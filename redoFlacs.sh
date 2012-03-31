@@ -221,11 +221,6 @@ function normal_abort {
 	exit $?
 }
 
-# Find the Bit Depth of a FLAC file
-function bit_depth {
-	metaflac --list --block-type=STREAMINFO "$i" | grep "bits-per-sample" | gawk '{print $2}'
-}
-
 # Create a countdown function for the metadata
 # to allow user to quit script safely
 function countdown_metadata {
@@ -430,7 +425,9 @@ function aucdtect {
 			SAMPLE="$(metaflac --list --block-type=STREAMINFO "$i" | grep "sample_rate" | gawk '{print $2}')"
 
 			# Skip the FLAC file if it has a bit depth greater
-			# than 16 or sample rate greater than 44.1kHz
+			# than 16 or sample rate greater than 44.1kHz since
+			# auCDtect doesn't support audio files with a higher
+			# resolution than a CD.
 			if [[ "$BITS" -gt "16" || "$SAMPLE" -gt "44100" ]] ; then
 				continue
 			fi
