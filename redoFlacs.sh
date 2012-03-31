@@ -419,9 +419,15 @@ function aucdtect {
 			print_aucdtect_flac
 			# Decompress FLAC to WAV so auCDtect can read the audio file
 			flac --totally-silent -d "$i"
+
 			# The actual auCDtect command with highest accuracy setting
-			AUCDTECT_CHECK="$("$AUCDTECT_COMMAND" -m0 "${i%.flac}.wav")"
+			# 2> hides the displayed progress to /dev/null so nothing is shown
+			AUCDTECT_CHECK="$("$AUCDTECT_COMMAND" -m0 "${i%.flac}.wav" 2> /dev/null)"
+
+			# Reads the last line of the above command which tells what
+			# auCDtect came up with for the WAV file
 			ERROR="$(echo "$AUCDTECT_CHECK" | tail -n1)"
+
 			if [[ "$ERROR" != "This track looks like CDDA with probability 100%" ]] ; then
 				print_aucdtect_issue
 				echo -e "[[$i]]\n"  "$ERROR\n" >> "$AUCDTECT_ERRORS"
