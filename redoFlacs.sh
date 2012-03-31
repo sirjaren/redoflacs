@@ -18,7 +18,6 @@
 # GNU General Public License for more details.
 #-----------------------------------------------------------------
 
-# TODO: Make auCDtect skip files that are higher than 16bit/44.1kHz
 # TODO: Use tput to print information using the entire terminal screen
 #       independent of size
 
@@ -222,6 +221,11 @@ function normal_abort {
 	exit $?
 }
 
+# Find the Bit Depth of a FLAC file
+function bit_depth {
+	metaflac --list --block-type=STREAMINFO "$i" | grep "bits-per-sample" | gawk '{print $2}'
+}
+
 # Create a countdown function for the metadata
 # to allow user to quit script safely
 function countdown_metadata {
@@ -389,13 +393,16 @@ function aucdtect {
 	# Abort script and check for any errors thus far
 	function aucdtect_abort {
 		echo -e "\n ${BOLD_GREEN}*${NORMAL} Control-C received, exiting script..."
+
 		# Don't remove WAV files in case user has WAV files there purposefully
 		# The script cannot determine between existing and script-created WAV files
 		WAV_FILES="$(find "$DIRECTORY" -name *.wav -print)"
+
 		if [[ -f "$AUCDTECT_ERRORS" ]] ; then
 			echo -e "\n ${BOLD_RED}*${NORMAL} Some FLAC files may be lossy sourced, please check"
 			echo -e " ${BOLD_RED}*${NORMAL} \"$AUCDTECT_ERRORS\" for errors"
 		fi
+
 		if [[ -n "$WAV_FILES" ]] ; then
 			echo -e "\n ${BOLD_RED}*${NORMAL} There are some temporary WAV files leftover that"
 			echo -e " ${BOLD_RED}*${NORMAL} couldn't be deleted because of script interruption"
@@ -408,6 +415,7 @@ function aucdtect {
 				echo -e " ${YELLOW}*${NORMAL}     $i"
 			done
 		fi
+
 		exit $?
 	}
 	
@@ -416,7 +424,19 @@ function aucdtect {
 
 	function aucdtect_f {
 		for i ; do
+			# Get the bit depth of a FLAC file
+			BITS="$(metaflac --list --block-type=STREAMINFO "$i" | grep "bits-per-sample" | gawk '{print $2}')"
+			# Get the sample rate of a FLAC file
+			SAMPLE="$(metaflac --list --block-type=STREAMINFO "$i" | grep "sample_rate" | gawk '{print $2}')"
+
+			# Skip the FLAC file if it has a bit depth greater
+			# than 16 or sample rate greater than 44.1kHz
+			if [[ "$BITS" -gt "16" || "$SAMPLE" -gt "44100" ]] ; then
+				continue
+			fi
+
 			print_aucdtect_flac
+
 			# Decompress FLAC to WAV so auCDtect can read the audio file
 			flac --totally-silent -d "$i"
 
