@@ -2,7 +2,7 @@
 
 #------------------------------------------------------------
 # Re-compress, Verify, Test, Re-tag, and Clean Up FLAC Files
-#                      Version 0.8.1
+#                      Version 0.9
 #                       sirjaren
 #------------------------------------------------------------
 
@@ -18,8 +18,7 @@
 # GNU General Public License for more details.
 #-----------------------------------------------------------------
 
-# TODO: Enable fallback option to users who do not have `tput` installed
-#       (via ncurses)
+# TODO: Cleanup fallback printing to cull strings correctly
 
 #--------------
 # Dependencies
@@ -74,18 +73,10 @@ AUCDTECT_COMMAND="$(command -v auCDtect)"
 ##########################
 
 # Version
-VERSION="0.8.1"
+VERSION="0.9"
 
 # Export auCDtect command to allow subshell access
 export AUCDTECT_COMMAND
-
-# Check if `tput` is installed and do a fallback if not
-# installed
-hash tput
-if [[ "$?" -eq 1 ]] ; then
-	# Export to allow subshell access
-	export FALLBACK="True"
-fi
 
 # Export the tag array using some trickery (BASH doesn't
 # support exporting arrays natively)
@@ -1120,6 +1111,14 @@ if [[ "$NO_COLOR" == "true" ]] ; then
 	BOLD_RED=""
 	NORMAL=""
 	YELLOW=""
+fi
+
+# Check if `tput` is installed and do a fallback if not
+# installed
+hash tput
+if [[ "$?" -eq 1 ]] ; then
+	# Export to allow subshell access
+	export FALLBACK="True"
 fi
 
 # The below order is probably the best bet in ensuring time
