@@ -17,18 +17,11 @@
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 # GNU General Public License for more details.
 #-----------------------------------------------------------------
-
-# TODO: Cleanup fallback printing to cull strings correctly
-
-#--------------
-# Dependencies
-#--------------
-# BASH
-# FLAC
-# Metaflac
-# Coreutils
-# NCurses (Optional)
-#--------------------
+# You can follow development of this script on Gitorious at:
+# https://gitorious.org/redoflacs
+#
+# Please submit requests/changes/patches and/or comments
+#-----------------------------------------------------------------
 
 tags=(
 ########################
