@@ -27,7 +27,8 @@
 # FLAC
 # Metaflac
 # Coreutils
-#--------------
+# NCurses (Optional)
+#--------------------
 
 tags=(
 ########################
@@ -72,6 +73,9 @@ AUCDTECT_COMMAND="$(command -v auCDtect)"
 #  END OF CONFIGURATION  #
 ##########################
 
+######################
+#  STATIC VARIABLES  #
+######################
 # Version
 VERSION="0.9"
 
@@ -106,7 +110,9 @@ MD5CHECK="false"
 PRUNE="false"
 REDO="false"
 
-# Various information printed to stdout
+###################################
+#  INFORMATION PRINTED TO STDOUT  # 
+###################################
 # Displaying currently running tasks
 function title_compress_flac {
 	echo -e " ${BOLD_GREEN}*${NORMAL} Compressing FLAC files with level 8 compression and verifying output"
@@ -452,6 +458,9 @@ export -f print_analyzing_tags
 export -f print_setting_tags
 export -f print_prune_flac
 
+######################################
+#  FUNCTIONS TO DO VARIOUS COMMANDS  #
+######################################
 # General abort script to use BASH's trap command on SIGINT
 function normal_abort {
 	echo -e "\n ${BOLD_GREEN}*${NORMAL} Control-C received, exiting script..."
@@ -1116,6 +1125,7 @@ fi
 # Check if `tput` is installed and do a fallback if not
 # installed
 hash tput
+# Check exit code. If 1, then `tput` is not installed
 if [[ "$?" -eq 1 ]] ; then
 	# Export to allow subshell access
 	export FALLBACK="True"
