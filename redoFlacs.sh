@@ -441,7 +441,7 @@ function print_prune_flac {
 		fi
 
 		printf "\r%$((${COLUMNS} - 17))s${YELLOW}%s${NORMAL}%s\r${CYAN}%s${NORMAL}${YELLOW}%s${NORMAL}%s" \
-		"[" "Pruning Metadata" "]" "     " "*" " ${FILENAME}"
+		"[" "Pruning Metadata" "]" "${PERCENT}" "*" " ${FILENAME}"
 	fi
 }
 
