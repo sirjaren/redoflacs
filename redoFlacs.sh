@@ -23,6 +23,13 @@
 # Please submit requests/changes/patches and/or comments
 #-----------------------------------------------------------------
 
+# TODO: Fix error with MD5 Checking and fake FLACs
+# TODO: Show output of skipping Hi-Res FLACs when using auCDtect
+# TODO: Log output of skipped Hi-Res FLACs
+# TODO: Test for >16bits and >44.1kHz separately using auCDtect
+#       to determine which (or both) causes auCDtect to fail
+# TODO: Show percentage in fallback mode!
+
 tags=(
 ########################
 #  USER CONFIGURATION  #
@@ -83,6 +90,7 @@ export EXPORT_TAG="$(echo -n "${tags[@]}")"
 # Export to allow subshell access
 export BOLD_GREEN="\033[1;32m"
 export BOLD_RED="\033[1;31m"
+export CYAN="\033[0;36m"
 export NORMAL="\033[0m"
 export YELLOW="\033[0;33m"
 
@@ -161,8 +169,8 @@ function print_compressing_flac {
 			FILENAME="$(basename "$i")"
 		fi
 
-		printf "\r%$((${COLUMNS} - 17))s${YELLOW}%s${NORMAL}%s\r%s${YELLOW}%s${NORMAL}%s" \
-		"[" "Compressing FLAC" "]" "     " "*" " ${FILENAME}"
+		printf "\r%$((${COLUMNS} - 17))s${YELLOW}%s${NORMAL}%s\r${CYAN}%s${$NORMAL}${YELLOW}%s${NORMAL}%s" \
+		"[" "Compressing FLAC" "]" "${PERCENT}" "*" " ${FILENAME}"
 	fi
 }
 
@@ -186,8 +194,8 @@ function print_testing_flac {
 			FILENAME="$(basename "$i")"
 		fi
 		
-		printf "\r%$((${COLUMNS} - 13))s${YELLOW}%s${NORMAL}%s\r%s${YELLOW}%s${NORMAL}%s" \
-		"[" "Testing FLAC" "]" "     " "*" " ${FILENAME}"
+		printf "\r%$((${COLUMNS} - 13))s${YELLOW}%s${NORMAL}%s\r${CYAN}%s${NORMAL}${YELLOW}%s${NORMAL}%s" \
+		"[" "Testing FLAC" "]" "${PERCENT}" "*" " ${FILENAME}"
 	fi
 }
 
@@ -235,8 +243,8 @@ function print_checking_md5 {
 			FILENAME="$(basename "$i")"
 		fi
 
-		printf "\r%$((${COLUMNS} - 13))s${YELLOW}%s${NORMAL}%s\r%s${YELLOW}%s${NORMAL}%s" \
-		"[" "Checking MD5" "]" "     " "*" " ${FILENAME}"
+		printf "\r%$((${COLUMNS} - 13))s${YELLOW}%s${NORMAL}%s\r${CYAN}%s${NORMAL}${YELLOW}%s${NORMAL}%s" \
+		"[" "Checking MD5" "]" "${PERCENT}" "*" " ${FILENAME}"
 	fi
 }
 
@@ -284,8 +292,8 @@ function print_aucdtect_flac {
 			FILENAME="$(basename "$i")"
 		fi
 
-		printf "\r%$((${COLUMNS} - 16))s${YELLOW}%s${NORMAL}%s\r%s${YELLOW}%s${NORMAL}%s" \
-		"[" "Validating FLAC" "]" "     " "*" " ${FILENAME}"
+		printf "\r%$((${COLUMNS} - 16))s${YELLOW}%s${NORMAL}%s\r${CYAN}%s${NORMAL}${YELLOW}%s${NORMAL}%s" \
+		"[" "Validating FLAC" "]" "${PERCENT}" "*" " ${FILENAME}"
 	fi
 }
 
@@ -382,8 +390,8 @@ function print_analyzing_tags {
 			FILENAME="$(basename "$i")"
 		fi
 
-		printf "\r%$((${COLUMNS} - 15))s${YELLOW}%s${NORMAL}%s\r%s${YELLOW}%s${NORMAL}%s" \
-		"[" "Analyzing Tags" "]" "     " "*" " ${FILENAME}"
+		printf "\r%$((${COLUMNS} - 15))s${YELLOW}%s${NORMAL}%s\r${CYAN}%s${NORMAL}${YELLOW}%s${NORMAL}%s" \
+		"[" "Analyzing Tags" "]" "${PERCENT}" "*" " ${FILENAME}"
 	fi
 }
 
@@ -407,8 +415,8 @@ function print_setting_tags {
 			FILENAME="$(basename "$i")"
 		fi
 
-		printf "\r%$((${COLUMNS} - 13))s${YELLOW}%s${NORMAL}%s\r%s${YELLOW}%s${NORMAL}%s" \
-		"[" "Setting Tags" "]" "     " "*" " ${FILENAME}"
+		printf "\r%$((${COLUMNS} - 13))s${YELLOW}%s${NORMAL}%s\r${CYAN}%s${NORMAL}${YELLOW}%s${NORMAL}%s" \
+		"[" "Setting Tags" "]" "${PERCENT}" "*" " ${FILENAME}"
 	fi
 }
 
@@ -432,9 +440,34 @@ function print_prune_flac {
 			FILENAME="$(basename "$i")"
 		fi
 
-		printf "\r%$((${COLUMNS} - 17))s${YELLOW}%s${NORMAL}%s\r%s${YELLOW}%s${NORMAL}%s" \
+		printf "\r%$((${COLUMNS} - 17))s${YELLOW}%s${NORMAL}%s\r${CYAN}%s${NORMAL}${YELLOW}%s${NORMAL}%s" \
 		"[" "Pruning Metadata" "]" "     " "*" " ${FILENAME}"
 	fi
+}
+
+# Send counted FLACS to FIFO pipe to be read out and build
+# the percentage to be displayed
+function count_flacs {
+	COUNT="$(($(cat "$TMPFIFO") + 1))"
+	echo -ne "$COUNT" > "$TMPFIFO" &
+	PERCENT="$(($COUNT * 100 / $TOTAL_FLACS))"
+
+	# Spacing varies according to percentage size
+	case "$(echo -n $PERCENT | wc -m)" in
+		1)
+			PERCENT="${PERCENT}%   "
+			;;
+		2)
+			PERCENT="${PERCENT}%  "
+			;;
+		3)
+			PERCENT="${PERCENT}% "
+			;;
+		*)
+			# This shouldn't ever happen
+			exit 1
+			;;
+	esac
 }
 
 # Export all the above functions for subshell access
@@ -450,6 +483,7 @@ export -f print_level_8
 export -f print_analyzing_tags 
 export -f print_setting_tags
 export -f print_prune_flac
+export -f count_flacs
 
 ######################################
 #  FUNCTIONS TO DO VARIOUS COMMANDS  #
@@ -457,8 +491,12 @@ export -f print_prune_flac
 # General abort script to use BASH's trap command on SIGINT
 function normal_abort {
 	echo -e "\n ${BOLD_GREEN}*${NORMAL} Control-C received, exiting script..."
-	exit $?
+	# Remove temporary FIFO
+	cat "$TMPFIFO" > /dev/null
+	rm "$TMPFIFO"
+	exit 1
 }
+
 
 # Create a countdown function for the metadata
 # to allow user to quit script safely
@@ -480,6 +518,10 @@ function countdown_metadata {
 			sleep 1
 			((COUNT--))
 		done
+		# Below is the last second of the countdown
+		# Put here for UI refinement (No extra spacing after last second)
+		echo -e "${BOLD_RED}1${NORMAL}\n"
+		sleep 1
 	}
 
 	# Trap SIGINT (Control-C) to abort cleanly
@@ -492,21 +534,11 @@ function countdown_metadata {
 	echo -e " ${YELLOW}*${NORMAL} Ctrl+C (Control-C) to abort..."
 	echo -en " ${BOLD_GREEN}*${NORMAL} Starting in: "
 	countdown_10
-	# Below is the last second of the countdown
-	# Put here for UI refinement (No extra spacing after last second)
-	echo -e "${BOLD_RED}1${NORMAL}\n"
-	sleep 1
 }
 
 # Compress FLAC files and verify output
 function compress_flacs {
 	title_compress_flac
-
-	FIND_FLACS="$(find "$DIRECTORY" -name "*.flac" -print)"
-	if [[ -z "$FIND_FLACS" ]] ; then
-		no_flacs
-		exit 0
-	fi
 
 	# Abort script and remove temporarily encoded FLAC files (if any)
 	# and check for any errors thus far
@@ -517,7 +549,10 @@ function compress_flacs {
 			echo -e "\n ${BOLD_RED}*${NORMAL} Errors found in some FLAC files, please check"
 			echo -e " ${BOLD_RED}*${NORMAL} \"$VERIFY_ERRORS\" for errors"
 		fi
-		exit $?
+		# Remove temporary FIFO
+		cat "$TMPFIFO" > /dev/null
+		rm "$TMPFIFO"
+		exit 1
 	}
 
 	# Trap SIGINT (Control-C) to abort cleanly
@@ -530,6 +565,7 @@ function compress_flacs {
 			# ERROR variable
 			COMPRESSION="$((metaflac --show-tag=COMPRESSION "$i") 2>&1)"
 			if [[ "$COMPRESSION" != "COMPRESSION=8" ]] ; then
+				count_flacs
 				print_compressing_flac
 				# This must come after the above command for proper formatting
 				ERROR="$((flac -f -8 -V -s "$i") 2>&1)"
@@ -543,6 +579,7 @@ function compress_flacs {
 				fi
 			# If already at level 8 compression, test the FLAC file instead
 			else
+				count_flacs
 				print_level_8
 				print_testing_flac
 				ERROR="$((flac -ts "$i") 2>&1)"
@@ -563,19 +600,19 @@ function compress_flacs {
 	if [[ -f "$VERIFY_ERRORS" ]] ; then
 		echo -e "\n ${BOLD_RED}*${NORMAL} Errors found in some FLAC files, please check"
 		echo -e " ${BOLD_RED}*${NORMAL} \"$VERIFY_ERRORS\" for errors"
-		exit 0
+		# Remove temporary FIFO
+		cat "$TMPFIFO" > /dev/null
+		rm "$TMPFIFO"
+		exit 1
 	fi
+
+	# Clear FIFO pipe in case another task is to begin after this one
+	echo -ne "0" > "$TMPFIFO" &
 }
 
 # Test FLAC files
 function test_flacs {
 	title_testing_flac
-
-	FIND_FLACS="$(find "$DIRECTORY" -name "*.flac" -print)"
-	if [[ -z "$FIND_FLACS" ]] ; then
-		no_flacs
-		exit 0
-	fi
 
 	# Abort script and check for any errors thus far
 	function test_abort {
@@ -583,8 +620,11 @@ function test_flacs {
 		if [[ -f "$TEST_ERRORS" ]] ; then
 			echo -e "\n ${BOLD_RED}*${NORMAL} Errors found in some FLAC files, please check"
 			echo -e " ${BOLD_RED}*${NORMAL} \"$TEST_ERRORS\" for errors"
+			# Remove temporary FIFO
+			cat "$TMPFIFO" > /dev/null
+			rm "$TMPFIFO"
+			exit 1
 		fi
-		exit $?
 	}
 
 	# Trap SIGINT (Control-C) to abort cleanly
@@ -592,6 +632,7 @@ function test_flacs {
 
 	function test_f {
 		for i ; do
+			count_flacs
 			print_testing_flac
 			ERROR="$((flac -ts "$i") 2>&1)"
 			if [[ ! -z "$ERROR" ]] ; then
@@ -610,19 +651,20 @@ function test_flacs {
 	if [[ -f "$TEST_ERRORS" ]] ; then
 		echo -e "\n ${BOLD_RED}*${NORMAL} Errors found in some FLAC files, please check"
 		echo -e " ${BOLD_RED}*${NORMAL} \"$TEST_ERRORS\" for errors"
-		exit 0
+		# Remove temporary FIFO
+		cat "$TMPFIFO" > /dev/null
+		rm "$TMPFIFO"
+		exit 1
 	fi
+
+	# Clear FIFO pipe in case another task is to begin after this one
+	echo -ne "0" > "$TMPFIFO" &
+
 }
 
 # Use auCDtect to check FLAC validity
 function aucdtect {
 	title_aucdtect_flac
-
-	FIND_FLACS="$(find "$DIRECTORY" -name "*.flac" -print)"
-	if [[ -z "$FIND_FLACS" ]] ; then
-		no_flacs
-		exit 0
-	fi
 
 	# Abort script and check for any errors thus far
 	function aucdtect_abort {
@@ -650,7 +692,10 @@ function aucdtect {
 			done
 		fi
 
-		exit $?
+		# Remove temporary FIFO
+		cat "$TMPFIFO" > /dev/null
+		rm "$TMPFIFO"
+		exit 1
 	}
 	
 	# Trap SIGINT (Control-C) to abort cleanly
@@ -671,6 +716,7 @@ function aucdtect {
 				continue
 			fi
 
+			count_flacs
 			print_aucdtect_flac
 
 			# Decompress FLAC to WAV so auCDtect can read the audio file
@@ -702,19 +748,20 @@ function aucdtect {
 	if [[ -f "$AUCDTECT_ERRORS" ]] ; then
 		echo -e "\n ${BOLD_RED}*${NORMAL} Some FLAC files may be lossy sourced, please check"
 		echo -e " ${BOLD_RED}*${NORMAL} \"$AUCDTECT_ERRORS\" for issues"
-		exit 0
+		# Remove temporary FIFO
+		cat "$TMPFIFO" > /dev/null
+		rm "$TMPFIFO"
+		exit 1
 	fi
+
+	# Clear FIFO pipe in case another task is to begin after this one
+	echo -ne "0" > "$TMPFIFO" &
+
 }
 
 # Check for unset MD5 Signatures in FLAC files
 function md5_check {
 	title_md5check_flac
-
-	FIND_FLACS="$(find "$DIRECTORY" -name "*.flac" -print)"
-	if [[ -z "$FIND_FLACS" ]] ; then
-		no_flacs
-		exit 0
-	fi
 
 	# Abort script and check for any errors thus far
 	function md5_check_abort {
@@ -722,8 +769,11 @@ function md5_check {
 		if [[ -f "$MD5_ERRORS" ]] ; then
 			echo -e "\n ${BOLD_RED}*${NORMAL} The MD5 Signature is unset for some FLAC files, please check"
 			echo -e " ${BOLD_RED}*${NORMAL} \"$MD5_ERRORS\" for details"
+			# Remove temporary FIFO
+			cat "$TMPFIFO" > /dev/null
+			rm "$TMPFIFO"
+			exit 1
 		fi
-		exit $?
 	}
 
 	# Trap SIGINT (Control-C) to abort cleanly
@@ -731,6 +781,7 @@ function md5_check {
 
 	function md5_c {
 		for i ; do
+			count_flacs
 			print_checking_md5
 			MD5_SUM="$(metaflac --show-md5sum "$i")"
 			if [[ "$MD5_SUM" == "00000000000000000000000000000000" ]] ; then
@@ -749,8 +800,14 @@ function md5_check {
 	if [[ -f "$MD5_ERRORS" ]] ; then
 		echo -e "\n ${BOLD_RED}*${NORMAL} The MD5 Signature is unset for some FLAC files, please check"
 		echo -e " ${BOLD_RED}*${NORMAL} \"$MD5_ERRORS\" for details"
-		exit 0
+		# Remove temporary FIFO
+		cat "$TMPFIFO" > /dev/null
+		rm "$TMPFIFO"
+		exit 1
 	fi  
+
+	# Clear FIFO pipe in case another task is to begin after this one
+	echo -ne "0" > "$TMPFIFO" &
 }
 
 # Extract wanted FLAC metadata
@@ -796,12 +853,6 @@ export -f set_vorbis_tags
 function redo_tags {
 	title_analyze_tags
 
-	FIND_FLACS="$(find "$DIRECTORY" -name "*.flac" -print)"
-	if [[ -z "$FIND_FLACS" ]] ; then
-		no_flacs
-		exit 0
-	fi
-	
 	# Keep SIGINT from exiting the script (Can cause all tags
 	# to be lost if done when tags are being removed!)
 	trap '' SIGINT
@@ -810,6 +861,7 @@ function redo_tags {
 		# Recreate the tags array so it can be used by the child process
 		eval "tags=(${EXPORT_TAG[*]})"
 		for i ; do
+			count_flacs
 			print_analyzing_tags
 			extract_vorbis_tags
 			print_done_flac
@@ -824,7 +876,10 @@ function redo_tags {
 		echo -e "\n ${BOLD_RED}*${NORMAL} Some FLAC files have missing tags, please check"
 		echo -e " ${BOLD_RED}*${NORMAL} \"$METADATA_ERRORS\" for details."
 		echo -e " ${BOLD_RED}*${NORMAL} Not Re-Tagging files."
-		exit 0
+		# Remove temporary FIFO
+		cat "$TMPFIFO" > /dev/null
+		rm "$TMPFIFO"
+		exit 1
 	fi
 
 	title_setting_tags
@@ -833,6 +888,7 @@ function redo_tags {
 		# Recreate the tags array so it can be used by the child process
 		eval "tags=(${EXPORT_TAG[*]})"
 		for i ; do
+			count_flacs
 			print_setting_tags
 			set_vorbis_tags
 			print_ok_flac
@@ -842,23 +898,21 @@ function redo_tags {
 	
 	# Run the above function with the configured threads (multithreaded)
 	find "$DIRECTORY" -name *.flac -print0 | xargs -0 -n 1 -P "$CORES" bash -c 'set_tags "$@"' --
+
+	# Clear FIFO pipe in case another task is to begin after this one
+	echo -ne "0" > "$TMPFIFO" &
 }
 
 # Clear excess FLAC metadata from each FLAC file
 function prune_flacs {
 	title_prune_flac
 
-	FIND_FLACS="$(find "$DIRECTORY" -name "*.flac" -print)"
-	if [[ -z "$FIND_FLACS" ]] ; then
-		no_flacs
-		exit 0
-	fi
-
 	# Trap SIGINT (Control-C) to abort cleanly	
 	trap normal_abort SIGINT
 
 	function prune_f {
 		for i ; do
+			count_flacs
 			print_prune_flac
 			metaflac --remove --block-type=SEEKTABLE "$i"
 			metaflac --remove --dont-use-padding --block-type=PADDING "$i"
@@ -869,6 +923,10 @@ function prune_flacs {
 	
 	# Run the above function with the configured threads (multithreaded)
 	find "$DIRECTORY" -name *.flac -print0 | xargs -0 -n 1 -P "$CORES" bash -c 'prune_f "$@"' --
+
+	# Clear FIFO pipe in case another task is to begin after this one
+	echo -ne "0" > "$TMPFIFO" &
+
 }
 
 # Display a lot of help
@@ -1015,9 +1073,9 @@ function print_version {
 	echo "Version $VERSION"
 }
 
-###############
-# Begin Script
-###############
+#######################
+#  PRE-SCRIPT CHECKS  #
+#######################
 
 # Add case where only one argument is specified
 if [[ "$#" -eq 1 ]] ; then
@@ -1103,8 +1161,26 @@ if [[ "$COMPRESS" == "true" && "$TEST" == "true" ]] ; then
 	exit 0
 fi
 
-# Execute the various options within the script if the arguments
-# were specified at the start
+# Check if FLAC files exist and count the number of FLAC
+# files to process if they exist
+FIND_FLACS="$(find "$DIRECTORY" -name "*.flac" -print)"
+if [[ -z "$FIND_FLACS" ]] ; then
+	no_flacs
+	exit 0
+else
+	export TOTAL_FLACS="$(find "$DIRECTORY" -name "*.flac" -print0 | \
+		xargs -0 bash -c 'COUNT="" ; for i in "$@" ; do ((COUNT++)) ; done ; echo $COUNT' --)"
+fi
+
+# If all the above script pre-checks pass make a temporary
+# FIFO pipe to hold the percentage completed to be displayed
+export TMPFIFO="/tmp/fifo.$$"
+mkfifo "$TMPFIFO"
+echo -ne "0" > "$TMPFIFO" &
+
+##################
+#  Begin Script  #
+##################
 
 # This must come before the other options in
 # order for it to take effect
@@ -1131,18 +1207,6 @@ if [[ "$REDO" == "true" && "$DISABLE_WARNING" != "true" ]] ; then
 	countdown_metadata
 fi
 
-if [[ "$COMPRESS" == "true" ]] ; then
-	compress_flacs
-fi
-
-if [[ "$TEST" == "true" ]] ; then
-	test_flacs
-fi
-
-if [[ "$MD5CHECK" == "true" ]] ; then
-	md5_check
-fi
-
 if [[ "$AUCDTECT" == "true" ]] ; then
 	# Check if auCDtect is found/installed
 	if [[ -f "$AUCDTECT_COMMAND" ]] ; then
@@ -1155,6 +1219,18 @@ if [[ "$AUCDTECT" == "true" ]] ; then
 	fi
 fi
 
+if [[ "$COMPRESS" == "true" ]] ; then
+	compress_flacs
+fi
+
+if [[ "$TEST" == "true" ]] ; then
+	test_flacs
+fi
+
+if [[ "$MD5CHECK" == "true" ]] ; then
+	md5_check
+fi
+
 if [[ "$REDO" == "true" ]] ; then
 	redo_tags
 fi
@@ -1162,3 +1238,7 @@ fi
 if [[ "$PRUNE" == "true" ]] ; then
 	prune_flacs
 fi
+
+# Remove temporary FIFO
+cat "$TMPFIFO" > /dev/null
+rm -f "$TMPFIFO"
