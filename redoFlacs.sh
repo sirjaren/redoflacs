@@ -82,6 +82,9 @@ VERSION="0.9.1"
 # Export auCDtect command to allow subshell access
 export AUCDTECT_COMMAND
 
+# Export CORES to allow testing in subshells
+export CORES
+
 # Export the tag array using some trickery (BASH doesn't
 # support exporting arrays natively)
 export EXPORT_TAG="$(echo -n "${tags[@]}")"
@@ -448,8 +451,28 @@ function print_prune_flac {
 # Send counted FLACS to FIFO pipe to be read out and build
 # the percentage to be displayed
 function count_flacs {
-	COUNT="$(($(cat "$TMPFIFO") + 1))"
-	echo -ne "$COUNT" > "$TMPFIFO" &
+	# If one core, output is forked into the background
+	# since another process is no longer available to `cat`
+	# the FIFO pipe.  This prevents the script hanging from
+	# the FIFO waiting for another process to read data from it
+	if [[ "$CORES" -eq "1" ]] ; then
+		# Iterate the count
+		COUNT="$(($(cat "$TMPFIFO" 2>/dev/null) + 1))"
+		echo -ne "$COUNT" > "$TMPFIFO" &
+	# More than 1 core below
+	else
+		# Get the count of FLACs so far and test if it's the last one
+		if [[ COUNT="(($(cat "$TMPFIFO" 2>/dev/null) + 1))" -eq $TOTAL_FLACS ]] ; then
+			# Remove FIFO if last FLAC so it doesn't hang as there isn't
+			# a process left to close the pipe
+			rm "$TMPFIFO"
+		else
+			# Iterate the count
+			echo -ne "$COUNT" > "$TMPFIFO"
+		fi
+	fi
+
+	# This is the percentage of completed FLACs thus far
 	PERCENT="$(($COUNT * 100 / $TOTAL_FLACS))"
 
 	# Spacing varies according to percentage size
@@ -492,8 +515,10 @@ export -f count_flacs
 function normal_abort {
 	echo -e "\n ${BOLD_GREEN}*${NORMAL} Control-C received, exiting script..."
 	# Remove temporary FIFO
-	cat "$TMPFIFO" > /dev/null
-	rm "$TMPFIFO"
+	if [[ "$COUNTDOWN" != "true" ]] ; then
+		cat "$TMPFIFO" &> /dev/null
+		rm "$TMPFIFO"
+	fi
 	exit 1
 }
 
@@ -501,6 +526,8 @@ function normal_abort {
 # Create a countdown function for the metadata
 # to allow user to quit script safely
 function countdown_metadata {
+	#To exit cleanly
+	export COUNTDOWN="true"
 	# Creates the listing of tags to be kept
 	function tags_countdown {
 		# Recreate the tags array so it can be parsed easily
@@ -520,8 +547,9 @@ function countdown_metadata {
 		done
 		# Below is the last second of the countdown
 		# Put here for UI refinement (No extra spacing after last second)
-		echo -e "${BOLD_RED}1${NORMAL}\n"
+		echo -en "${BOLD_RED}1${NORMAL}"
 		sleep 1
+		echo -e "\n"
 	}
 
 	# Trap SIGINT (Control-C) to abort cleanly
@@ -538,6 +566,11 @@ function countdown_metadata {
 
 # Compress FLAC files and verify output
 function compress_flacs {
+	rm -f "$TMPFIFO"
+	export TMPFIFO="/tmp/fifo.$$"
+	mkfifo $TMPFIFO
+	echo -ne "0" > "$TMPFIFO" &
+
 	title_compress_flac
 
 	# Abort script and remove temporarily encoded FLAC files (if any)
@@ -550,7 +583,7 @@ function compress_flacs {
 			echo -e " ${BOLD_RED}*${NORMAL} \"$VERIFY_ERRORS\" for errors"
 		fi
 		# Remove temporary FIFO
-		cat "$TMPFIFO" > /dev/null
+		cat "$TMPFIFO" &> /dev/null
 		rm "$TMPFIFO"
 		exit 1
 	}
@@ -601,17 +634,19 @@ function compress_flacs {
 		echo -e "\n ${BOLD_RED}*${NORMAL} Errors found in some FLAC files, please check"
 		echo -e " ${BOLD_RED}*${NORMAL} \"$VERIFY_ERRORS\" for errors"
 		# Remove temporary FIFO
-		cat "$TMPFIFO" > /dev/null
+		cat "$TMPFIFO" &> /dev/null
 		rm "$TMPFIFO"
 		exit 1
 	fi
-
-	# Clear FIFO pipe in case another task is to begin after this one
-	echo -ne "0" > "$TMPFIFO" &
 }
 
 # Test FLAC files
 function test_flacs {
+	rm -f "$TMPFIFO"
+	export TMPFIFO="/tmp/fifo.$$"
+	mkfifo $TMPFIFO
+	echo -ne "0" > "$TMPFIFO" &
+
 	title_testing_flac
 
 	# Abort script and check for any errors thus far
@@ -621,7 +656,7 @@ function test_flacs {
 			echo -e "\n ${BOLD_RED}*${NORMAL} Errors found in some FLAC files, please check"
 			echo -e " ${BOLD_RED}*${NORMAL} \"$TEST_ERRORS\" for errors"
 			# Remove temporary FIFO
-			cat "$TMPFIFO" > /dev/null
+			cat "$TMPFIFO" &> /dev/null
 			rm "$TMPFIFO"
 			exit 1
 		fi
@@ -652,18 +687,20 @@ function test_flacs {
 		echo -e "\n ${BOLD_RED}*${NORMAL} Errors found in some FLAC files, please check"
 		echo -e " ${BOLD_RED}*${NORMAL} \"$TEST_ERRORS\" for errors"
 		# Remove temporary FIFO
-		cat "$TMPFIFO" > /dev/null
+		cat "$TMPFIFO" &> /dev/null
 		rm "$TMPFIFO"
 		exit 1
 	fi
-
-	# Clear FIFO pipe in case another task is to begin after this one
-	echo -ne "0" > "$TMPFIFO" &
-
 }
 
 # Use auCDtect to check FLAC validity
 function aucdtect {
+	rm -f "$TMPFIFO"
+	export TMPFIFO="/tmp/fifo.$$"
+	mkfifo $TMPFIFO
+	echo -ne "0" > "$TMPFIFO" &
+
+
 	title_aucdtect_flac
 
 	# Abort script and check for any errors thus far
@@ -693,7 +730,7 @@ function aucdtect {
 		fi
 
 		# Remove temporary FIFO
-		cat "$TMPFIFO" > /dev/null
+		cat "$TMPFIFO" &> /dev/null
 		rm "$TMPFIFO"
 		exit 1
 	}
@@ -749,18 +786,19 @@ function aucdtect {
 		echo -e "\n ${BOLD_RED}*${NORMAL} Some FLAC files may be lossy sourced, please check"
 		echo -e " ${BOLD_RED}*${NORMAL} \"$AUCDTECT_ERRORS\" for issues"
 		# Remove temporary FIFO
-		cat "$TMPFIFO" > /dev/null
+		cat "$TMPFIFO" &> /dev/null
 		rm "$TMPFIFO"
 		exit 1
 	fi
-
-	# Clear FIFO pipe in case another task is to begin after this one
-	echo -ne "0" > "$TMPFIFO" &
-
 }
 
 # Check for unset MD5 Signatures in FLAC files
 function md5_check {
+	rm -f "$TMPFIFO"
+	export TMPFIFO="/tmp/fifo.$$"
+	mkfifo $TMPFIFO
+	echo -ne "0" > "$TMPFIFO" &
+
 	title_md5check_flac
 
 	# Abort script and check for any errors thus far
@@ -770,7 +808,7 @@ function md5_check {
 			echo -e "\n ${BOLD_RED}*${NORMAL} The MD5 Signature is unset for some FLAC files, please check"
 			echo -e " ${BOLD_RED}*${NORMAL} \"$MD5_ERRORS\" for details"
 			# Remove temporary FIFO
-			cat "$TMPFIFO" > /dev/null
+			cat "$TMPFIFO" &> /dev/null
 			rm "$TMPFIFO"
 			exit 1
 		fi
@@ -801,13 +839,10 @@ function md5_check {
 		echo -e "\n ${BOLD_RED}*${NORMAL} The MD5 Signature is unset for some FLAC files, please check"
 		echo -e " ${BOLD_RED}*${NORMAL} \"$MD5_ERRORS\" for details"
 		# Remove temporary FIFO
-		cat "$TMPFIFO" > /dev/null
+		cat "$TMPFIFO" &> /dev/null
 		rm "$TMPFIFO"
 		exit 1
 	fi  
-
-	# Clear FIFO pipe in case another task is to begin after this one
-	echo -ne "0" > "$TMPFIFO" &
 }
 
 # Extract wanted FLAC metadata
@@ -851,6 +886,11 @@ export -f set_vorbis_tags
 # Check for missing tags and retag FLAC files if all files
 # are not missing tags
 function redo_tags {
+	rm -f "$TMPFIFO"
+	export TMPFIFO="/tmp/fifo.$$"
+	mkfifo $TMPFIFO
+	echo -ne "0" > "$TMPFIFO" &
+
 	title_analyze_tags
 
 	# Keep SIGINT from exiting the script (Can cause all tags
@@ -877,10 +917,15 @@ function redo_tags {
 		echo -e " ${BOLD_RED}*${NORMAL} \"$METADATA_ERRORS\" for details."
 		echo -e " ${BOLD_RED}*${NORMAL} Not Re-Tagging files."
 		# Remove temporary FIFO
-		cat "$TMPFIFO" > /dev/null
+		cat "$TMPFIFO" &> /dev/null
 		rm "$TMPFIFO"
 		exit 1
 	fi
+
+	rm -f "$TMPFIFO"
+	export TMPFIFO="/tmp/fifo.$$"
+	mkfifo $TMPFIFO
+	echo -ne "0" > "$TMPFIFO" &
 
 	title_setting_tags
 
@@ -898,13 +943,15 @@ function redo_tags {
 	
 	# Run the above function with the configured threads (multithreaded)
 	find "$DIRECTORY" -name *.flac -print0 | xargs -0 -n 1 -P "$CORES" bash -c 'set_tags "$@"' --
-
-	# Clear FIFO pipe in case another task is to begin after this one
-	echo -ne "0" > "$TMPFIFO" &
 }
 
 # Clear excess FLAC metadata from each FLAC file
 function prune_flacs {
+	rm -f "$TMPFIFO"
+	export TMPFIFO="/tmp/fifo.$$"
+	mkfifo $TMPFIFO
+	echo -ne "0" > "$TMPFIFO" &
+
 	title_prune_flac
 
 	# Trap SIGINT (Control-C) to abort cleanly	
@@ -923,10 +970,6 @@ function prune_flacs {
 	
 	# Run the above function with the configured threads (multithreaded)
 	find "$DIRECTORY" -name *.flac -print0 | xargs -0 -n 1 -P "$CORES" bash -c 'prune_f "$@"' --
-
-	# Clear FIFO pipe in case another task is to begin after this one
-	echo -ne "0" > "$TMPFIFO" &
-
 }
 
 # Display a lot of help
@@ -1174,9 +1217,9 @@ fi
 
 # If all the above script pre-checks pass make a temporary
 # FIFO pipe to hold the percentage completed to be displayed
-export TMPFIFO="/tmp/fifo.$$"
-mkfifo "$TMPFIFO"
-echo -ne "0" > "$TMPFIFO" &
+#export TMPFIFO="/tmp/fifo.$$"
+#mkfifo "$TMPFIFO"
+#echo -ne "0" > "$TMPFIFO" &
 
 ##################
 #  Begin Script  #
@@ -1240,5 +1283,5 @@ if [[ "$PRUNE" == "true" ]] ; then
 fi
 
 # Remove temporary FIFO
-cat "$TMPFIFO" > /dev/null
+cat "$TMPFIFO" &> /dev/null
 rm -f "$TMPFIFO"
