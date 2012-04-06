@@ -514,7 +514,8 @@ export -f count_flacs
 # General abort script to use BASH's trap command on SIGINT
 function normal_abort {
 	echo -e "\n ${BOLD_GREEN}*${NORMAL} Control-C received, exiting script..."
-	# Remove temporary FIFO
+	# Remove temporary FIFO if the abortion was not during
+	# the metadata countdown
 	if [[ "$COUNTDOWN" != "true" ]] ; then
 		cat "$TMPFIFO" &> /dev/null
 		rm "$TMPFIFO"
@@ -526,8 +527,10 @@ function normal_abort {
 # Create a countdown function for the metadata
 # to allow user to quit script safely
 function countdown_metadata {
-	#To exit cleanly
+	# Below ensures if metadata countdown is aborted,
+	# the temporary FIFO isn't removed
 	export COUNTDOWN="true"
+
 	# Creates the listing of tags to be kept
 	function tags_countdown {
 		# Recreate the tags array so it can be parsed easily
@@ -1214,12 +1217,6 @@ else
 	export TOTAL_FLACS="$(find "$DIRECTORY" -name "*.flac" -print0 | \
 		xargs -0 bash -c 'COUNT="" ; for i in "$@" ; do ((COUNT++)) ; done ; echo $COUNT' --)"
 fi
-
-# If all the above script pre-checks pass make a temporary
-# FIFO pipe to hold the percentage completed to be displayed
-#export TMPFIFO="/tmp/fifo.$$"
-#mkfifo "$TMPFIFO"
-#echo -ne "0" > "$TMPFIFO" &
 
 ##################
 #  Begin Script  #
