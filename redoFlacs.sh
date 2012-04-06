@@ -1227,6 +1227,7 @@ fi
 if [[ "$NO_COLOR" == "true" ]] ; then
 	BOLD_GREEN=""
 	BOLD_RED=""
+	CYAN=""
 	NORMAL=""
 	YELLOW=""
 fi
