@@ -485,7 +485,7 @@ function count_flacs {
 		if [[ COUNT="(($(cat "$TMPFIFO" 2>/dev/null) + 1))" -eq $TOTAL_FLACS ]] ; then
 			# Remove FIFO if last FLAC so it doesn't hang as there isn't
 			# a process left to close the pipe
-			rm "$TMPFIFO"
+			rm -f "$TMPFIFO"
 		else
 			# Iterate the count
 			echo -ne "$COUNT" > "$TMPFIFO"
@@ -539,7 +539,7 @@ function normal_abort {
 	# the metadata countdown
 	if [[ "$COUNTDOWN" != "true" ]] ; then
 		cat "$TMPFIFO" &> /dev/null
-		rm "$TMPFIFO"
+		rm -f "$TMPFIFO"
 	fi
 	exit 1
 }
@@ -608,7 +608,7 @@ function compress_flacs {
 		fi
 		# Remove temporary FIFO
 		cat "$TMPFIFO" &> /dev/null
-		rm "$TMPFIFO"
+		rm -f "$TMPFIFO"
 		exit 1
 	}
 
@@ -659,7 +659,7 @@ function compress_flacs {
 		echo -e " ${BOLD_RED}*${NORMAL} \"$VERIFY_ERRORS\" for errors"
 		# Remove temporary FIFO
 		cat "$TMPFIFO" &> /dev/null
-		rm "$TMPFIFO"
+		rm -f "$TMPFIFO"
 		exit 1
 	fi
 }
@@ -681,7 +681,7 @@ function test_flacs {
 			echo -e " ${BOLD_RED}*${NORMAL} \"$TEST_ERRORS\" for errors"
 			# Remove temporary FIFO
 			cat "$TMPFIFO" &> /dev/null
-			rm "$TMPFIFO"
+			rm -f "$TMPFIFO"
 			exit 1
 		fi
 	}
@@ -712,7 +712,7 @@ function test_flacs {
 		echo -e " ${BOLD_RED}*${NORMAL} \"$TEST_ERRORS\" for errors"
 		# Remove temporary FIFO
 		cat "$TMPFIFO" &> /dev/null
-		rm "$TMPFIFO"
+		rm -f "$TMPFIFO"
 		exit 1
 	fi
 }
@@ -755,7 +755,7 @@ function aucdtect {
 
 		# Remove temporary FIFO
 		cat "$TMPFIFO" &> /dev/null
-		rm "$TMPFIFO"
+		rm -f "$TMPFIFO"
 		exit 1
 	}
 	
@@ -778,6 +778,7 @@ function aucdtect {
 			# files with a higher resolution than a CD.
 			if [[ "$BITS" -gt "16" ]] ; then
 				print_aucdtect_skip
+				echo -e "[[$i]]\n"  "The above file has a bit depth greater than 16 and was skipped\n" >> "$AUCDTECT_ERRORS"
 				continue
 			fi
 
@@ -812,7 +813,7 @@ function aucdtect {
 		echo -e " ${BOLD_RED}*${NORMAL} \"$AUCDTECT_ERRORS\" for issues"
 		# Remove temporary FIFO
 		cat "$TMPFIFO" &> /dev/null
-		rm "$TMPFIFO"
+		rm -f "$TMPFIFO"
 		exit 1
 	fi
 }
@@ -834,7 +835,7 @@ function md5_check {
 			echo -e " ${BOLD_RED}*${NORMAL} \"$MD5_ERRORS\" for details"
 			# Remove temporary FIFO
 			cat "$TMPFIFO" &> /dev/null
-			rm "$TMPFIFO"
+			rm -f "$TMPFIFO"
 			exit 1
 		fi
 	}
@@ -865,7 +866,7 @@ function md5_check {
 		echo -e " ${BOLD_RED}*${NORMAL} \"$MD5_ERRORS\" for details"
 		# Remove temporary FIFO
 		cat "$TMPFIFO" &> /dev/null
-		rm "$TMPFIFO"
+		rm -f "$TMPFIFO"
 		exit 1
 	fi  
 }
@@ -943,7 +944,7 @@ function redo_tags {
 		echo -e " ${BOLD_RED}*${NORMAL} Not Re-Tagging files."
 		# Remove temporary FIFO
 		cat "$TMPFIFO" &> /dev/null
-		rm "$TMPFIFO"
+		rm -f "$TMPFIFO"
 		exit 1
 	fi
 
