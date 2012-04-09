@@ -24,10 +24,7 @@
 #-----------------------------------------------------------------
 
 # TODO: Fix error with MD5 Checking and fake FLACs
-# TODO: Show output of skipping Hi-Res FLACs when using auCDtect
 # TODO: Log output of skipped Hi-Res FLACs
-# TODO: Test for >16bits and >44.1kHz separately using auCDtect
-#       to determine which (or both) causes auCDtect to fail
 
 tags=(
 ########################
@@ -323,6 +320,30 @@ function print_aucdtect_issue {
 	fi
 }
 
+function print_aucdtect_skip {
+	if [[ "$FALLBACK" == "true" ]] ; then
+		printf "\r%75s${YELLOW}%s${NORMAL}%s\r%s${YELLOW}%s${NORMAL}%s\n" \
+		"[" "SKIPPED" "]         " "     " "*" " $(basename "$i" | gawk '{print substr($0,0,65)}')"
+	else
+		COLUMNS="$(tput cols)"
+
+		# This is the number of columns minus the indent (7) minus length of the printed
+		# message, [SKIPPED] (9) minus 2 (leaves a gap and the gives room for the ellipsis (…))
+		MAX_FILENAME_LENGTH="$((${COLUMNS} - 18))"
+
+		FILENAME_LENGTH="$(basename "$i" | wc -m)"
+
+		if [[ "$FILENAME_LENGTH" -gt "$MAX_FILENAME_LENGTH" ]] ; then
+			FILENAME="$(echo "$(basename "$i" | gawk '{print substr($0,0,"'"$MAX_FILENAME_LENGTH"'")}')…" )"
+		else
+			FILENAME="$(basename "$i")"
+		fi
+
+		printf "\r%$((${COLUMNS} - 8))s${YELLOW}%s${NORMAL}%s\r%s${YELLOW}%s${NORMAL}%s\n" \
+		"[" "SKIPPED" "]" "     " "*" " ${FILENAME}"
+	fi
+}
+
 function print_done_flac {
 	if [[ "$FALLBACK" == "true" ]] ; then
 		printf "\r%75s${BOLD_GREEN}%s${NORMAL}%s\r%s${YELLOW}%s${NORMAL}%s\n" \
@@ -500,6 +521,7 @@ export -f print_checking_md5
 export -f print_ok_flac
 export -f print_aucdtect_flac
 export -f print_aucdtect_issue
+export -f print_aucdtect_skip
 export -f print_done_flac
 export -f print_level_8
 export -f print_analyzing_tags 
@@ -742,28 +764,29 @@ function aucdtect {
 
 	function aucdtect_f {
 		for i ; do
+			# Comes before others to show percentage on skipped
+			# FLAC files
+			count_flacs
+
+			print_aucdtect_flac
+
 			# Get the bit depth of a FLAC file
 			BITS="$(metaflac --list --block-type=STREAMINFO "$i" | grep "bits-per-sample" | gawk '{print $2}')"
-			# Get the sample rate of a FLAC file
-			SAMPLE="$(metaflac --list --block-type=STREAMINFO "$i" | grep "sample_rate" | gawk '{print $2}')"
 
 			# Skip the FLAC file if it has a bit depth greater
-			# than 16 or sample rate greater than 44.1kHz since
-			# auCDtect doesn't support audio files with a higher
-			# resolution than a CD.
-			if [[ "$BITS" -gt "16" || "$SAMPLE" -gt "44100" ]] ; then
+			# than 16 since auCDtect doesn't support audio
+			# files with a higher resolution than a CD.
+			if [[ "$BITS" -gt "16" ]] ; then
+				print_aucdtect_skip
 				continue
 			fi
-
-			count_flacs
-			print_aucdtect_flac
 
 			# Decompress FLAC to WAV so auCDtect can read the audio file
 			flac --totally-silent -d "$i"
 
 			# The actual auCDtect command with highest accuracy setting
 			# 2> hides the displayed progress to /dev/null so nothing is shown
-			AUCDTECT_CHECK="$("$AUCDTECT_COMMAND" -m0 "${i%.flac}.wav" 2> /dev/null)"
+			AUCDTECT_CHECK="$("$AUCDTECT_COMMAND" -m20 "${i%.flac}.wav" 2> /dev/null)"
 
 			# Reads the last line of the above command which tells what
 			# auCDtect came up with for the WAV file
@@ -1007,9 +1030,8 @@ function long_help {
 
                             While this program isn't foolproof, it gives a good idea which FLAC
                             files will need further investigation (ie a spectrograph).  This program
-                            does not work on FLAC files which have a sample rate and bit depth more
-                            than a typical audio CD (16bit / 44.1kHz), and will skip files that have
-                            a higher bit depth and sample rate.
+                            does not work on FLAC files which have a bit depth more than a typical
+                            audio CD (16bit), and will skip the files that have a higher bit depth.
 
                             If any files are found to not be perfect (100% CDDA), a log will be created
                             with the questionable FLAC files recorded in it.
