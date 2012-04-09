@@ -2,7 +2,7 @@
 
 #------------------------------------------------------------
 # Re-compress, Verify, Test, Re-tag, and Clean Up FLAC Files
-#                      Version 0.10.1
+#                      Version 0.10.2
 #                       sirjaren
 #------------------------------------------------------------
 
@@ -22,6 +22,9 @@
 #
 # Please submit requests/changes/patches and/or comments
 #-----------------------------------------------------------------
+
+# TODO: Find a way to abort script cleanly when using FIFO
+#       pipes with multiple processes/cores
 
 tags=(
 ########################
@@ -70,7 +73,7 @@ AUCDTECT_COMMAND="$(command -v auCDtect)"
 #  STATIC VARIABLES  #
 ######################
 # Version
-VERSION="0.10.1"
+VERSION="0.10.2"
 
 # Export auCDtect command to allow subshell access
 export AUCDTECT_COMMAND
