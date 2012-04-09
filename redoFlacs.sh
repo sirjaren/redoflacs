@@ -786,7 +786,7 @@ function aucdtect {
 
 			# The actual auCDtect command with highest accuracy setting
 			# 2> hides the displayed progress to /dev/null so nothing is shown
-			AUCDTECT_CHECK="$("$AUCDTECT_COMMAND" -m20 "${i%.flac}.wav" 2> /dev/null)"
+			AUCDTECT_CHECK="$("$AUCDTECT_COMMAND" -m0 "${i%.flac}.wav" 2> /dev/null)"
 
 			# Reads the last line of the above command which tells what
 			# auCDtect came up with for the WAV file
