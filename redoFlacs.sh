@@ -2,7 +2,7 @@
 
 #------------------------------------------------------------
 # Re-compress, Verify, Test, Re-tag, and Clean Up FLAC Files
-#                      Version 0.9.1
+#                      Version 0.10
 #                       sirjaren
 #------------------------------------------------------------
 
@@ -76,7 +76,7 @@ AUCDTECT_COMMAND="$(command -v auCDtect)"
 #  STATIC VARIABLES  #
 ######################
 # Version
-VERSION="0.9.1"
+VERSION="0.10"
 
 # Export auCDtect command to allow subshell access
 export AUCDTECT_COMMAND
