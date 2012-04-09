@@ -152,7 +152,7 @@ function no_flacs {
 
 # Information relating to currently running tasks
 function print_compressing_flac {
-	if [[ "$FALLBACK" == "True" ]] ; then
+	if [[ "$FALLBACK" == "true" ]] ; then
 		printf "\r%75s${YELLOW}%s${NORMAL}%s\r${CYAN}%s${NORMAL}{YELLOW}%s${NORMAL}%s" \
 		"[" "Compressing FLAC" "]" "${PERCENT}" "*" " $(basename "$i" | gawk '{print substr($0,0,65)}')"
 	else
@@ -177,7 +177,7 @@ function print_compressing_flac {
 }
 
 function print_testing_flac {
-	if [[ "$FALLBACK" == "True" ]] ; then
+	if [[ "$FALLBACK" == "true" ]] ; then
 		printf "\r%75s${YELLOW}%s${NORMAL}%s\r${CYAN}%s${NORMAL}${YELLOW}%s${NORMAL}%s" \
 		"[" "Testing FLAC" "]" "${PERCENT}" "*" " $(basename "$i" | gawk '{print substr($0,0,65)}')"
 	else
@@ -202,7 +202,7 @@ function print_testing_flac {
 }
 
 function print_failed_flac {
-	if [[ "$FALLBACK" == "True" ]] ; then
+	if [[ "$FALLBACK" == "true" ]] ; then
 		printf "\r%75s${BOLD_RED}%s${NORMAL}%s\r%s${YELLOW}%s${NORMAL}%s\n" \
 		"[" "FAILED" "]          " "     " "*" " $(basename "$i" | gawk '{print substr($0,0,65)}')"
 	else
@@ -226,7 +226,7 @@ function print_failed_flac {
 }
 
 function print_checking_md5 {
-	if [[ "$FALLBACK" == "True" ]] ; then
+	if [[ "$FALLBACK" == "true" ]] ; then
 		printf "\r%75s${YELLOW}%s${NORMAL}%s\r${CYAN}%s${NORMAL}${YELLOW}%s${NORMAL}%s" \
 		"[" "Checking MD5" "]" "${PERCENT}" "*" " $(basename "$i" | gawk '{print substr($0,0,65)}')"
 	else
@@ -251,7 +251,7 @@ function print_checking_md5 {
 }
 
 function print_ok_flac {
-	if [[ "$FALLBACK" == "True" ]] ; then
+	if [[ "$FALLBACK" == "true" ]] ; then
 		printf "\r%75s${BOLD_GREEN}%s${NORMAL}%s\r%s${YELLOW}%s${NORMAL}%s\n" \
 		"[" "OK" "]              " "     " "*" " $(basename "$i" | gawk '{print substr($0,0,65)}')"
 	else
@@ -275,7 +275,7 @@ function print_ok_flac {
 }
 
 function print_aucdtect_flac {
-	if [[ "$FALLBACK" == "True" ]] ; then
+	if [[ "$FALLBACK" == "true" ]] ; then
 		printf "\r%75s${YELLOW}%s${NORMAL}%s\r${CYAN}%s${NORMAL}${YELLOW}%s${NORMAL}%s\n" \
 		"[" "Validating FLAC" "]  " "${PERCENT}" "*" " $(basename "$i" | gawk '{print substr($0,0,65)}')"
 	else
@@ -300,7 +300,7 @@ function print_aucdtect_flac {
 }
 
 function print_aucdtect_issue {
-	if [[ "$FALLBACK" == "True" ]] ; then
+	if [[ "$FALLBACK" == "true" ]] ; then
 		printf "\r%75s${YELLOW}%s${NORMAL}%s\r%s${YELLOW}%s${NORMAL}%s\n" \
 		"[" "ISSUE" "]           " "     " "*" " $(basename "$i" | gawk '{print substr($0,0,65)}')"
 	else
@@ -324,7 +324,7 @@ function print_aucdtect_issue {
 }
 
 function print_done_flac {
-	if [[ "$FALLBACK" == "True" ]] ; then
+	if [[ "$FALLBACK" == "true" ]] ; then
 		printf "\r%75s${BOLD_GREEN}%s${NORMAL}%s\r%s${YELLOW}%s${NORMAL}%s\n" \
 		"[" "DONE" "]            " "     " "*" " $(basename "$i" | gawk '{print substr($0,0,65)}')"
 	else
@@ -348,7 +348,7 @@ function print_done_flac {
 }
 
 function print_level_8 {
-	if [[ "$FALLBACK" == "True" ]] ; then
+	if [[ "$FALLBACK" == "true" ]] ; then
 		printf "\r%75s${YELLOW}%s${NORMAL}%s\r%s${YELLOW}%s${NORMAL}%s\n" \
 		"[" "Already At Level 8" "]" "     " "*" " $(basename "$i" | gawk '{print substr($0,0,65)}')"
 	else
@@ -373,7 +373,7 @@ function print_level_8 {
 }
 
 function print_analyzing_tags {
-	if [[ "$FALLBACK" == "True" ]] ; then
+	if [[ "$FALLBACK" == "true" ]] ; then
 		printf "\r%75s${YELLOW}%s${NORMAL}%s\r${CYAN}%s${NORMAL}${YELLOW}%s${NORMAL}%s" \
 		"[" "Analyzing Tags" "]" "${PERCENT}" "*" " $(basename "$i" | gawk '{print substr($0,0,65)}')"
 	else
@@ -398,7 +398,7 @@ function print_analyzing_tags {
 }
 
 function print_setting_tags {
-	if [[ "$FALLBACK" == "True" ]] ; then
+	if [[ "$FALLBACK" == "true" ]] ; then
 		printf "\r%75s${YELLOW}%s${NORMAL}%s\r${CYAN}%s${NORMAL}${YELLOW}%s${NORMAL}%s" \
 		"[" "Setting Tags" "]" "${PERCENT}" "*" " $(basename "$i" | gawk '{print substr($0,0,65)}')"
 	else
@@ -423,7 +423,7 @@ function print_setting_tags {
 }
 
 function print_prune_flac {
-	if [[ "$FALLBACK" == "True" ]] ; then
+	if [[ "$FALLBACK" == "true" ]] ; then
 		printf "\r%75s${YELLOW}%s${NORMAL}%s\r${CYAN}%s${NORMAL}${YELLOW}%s${NORMAL}%s" \
 		"[" "Pruning Metadata" "]" "${PERCENT}" "*" " $(basename "$i" | gawk '{print substr($0,0,65)}')"
 	else
@@ -1235,10 +1235,10 @@ fi
 # installed
 hash tput
 # Check exit code. If 1, then `tput` is not installed
-#if [[ "$?" -eq 1 ]] ; then
+if [[ "$?" -eq 1 ]] ; then
 	# Export to allow subshell access
-	export FALLBACK="True"
-#fi
+	export FALLBACK="true"
+fi
 
 # The below order is probably the best bet in ensuring time
 # isn't wasted on doing unnecessary operations if the
