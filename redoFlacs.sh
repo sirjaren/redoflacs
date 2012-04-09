@@ -23,8 +23,6 @@
 # Please submit requests/changes/patches and/or comments
 #-----------------------------------------------------------------
 
-# TODO: Fix error with MD5 Checking and fake FLACs
-
 tags=(
 ########################
 #  USER CONFIGURATION  #
@@ -99,6 +97,7 @@ export TEST_ERRORS="$ERROR_LOG/FLAC_Test_Errors $(date "+[%Y-%m-%d %R]")"
 export MD5_ERRORS="$ERROR_LOG/MD5_Signature_Errors $(date "+[%Y-%m-%d %R]")"
 export METADATA_ERRORS="$ERROR_LOG/FLAC_Metadata_Errors $(date "+[%Y-%m-%d %R]")"
 export AUCDTECT_ERRORS="$ERROR_LOG/auCDtect_Errors $(date "+[%Y-%m-%d %R]")"
+export PRUNE_ERRORS="$ERROR_LOG/FLAC_Prune_Errors $(date "+[%Y-%m-%d %R]")"
 
 # Set arguments to false
 # If enabled they will be changed to true
@@ -167,7 +166,7 @@ function print_compressing_flac {
 			FILENAME="$(basename "$i")"
 		fi
 
-		printf "\r%$((${COLUMNS} - 17))s${YELLOW}%s${NORMAL}%s\r${CYAN}%s${$NORMAL}${YELLOW}%s${NORMAL}%s" \
+		printf "\r%$((${COLUMNS} - 17))s${YELLOW}%s${NORMAL}%s\r${CYAN}%s${NORMAL}${YELLOW}%s${NORMAL}%s" \
 		"[" "Compressing FLAC" "]" "${PERCENT}" "*" " ${FILENAME}"
 	fi
 }
@@ -602,7 +601,7 @@ function compress_flacs {
 		echo -e "\n ${BOLD_GREEN}*${NORMAL} Control-C received, removing temporary files and exiting script..."
 		find "$DIRECTORY" -name *.tmp,fl-ac+en\'c -exec rm "{}" \;
 		if [[ -f "$VERIFY_ERRORS" ]] ; then
-			echo -e "\n ${BOLD_RED}*${NORMAL} Errors found in some FLAC files, please check"
+			echo -e "\n ${BOLD_RED}*${NORMAL} Errors found in some FLAC files, please check:"
 			echo -e " ${BOLD_RED}*${NORMAL} \"$VERIFY_ERRORS\" for errors"
 		fi
 		# Remove temporary FIFO
@@ -651,10 +650,10 @@ function compress_flacs {
 	export -f compress_f
 
 	# Run the above function with the configured threads (multithreaded)
-	find "$DIRECTORY" -name *.flac -print0 | xargs -0 -n 1 -P "$CORES" bash -c 'compress_f "$@"' --
+	find "$DIRECTORY" -name "*.flac" -print0 | xargs -0 -n 1 -P "$CORES" bash -c 'compress_f "$@"' --
 	
 	if [[ -f "$VERIFY_ERRORS" ]] ; then
-		echo -e "\n ${BOLD_RED}*${NORMAL} Errors found in some FLAC files, please check"
+		echo -e "\n ${BOLD_RED}*${NORMAL} Errors found in some FLAC files, please check:"
 		echo -e " ${BOLD_RED}*${NORMAL} \"$VERIFY_ERRORS\" for errors"
 		# Remove temporary FIFO
 		cat "$TMPFIFO" &> /dev/null
@@ -676,7 +675,7 @@ function test_flacs {
 	function test_abort {
 		echo -e "\n ${BOLD_GREEN}*${NORMAL} Control-C received, exiting script..."
 		if [[ -f "$TEST_ERRORS" ]] ; then
-			echo -e "\n ${BOLD_RED}*${NORMAL} Errors found in some FLAC files, please check"
+			echo -e "\n ${BOLD_RED}*${NORMAL} Errors found in some FLAC files, please check:"
 			echo -e " ${BOLD_RED}*${NORMAL} \"$TEST_ERRORS\" for errors"
 			# Remove temporary FIFO
 			cat "$TMPFIFO" &> /dev/null
@@ -704,10 +703,10 @@ function test_flacs {
 	export -f test_f
 
 	# Run the above function with the configured threads (multithreaded)
-	find "$DIRECTORY" -name *.flac -print0 | xargs -0 -n 1 -P "$CORES" bash -c 'test_f "$@"' --
+	find "$DIRECTORY" -name "*.flac" -print0 | xargs -0 -n 1 -P "$CORES" bash -c 'test_f "$@"' --
 
 	if [[ -f "$TEST_ERRORS" ]] ; then
-		echo -e "\n ${BOLD_RED}*${NORMAL} Errors found in some FLAC files, please check"
+		echo -e "\n ${BOLD_RED}*${NORMAL} Errors found in some FLAC files, please check:"
 		echo -e " ${BOLD_RED}*${NORMAL} \"$TEST_ERRORS\" for errors"
 		# Remove temporary FIFO
 		cat "$TMPFIFO" &> /dev/null
@@ -723,7 +722,6 @@ function aucdtect {
 	mkfifo $TMPFIFO
 	echo -ne "0" > "$TMPFIFO" &
 
-
 	title_aucdtect_flac
 
 	# Abort script and check for any errors thus far
@@ -735,7 +733,7 @@ function aucdtect {
 		WAV_FILES="$(find "$DIRECTORY" -name *.wav -print)"
 
 		if [[ -f "$AUCDTECT_ERRORS" ]] ; then
-			echo -e "\n ${BOLD_RED}*${NORMAL} Some FLAC files may be lossy sourced, please check"
+			echo -e "\n ${BOLD_RED}*${NORMAL} Some FLAC files may be lossy sourced, please check:"
 			echo -e " ${BOLD_RED}*${NORMAL} \"$AUCDTECT_ERRORS\" for errors"
 		fi
 
@@ -766,49 +764,57 @@ function aucdtect {
 			# Comes before others to show percentage on skipped
 			# FLAC files
 			count_flacs
-
 			print_aucdtect_flac
 
-			# Get the bit depth of a FLAC file
-			BITS="$(metaflac --list --block-type=STREAMINFO "$i" | grep "bits-per-sample" | gawk '{print $2}')"
+			# Check if file is a FLAC file
+			CHECK_FLAC="$(metaflac --show-md5sum "$i" 2>&1 | grep -o "FLAC__METADATA_CHAIN_STATUS_NOT_A_FLAC_FILE")"
 
-			# Skip the FLAC file if it has a bit depth greater
-			# than 16 since auCDtect doesn't support audio
-			# files with a higher resolution than a CD.
-			if [[ "$BITS" -gt "16" ]] ; then
-				print_aucdtect_skip
-				echo -e "[[$i]]\n"  "The above file has a bit depth greater than 16 and was skipped\n" >> "$AUCDTECT_ERRORS"
-				continue
-			fi
-
-			# Decompress FLAC to WAV so auCDtect can read the audio file
-			flac --totally-silent -d "$i"
-
-			# The actual auCDtect command with highest accuracy setting
-			# 2> hides the displayed progress to /dev/null so nothing is shown
-			AUCDTECT_CHECK="$("$AUCDTECT_COMMAND" -m0 "${i%.flac}.wav" 2> /dev/null)"
-
-			# Reads the last line of the above command which tells what
-			# auCDtect came up with for the WAV file
-			ERROR="$(echo "$AUCDTECT_CHECK" | tail -n1)"
-
-			if [[ "$ERROR" != "This track looks like CDDA with probability 100%" ]] ; then
-				print_aucdtect_issue
-				echo -e "[[$i]]\n"  "$ERROR\n" >> "$AUCDTECT_ERRORS"
+			if [[ "$CHECK_FLAC" == "FLAC__METADATA_CHAIN_STATUS_NOT_A_FLAC_FILE" ]] ; then
+				echo -e "[[$i]]\n"  "The above file does not appear to be a FLAC file\n" >> "$AUCDTECT_ERRORS"
+				# File is not a FLAC file, display failed
+				print_failed_flac
 			else
-				print_ok_flac
+				# Get the bit depth of a FLAC file
+				BITS="$(metaflac --list --block-type=STREAMINFO "$i" | grep "bits-per-sample" | gawk '{print $2}')"
+
+				# Skip the FLAC file if it has a bit depth greater
+				# than 16 since auCDtect doesn't support audio
+				# files with a higher resolution than a CD.
+				if [[ "$BITS" -gt "16" ]] ; then
+					print_aucdtect_skip
+					echo -e "[[$i]]\n"  "The above file has a bit depth greater than 16 and was skipped\n" >> "$AUCDTECT_ERRORS"
+					continue
+				fi
+
+				# Decompress FLAC to WAV so auCDtect can read the audio file
+				flac --totally-silent -d "$i"
+
+				# The actual auCDtect command with highest accuracy setting
+				# 2> hides the displayed progress to /dev/null so nothing is shown
+				AUCDTECT_CHECK="$("$AUCDTECT_COMMAND" -m0 "${i%.flac}.wav" 2> /dev/null)"
+
+				# Reads the last line of the above command which tells what
+				# auCDtect came up with for the WAV file
+				ERROR="$(echo "$AUCDTECT_CHECK" | tail -n1)"
+
+				if [[ "$ERROR" != "This track looks like CDDA with probability 100%" ]] ; then
+					print_aucdtect_issue
+					echo -e "[[$i]]\n"  "$ERROR\n" >> "$AUCDTECT_ERRORS"
+				else
+					print_ok_flac
+				fi
+				# Remove temporary WAV file
+				rm "${i%.flac}.wav"
 			fi
-			# Remove temporary WAV file
-			rm "${i%.flac}.wav"
 		done
 	}
 	export -f aucdtect_f
 
 	# Run the above function with the configured threads (multithreaded)
-	find "$DIRECTORY" -name *.flac -print0 | xargs -0 -n 1 -P "$CORES" bash -c 'aucdtect_f "$@"' --
+	find "$DIRECTORY" -name "*.flac" -print0 | xargs -0 -n 1 -P "$CORES" bash -c 'aucdtect_f "$@"' --
 
 	if [[ -f "$AUCDTECT_ERRORS" ]] ; then
-		echo -e "\n ${BOLD_RED}*${NORMAL} Some FLAC files may be lossy sourced, please check"
+		echo -e "\n ${BOLD_RED}*${NORMAL} Some FLAC files may be lossy sourced, please check:"
 		echo -e " ${BOLD_RED}*${NORMAL} \"$AUCDTECT_ERRORS\" for issues"
 		# Remove temporary FIFO
 		cat "$TMPFIFO" &> /dev/null
@@ -830,7 +836,8 @@ function md5_check {
 	function md5_check_abort {
 		echo -e "\n ${BOLD_GREEN}*${NORMAL} Control-C received, exiting script..."
 		if [[ -f "$MD5_ERRORS" ]] ; then
-			echo -e "\n ${BOLD_RED}*${NORMAL} The MD5 Signature is unset for some FLAC files, please check"
+			echo -e "\n ${BOLD_RED}*${NORMAL} The MD5 Signature is unset for some FLAC files or there were"
+			echo -e " ${BOLD_RED}*${NORMAL} issues with some of the FLAC files, please check:"
 			echo -e " ${BOLD_RED}*${NORMAL} \"$MD5_ERRORS\" for details"
 			# Remove temporary FIFO
 			cat "$TMPFIFO" &> /dev/null
@@ -846,10 +853,14 @@ function md5_check {
 		for i ; do
 			count_flacs
 			print_checking_md5
-			MD5_SUM="$(metaflac --show-md5sum "$i")"
+			MD5_SUM="$(metaflac --show-md5sum "$i" 2>&1)"
+			MD5_NOT_FLAC="$(echo "$MD5_SUM" | grep -o "FLAC__METADATA_CHAIN_STATUS_NOT_A_FLAC_FILE")"
 			if [[ "$MD5_SUM" == "00000000000000000000000000000000" ]] ; then
 				print_failed_flac
 				echo -e "[[$i]]\n"  "MD5 Signature: $MD5_SUM" >> "$MD5_ERRORS"
+			elif [[ "$MD5_NOT_FLAC" == "FLAC__METADATA_CHAIN_STATUS_NOT_A_FLAC_FILE" ]] ; then
+				print_failed_flac
+				echo -e "[[$i]]\n"  "The above file does not appear to be a FLAC file\n" >> "$MD5_ERRORS"
 			else
 				print_ok_flac
 			fi
@@ -858,11 +869,13 @@ function md5_check {
 	export -f md5_c
 
 	# Run the above function with the configured threads (multithreaded)
-	find "$DIRECTORY" -name *.flac -print0 | xargs -0 -n 1 -P "$CORES" bash -c 'md5_c "$@"' --
+	find "$DIRECTORY" -name "*.flac" -print0 | xargs -0 -n 1 -P "$CORES" bash -c 'md5_c "$@"' --
 	
 	if [[ -f "$MD5_ERRORS" ]] ; then
-		echo -e "\n ${BOLD_RED}*${NORMAL} The MD5 Signature is unset for some FLAC files, please check"
+		echo -e "\n ${BOLD_RED}*${NORMAL} The MD5 Signature is unset for some FLAC files or there were"
+		echo -e " ${BOLD_RED}*${NORMAL} issues with some of the FLAC files, please check:"
 		echo -e " ${BOLD_RED}*${NORMAL} \"$MD5_ERRORS\" for details"
+
 		# Remove temporary FIFO
 		cat "$TMPFIFO" &> /dev/null
 		rm -f "$TMPFIFO"
@@ -872,19 +885,30 @@ function md5_check {
 
 # Extract wanted FLAC metadata
 function extract_vorbis_tags {
-	# Recreate the tags array so it can be used by the child process
-	eval "tags=(${EXPORT_TAG[*]})"
-	# Iterate through the tag array and test to see if each tag is set
-	for j in "${tags[@]}" ; do
-		# Set a temporary variable to be easily parsed by `eval`
-		local TEMP_TAG="$(metaflac --show-tag="$j" "$i" | sed "s/${j}=//")"
-		# Evaluate TEMP_TAG into the dynamic tag
-		eval "${j}"_TAG='"${TEMP_TAG}"'
-		# If tags are not found, log output
-		if [[ -z "$(eval "echo "\$${j}_TAG"")" ]] ; then
-			echo -e "${j} tag not found for $i" >> "$METADATA_ERRORS"
-		fi
-	done
+	# Check if file is a FLAC file
+	CHECK_FLAC="$(metaflac --show-md5sum "$i" 2>&1 | grep -o "FLAC__METADATA_CHAIN_STATUS_NOT_A_FLAC_FILE")"
+
+	if [[ "$CHECK_FLAC" == "FLAC__METADATA_CHAIN_STATUS_NOT_A_FLAC_FILE" ]] ; then
+		echo -e "[[$i]]\n"  "The above file does not appear to be a FLAC file\n" >> "$METADATA_ERRORS"
+		# File is not a FLAC file, display failed
+		print_failed_flac
+	else
+		# Recreate the tags array so it can be used by the child process
+		eval "tags=(${EXPORT_TAG[*]})"
+		# Iterate through the tag array and test to see if each tag is set
+		for j in "${tags[@]}" ; do
+			# Set a temporary variable to be easily parsed by `eval`
+			local TEMP_TAG="$(metaflac --show-tag="$j" "$i" | sed "s/${j}=//")"
+			# Evaluate TEMP_TAG into the dynamic tag
+			eval "${j}"_TAG='"${TEMP_TAG}"'
+			# If tags are not found, log output
+			if [[ -z "$(eval "echo "\$${j}_TAG"")" ]] ; then
+				echo -e "${j} tag not found for $i" >> "$METADATA_ERRORS"
+			fi
+		done
+		# Done analyzing FLAC file tags
+		print_done_flac
+	fi
 }
 export -f extract_vorbis_tags
 
@@ -929,16 +953,16 @@ function redo_tags {
 			count_flacs
 			print_analyzing_tags
 			extract_vorbis_tags
-			print_done_flac
 		done
 	}
 	export -f analyze_tags
 
 	# Run the above function with the configured threads (multithreaded)
-	find "$DIRECTORY" -name *.flac -print0 | xargs -0 -n 1 -P "$CORES" bash -c 'analyze_tags "$@"' --
+	find "$DIRECTORY" -name "*.flac" -print0 | xargs -0 -n 1 -P "$CORES" bash -c 'analyze_tags "$@"' --
 
 	if [[ -f "$METADATA_ERRORS" ]] ; then
-		echo -e "\n ${BOLD_RED}*${NORMAL} Some FLAC files have missing tags, please check"
+		echo -e "\n ${BOLD_RED}*${NORMAL} Some FLAC files have missing tags or there were"
+		echo -e " ${BOLD_RED}*${NORMAL} issues with some of the FLAC files, please check:"
 		echo -e " ${BOLD_RED}*${NORMAL} \"$METADATA_ERRORS\" for details."
 		echo -e " ${BOLD_RED}*${NORMAL} Not Re-Tagging files."
 		# Remove temporary FIFO
@@ -967,7 +991,7 @@ function redo_tags {
 	export -f set_tags
 	
 	# Run the above function with the configured threads (multithreaded)
-	find "$DIRECTORY" -name *.flac -print0 | xargs -0 -n 1 -P "$CORES" bash -c 'set_tags "$@"' --
+	find "$DIRECTORY" -name "*.flac" -print0 | xargs -0 -n 1 -P "$CORES" bash -c 'set_tags "$@"' --
 }
 
 # Clear excess FLAC metadata from each FLAC file
@@ -979,22 +1003,52 @@ function prune_flacs {
 
 	title_prune_flac
 
+	# Abort script and check for any errors thus far
+	function prune_abort {
+		echo -e "\n ${BOLD_GREEN}*${NORMAL} Control-C received, exiting script..."
+		if [[ -f "$PRUNE_ERRORS" ]] ; then
+			echo -e "\n ${BOLD_RED}*${NORMAL} There were issues with some of the FLAC files,"
+			echo -e " ${BOLD_RED}*${NORMAL} please check:"
+			echo -e " ${BOLD_RED}*${NORMAL} \"$PRUNE_ERRORS\" for details."
+
+			# Remove temporary FIFO
+			cat "$TMPFIFO" &> /dev/null
+			rm -f "$TMPFIFO"
+			exit 1
+		fi
+	}
+
 	# Trap SIGINT (Control-C) to abort cleanly	
-	trap normal_abort SIGINT
+	trap prune_abort SIGINT
 
 	function prune_f {
 		for i ; do
 			count_flacs
 			print_prune_flac
-			metaflac --remove --block-type=SEEKTABLE "$i"
-			metaflac --remove --dont-use-padding --block-type=PADDING "$i"
-			print_ok_flac
+
+			# Check if file is a FLAC file
+			CHECK_FLAC="$(metaflac --show-md5sum "$i" 2>&1 | grep -o "FLAC__METADATA_CHAIN_STATUS_NOT_A_FLAC_FILE")"
+
+			if [[ "$CHECK_FLAC" == "FLAC__METADATA_CHAIN_STATUS_NOT_A_FLAC_FILE" ]] ; then
+				echo -e "[[$i]]\n"  "The above file does not appear to be a FLAC file\n" >> "$PRUNE_ERRORS"
+				# File is not a FLAC file, display failed
+				print_failed_flac
+			else
+				metaflac --remove --block-type=SEEKTABLE "$i"
+				metaflac --remove --dont-use-padding --block-type=PADDING "$i"
+				print_ok_flac
+			fi
 		done
 	}
 	export -f prune_f
 	
 	# Run the above function with the configured threads (multithreaded)
-	find "$DIRECTORY" -name *.flac -print0 | xargs -0 -n 1 -P "$CORES" bash -c 'prune_f "$@"' --
+	find "$DIRECTORY" -name "*.flac" -print0 | xargs -0 -n 1 -P "$CORES" bash -c 'prune_f "$@"' --
+	if [[ -f "$PRUNE_ERRORS" ]] ; then
+		echo -e "\n ${BOLD_RED}*${NORMAL} There were issues with some of the FLAC files,"
+		echo -e " ${BOLD_RED}*${NORMAL} please check:"
+		echo -e " ${BOLD_RED}*${NORMAL} \"$PRUNE_ERRORS\" for details."
+	fi
 }
 
 # Display a lot of help
