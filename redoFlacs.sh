@@ -2,7 +2,7 @@
 
 #------------------------------------------------------------
 # Re-compress, Verify, Test, Re-tag, and Clean Up FLAC Files
-#                      Version 0.10
+#                      Version 0.10.1
 #                       sirjaren
 #------------------------------------------------------------
 
@@ -24,7 +24,6 @@
 #-----------------------------------------------------------------
 
 # TODO: Fix error with MD5 Checking and fake FLACs
-# TODO: Log output of skipped Hi-Res FLACs
 
 tags=(
 ########################
@@ -73,7 +72,7 @@ AUCDTECT_COMMAND="$(command -v auCDtect)"
 #  STATIC VARIABLES  #
 ######################
 # Version
-VERSION="0.10"
+VERSION="0.10.1"
 
 # Export auCDtect command to allow subshell access
 export AUCDTECT_COMMAND
