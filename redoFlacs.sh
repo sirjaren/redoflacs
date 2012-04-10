@@ -48,7 +48,7 @@ COMPRESSION
 # Set the number of threads/cores to use
 # when running this script.  The default
 # number of threads/cores used is 2
-CORES=5
+CORES=2
 
 # Set the where you want the error logs to
 # be placed. By default, they are placed in
