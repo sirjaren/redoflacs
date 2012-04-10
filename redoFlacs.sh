@@ -2,7 +2,7 @@
 
 #------------------------------------------------------------
 # Re-compress, Verify, Test, Re-tag, and Clean Up FLAC Files
-#                     Version 0.10.2
+#                     Version 0.10.3
 #                       sirjaren
 #------------------------------------------------------------
 
@@ -70,7 +70,7 @@ AUCDTECT_COMMAND="$(command -v auCDtect)"
 #  STATIC VARIABLES  #
 ######################
 # Version
-VERSION="0.10.2"
+VERSION="0.10.3"
 
 # Export auCDtect command to allow subshell access
 export AUCDTECT_COMMAND
@@ -696,7 +696,7 @@ function aucdtect {
 
 				# The actual auCDtect command with highest accuracy setting
 				# 2> hides the displayed progress to /dev/null so nothing is shown
-				AUCDTECT_CHECK="$("$AUCDTECT_COMMAND" -m30 "${i%.flac}.wav" 2> /dev/null)"
+				AUCDTECT_CHECK="$("$AUCDTECT_COMMAND" -m0 "${i%.flac}.wav" 2> /dev/null)"
 
 				# Reads the last line of the above command which tells what
 				# auCDtect came up with for the WAV file
