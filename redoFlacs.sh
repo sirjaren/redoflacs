@@ -581,7 +581,7 @@ function compress_flacs {
 	export -f compress_f
 
 	# Run the above function with the configured threads (multithreaded)
-	find "$DIRECTORY" -name "*.flac" -print0 | xargs -0 -n 1 -P "$CORES" bash -c 'compress_f "$@"' --
+	find "$DIRECTORY" -name "*.[Ff][Ll][Aa][Cc]" -print0 | xargs -0 -n 1 -P "$CORES" bash -c 'compress_f "$@"' --
 	
 	if [[ -f "$VERIFY_ERRORS" ]] ; then
 		echo -e "\n ${BOLD_RED}*${NORMAL} Errors found in some FLAC files, please check:"
@@ -622,7 +622,7 @@ function test_flacs {
 	export -f test_f
 
 	# Run the above function with the configured threads (multithreaded)
-	find "$DIRECTORY" -name "*.flac" -print0 | xargs -0 -n 1 -P "$CORES" bash -c 'test_f "$@"' --
+	find "$DIRECTORY" -name "*.[Ff][Ll][Aa][Cc]" -print0 | xargs -0 -n 1 -P "$CORES" bash -c 'test_f "$@"' --
 
 	if [[ -f "$TEST_ERRORS" ]] ; then
 		echo -e "\n ${BOLD_RED}*${NORMAL} Errors found in some FLAC files, please check:"
@@ -641,7 +641,7 @@ function aucdtect {
 
 		# Don't remove WAV files in case user has WAV files there purposefully
 		# The script cannot determine between existing and script-created WAV files
-		WAV_FILES="$(find "$DIRECTORY" -name "*.wav" -print)"
+		WAV_FILES="$(find "$DIRECTORY" -name "*.[Ww][Aa][Vv]" -print)"
 
 		if [[ -f "$AUCDTECT_ERRORS" ]] ; then
 			echo -e "\n ${BOLD_RED}*${NORMAL} Some FLAC files may be lossy sourced, please check:"
@@ -656,7 +656,7 @@ function aucdtect {
 			echo -e " ${YELLOW}*${NORMAL} and script-created files by design.  Please delete the"
 			echo -e " ${YELLOW}*${NORMAL} below files manually:"
 			# Find all WAV files in chosen directory to display for manual deletion
-			find "$DIRECTORY" -name "*.wav -print | while read i ; do
+			find "$DIRECTORY" -name "*.[Ww][Aa][Vv]" -print | while read i ; do
 				echo -e " ${YELLOW}*${NORMAL}     $i"
 			done
 		fi
@@ -716,7 +716,7 @@ function aucdtect {
 	export -f aucdtect_f
 
 	# Run the above function with the configured threads (multithreaded)
-	find "$DIRECTORY" -name "*.flac" -print0 | xargs -0 -n 1 -P "$CORES" bash -c 'aucdtect_f "$@"' --
+	find "$DIRECTORY" -name "*.[Ff][Ll][Aa][Cc]" -print0 | xargs -0 -n 1 -P "$CORES" bash -c 'aucdtect_f "$@"' --
 
 	if [[ -f "$AUCDTECT_ERRORS" ]] ; then
 		echo -e "\n ${BOLD_RED}*${NORMAL} Some FLAC files may be lossy sourced, please check:"
@@ -762,7 +762,7 @@ function md5_check {
 	export -f md5_c
 
 	# Run the above function with the configured threads (multithreaded)
-	find "$DIRECTORY" -name "*.flac" -print0 | xargs -0 -n 1 -P "$CORES" bash -c 'md5_c "$@"' --
+	find "$DIRECTORY" -name "*.[Ff][Ll][Aa][Cc]" -print0 | xargs -0 -n 1 -P "$CORES" bash -c 'md5_c "$@"' --
 	
 	if [[ -f "$MD5_ERRORS" ]] ; then
 		echo -e "\n ${BOLD_RED}*${NORMAL} The MD5 Signature is unset for some FLAC files or there were"
@@ -841,7 +841,7 @@ function redo_tags {
 	export -f analyze_tags
 
 	# Run the above function with the configured threads (multithreaded)
-	find "$DIRECTORY" -name "*.flac" -print0 | xargs -0 -n 1 -P "$CORES" bash -c 'analyze_tags "$@"' --
+	find "$DIRECTORY" -name "*.[Ff][Ll][Aa][Cc]" -print0 | xargs -0 -n 1 -P "$CORES" bash -c 'analyze_tags "$@"' --
 
 	if [[ -f "$METADATA_ERRORS" ]] ; then
 		echo -e "\n ${BOLD_RED}*${NORMAL} Some FLAC files have missing tags or there were"
@@ -865,7 +865,7 @@ function redo_tags {
 	export -f set_tags
 	
 	# Run the above function with the configured threads (multithreaded)
-	find "$DIRECTORY" -name "*.flac" -print0 | xargs -0 -n 1 -P "$CORES" bash -c 'set_tags "$@"' --
+	find "$DIRECTORY" -name "*.[Ff][Ll][Aa][Cc]" -print0 | xargs -0 -n 1 -P "$CORES" bash -c 'set_tags "$@"' --
 }
 
 # Clear excess FLAC metadata from each FLAC file
@@ -907,7 +907,7 @@ function prune_flacs {
 	export -f prune_f
 	
 	# Run the above function with the configured threads (multithreaded)
-	find "$DIRECTORY" -name "*.flac" -print0 | xargs -0 -n 1 -P "$CORES" bash -c 'prune_f "$@"' --
+	find "$DIRECTORY" -name "*.[Ff][Ll][Aa][Cc]" -print0 | xargs -0 -n 1 -P "$CORES" bash -c 'prune_f "$@"' --
 	if [[ -f "$PRUNE_ERRORS" ]] ; then
 		echo -e "\n ${BOLD_RED}*${NORMAL} There were issues with some of the FLAC files,"
 		echo -e " ${BOLD_RED}*${NORMAL} please check:"
@@ -1148,12 +1148,12 @@ fi
 
 # Check if FLAC files exist and count the number of FLAC
 # files to process if they exist
-FIND_FLACS="$(find "$DIRECTORY" -name "*.flac" -print)"
+FIND_FLACS="$(find "$DIRECTORY" -name "*.[Ff][Ll][Aa][Cc]" -print)"
 if [[ -z "$FIND_FLACS" ]] ; then
 	no_flacs
 	exit 0
 else
-	export TOTAL_FLACS="$(find "$DIRECTORY" -name "*.flac" -print0 | \
+	export TOTAL_FLACS="$(find "$DIRECTORY" -name "*.[Ff][Ll][Aa][Cc]" -print0 | \
 		xargs -0 bash -c 'COUNT="" ; for i in "$@" ; do ((COUNT++)) ; done ; echo $COUNT' --)"
 fi
 
