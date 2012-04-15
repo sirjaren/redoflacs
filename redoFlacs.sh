@@ -565,15 +565,18 @@ function compress_flacs {
 					print_ok_flac
 				fi
 			# If already at level 8 compression, test the FLAC file instead
+			# or skip the file if --compress-notest,-C was specified
 			else
 				print_level_8
-				print_testing_flac
-				ERROR="$((flac -ts "$i") 2>&1)"
-				if [[ ! -z "$ERROR" ]] ; then
-					print_failed_flac
-					echo -e "[[$i]]\n"  "$ERROR\n" >> "$VERIFY_ERRORS"
-				else 
-					print_ok_flac
+				if [[ "$SKIP_TEST" != "true" ]] ; then
+					print_testing_flac
+					ERROR="$((flac -ts "$i") 2>&1)"
+					if [[ ! -z "$ERROR" ]] ; then
+						print_failed_flac
+						echo -e "[[$i]]\n"  "$ERROR\n" >> "$VERIFY_ERRORS"
+					else 
+						print_ok_flac
+					fi
 				fi
 			fi
 		done
@@ -934,6 +937,11 @@ function long_help {
                             finishing the compression of any other files and produce an error
                             log.
 
+    -C, --compress-notest   Same as compress but if the FLAC file already has the COMPRESSION=8
+                            tag, the script will skip the file and continue on to the next without
+                            testing the FLAC file's integrity.  Useful just checking whether
+                            FLAC files have been compressed already.
+
     -t, --test              Same as compress but instead of compressing the FLAC files, this
                             script just verfies the files.  This option will NOT add the
                             compression tag to the files.
@@ -1041,6 +1049,7 @@ function short_help {
 	echo "  Usage: $0 [OPTION] [OPTION]... [PATH_TO_FLAC(s)]"
 	echo "  Options:"
 	echo "    -c, --compress"
+	echo "    -C, --compress-notest"
 	echo "    -t, --test"
 	echo "    -m, --md5check"
 	echo "    -a, --aucdtect"
@@ -1085,6 +1094,12 @@ while [[ "$#" -gt 1 ]] ; do
 	case "$1" in
 		--compress|-c)
 			COMPRESS="true"
+			COMPRESS_TEST="true"
+			shift
+			;;
+		--compress-notest|-C)
+			COMPRESS="true"
+			export SKIP_TEST="true"
 			shift
 			;;
 		--test|-t)
@@ -1139,7 +1154,7 @@ if [[ "$#" -eq 0 ]] ; then
 fi
 
 # Make sure compress and test aren't both specified
-if [[ "$COMPRESS" == "true" && "$TEST" == "true" ]] ; then
+if [[ "$COMPRESS_TEST" == "true" && "$TEST" == "true" ]] ; then
 	echo -e " ${BOLD_RED}*${NORMAL} Running both \"--compress\" and \"--test\" is redundant as \"--compress\""
 	echo -e " ${BOLD_RED}*${NORMAL} already tests the FLAC files while compressing them.  Please"
 	echo -e " ${BOLD_RED}*${NORMAL} choose one or the other."
