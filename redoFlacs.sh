@@ -83,6 +83,7 @@ export EXPORT_TAG="$(echo -n "${tags[@]}")"
 # Export to allow subshell access
 export BOLD_GREEN="\033[1;32m"
 export BOLD_RED="\033[1;31m"
+export BOLD_BLUE="\033[1;34m"
 export CYAN="\033[0;36m"
 export NORMAL="\033[0m"
 export YELLOW="\033[0;33m"
@@ -145,15 +146,15 @@ function no_flacs {
 # Information relating to currently running tasks
 function print_compressing_flac {
 	if [[ "$FALLBACK" == "true" ]] ; then
-		printf "\r%75s${YELLOW}%s${NORMAL}%s\r${CYAN}%s${NORMAL}{YELLOW}%s${NORMAL}%s" \
-		"[" "Compressing FLAC" "]" "     " "*" " $(basename "$i" | gawk '{print substr($0,0,65)}')"
+		printf "\r${NORMAL}%74s${BOLD_BLUE}%s${NORMAL}%s${YELLOW}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}\r%s${NORMAL}${YELLOW}%s${NORMAL}%s" \
+		"" "[" " " "Compressing FLAC" " " "]" "     " "*" " $(basename "$i" | gawk '{print substr($0,0,65)}')"
 	else
 		COLUMNS="$(tput cols)"
 
 		# This is the number of $COLUMNS minus the indent (7) minus length of the printed
-		# message, [Compressing FLAC] (18) minus 3 (leaves a gap and the gives room for the
+		# message, [ Compressing FLAC ] (20) minus 3 (leaves a gap and the gives room for the
 		# ellipsis (…) and cursor)
-		MAX_FILENAME_LENGTH="$((${COLUMNS} - 28))"
+		MAX_FILENAME_LENGTH="$((${COLUMNS} - 30))"
 
 		FILENAME_LENGTH="$(basename "$i" | wc -m)"
 
@@ -163,22 +164,22 @@ function print_compressing_flac {
 			FILENAME="$(basename "$i")"
 		fi
 
-		printf "\r%$((${COLUMNS} - 17))s${YELLOW}%s${NORMAL}%s\r${CYAN}%s${NORMAL}${YELLOW}%s${NORMAL}%s" \
-		"[" "Compressing FLAC" "]" "     " "*" " ${FILENAME}"
+		printf "\r${NORMAL}%$((${COLUMNS} - 20))s${BOLD_BLUE}%s${NORMAL}%s${YELLOW}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}\r%s${NORMAL}${YELLOW}%s${NORMAL}%s" \
+		"" "[" " " "Compressing FLAC" " " "]" "     " "*" " ${FILENAME}"
 	fi
 }
 
 function print_testing_flac {
 	if [[ "$FALLBACK" == "true" ]] ; then
-		printf "\r%75s${YELLOW}%s${NORMAL}%s\r${CYAN}%s${NORMAL}${YELLOW}%s${NORMAL}%s" \
-		"[" "Testing FLAC" "]" "     " "*" " $(basename "$i" | gawk '{print substr($0,0,65)}')"
+		printf "\r${NORMAL}%74s${BOLD_BLUE}%s${NORMAL}%s${YELLOW}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}\r%s${NORMAL}${YELLOW}%s${NORMAL}%s" \
+		"" "[" " " "Testing FLAC" " " "]" "     " "*" " $(basename "$i" | gawk '{print substr($0,0,65)}')"
 	else
 		COLUMNS="$(tput cols)"
 
 		# This is the number of $COLUMNS minus the indent (7) minus length of the printed
-		# message, [Testing FLAC] (14) minus 3 (leaves a gap and the gives room for the
+		# message, [ Testing FLAC ] (16) minus 3 (leaves a gap and the gives room for the
 		# ellipsis (…) and cursor)
-		MAX_FILENAME_LENGTH="$((${COLUMNS} - 24))"
+		MAX_FILENAME_LENGTH="$((${COLUMNS} - 26))"
 
 		FILENAME_LENGTH="$(basename "$i" | wc -m)"
 
@@ -188,21 +189,21 @@ function print_testing_flac {
 			FILENAME="$(basename "$i")"
 		fi
 		
-		printf "\r%$((${COLUMNS} - 13))s${YELLOW}%s${NORMAL}%s\r${CYAN}%s${NORMAL}${YELLOW}%s${NORMAL}%s" \
-		"[" "Testing FLAC" "]" "     " "*" " ${FILENAME}"
+		printf "\r${NORMAL}%$((${COLUMNS} - 16))s${BOLD_BLUE}%s${NORMAL}%s${YELLOW}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}\r%s${NORMAL}${YELLOW}%s${NORMAL}%s" \
+		"" "[" " " "Testing FLAC" " " "]" "     " "*" " ${FILENAME}"
 	fi
 }
 
 function print_failed_flac {
 	if [[ "$FALLBACK" == "true" ]] ; then
-		printf "\r%75s${BOLD_RED}%s${NORMAL}%s\r%s${YELLOW}%s${NORMAL}%s\n" \
-		"[" "FAILED" "]          " "     " "*" " $(basename "$i" | gawk '{print substr($0,0,65)}')"
+		printf "\r${NORMAL}%74s${BOLD_BLUE}%s${NORMAL}%s${BOLD_RED}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}%s\r%s${YELLOW}%s${NORMAL}%s\n" \
+		"" "[" " " "FAILED" " " "]" "          " "     " "*" " $(basename "$i" | gawk '{print substr($0,0,65)}')"
 	else
 		COLUMNS="$(tput cols)"
 
 		# This is the number of $COLUMNS minus the indent (7) minus length of the printed
-		# message, [FAILED] (8) minus 2 (leaves a gap and the gives room for the ellipsis (…))
-		MAX_FILENAME_LENGTH="$((${COLUMNS} - 17))"
+		# message, [ FAILED ] (10) minus 2 (leaves a gap and the gives room for the ellipsis (…))
+		MAX_FILENAME_LENGTH="$((${COLUMNS} - 19))"
 
 		FILENAME_LENGTH="$(basename "$i" | wc -m)"
 
@@ -212,191 +213,20 @@ function print_failed_flac {
 			FILENAME="$(basename "$i")"
 		fi
 
-		printf "\r%$((${COLUMNS} - 7))s${BOLD_RED}%s${NORMAL}%s\r%s${YELLOW}%s${NORMAL}%s\n" \
-		"[" "FAILED" "]" "     " "*" " ${FILENAME}"
+		printf "\r${NORMAL}%$((${COLUMNS} - 10))s${BOLD_BLUE}%s${NORMAL}%s${BOLD_RED}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}\r%s${YELLOW}%s${NORMAL}%s\n" \
+		"" "[" " " "FAILED" " " "]" "     " "*" " ${FILENAME}"
 	fi
 }
 
 function print_checking_md5 {
 	if [[ "$FALLBACK" == "true" ]] ; then
-		printf "\r%75s${YELLOW}%s${NORMAL}%s\r${CYAN}%s${NORMAL}${YELLOW}%s${NORMAL}%s" \
-		"[" "Checking MD5" "]" "     " "*" " $(basename "$i" | gawk '{print substr($0,0,65)}')"
+		printf "\r${NORMAL}%74s${BOLD_BLUE}%s${NORMAL}%s${YELLOW}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}\r%s${NORMAL}${YELLOW}%s${NORMAL}%s" \
+		"" "[" " " "Checking MD5" " " "]" "     " "*" " $(basename "$i" | gawk '{print substr($0,0,65)}')"
 	else
 		COLUMNS="$(tput cols)"
 
 		# This is the number of $COLUMNS minus the indent (7) minus length of the printed
-		# message, [Checking MD5] (14) minus 3 (leaves a gap and the gives room for the
-		# ellipsis (…) and cursor)
-		MAX_FILENAME_LENGTH="$((${COLUMNS} - 24))"
-
-		FILENAME_LENGTH="$(basename "$i" | wc -m)"
-
-		if [[ "$FILENAME_LENGTH" -gt "$MAX_FILENAME_LENGTH" ]] ; then
-			FILENAME="$(echo "$(basename "$i" | gawk '{print substr($0,0,"'"$MAX_FILENAME_LENGTH"'")}')…" )"
-		else
-			FILENAME="$(basename "$i")"
-		fi
-
-		printf "\r%$((${COLUMNS} - 13))s${YELLOW}%s${NORMAL}%s\r${CYAN}%s${NORMAL}${YELLOW}%s${NORMAL}%s" \
-		"[" "Checking MD5" "]" "     " "*" " ${FILENAME}"
-	fi
-}
-
-function print_ok_flac {
-	if [[ "$FALLBACK" == "true" ]] ; then
-		printf "\r%75s${BOLD_GREEN}%s${NORMAL}%s\r%s${YELLOW}%s${NORMAL}%s\n" \
-		"[" "OK" "]              " "     " "*" " $(basename "$i" | gawk '{print substr($0,0,65)}')"
-	else
-		COLUMNS="$(tput cols)"
-
-		# This is the number of columns minus the indent (7) minus length of the printed
-		# message, [OK] (4) minus 2 (leaves a gap and the gives room for the ellipsis (…))
-		MAX_FILENAME_LENGTH="$((${COLUMNS} - 13))"
-
-		FILENAME_LENGTH="$(basename "$i" | wc -m)"
-
-		if [[ "$FILENAME_LENGTH" -gt "$MAX_FILENAME_LENGTH" ]] ; then
-			FILENAME="$(echo "$(basename "$i" | gawk '{print substr($0,0,"'"$MAX_FILENAME_LENGTH"'")}')…" )"
-		else
-			FILENAME="$(basename "$i")"
-		fi
-
-		printf "\r%$((${COLUMNS} - 3))s${BOLD_GREEN}%s${NORMAL}%s\r%s${YELLOW}%s${NORMAL}%s\n" \
-		"[" "OK" "]" "     " "*" " ${FILENAME}"
-	fi
-}
-
-function print_aucdtect_flac {
-	if [[ "$FALLBACK" == "true" ]] ; then
-		printf "\r%75s${YELLOW}%s${NORMAL}%s\r${CYAN}%s${NORMAL}${YELLOW}%s${NORMAL}%s" \
-		"[" "Validating FLAC" "]  " "     " "*" " $(basename "$i" | gawk '{print substr($0,0,65)}')"
-	else
-		COLUMNS="$(tput cols)"
-
-		# This is the number of $COLUMNS minus the indent (7) minus length of the printed
-		# message, [Validating FLAC] (17) minus 3 (leaves a gap and the gives room for the
-		# ellipsis (…) and cursor)
-		MAX_FILENAME_LENGTH="$((${COLUMNS} - 27))"
-
-		FILENAME_LENGTH="$(basename "$i" | wc -m)"
-
-		if [[ "$FILENAME_LENGTH" -gt "$MAX_FILENAME_LENGTH" ]] ; then
-			FILENAME="$(echo "$(basename "$i" | gawk '{print substr($0,0,"'"$MAX_FILENAME_LENGTH"'")}')…" )"
-		else
-			FILENAME="$(basename "$i")"
-		fi
-
-		printf "\r%$((${COLUMNS} - 16))s${YELLOW}%s${NORMAL}%s\r${CYAN}%s${NORMAL}${YELLOW}%s${NORMAL}%s" \
-		"[" "Validating FLAC" "]" "     " "*" " ${FILENAME}"
-	fi
-}
-
-function print_aucdtect_issue {
-	if [[ "$FALLBACK" == "true" ]] ; then
-		printf "\r%75s${YELLOW}%s${NORMAL}%s\r%s${YELLOW}%s${NORMAL}%s\n" \
-		"[" "ISSUE" "]           " "     " "*" " $(basename "$i" | gawk '{print substr($0,0,65)}')"
-	else
-		COLUMNS="$(tput cols)"
-
-		# This is the number of columns minus the indent (7) minus length of the printed
-		# message, [ISSUE] (7) minus 2 (leaves a gap and the gives room for the ellipsis (…))
-		MAX_FILENAME_LENGTH="$((${COLUMNS} - 16))"
-
-		FILENAME_LENGTH="$(basename "$i" | wc -m)"
-
-		if [[ "$FILENAME_LENGTH" -gt "$MAX_FILENAME_LENGTH" ]] ; then
-			FILENAME="$(echo "$(basename "$i" | gawk '{print substr($0,0,"'"$MAX_FILENAME_LENGTH"'")}')…" )"
-		else
-			FILENAME="$(basename "$i")"
-		fi
-
-		printf "\r%$((${COLUMNS} - 6))s${YELLOW}%s${NORMAL}%s\r%s${YELLOW}%s${NORMAL}%s\n" \
-		"[" "ISSUE" "]" "     " "*" " ${FILENAME}"
-	fi
-}
-
-function print_aucdtect_skip {
-	if [[ "$FALLBACK" == "true" ]] ; then
-		printf "\r%75s${YELLOW}%s${NORMAL}%s\r%s${YELLOW}%s${NORMAL}%s\n" \
-		"[" "SKIPPED" "]         " "     " "*" " $(basename "$i" | gawk '{print substr($0,0,65)}')"
-	else
-		COLUMNS="$(tput cols)"
-
-		# This is the number of columns minus the indent (7) minus length of the printed
-		# message, [SKIPPED] (9) minus 2 (leaves a gap and the gives room for the ellipsis (…))
-		MAX_FILENAME_LENGTH="$((${COLUMNS} - 18))"
-
-		FILENAME_LENGTH="$(basename "$i" | wc -m)"
-
-		if [[ "$FILENAME_LENGTH" -gt "$MAX_FILENAME_LENGTH" ]] ; then
-			FILENAME="$(echo "$(basename "$i" | gawk '{print substr($0,0,"'"$MAX_FILENAME_LENGTH"'")}')…" )"
-		else
-			FILENAME="$(basename "$i")"
-		fi
-
-		printf "\r%$((${COLUMNS} - 8))s${YELLOW}%s${NORMAL}%s\r%s${YELLOW}%s${NORMAL}%s\n" \
-		"[" "SKIPPED" "]" "     " "*" " ${FILENAME}"
-	fi
-}
-
-function print_done_flac {
-	if [[ "$FALLBACK" == "true" ]] ; then
-		printf "\r%75s${BOLD_GREEN}%s${NORMAL}%s\r%s${YELLOW}%s${NORMAL}%s\n" \
-		"[" "DONE" "]            " "     " "*" " $(basename "$i" | gawk '{print substr($0,0,65)}')"
-	else
-		COLUMNS="$(tput cols)"
-
-		# This is the number of columns minus the indent (7) minus length of the printed
-		# message, [DONE] (6) minus 2 (leaves a gap and the gives room for the ellipsis (…))
-		MAX_FILENAME_LENGTH="$((${COLUMNS} - 15))"
-
-		FILENAME_LENGTH="$(basename "$i" | wc -m)"
-
-		if [[ "$FILENAME_LENGTH" -gt "$MAX_FILENAME_LENGTH" ]] ; then
-			FILENAME="$(echo "$(basename "$i" | gawk '{print substr($0,0,"'"$MAX_FILENAME_LENGTH"'")}')…" )"
-		else
-			FILENAME="$(basename "$i")"
-		fi
-
-		printf "\r%$((${COLUMNS} - 5))s${BOLD_GREEN}%s${NORMAL}%s\r%s${YELLOW}%s${NORMAL}%s\n" \
-		"[" "DONE" "]" "     " "*" " ${FILENAME}"
-	fi
-}
-
-function print_level_8 {
-	if [[ "$FALLBACK" == "true" ]] ; then
-		printf "\r%75s${YELLOW}%s${NORMAL}%s\r%s${YELLOW}%s${NORMAL}%s\n" \
-		"[" "Already At Level 8" "]" "     " "*" " $(basename "$i" | gawk '{print substr($0,0,65)}')"
-	else
-		COLUMNS="$(tput cols)"
-
-		# This is the number of columns minus the indent (7) minus length of the printed
-		# message, [Already At Level 8] (20) minus 2 (leaves a gap and the gives room for
-		#the ellipsis (…))
-		MAX_FILENAME_LENGTH="$((${COLUMNS} - 29))"
-
-		FILENAME_LENGTH="$(basename "$i" | wc -m)"
-
-		if [[ "$FILENAME_LENGTH" -gt "$MAX_FILENAME_LENGTH" ]] ; then
-			FILENAME="$(echo "$(basename "$i" | gawk '{print substr($0,0,"'"$MAX_FILENAME_LENGTH"'")}')…" )"
-		else
-			FILENAME="$(basename "$i")"
-		fi
-
-		printf "\r%$((${COLUMNS} - 19))s${YELLOW}%s${NORMAL}%s\r%s${YELLOW}%s${NORMAL}%s\n" \
-		"[" "Already At Level 8" "]" "     " "*" " ${FILENAME}"
-	fi
-}
-
-function print_analyzing_tags {
-	if [[ "$FALLBACK" == "true" ]] ; then
-		printf "\r%75s${YELLOW}%s${NORMAL}%s\r${CYAN}%s${NORMAL}${YELLOW}%s${NORMAL}%s" \
-		"[" "Analyzing Tags" "]" "     " "*" " $(basename "$i" | gawk '{print substr($0,0,65)}')"
-	else
-		COLUMNS="$(tput cols)"
-
-		# This is the number of $COLUMNS minus the indent (7) minus length of the printed
-		# message, [Analyzing Tags] (16) minus 3 (leaves a gap and the gives room for the
+		# message, [ Checking MD5 ] (16) minus 3 (leaves a gap and the gives room for the
 		# ellipsis (…) and cursor)
 		MAX_FILENAME_LENGTH="$((${COLUMNS} - 26))"
 
@@ -408,22 +238,21 @@ function print_analyzing_tags {
 			FILENAME="$(basename "$i")"
 		fi
 
-		printf "\r%$((${COLUMNS} - 15))s${YELLOW}%s${NORMAL}%s\r${CYAN}%s${NORMAL}${YELLOW}%s${NORMAL}%s" \
-		"[" "Analyzing Tags" "]" "     " "*" " ${FILENAME}"
+		printf "\r${NORMAL}%$((${COLUMNS} - 16))s${BOLD_BLUE}%s${NORMAL}%s${YELLOW}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}\r%s${NORMAL}${YELLOW}%s${NORMAL}%s" \
+		"" "[" " " "Checking MD5" " " "]" "     " "*" " ${FILENAME}"
 	fi
 }
 
-function print_setting_tags {
+function print_ok_flac {
 	if [[ "$FALLBACK" == "true" ]] ; then
-		printf "\r%75s${YELLOW}%s${NORMAL}%s\r${CYAN}%s${NORMAL}${YELLOW}%s${NORMAL}%s" \
-		"[" "Setting Tags" "]" "     " "*" " $(basename "$i" | gawk '{print substr($0,0,65)}')"
+		printf "\r${NORMAL}%74s${BOLD_BLUE}%s${NORMAL}%s${BOLD_GREEN}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}%s\r%s${YELLOW}%s${NORMAL}%s\n" \
+		"" "[" " " "OK" " " "]" "              " "     " "*" " $(basename "$i" | gawk '{print substr($0,0,65)}')"
 	else
 		COLUMNS="$(tput cols)"
 
 		# This is the number of $COLUMNS minus the indent (7) minus length of the printed
-		# message, [Setting Tags] (14) minus 3 (leaves a gap and the gives room for the
-		# ellipsis (…) and cursor)
-		MAX_FILENAME_LENGTH="$((${COLUMNS} - 24))"
+		# message, [ OK ] (6) minus 2 (leaves a gap and the gives room for the ellipsis (…))
+		MAX_FILENAME_LENGTH="$((${COLUMNS} - 15))"
 
 		FILENAME_LENGTH="$(basename "$i" | wc -m)"
 
@@ -433,20 +262,142 @@ function print_setting_tags {
 			FILENAME="$(basename "$i")"
 		fi
 
-		printf "\r%$((${COLUMNS} - 13))s${YELLOW}%s${NORMAL}%s\r${CYAN}%s${NORMAL}${YELLOW}%s${NORMAL}%s" \
-		"[" "Setting Tags" "]" "     " "*" " ${FILENAME}"
+		printf "\r${NORMAL}%$((${COLUMNS} - 6))s${BOLD_BLUE}%s${NORMAL}%s${BOLD_GREEN}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}\r%s${YELLOW}%s${NORMAL}%s\n" \
+		"" "[" " " "OK" " " "]" "     " "*" " ${FILENAME}"
 	fi
 }
 
-function print_prune_flac {
+function print_aucdtect_flac {
 	if [[ "$FALLBACK" == "true" ]] ; then
-		printf "\r%75s${YELLOW}%s${NORMAL}%s\r${CYAN}%s${NORMAL}${YELLOW}%s${NORMAL}%s" \
-		"[" "Pruning Metadata" "]" "     " "*" " $(basename "$i" | gawk '{print substr($0,0,65)}')"
+		printf "\r${NORMAL}%74s${BOLD_BLUE}%s${NORMAL}%s${YELLOW}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}\r%s${NORMAL}${YELLOW}%s${NORMAL}%s" \
+		"" "[" " " "Validating FLAC" " " "]" "     " "*" " $(basename "$i" | gawk '{print substr($0,0,65)}')"
 	else
 		COLUMNS="$(tput cols)"
 
 		# This is the number of $COLUMNS minus the indent (7) minus length of the printed
-		# message, [Pruning Metadata] (18) minus 3 (leaves a gap and the gives room for the
+		# message, [ Validating FLAC ] (19) minus 3 (leaves a gap and the gives room for the
+		# ellipsis (…) and cursor)
+		MAX_FILENAME_LENGTH="$((${COLUMNS} - 29))"
+
+		FILENAME_LENGTH="$(basename "$i" | wc -m)"
+
+		if [[ "$FILENAME_LENGTH" -gt "$MAX_FILENAME_LENGTH" ]] ; then
+			FILENAME="$(echo "$(basename "$i" | gawk '{print substr($0,0,"'"$MAX_FILENAME_LENGTH"'")}')…" )"
+		else
+			FILENAME="$(basename "$i")"
+		fi
+
+		printf "\r${NORMAL}%$((${COLUMNS} - 19))s${BOLD_BLUE}%s${NORMAL}%s${YELLOW}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}\r%s${NORMAL}${YELLOW}%s${NORMAL}%s" \
+		"" "[" " " "Validating FLAC" " " "]" "     " "*" " ${FILENAME}"
+	fi
+}
+
+function print_aucdtect_issue {
+	if [[ "$FALLBACK" == "true" ]] ; then
+		printf "\r${NORMAL}%74s${BOLD_BLUE}%s${NORMAL}%s${YELLOW}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}%s\r%s${YELLOW}%s${NORMAL}%s\n" \
+		"" "[" " " "ISSUE" " " "]" "           " "     " "*" " $(basename "$i" | gawk '{print substr($0,0,65)}')"
+	else
+		COLUMNS="$(tput cols)"
+
+		# This is the number of $COLUMNS minus the indent (7) minus length of the printed
+		# message, [ ISSUE ] (9) minus 2 (leaves a gap and the gives room for the ellipsis (…))
+		MAX_FILENAME_LENGTH="$((${COLUMNS} - 18))"
+
+		FILENAME_LENGTH="$(basename "$i" | wc -m)"
+
+		if [[ "$FILENAME_LENGTH" -gt "$MAX_FILENAME_LENGTH" ]] ; then
+			FILENAME="$(echo "$(basename "$i" | gawk '{print substr($0,0,"'"$MAX_FILENAME_LENGTH"'")}')…" )"
+		else
+			FILENAME="$(basename "$i")"
+		fi
+
+		printf "\r${NORMAL}%$((${COLUMNS} - 9))s${BOLD_BLUE}%s${NORMAL}%s${YELLOW}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}\r%s${YELLOW}%s${NORMAL}%s\n" \
+		"" "[" " " "ISSUE" " " "]" "     " "*" " ${FILENAME}"
+	fi
+}
+
+function print_aucdtect_skip {
+	if [[ "$FALLBACK" == "true" ]] ; then
+		printf "\r${NORMAL}%74s${BOLD_BLUE}%s${NORMAL}%s${YELLOW}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}%s\r%s${YELLOW}%s${NORMAL}%s\n" \
+		"" "[" " " "SKIPPED" " " "]" "         " "     " "*" " $(basename "$i" | gawk '{print substr($0,0,65)}')"
+	else
+		COLUMNS="$(tput cols)"
+
+		# This is the number of $COLUMNS minus the indent (7) minus length of the printed
+		# message, [ SKIPPED ] (11) minus 2 (leaves a gap and the gives room for the ellipsis (…))
+		MAX_FILENAME_LENGTH="$((${COLUMNS} - 20))"
+
+		FILENAME_LENGTH="$(basename "$i" | wc -m)"
+
+		if [[ "$FILENAME_LENGTH" -gt "$MAX_FILENAME_LENGTH" ]] ; then
+			FILENAME="$(echo "$(basename "$i" | gawk '{print substr($0,0,"'"$MAX_FILENAME_LENGTH"'")}')…" )"
+		else
+			FILENAME="$(basename "$i")"
+		fi
+
+		printf "\r${NORMAL}%$((${COLUMNS} - 11))s${BOLD_BLUE}%s${NORMAL}%s${YELLOW}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}\r%s${YELLOW}%s${NORMAL}%s\n" \
+		"" "[" " " "SKIPPED" " " "]" "     " "*" " ${FILENAME}"
+	fi
+}
+
+function print_done_flac {
+	if [[ "$FALLBACK" == "true" ]] ; then
+		printf "\r${NORMAL}%74s${BOLD_BLUE}%s${NORMAL}%s${BOLD_GREEN}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}%s\r%s${YELLOW}%s${NORMAL}%s\n" \
+		"" "[" " " "DONE" " " "]" "            " "     " "*" " $(basename "$i" | gawk '{print substr($0,0,65)}')"
+	else
+		COLUMNS="$(tput cols)"
+
+		# This is the number of $COLUMNS minus the indent (7) minus length of the printed
+		# message, [ DONE ] (8) minus 2 (leaves a gap and the gives room for the ellipsis (…))
+		MAX_FILENAME_LENGTH="$((${COLUMNS} - 17))"
+
+		FILENAME_LENGTH="$(basename "$i" | wc -m)"
+
+		if [[ "$FILENAME_LENGTH" -gt "$MAX_FILENAME_LENGTH" ]] ; then
+			FILENAME="$(echo "$(basename "$i" | gawk '{print substr($0,0,"'"$MAX_FILENAME_LENGTH"'")}')…" )"
+		else
+			FILENAME="$(basename "$i")"
+		fi
+
+		printf "\r${NORMAL}%$((${COLUMNS} - 8))s${BOLD_BLUE}%s${NORMAL}%s${BOLD_GREEN}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}\r%s${YELLOW}%s${NORMAL}%s\n" \
+		"" "[" " " "DONE" " " "]" "     " "*" " ${FILENAME}"
+	fi
+}
+
+function print_level_8 {
+	if [[ "$FALLBACK" == "true" ]] ; then
+		printf "\r${NORMAL}%74s${BOLD_BLUE}%s${NORMAL}%s${YELLOW}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}\r%s${YELLOW}%s${NORMAL}%s\n" \
+		"" "[" " " "Already At Level 8" " " "]" "     " "*" " $(basename "$i" | gawk '{print substr($0,0,65)}')"
+	else
+		COLUMNS="$(tput cols)"
+
+		# This is the number of $COLUMNS minus the indent (7) minus length of the printed
+		# message, [ Already At Level 8 ] (22) minus 2 (leaves a gap and the gives room for
+		#the ellipsis (…))
+		MAX_FILENAME_LENGTH="$((${COLUMNS} - 31))"
+
+		FILENAME_LENGTH="$(basename "$i" | wc -m)"
+
+		if [[ "$FILENAME_LENGTH" -gt "$MAX_FILENAME_LENGTH" ]] ; then
+			FILENAME="$(echo "$(basename "$i" | gawk '{print substr($0,0,"'"$MAX_FILENAME_LENGTH"'")}')…" )"
+		else
+			FILENAME="$(basename "$i")"
+		fi
+
+		printf "\r${NORMAL}%$((${COLUMNS} - 22))s${BOLD_BLUE}%s${NORMAL}%s${YELLOW}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}\r%s${YELLOW}%s${NORMAL}%s\n" \
+		"" "[" " " "Already At Level 8" " " "]" "     " "*" " ${FILENAME}"
+	fi
+}
+
+function print_analyzing_tags {
+	if [[ "$FALLBACK" == "true" ]] ; then
+		printf "\r${NORMAL}%74s${BOLD_BLUE}%s${NORMAL}%s${YELLOW}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}\r%s${NORMAL}${YELLOW}%s${NORMAL}%s" \
+		"" "[" " " "Analyzing Tags" " " "]" "     " "*" " $(basename "$i" | gawk '{print substr($0,0,65)}')"
+	else
+		COLUMNS="$(tput cols)"
+
+		# This is the number of $COLUMNS minus the indent (7) minus length of the printed
+		# message, [ Analyzing Tags ] (18) minus 3 (leaves a gap and the gives room for the
 		# ellipsis (…) and cursor)
 		MAX_FILENAME_LENGTH="$((${COLUMNS} - 28))"
 
@@ -458,8 +409,58 @@ function print_prune_flac {
 			FILENAME="$(basename "$i")"
 		fi
 
-		printf "\r%$((${COLUMNS} - 17))s${YELLOW}%s${NORMAL}%s\r${CYAN}%s${NORMAL}${YELLOW}%s${NORMAL}%s" \
-		"[" "Pruning Metadata" "]" "     " "*" " ${FILENAME}"
+		printf "\r${NORMAL}%$((${COLUMNS} - 18))s${BOLD_BLUE}%s${NORMAL}%s${YELLOW}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}\r%s${NORMAL}${YELLOW}%s${NORMAL}%s" \
+		"" "[" " " "Analyzing Tags" " " "]" "     " "*" " ${FILENAME}"
+	fi
+}
+
+function print_setting_tags {
+	if [[ "$FALLBACK" == "true" ]] ; then
+		printf "\r${NORMAL}%74s${BOLD_BLUE}%s${NORMAL}%s${YELLOW}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}\r%s${NORMAL}${YELLOW}%s${NORMAL}%s" \
+		"" "[" " " "Setting Tags" " " "]" "     " "*" " $(basename "$i" | gawk '{print substr($0,0,65)}')"
+	else
+		COLUMNS="$(tput cols)"
+
+		# This is the number of $COLUMNS minus the indent (7) minus length of the printed
+		# message, [ Setting Tags ] (16) minus 3 (leaves a gap and the gives room for the
+		# ellipsis (…) and cursor)
+		MAX_FILENAME_LENGTH="$((${COLUMNS} - 26))"
+
+		FILENAME_LENGTH="$(basename "$i" | wc -m)"
+
+		if [[ "$FILENAME_LENGTH" -gt "$MAX_FILENAME_LENGTH" ]] ; then
+			FILENAME="$(echo "$(basename "$i" | gawk '{print substr($0,0,"'"$MAX_FILENAME_LENGTH"'")}')…" )"
+		else
+			FILENAME="$(basename "$i")"
+		fi
+
+		printf "\r${NORMAL}%$((${COLUMNS} - 16))s${BOLD_BLUE}%s${NORMAL}%s${YELLOW}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}\r%s${NORMAL}${YELLOW}%s${NORMAL}%s" \
+		"" "[" " " "Setting Tags" " " "]" "     " "*" " ${FILENAME}"
+	fi
+}
+
+function print_prune_flac {
+	if [[ "$FALLBACK" == "true" ]] ; then
+		printf "\r${NORMAL}%74s${BOLD_BLUE}%s${NORMAL}%s${YELLOW}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}\r%s${NORMAL}${YELLOW}%s${NORMAL}%s" \
+		"" "[" " " "Pruning Metadata" " " "]" "     " "*" " $(basename "$i" | gawk '{print substr($0,0,65)}')"
+	else
+		COLUMNS="$(tput cols)"
+
+		# This is the number of $COLUMNS minus the indent (7) minus length of the printed
+		# message, [Pruning Metadata] (20) minus 3 (leaves a gap and the gives room for the
+		# ellipsis (…) and cursor)
+		MAX_FILENAME_LENGTH="$((${COLUMNS} - 30))"
+
+		FILENAME_LENGTH="$(basename "$i" | wc -m)"
+
+		if [[ "$FILENAME_LENGTH" -gt "$MAX_FILENAME_LENGTH" ]] ; then
+			FILENAME="$(echo "$(basename "$i" | gawk '{print substr($0,0,"'"$MAX_FILENAME_LENGTH"'")}')…" )"
+		else
+			FILENAME="$(basename "$i")"
+		fi
+
+		printf "\r${NORMAL}%$((${COLUMNS} - 20))s${BOLD_BLUE}%s${NORMAL}%s${YELLOW}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}\r%s${NORMAL}${YELLOW}%s${NORMAL}%s" \
+		"" "[" " " "Pruning Metadata" " " "]" "     " "*" " ${FILENAME}"
 	fi
 }
 
@@ -1181,6 +1182,7 @@ fi
 if [[ "$NO_COLOR" == "true" ]] ; then
 	BOLD_GREEN=""
 	BOLD_RED=""
+	BOLD_BLUE=""
 	CYAN=""
 	NORMAL=""
 	YELLOW=""
