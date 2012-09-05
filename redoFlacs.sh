@@ -31,7 +31,8 @@ tags=(
 # The tags are case sensitive!
 # The default is listed below.
 # Be sure not to delete the parenthesis below
-# or put wanted tags below it!
+# or put wanted tags below it! Another common tag
+# not added by default is ALBUMARTIST.
 
 TITLE
 ARTIST
@@ -41,10 +42,33 @@ DATE
 TRACKNUMBER
 TRACKTOTAL
 GENRE
+
+# The COMPRESSION tag is a custom tag to allow
+# the script to determine which level of compression
+# the FLAC file(s) has/have been compressed at.
 COMPRESSION
+
+# The RELEASETYPE tag is a custom tag the author
+# of this script uses to catalogue what kind of
+# release the album is (ie, Full Length, EP,
+# Demo, etc.).
 RELEASETYPE
+
+# The SOURCE tag is a custom tag the author of
+# this script uses to catalogue which source the
+# album has derived from (ie, CD, Vinyl,
+# Digital, etc.).
 SOURCE
+
+# The MASTERING tag is a custom tag the author of
+# this script uses to catalogue how the album has
+# been mastered (ie, Lossless, or Lossy).
 MASTERING
+
+# The REPLAYGAIN tags, below, are added by the
+# --replaygain, -g argument.  If you want to
+# keep the replaygain tags, make sure you leave
+# these here.
 REPLAYGAIN_REFERENCE_LOUDNESS
 REPLAYGAIN_TRACK_GAIN
 REPLAYGAIN_TRACK_PEAK
@@ -52,6 +76,12 @@ REPLAYGAIN_ALBUM_GAIN
 REPLAYGAIN_ALBUM_PEAK
 
 )
+
+# Set the type of COMPRESSION to compress the
+# FLAC files.  Numbers range from 1-8, with 1 being
+# the lowest compression and 8 being the highest
+# compression.  The default is 8.
+COMPRESSION_LEVEL=5
 
 # Set the number of threads/cores to use
 # when running this script.  The default
@@ -79,6 +109,9 @@ AUCDTECT_COMMAND="$(command -v auCDtect)"
 ######################
 # Version
 VERSION="0.11.1"
+
+# Export COMPRESSION_LEVEL command to allow subshell access
+export COMPRESSION_LEVEL
 
 # Export auCDtect command to allow subshell access
 export AUCDTECT_COMMAND
@@ -121,7 +154,7 @@ REDO="false"
 ###################################
 # Displaying currently running tasks
 function title_compress_flac {
-	echo -e " ${BOLD_GREEN}*${NORMAL} Compressing FLAC files with level 8 compression and verifying output"
+	echo -e " ${BOLD_GREEN}*${NORMAL} Compressing FLAC files with level ${COMPRESSION_LEVEL} compression and verifying output"
 }
 
 function title_test_replaygain {
@@ -482,10 +515,10 @@ function print_done_flac {
 	fi
 }
 
-function print_level_8 {
+function print_level_same_compression {
 	if [[ "$FALLBACK" == "true" ]] ; then
 		printf "\r${NORMAL}%74s${BOLD_BLUE}%s${NORMAL}%s${YELLOW}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}\r%s${YELLOW}%s${NORMAL}%s\n" \
-		"" "[" " " "Already At Level 8" " " "]" "     " "*" " $(basename "$i" | gawk '{print substr($0,0,65)}')"
+		"" "[" " " "Already At Level ${COMPRESSION_LEVEL}" " " "]" "     " "*" " $(basename "$i" | gawk '{print substr($0,0,65)}')"
 	else
 		COLUMNS="$(tput cols)"
 
@@ -503,7 +536,7 @@ function print_level_8 {
 		fi
 
 		printf "\r${NORMAL}%$((${COLUMNS} - 22))s${BOLD_BLUE}%s${NORMAL}%s${YELLOW}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}\r%s${YELLOW}%s${NORMAL}%s\n" \
-		"" "[" " " "Already At Level 8" " " "]" "     " "*" " ${FILENAME}"
+		"" "[" " " "Already At Level ${COMPRESSION_LEVEL}" " " "]" "     " "*" " ${FILENAME}"
 	fi
 }
 
@@ -595,7 +628,7 @@ export -f print_aucdtect_flac
 export -f print_aucdtect_issue
 export -f print_aucdtect_skip
 export -f print_done_flac
-export -f print_level_8
+export -f print_level_same_compression
 export -f print_analyzing_tags 
 export -f print_setting_tags
 export -f print_prune_flac
@@ -782,23 +815,23 @@ function compress_flacs {
 			# Trap errors into a variable as the output doesn't help
 			# for there is a better way to test below using the
 			# ERROR variable
-			COMPRESSION="$((metaflac --show-tag=COMPRESSION "$i") 2>&1)"
-			if [[ "$COMPRESSION" != "COMPRESSION=8" ]] ; then
+			COMPRESSION="$((metaflac --show-tag=COMPRESSION "$i" | sed 's/^COMPRESSION=//i') 2>&1)"
+			if [[ "$COMPRESSION" != "$COMPRESSION_LEVEL" ]] ; then
 				print_compressing_flac
 				# This must come after the above command for proper formatting
-				ERROR="$((flac -f -8 -V -s "$i") 2>&1)"
+				ERROR="$((flac -f -${COMPRESSION_LEVEL} -V -s "$i") 2>&1)"
 				if [[ ! -z "$ERROR" ]] ; then
 					print_failed_flac
 					echo -e "[[$i]]\n"  "$ERROR\n" >> "$VERIFY_ERRORS"
 				else
 					metaflac --remove-tag=COMPRESSION "$i"
-					metaflac --set-tag=COMPRESSION=8 "$i"
+					metaflac --set-tag=COMPRESSION=${COMPRESSION_LEVEL} "$i"
 					print_ok_flac
 				fi
-			# If already at level 8 compression, test the FLAC file instead
+			# If already at COMPRESSION_LEVEL, test the FLAC file instead
 			# or skip the file if --compress-notest,-C was specified
 			else
-				print_level_8
+				print_level_same_compression
 				if [[ "$SKIP_TEST" != "true" ]] ; then
 					print_testing_flac
 					ERROR="$((flac -ts "$i") 2>&1)"
