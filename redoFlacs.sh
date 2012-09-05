@@ -42,6 +42,14 @@ TRACKNUMBER
 TRACKTOTAL
 GENRE
 COMPRESSION
+RELEASETYPE
+SOURCE
+MASTERING
+REPLAYGAIN_REFERENCE_LOUDNESS
+REPLAYGAIN_TRACK_GAIN
+REPLAYGAIN_TRACK_PEAK
+REPLAYGAIN_ALBUM_GAIN
+REPLAYGAIN_ALBUM_PEAK
 
 )
 
@@ -94,6 +102,8 @@ export VERIFY_ERRORS="$ERROR_LOG/FLAC_Verify_Errors $(date "+[%Y-%m-%d %R]")"
 export TEST_ERRORS="$ERROR_LOG/FLAC_Test_Errors $(date "+[%Y-%m-%d %R]")"
 export MD5_ERRORS="$ERROR_LOG/MD5_Signature_Errors $(date "+[%Y-%m-%d %R]")"
 export METADATA_ERRORS="$ERROR_LOG/FLAC_Metadata_Errors $(date "+[%Y-%m-%d %R]")"
+export REPLAY_TEST_ERRORS="$ERROR_LOG/ReplayGain_Test_Errors $(date "+[%Y-%m-%d %R]")"
+export REPLAY_ADD_ERRORS="$ERROR_LOG/ReplayGain_Add_Errors $(date "+[%Y-%m-%d %R]")"
 export AUCDTECT_ERRORS="$ERROR_LOG/auCDtect_Errors $(date "+[%Y-%m-%d %R]")"
 export PRUNE_ERRORS="$ERROR_LOG/FLAC_Prune_Errors $(date "+[%Y-%m-%d %R]")"
 
@@ -112,6 +122,14 @@ REDO="false"
 # Displaying currently running tasks
 function title_compress_flac {
 	echo -e " ${BOLD_GREEN}*${NORMAL} Compressing FLAC files with level 8 compression and verifying output"
+}
+
+function title_test_replaygain {
+	echo -e " ${BOLD_GREEN}*${NORMAL} Verifying FLAC Files can have ReplayGain Tags added"
+}
+
+function title_add_replaygain {
+	echo -e " ${BOLD_GREEN}*${NORMAL} Applying ReplayGain values by album directory"
 }
 
 function title_analyze_tags {
@@ -169,6 +187,56 @@ function print_compressing_flac {
 	fi
 }
 
+function print_test_replaygain {
+	if [[ "$FALLBACK" == "true" ]] ; then
+		printf "\r${NORMAL}%74s${BOLD_BLUE}%s${NORMAL}%s${YELLOW}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}\r%s${NORMAL}${YELLOW}%s${NORMAL}%s" \
+		"" "[" " " "Testing ReplayGain" " " "]" "     " "*" " $(basename "$i" | gawk '{print substr($0,0,65)}')"
+	else
+		COLUMNS="$(tput cols)"
+
+		# This is the number of $COLUMNS minus the indent (7) minus length of the printed
+		# message, [ Testing ReplayGain ] (22) minus 3 (leaves a gap and the gives room for the
+		# ellipsis (…) and cursor)
+		MAX_FILENAME_LENGTH="$((${COLUMNS} - 32))"
+
+		FILENAME_LENGTH="$(basename "$i" | wc -m)"
+
+		if [[ "$FILENAME_LENGTH" -gt "$MAX_FILENAME_LENGTH" ]] ; then
+			FILENAME="$(echo "$(basename "$i" | gawk '{print substr($0,0,"'"$MAX_FILENAME_LENGTH"'")}')…" )"
+		else
+			FILENAME="$(basename "$i")"
+		fi
+
+		printf "\r${NORMAL}%$((${COLUMNS} - 22))s${BOLD_BLUE}%s${NORMAL}%s${YELLOW}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}\r%s${NORMAL}${YELLOW}%s${NORMAL}%s" \
+		"" "[" " " "Testing ReplayGain" " " "]" "     " "*" " ${FILENAME}"
+	fi
+}
+
+function print_add_replaygain {
+	if [[ "$FALLBACK" == "true" ]] ; then
+		printf "\r${NORMAL}%74s${BOLD_BLUE}%s${NORMAL}%s${YELLOW}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}\r%s${NORMAL}${YELLOW}%s${NORMAL}%s${CYAN}%s${NORMAL}" \
+		"" "[" " " "Adding ReplayGain" " " "]" "     " "*" " $(basename "$FLAC_LOCATION" | gawk '{print substr($0,0,65)}') " "[Directory]"
+	else
+		COLUMNS="$(tput cols)"
+
+		# This is the number of $COLUMNS minus the indent (7) minus length of the printed
+		# message, [ Adding ReplayGain ] (21) minus 3 (leaves a gap and the gives room for the
+		# ellipsis (…) and cursor)
+		MAX_FILENAME_LENGTH="$((${COLUMNS} - 31))"
+
+		FILENAME_LENGTH="$(basename "$FLAC_LOCATION" | wc -m)"
+
+		if [[ "$FILENAME_LENGTH" -gt "$MAX_FILENAME_LENGTH" ]] ; then
+			FILENAME="$(echo "$(basename "$FLAC_LOCATION" | gawk '{print substr($0,0,"'"$MAX_FILENAME_LENGTH"'")}')…" )"
+		else
+			FILENAME="$(basename "$FLAC_LOCATION")"
+		fi
+
+		printf "\r${NORMAL}%$((${COLUMNS} - 21))s${BOLD_BLUE}%s${NORMAL}%s${YELLOW}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}\r%s${NORMAL}${YELLOW}%s${NORMAL}%s${CYAN}%s${NORMAL}" \
+		"" "[" " " "Adding ReplayGain" " " "]" "     " "*" " ${FILENAME} " "[Directory]"
+	fi
+}
+
 function print_testing_flac {
 	if [[ "$FALLBACK" == "true" ]] ; then
 		printf "\r${NORMAL}%74s${BOLD_BLUE}%s${NORMAL}%s${YELLOW}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}\r%s${NORMAL}${YELLOW}%s${NORMAL}%s" \
@@ -218,6 +286,31 @@ function print_failed_flac {
 	fi
 }
 
+function print_failed_replaygain {
+	if [[ "$FALLBACK" == "true" ]] ; then
+		printf "\r${NORMAL}%74s${BOLD_BLUE}%s${NORMAL}%s${BOLD_RED}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}\r%s${YELLOW}%s${NORMAL}%s${CYAN}%s${NORMAL}\n" \
+		"" "[" " " "FAILED" " " "]" "          " "*" " $(basename "$FLAC_LOCATION" | gawk '{print substr($0,0,65)}') " "[Directory]"
+	else
+		COLUMNS="$(tput cols)"
+
+		# This is the number of $COLUMNS minus the indent (7) minus length of the printed
+		# message, [ FAILED ] (10) minus 2 (leaves a gap and the gives room for the
+		# ellipsis (…) and cursor)
+		MAX_FILENAME_LENGTH="$((${COLUMNS} - 19))"
+
+		FILENAME_LENGTH="$(basename "$FLAC_LOCATION" | wc -m)"
+
+		if [[ "$FILENAME_LENGTH" -gt "$MAX_FILENAME_LENGTH" ]] ; then
+			FILENAME="$(echo "$(basename "$FLAC_LOCATION" | gawk '{print substr($0,0,"'"$MAX_FILENAME_LENGTH"'")}')…" )"
+		else
+			FILENAME="$(basename "$FLAC_LOCATION")"
+		fi
+
+		printf "\r${NORMAL}%$((${COLUMNS} - 10))s${BOLD_BLUE}%s${NORMAL}%s${BOLD_RED}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}\r%s${NORMAL}${YELLOW}%s${NORMAL}%s${CYAN}%s${NORMAL}\n" \
+		"" "[" " " "FAILED" " " "]" "     " "*" " ${FILENAME} " "[Directory]"
+	fi
+}
+
 function print_checking_md5 {
 	if [[ "$FALLBACK" == "true" ]] ; then
 		printf "\r${NORMAL}%74s${BOLD_BLUE}%s${NORMAL}%s${YELLOW}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}\r%s${NORMAL}${YELLOW}%s${NORMAL}%s" \
@@ -264,6 +357,31 @@ function print_ok_flac {
 
 		printf "\r${NORMAL}%$((${COLUMNS} - 6))s${BOLD_BLUE}%s${NORMAL}%s${BOLD_GREEN}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}\r%s${YELLOW}%s${NORMAL}%s\n" \
 		"" "[" " " "OK" " " "]" "     " "*" " ${FILENAME}"
+	fi
+}
+
+function print_ok_replaygain {
+	if [[ "$FALLBACK" == "true" ]] ; then
+		printf "\r${NORMAL}%74s${BOLD_BLUE}%s${NORMAL}%s${BOLD_GREEN}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}\r%s${YELLOW}%s${NORMAL}%s${CYAN}%s${NORMAL}\n" \
+		"" "[" " " "OK" " " "]" "              " "*" " $(basename "$FLAC_LOCATION" | gawk '{print substr($0,0,65)}') " "[Directory]"
+	else
+		COLUMNS="$(tput cols)"
+
+		# This is the number of $COLUMNS minus the indent (7) minus length of the printed
+		# message, [ OK ] (6) minus 2 (leaves a gap and the gives room for the
+		# ellipsis (…) and cursor)
+		MAX_FILENAME_LENGTH="$((${COLUMNS} - 15))"
+
+		FILENAME_LENGTH="$(basename "$FLAC_LOCATION" | wc -m)"
+
+		if [[ "$FILENAME_LENGTH" -gt "$MAX_FILENAME_LENGTH" ]] ; then
+			FILENAME="$(echo "$(basename "$FLAC_LOCATION" | gawk '{print substr($0,0,"'"$MAX_FILENAME_LENGTH"'")}')…" )"
+		else
+			FILENAME="$(basename "$FLAC_LOCATION")"
+		fi
+
+		printf "\r${NORMAL}%$((${COLUMNS} - 6))s${BOLD_BLUE}%s${NORMAL}%s${BOLD_GREEN}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}\r%s${NORMAL}${YELLOW}%s${NORMAL}%s${CYAN}%s${NORMAL}\n" \
+		"" "[" " " "OK" " " "]" "     " "*" " ${FILENAME} " "[Directory]"
 	fi
 }
 
@@ -466,10 +584,13 @@ function print_prune_flac {
 
 # Export all the above functions for subshell access
 export -f print_compressing_flac
+export -f print_test_replaygain
+export -f print_add_replaygain
 export -f print_testing_flac
 export -f print_failed_flac
 export -f print_checking_md5
 export -f print_ok_flac
+export -f print_ok_replaygain
 export -f print_aucdtect_flac
 export -f print_aucdtect_issue
 export -f print_aucdtect_skip
@@ -526,6 +647,115 @@ function countdown_metadata {
 	echo -e " ${YELLOW}*${NORMAL} Ctrl+C (Control-C) to abort..."
 	echo -en " ${BOLD_GREEN}*${NORMAL} Starting in: "
 	countdown_10
+}
+
+# Add ReplayGain to files and make sure each album disc uses the same
+# ReplayGain values (multi-disc albums have their own ReplayGain) as well
+# as make the tracks have their own ReplayGain values individually.
+function replaygain {
+	title_test_replaygain
+
+	# Trap SIGINT (Control-C) to abort cleanly
+	trap normal_abort SIGINT
+
+	function test_replaygain {
+		for i ; do
+			print_test_replaygain
+
+			# Variable to check if file is a FLAC file
+			CHECK_FLAC="$(metaflac --show-md5sum "$i" 2>&1 | grep -o "FLAC__METADATA_CHAIN_STATUS_NOT_A_FLAC_FILE")"
+
+			# Test to make sure FLAC file can have ReplayGain tags added to it
+			if [[ "$CHECK_FLAC" == "FLAC__METADATA_CHAIN_STATUS_NOT_A_FLAC_FILE" ]] ; then
+				echo -e "[[$i]]\n" "The above file does not appear to be a FLAC file\n" >> "$REPLAY_TEST_ERRORS"
+				# File is not a FLAC file, display failed
+				print_failed_flac
+			else
+				# File is a FLAC file, erase any ReplayGain tags, display ok
+				metaflac --remove-replay-gain "$i"
+				print_ok_flac
+			fi
+		done
+	}
+	export -f test_replaygain
+
+	# Run the above function with the configured threads (multithreaded)
+	find "$DIRECTORY" -name "*.[Ff][Ll][Aa][Cc]" -print0 | xargs -0 -n 1 -P "$CORES" bash -c 'test_replaygain "$@"' --
+
+	if [[ -f "$REPLAY_TEST_ERRORS" ]] ; then
+		echo -e "\n ${BOLD_RED}*${NORMAL} There were issues with some of the FLAC files,"
+		echo -e " ${BOLD_RED}*${NORMAL} please check:"
+		echo -e " ${BOLD_RED}*${NORMAL} \"$REPLAY_TEST_ERRORS\" for details."
+		exit 1
+	fi
+
+	# The below stuff cannot be done in parallel to prevent race conditions
+	# from making the script think some FLAC files have already had
+	# ReplayGain tags added to them.  Due to the nature of processing the
+	# album tags as a whole, this must be done without multithreading.
+
+	title_add_replaygain
+
+	find "$DIRECTORY" -name "*.[Ff][Ll][Aa][Cc]" -print | while read i ; do
+		# Find where the FLAC file is in the DIRECTORY hierarchy
+		FLAC_LOCATION="$(dirname "${i}")"
+
+		# Test if DIRECTORY is the current working directory (AKA: ./)
+		# as well as check if FLAC_LOCATION is equal to "./"
+		if [[ "$DIRECTORY" == "." && "$FLAC_LOCATION" = "." ]] ; then
+			# We want to be able to display a directory path, so we create
+			# the pathname to the FLAC files
+			FLAC_LOCATION="$PWD"
+		fi
+
+		# Find the basename directory from FLAC_LOCATION (this is the supposed
+		# album name to be printed)
+		ALBUM_BASENAME="$(basename "$FLAC_LOCATION")"
+
+		# Check if FLAC files have existing ReplayGain tags
+		REPLAYGAIN_REFERENCE_LOUDNESS="$(metaflac --show-tag=REPLAYGAIN_REFERENCE_LOUDNESS "$i" \
+			| sed 's/REPLAYGAIN_REFERENCE_LOUDNESS=//')"
+		REPLAYGAIN_TRACK_GAIN="$(metaflac --show-tag=REPLAYGAIN_TRACK_GAIN "$i" \
+			| sed 's/REPLAYGAIN_TRACK_GAIN=//')"
+		REPLAYGAIN_TRACK_PEAK="$(metaflac --show-tag=REPLAYGAIN_TRACK_PEAK "$i" \
+			| sed 's/REPLAYGAIN_TRACK_PEAK=//')"
+		REPLAYGAIN_ALBUM_GAIN="$(metaflac --show-tag=REPLAYGAIN_ALBUM_GAIN "$i" \
+			| sed 's/REPLAYGAIN_ALBUM_GAIN=//')"
+		REPLAYGAIN_ALBUM_PEAK="$(metaflac --show-tag=REPLAYGAIN_ALBUM_PEAK "$i" \
+			| sed 's/REPLAYGAIN_ALBUM_PEAK=//')"
+
+		if [[ -n "$REPLAYGAIN_REFERENCE_LOUDNESS" && -n "$REPLAYGAIN_TRACK_GAIN" && \
+			  -n "$REPLAYGAIN_TRACK_PEAK" && -n "$REPLAYGAIN_ALBUM_GAIN" && \
+			  -n "$REPLAYGAIN_ALBUM_PEAK" ]] ; then
+			# All ReplayGain tags accounted for, skip this file
+			continue
+		elif [[ "$REPLAYGAIN_ALBUM_FAILED" == "${ALBUM_BASENAME} FAILED" ]] ; then
+			# This album (directory of FLACS) had at LEAST one FLAC fail, so skip
+			# files that are in this album (directory)
+			continue
+		else
+			# Add ReplayGain tags to the files in this directory (which SHOULD include
+			# the current working FLAC file [$i])
+			print_add_replaygain
+			ERROR="$((metaflac --add-replay-gain "${FLAC_LOCATION}"/*.[Ff][Ll][Aa][Cc]) 2>&1)"
+			if [[ -n "$ERROR" ]] ; then
+				print_failed_replaygain
+				echo -e "[[$FLAC_LOCATION]]\n" "$ERROR\n" >> "$REPLAY_ADD_ERRORS"
+				# Set variable to let script know this album failed and not NOT
+				# continue checking the files in this album
+				REPLAYGAIN_ALBUM_FAILED="${ALBUM_BASENAME} FAILED"
+			else
+				print_ok_replaygain
+			fi
+		fi
+	done
+
+	if [[ -f "$REPLAY_ADD_ERRORS" ]] ; then
+		echo -e "\n ${BOLD_RED}*${NORMAL} There were issues with some of the FLAC files,"
+		echo -e " ${BOLD_RED}*${NORMAL} please check:"
+		echo -e " ${BOLD_RED}*${NORMAL} \"$REPLAY_TEST_ERRORS\" for details."
+		exit 1
+	fi
 }
 
 # Compress FLAC files and verify output
@@ -649,7 +879,7 @@ function aucdtect {
 
 		if [[ -f "$AUCDTECT_ERRORS" ]] ; then
 			echo -e "\n ${BOLD_RED}*${NORMAL} Some FLAC files may be lossy sourced, please check:"
-			echo -e " ${BOLD_RED}*${NORMAL} \"$AUCDTECT_ERRORS\" for errors"
+			echo -e " ${BOLD_RED}*${NORMAL} \"$AUCDTECT_ERRORS\" for details"
 		fi
 
 		if [[ -n "$WAV_FILES" ]] ; then
@@ -724,7 +954,7 @@ function aucdtect {
 
 	if [[ -f "$AUCDTECT_ERRORS" ]] ; then
 		echo -e "\n ${BOLD_RED}*${NORMAL} Some FLAC files may be lossy sourced, please check:"
-		echo -e " ${BOLD_RED}*${NORMAL} \"$AUCDTECT_ERRORS\" for issues"
+		echo -e " ${BOLD_RED}*${NORMAL} \"$AUCDTECT_ERRORS\" for details"
 		exit 1
 	fi
 }
@@ -790,8 +1020,31 @@ function extract_vorbis_tags {
 		eval "tags=(${EXPORT_TAG[*]})"
 		# Iterate through the tag array and test to see if each tag is set
 		for j in "${tags[@]}" ; do
-			# Set a temporary variable to be easily parsed by `eval`
-			local TEMP_TAG="$(metaflac --show-tag="$j" "$i" | sed "s/${j}=//")"
+			# Check if ALBUMARTIST is two words as well (ie 'album artist')
+			if [[ "$j" == "ALBUMARTIST" ]] ; then
+				# Check for 'album artist' and 'album_artist' tag variable (case insensitive)
+				# "album artist"
+				if [[ -n "$(metaflac --show-tag="album artist" "$i")" ]] ; then
+					# Set a temporary variable to be easily parsed by `eval`
+					local TEMP_TAG="$(metaflac --show-tag="album artist" "$i" | sed "s/^album artist=//i")"
+				# "ALBUM ARTIST"
+				elif [[ -n "$(metaflac --show-tag="ALBUM ARTIST" "$i")" ]] ; then
+					# Set a temporary variable to be easily parsed by `eval`
+					local TEMP_TAG="$(metaflac --show-tag="ALBUM ARTIST" "$i" | sed "s/^ALBUM ARTIST=//i")"
+				# "album_artist"
+				elif [[ -n "$(metaflac --show-tag="album_artist" "$i")" ]] ; then
+					# Set a temporary variable to be easily parsed by `eval`
+					local TEMP_TAG="$(metaflac --show-tag="album_artist" "$i" | sed "s/^album_artist=//i")"
+				# "ALBUM_ARTIST"
+				elif [[ -n "$(metaflac --show-tag="ALBUM_ARTIST" "$i")" ]] ; then
+					# Set a temporary variable to be easily parsed by `eval`
+					local TEMP_TAG="$(metaflac --show-tag="ALBUM_ARTIST" "$i" | sed "s/^ALBUM_ARTIST=//i")"
+				fi
+			else
+				# Set a temporary variable to be easily parsed by `eval`
+				local TEMP_TAG="$(metaflac --show-tag="$j" "$i" | sed "s/^${j}=//i")"
+			fi
+
 			# Evaluate TEMP_TAG into the dynamic tag
 			eval "${j}"_TAG='"${TEMP_TAG}"'
 			# If tags are not found, log output
@@ -809,8 +1062,31 @@ export -f extract_vorbis_tags
 function set_vorbis_tags {
 	# Iterate through the tag array and set a variable for each tag
 	for j in "${tags[@]}" ; do
-		# Set a temporary variable to be easily parsed by `eval`
-		local TEMP_TAG="$(metaflac --show-tag="${j}" "$i" | sed "s/${j}=//")"
+		# Check if ALBUMARTIST is two words as well (ie 'album artist')
+		if [[ "$j" == "ALBUMARTIST" ]] ; then
+			# Check for 'album artist' and 'album_artist' tag variable (case insensitive)
+			# "album artist"
+			if [[ -n "$(metaflac --show-tag="album artist" "$i")" ]] ; then
+				# Set a temporary variable to be easily parsed by `eval`
+				local TEMP_TAG="$(metaflac --show-tag="album artist" "$i" | sed "s/^album artist=//i")"
+			# "ALBUM ARTIST"
+			elif [[ -n "$(metaflac --show-tag="ALBUM ARTIST" "$i")" ]] ; then
+				# Set a temporary variable to be easily parsed by `eval`
+				local TEMP_TAG="$(metaflac --show-tag="ALBUM ARTIST" "$i" | sed "s/^ALBUM ARTIST=//i")"
+			# "album_artist"
+			elif [[ -n "$(metaflac --show-tag="album_artist" "$i")" ]] ; then
+				# Set a temporary variable to be easily parsed by `eval`
+				local TEMP_TAG="$(metaflac --show-tag="album_artist" "$i" | sed "s/^album_artist=//i")"
+			# "ALBUM_ARTIST"
+			elif [[ -n "$(metaflac --show-tag="ALBUM_ARTIST" "$i")" ]] ; then
+				# Set a temporary variable to be easily parsed by `eval`
+				local TEMP_TAG="$(metaflac --show-tag="ALBUM_ARTIST" "$i" | sed "s/^ALBUM_ARTIST=//i")"
+			fi
+		else
+			# Set a temporary variable to be easily parsed by `eval`
+			local TEMP_TAG="$(metaflac --show-tag="$j" "$i" | sed "s/^${j}=//i")"
+		fi
+
 		# Evaluate TEMP_TAG into the dynamic tag
 		eval "${j}"_SET='"${TEMP_TAG}"'
 	done
@@ -1055,6 +1331,7 @@ function short_help {
 	echo "    -m, --md5check"
 	echo "    -a, --aucdtect"
 	echo "    -p, --prune"
+	echo "    -g, --replaygain"
 	echo "    -r, --redo"
 	echo "    -n, --no-color"
 	echo "    -d, --disable-warning"
@@ -1105,6 +1382,10 @@ while [[ "$#" -gt 1 ]] ; do
 			;;
 		--test|-t)
 			TEST="true"
+			shift
+			;;
+		--replaygain|-g)
+			REPLAYGAIN="true"
 			shift
 			;;
 		--aucdtect|-a)
@@ -1162,15 +1443,11 @@ if [[ "$COMPRESS_TEST" == "true" && "$TEST" == "true" ]] ; then
 	exit 0
 fi
 
-# Check if FLAC files exist and count the number of FLAC
-# files to process if they exist
+# Check if FLAC files exist
 FIND_FLACS="$(find "$DIRECTORY" -name "*.[Ff][Ll][Aa][Cc]" -print)"
 if [[ -z "$FIND_FLACS" ]] ; then
 	no_flacs
 	exit 0
-else
-	export TOTAL_FLACS="$(find "$DIRECTORY" -name "*.[Ff][Ll][Aa][Cc]" -print0 | \
-		xargs -0 bash -c 'COUNT="" ; for i in "$@" ; do ((COUNT++)) ; done ; echo $COUNT' --)"
 fi
 
 ##################
@@ -1226,6 +1503,10 @@ fi
 
 if [[ "$MD5CHECK" == "true" ]] ; then
 	md5_check
+fi
+
+if [[ "$REPLAYGAIN" == "true" ]] ; then
+	replaygain
 fi
 
 if [[ "$REDO" == "true" ]] ; then
