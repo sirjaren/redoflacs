@@ -2,7 +2,7 @@
 
 #------------------------------------------------------------
 # Re-compress, Verify, Test, Re-tag, and Clean Up FLAC Files
-#                     Version 0.11.1
+#                     Version 0.12_pre
 #                       sirjaren
 #------------------------------------------------------------
 
@@ -108,7 +108,7 @@ AUCDTECT_COMMAND="$(command -v auCDtect)"
 #  STATIC VARIABLES  #
 ######################
 # Version
-VERSION="0.11.1"
+VERSION="0.12_pre"
 
 # Export COMPRESSION_LEVEL command to allow subshell access
 export COMPRESSION_LEVEL
