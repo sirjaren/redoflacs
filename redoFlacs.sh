@@ -30,7 +30,7 @@ tags=(
 # List the tags to be kept in each FLAC file
 # The tags are case sensitive!
 # The default is listed below.
-# Be sure not to delete the parenthesis below
+# Be sure not to delete the parenthesis ")" below
 # or put wanted tags below it! Another common tag
 # not added by default is ALBUMARTIST.
 
@@ -65,7 +65,7 @@ SOURCE
 # been mastered (ie, Lossless, or Lossy).
 MASTERING
 
-# The REPLAYGAIN tags, below, are added by the
+# The REPLAYGAIN tags below, are added by the
 # --replaygain, -g argument.  If you want to
 # keep the replaygain tags, make sure you leave
 # these here.
@@ -81,7 +81,7 @@ REPLAYGAIN_ALBUM_PEAK
 # FLAC files.  Numbers range from 1-8, with 1 being
 # the lowest compression and 8 being the highest
 # compression.  The default is 8.
-COMPRESSION_LEVEL=5
+COMPRESSION_LEVEL=8
 
 # Set the number of threads/cores to use
 # when running this script.  The default
@@ -1233,28 +1233,36 @@ function long_help {
 	cat << EOF
   Usage: $0 [OPTION] [OPTION]... [PATH_TO_FLAC(s)]
   Options:
-    -c, --compress          Compress the FLAC files with level 8 compression AND verify the
-                            resultant files.  This option will add a tag to all successfully
-                            verified FLAC files: COMPRESSION=8.
+    -c, --compress          Compress the FLAC files with the user-specified level of compression
+                            defined under USER CONFIGURATION (as the variable COMPRESSION_LEVEL)
+                            and verify the resultant files.
 
-                            If any FLAC files already have the "COMPRESSION=8" tag (a sure sign
-                            the files are already compressed at level 8), the script will instead
-                            test the FLAC files for any errors.  This is useful to check your
-                            entire library to make sure all the FLAC files are compressed at the
-                            the highest level.
+                            The default is 8, with the range of values starting from 1 to 8 with
+                            the smallest compression at 1, and the highest at 8.  This option
+                            will add a tag to all successfully verified FLAC files.  Below
+                            shows the default COMPRESSION tag added to each successfully
+                            verified FLAC:
+
+                                        COMPRESSION=8
+
+                            If any FLAC files already have the defined COMPRESSION_LEVEL tag (a
+                            good indicator the files are already compressed at that level), the
+                            script will instead test the FLAC files for any errors.  This is useful
+                            to check your entire music library to make sure all the FLAC files are
+                            compressed at the level specified as well as make sure they are intact.
 
                             If any files are found to be corrupt, this script will quit upon
                             finishing the compression of any other files and produce an error
                             log.
 
-    -C, --compress-notest   Same as compress but if the FLAC file already has the COMPRESSION=8
-                            tag, the script will skip the file and continue on to the next without
-                            testing the FLAC file's integrity.  Useful just checking whether
-                            FLAC files have been compressed already.
+    -C, --compress-notest   Same as the "--compress" option, but if any FLAC files already have the
+                            defined COMPRESSION_LEVEL tag, the script will skip the file and continue
+                            on to the next without test the FLAC file's integrity.  Useful for
+                            checking all your FLAC files are compressed at the level specified.
 
     -t, --test              Same as compress but instead of compressing the FLAC files, this
                             script just verfies the files.  This option will NOT add the
-                            compression tag to the files.
+                            COMPRESSION tag to the files.
 
                             As with the "--compress" option, this will produce an error log if
                             any FLAC files are found to be corrupt.
@@ -1265,7 +1273,7 @@ function long_help {
                             converted to FLAC is no longer lossless therefore lossy sourced.
 
                             While this program isn't foolproof, it gives a good idea which FLAC
-                            files will need further investigation (ie a spectrograph).  This program
+                            files will need further investigation (ie a spectrogram).  This program
                             does not work on FLAC files which have a bit depth more than a typical
                             audio CD (16bit), and will skip the files that have a higher bit depth.
 
@@ -1274,13 +1282,52 @@ function long_help {
 
     -m, --md5check          Check the FLAC files for unset MD5 Signatures and log the output of
                             any unset signatures.  An unset MD5 signature doesn't necessarily mean
-                            a FLAC file is corrupt, and can be repaired with a re-encoding of the
-                            said FLAC file.
+                            a FLAC file is corrupt, and can be repaired with a re-encoding of said
+                            FLAC file.
 
     -p, --prune             Delete the SEEKTABLE from each FLAC file and follow up with the removal
                             of any excess PADDING in each FLAC file.
 
-    -r, --redo              Extract the configured tags in each FLAC file and clear the rest before 
+    -g, --replaygain        Add ReplayGain tags to the FLAC files.  The ReplayGain is calculated
+                            for ALBUM and TRACK values. ReplayGain is applied via VORBIS_TAGS and
+                            as such, will require the redo, --r argument to have these tags kept
+                            in order to preserve the added ReplayGain values.  The tags added are:
+
+                                        REPLAYGAIN_REFERENCE_LOUDNESS
+                                        REPLAYGAIN_TRACK_GAIN
+                                        REPLAYGAIN_TRACK_PEAK
+                                        REPLAYGAIN_ALBUM_GAIN
+                                        REPLAYGAIN_ALBUM_PEAK
+
+                            In order for the ReplayGain values to be applied correctly, the
+                            script has to determine which FLAC files to add values by directory.
+                            What this means is that the script must add the ReplayGain values by
+                            working off the FLAC files' parent directory.  If there are some FLAC
+                            files found, the script will move up one directory and begin applying
+                            the ReplayGain values.  This is necessary in order to get the
+                            REPLAYGAIN_ALBUM_GAIN and REPLAYGAIN_ALBUM_PEAK values set correctly.
+                            Without doing this, the ALBUM and TRACK values would be identical.
+
+                            Ideally, this script would like to be able to apply the values on each
+                            FLAC file individually, but due to how metaflac determines the
+                            ReplayGain values for ALBUM values (ie with wildcard characters), this
+                            isn't simple and/or straightforward.
+
+                            A limitation of this option can now be seen.  If a user has many FLAC
+                            files under one directory (of different albums/artists), the
+                            ReplayGain ALBUM values are going to be incorrect as the script will
+                            perceive all those FLAC files to essentially be an album.  For now,
+                            this is mitigated by having your music library somewhat organized with
+                            each album housing the correct FLAC files and no others.
+
+                            In the future, this script will ideally choose which FLAC files will
+                            be processed by ARTIST and ALBUM metadata, not requiring physical
+                            directories to process said FLAC files.
+
+                            If there are any errors found while creating the ReplayGain values
+                            and/or setting the values, an error log will be produced.
+
+   -r, --redo               Extract the configured tags in each FLAC file and clear the rest before
                             retagging the file.  The default tags kept are:
 
                                         TITLE
@@ -1292,13 +1339,21 @@ function long_help {
                                         TRACKTOTAL
                                         GENRE
                                         COMPRESSION
+                                        RELEASETYPE
+                                        SOURCE
+                                        MASTERING
+                                        REPLAYGAIN_REFERENCE_LOUDNESS
+                                        REPLAYGAIN_TRACK_GAIN
+                                        REPLAYGAIN_TRACK_PEAK
+                                        REPLAYGAIN_ALBUM_GAIN
+                                        REPLAYGAIN_ALBUM_PEAK
 
                             If any FLAC files have missing tags (from those configured to be kept),
                             the file and the missing tag will be recorded in a log.
 
                             The tags that can be kept are eseentially infinite, as long as the
                             tags to be kept are set in the tag configuration located at the top of
-                            this script.
+                            this script under USER CONFIGURATION.
 
                             If this option is specified, a warning will appear upon script
                             execution.  This warning will show which of the configured TAG fields
@@ -1327,8 +1382,8 @@ function long_help {
     "find" command.  While not true multithreading, this psuedo multithreading will greatly speed
     up the processing if the host has more than one CPU.
 
-  Examples:
-    # Compress to level 8 compression and verify FLAC files
+  Invcation Examples:
+    # Compress and verify FLAC files
     $0 --compress /media/Music_Files
 
     # Same as above but check MD5 Signature of all FLAC files if all files are verified as OK
@@ -1348,8 +1403,8 @@ function long_help {
     # Clear excess tags from each FLAC file
     $0 --redo /some/path/to/files
 
-    # Compress FLAC files to level 8 compression and redo
-    # the FLAC tags without the warning/countdown
+    # Compress FLAC files and redo the FLAC tags
+    # without the warning/countdown
     $0 -c -r -d /some/path/to/files
 EOF
 }
