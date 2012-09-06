@@ -36,40 +36,41 @@ tags=(
 
 TITLE
 ARTIST
+ALBUMARTIST
 ALBUM
-DISCNUMBER
+#DISCNUMBER
 DATE
 TRACKNUMBER
-TRACKTOTAL
+#TRACKTOTAL
 GENRE
 
 # The COMPRESSION tag is a custom tag to allow
 # the script to determine which level of compression
 # the FLAC file(s) has/have been compressed at.
-COMPRESSION
+#COMPRESSION
 
 # The RELEASETYPE tag is a custom tag the author
 # of this script uses to catalogue what kind of
 # release the album is (ie, Full Length, EP,
 # Demo, etc.).
-RELEASETYPE
+#RELEASETYPE
 
 # The SOURCE tag is a custom tag the author of
 # this script uses to catalogue which source the
 # album has derived from (ie, CD, Vinyl,
 # Digital, etc.).
-SOURCE
+#SOURCE
 
 # The MASTERING tag is a custom tag the author of
 # this script uses to catalogue how the album has
 # been mastered (ie, Lossless, or Lossy).
-MASTERING
+#MASTERING
 
 # The REPLAYGAIN tags below, are added by the
 # --replaygain, -g argument.  If you want to
 # keep the replaygain tags, make sure you leave
 # these here.
-REPLAYGAIN_REFERENCE_LOUDNESS
+#REPLAYGAIN_REFERENCE_LOUDNESS
 REPLAYGAIN_TRACK_GAIN
 REPLAYGAIN_TRACK_PEAK
 REPLAYGAIN_ALBUM_GAIN
@@ -747,15 +748,15 @@ function replaygain {
 
 		# Check if FLAC files have existing ReplayGain tags
 		REPLAYGAIN_REFERENCE_LOUDNESS="$(metaflac --show-tag=REPLAYGAIN_REFERENCE_LOUDNESS "$i" \
-			| sed 's/REPLAYGAIN_REFERENCE_LOUDNESS=//')"
+			| sed 's/REPLAYGAIN_REFERENCE_LOUDNESS=//i')"
 		REPLAYGAIN_TRACK_GAIN="$(metaflac --show-tag=REPLAYGAIN_TRACK_GAIN "$i" \
-			| sed 's/REPLAYGAIN_TRACK_GAIN=//')"
+			| sed 's/REPLAYGAIN_TRACK_GAIN=//i')"
 		REPLAYGAIN_TRACK_PEAK="$(metaflac --show-tag=REPLAYGAIN_TRACK_PEAK "$i" \
-			| sed 's/REPLAYGAIN_TRACK_PEAK=//')"
+			| sed 's/REPLAYGAIN_TRACK_PEAK=//i')"
 		REPLAYGAIN_ALBUM_GAIN="$(metaflac --show-tag=REPLAYGAIN_ALBUM_GAIN "$i" \
-			| sed 's/REPLAYGAIN_ALBUM_GAIN=//')"
+			| sed 's/REPLAYGAIN_ALBUM_GAIN=//i')"
 		REPLAYGAIN_ALBUM_PEAK="$(metaflac --show-tag=REPLAYGAIN_ALBUM_PEAK "$i" \
-			| sed 's/REPLAYGAIN_ALBUM_PEAK=//')"
+			| sed 's/REPLAYGAIN_ALBUM_PEAK=//i')"
 
 		if [[ -n "$REPLAYGAIN_REFERENCE_LOUDNESS" && -n "$REPLAYGAIN_TRACK_GAIN" && \
 			  -n "$REPLAYGAIN_TRACK_PEAK" && -n "$REPLAYGAIN_ALBUM_GAIN" && \
@@ -1072,10 +1073,14 @@ function extract_vorbis_tags {
 				elif [[ -n "$(metaflac --show-tag="ALBUM_ARTIST" "$i")" ]] ; then
 					# Set a temporary variable to be easily parsed by `eval`
 					local TEMP_TAG="$(metaflac --show-tag="ALBUM_ARTIST" "$i" | sed "s/^ALBUM_ARTIST=//i")"
+				else
+					# Set a temporary variable to be easily parsed by `eval`
+					local TEMP_TAG="$(metaflac --show-tag="$j" "$i" | sed "s/^${j}=//i")"
 				fi
 			else
 				# Set a temporary variable to be easily parsed by `eval`
 				local TEMP_TAG="$(metaflac --show-tag="$j" "$i" | sed "s/^${j}=//i")"
+				echo "$j $TEMP_TAG" >> /home/jaren/echoed.txt
 			fi
 
 			# Evaluate TEMP_TAG into the dynamic tag
@@ -1114,6 +1119,9 @@ function set_vorbis_tags {
 			elif [[ -n "$(metaflac --show-tag="ALBUM_ARTIST" "$i")" ]] ; then
 				# Set a temporary variable to be easily parsed by `eval`
 				local TEMP_TAG="$(metaflac --show-tag="ALBUM_ARTIST" "$i" | sed "s/^ALBUM_ARTIST=//i")"
+			else
+				# Set a temporary variable to be easily parsed by `eval`
+				local TEMP_TAG="$(metaflac --show-tag="$j" "$i" | sed "s/^${j}=//i")"
 			fi
 		else
 			# Set a temporary variable to be easily parsed by `eval`
