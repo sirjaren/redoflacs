@@ -2,7 +2,7 @@
 
 #------------------------------------------------------------
 # Re-compress, Verify, Test, Re-tag, and Clean Up FLAC Files
-#                     Version 0.12
+#                     Version 0.12.1
 #                       sirjaren
 #------------------------------------------------------------
 
@@ -38,39 +38,39 @@ TITLE
 ARTIST
 ALBUMARTIST
 ALBUM
-#DISCNUMBER
+DISCNUMBER
 DATE
 TRACKNUMBER
-#TRACKTOTAL
+TRACKTOTAL
 GENRE
 
 # The COMPRESSION tag is a custom tag to allow
 # the script to determine which level of compression
 # the FLAC file(s) has/have been compressed at.
-#COMPRESSION
+COMPRESSION
 
 # The RELEASETYPE tag is a custom tag the author
 # of this script uses to catalogue what kind of
 # release the album is (ie, Full Length, EP,
 # Demo, etc.).
-#RELEASETYPE
+RELEASETYPE
 
 # The SOURCE tag is a custom tag the author of
 # this script uses to catalogue which source the
 # album has derived from (ie, CD, Vinyl,
 # Digital, etc.).
-#SOURCE
+SOURCE
 
 # The MASTERING tag is a custom tag the author of
 # this script uses to catalogue how the album has
 # been mastered (ie, Lossless, or Lossy).
-#MASTERING
+MASTERING
 
 # The REPLAYGAIN tags below, are added by the
 # --replaygain, -g argument.  If you want to
 # keep the replaygain tags, make sure you leave
 # these here.
-#REPLAYGAIN_REFERENCE_LOUDNESS
+REPLAYGAIN_REFERENCE_LOUDNESS
 REPLAYGAIN_TRACK_GAIN
 REPLAYGAIN_TRACK_PEAK
 REPLAYGAIN_ALBUM_GAIN
@@ -109,7 +109,7 @@ AUCDTECT_COMMAND="$(command -v auCDtect)"
 #  STATIC VARIABLES  #
 ######################
 # Version
-VERSION="0.12"
+VERSION="0.12.1"
 
 # Export COMPRESSION_LEVEL command to allow subshell access
 export COMPRESSION_LEVEL
