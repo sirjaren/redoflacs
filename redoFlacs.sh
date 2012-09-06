@@ -1080,7 +1080,6 @@ function extract_vorbis_tags {
 			else
 				# Set a temporary variable to be easily parsed by `eval`
 				local TEMP_TAG="$(metaflac --show-tag="$j" "$i" | sed "s/^${j}=//i")"
-				echo "$j $TEMP_TAG" >> /home/jaren/echoed.txt
 			fi
 
 			# Evaluate TEMP_TAG into the dynamic tag
