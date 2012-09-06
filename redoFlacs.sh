@@ -1327,7 +1327,7 @@ function long_help {
                             If there are any errors found while creating the ReplayGain values
                             and/or setting the values, an error log will be produced.
 
-   -r, --redo               Extract the configured tags in each FLAC file and clear the rest before
+    -r, --redo              Extract the configured tags in each FLAC file and clear the rest before
                             retagging the file.  The default tags kept are:
 
                                         TITLE
