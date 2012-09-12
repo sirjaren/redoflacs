@@ -169,44 +169,46 @@ REDO="false"
 ###################################
 # Displaying currently running tasks
 function title_compress_flac {
-	echo -e " ${BOLD_GREEN}*${NORMAL} Compressing FLAC files with level ${COMPRESSION_LEVEL} compression and verifying output"
+	echo -e " ${BOLD_GREEN}*${NORMAL} Compressing FLAC files with level ${COMPRESSION_LEVEL} compression and verifying output :: ${BOLD_BLUE}[${CORES} Thread(s)]${NORMAL}"
 }
 
 function title_test_replaygain {
-	echo -e " ${BOLD_GREEN}*${NORMAL} Verifying FLAC Files can have ReplayGain Tags added"
+	echo -e " ${BOLD_GREEN}*${NORMAL} Verifying FLAC Files can have ReplayGain Tags added :: ${BOLD_BLUE}[${CORES} Thread(s)]${NORMAL}"
 }
 
+# This is NOT multithreaded (1 thread only)
+# This is intentional and intended
 function title_add_replaygain {
-	echo -e " ${BOLD_GREEN}*${NORMAL} Applying ReplayGain values by album directory"
+	echo -e " ${BOLD_GREEN}*${NORMAL} Applying ReplayGain values by album directory :: ${BOLD_BLUE}[1 Thread(s)]${NORMAL}"
 }
 
 function title_analyze_tags {
-	echo -e " ${BOLD_GREEN}*${NORMAL} Analyzing FLAC Tags"
+	echo -e " ${BOLD_GREEN}*${NORMAL} Analyzing FLAC Tags :: ${BOLD_BLUE}[${CORES} Thread(s)]${NORMAL}"
 }
 
 function title_setting_tags {
-	echo -e " ${BOLD_GREEN}*${NORMAL} Setting new FLAC Tags"
+	echo -e " ${BOLD_GREEN}*${NORMAL} Setting new FLAC Tags :: ${BOLD_BLUE}[${CORES} Thread(s)]${NORMAL}"
 }
 
 function title_testing_flac {
-	echo -e " ${BOLD_GREEN}*${NORMAL} Testing the integrity of each FLAC file"
+	echo -e " ${BOLD_GREEN}*${NORMAL} Testing the integrity of each FLAC file :: ${BOLD_BLUE}[${CORES} Thread(s)]${NORMAL}"
 }
 
 function title_aucdtect_flac {
-	echo -e " ${BOLD_GREEN}*${NORMAL} Validating FLAC is not lossy sourced"
+	echo -e " ${BOLD_GREEN}*${NORMAL} Validating FLAC is not lossy sourced :: ${BOLD_BLUE}[${CORES} Thread(s)]${NORMAL}"
 }
 
 function title_md5check_flac {
-	echo -e " ${BOLD_GREEN}*${NORMAL} Verifying the MD5 Signature in each FLAC file"
+	echo -e " ${BOLD_GREEN}*${NORMAL} Verifying the MD5 Signature in each FLAC file :: ${BOLD_BLUE}[${CORES} Thread(s)]${NORMAL}"
 }
 
 function title_prune_flac {
-	echo -e " ${BOLD_GREEN}*${NORMAL} Removing the SEEKTABLE and PADDING block from each FLAC file"
+	echo -e " ${BOLD_GREEN}*${NORMAL} Removing the SEEKTABLE and PADDING block from each FLAC file :: ${BOLD_BLUE}[${CORES} Thread(s)]${NORMAL}"
 }
 
 # Error messages
 function no_flacs {
-	echo -e " ${BOLD_RED}*${NORMAL} There are not any FLAC files to process"
+	echo -e " ${BOLD_RED}*${NORMAL} There are not any FLAC files to process :: ${BOLD_BLUE}[${CORES} Thread(s)]${NORMAL}"
 }
 
 # Information relating to currently running tasks
@@ -701,6 +703,9 @@ function countdown_metadata {
 	countdown_10
 }
 
+################
+#  REPLAYGAIN  #
+################
 # Add ReplayGain to files and make sure each album disc uses the same
 # ReplayGain values (multi-disc albums have their own ReplayGain) as well
 # as make the tracks have their own ReplayGain values individually.
@@ -745,7 +750,7 @@ function replaygain {
 	# The below stuff cannot be done in parallel to prevent race conditions
 	# from making the script think some FLAC files have already had
 	# ReplayGain tags added to them.  Due to the nature of processing the
-	# album tags as a whole, this must be done without multithreading.
+	# album tags as a whole, this MUST be done without multithreading.
 
 	title_add_replaygain
 
@@ -812,6 +817,9 @@ function replaygain {
 	fi
 }
 
+#############################
+#  COMPRESS & VERIFY FLACS  #
+#############################
 # Compress FLAC files and verify output
 function compress_flacs {
 	title_compress_flac
@@ -880,6 +888,9 @@ function compress_flacs {
 	fi
 }
 
+################
+#  TEST FLACS  #
+################
 # Test FLAC files
 function test_flacs {
 	title_testing_flac
@@ -922,6 +933,9 @@ function test_flacs {
 	fi
 }
 
+#######################################
+#  CHECK FLAC VALIDITY WITH AUCDTECT  #
+#######################################
 # Use auCDtect to check FLAC validity
 function aucdtect {
 	title_aucdtect_flac
@@ -1019,6 +1033,9 @@ function aucdtect {
 	fi
 }
 
+#########################
+#  CHECK MD5 SIGNATURE  #
+#########################
 # Check for unset MD5 Signatures in FLAC files
 function md5_check {
 	title_md5check_flac
@@ -1068,6 +1085,9 @@ function md5_check {
 	fi  
 }
 
+###############
+#  REDO TAGS  #
+###############
 # Check for missing tags and retag FLAC files if all files
 # are not missing tags
 function redo_tags {
@@ -1337,7 +1357,7 @@ function redo_tags {
 	############
 
 	# Recreate the tags array as it may have added the
-	# COVEART tag.  This way, we ensure that the COVERART
+	# COVERART tag.  This way, we ensure that the COVERART
 	# tag is, in fact, temporary.
 	eval "tags=(${EXPORT_TAG[*]})"
 
@@ -1402,6 +1422,9 @@ function redo_tags {
 	find "$DIRECTORY" -name "*.[Ff][Ll][Aa][Cc]" -print0 | xargs -0 -n 1 -P "$CORES" bash -c 'retag_flacs "$@"' --
 }
 
+#################
+#  PRUNE FLACS  #
+#################
 # Clear excess FLAC metadata from each FLAC file
 function prune_flacs {
 	title_prune_flac
@@ -1462,6 +1485,9 @@ function prune_flacs {
 	fi
 }
 
+#######################
+#  DISPLAY LONG HELP  #
+#######################
 # Display a lot of help
 function long_help {
 	cat << EOF
@@ -1558,6 +1584,10 @@ function long_help {
                             be processed by ARTIST and ALBUM metadata, not requiring physical
                             directories to process said FLAC files.
 
+                            Due to the nature of how ALBUM values are processed, this option cannot
+                            use more than one thread, so the CORES configuration option will not be
+                            honored -- enforcing only one thread.
+
                             If there are any errors found while creating the ReplayGain values
                             and/or setting the values, an error log will be produced.
 
@@ -1638,6 +1668,9 @@ function long_help {
 EOF
 }
 
+########################
+#  DISPLAY SHORT HELP  #
+########################
 # Display short help
 function short_help {
 	echo "  Usage: $0 [OPTION] [OPTION]... [PATH_TO_FLAC(s)]"
@@ -1656,6 +1689,9 @@ function short_help {
 	echo "  This is the short help; for details use '$0 --help' or '$0 -h'"
 }
 
+############################
+#  DISPLAY SCRIPT VERSION  #
+############################
 # Display script version
 function print_version {
 	echo "Version $VERSION"
@@ -1664,7 +1700,6 @@ function print_version {
 #######################
 #  PRE-SCRIPT CHECKS  #
 #######################
-
 # Add case where only one argument is specified
 if [[ "$#" -eq 1 ]] ; then
 	case "$1" in
@@ -1761,6 +1796,10 @@ if [[ -z "$FIND_FLACS" ]] ; then
 	no_flacs
 	exit 0
 fi
+
+###########################
+#  END PRE-SCRIPT CHECKS  #
+###########################
 
 ##################
 #  Begin Script  #
