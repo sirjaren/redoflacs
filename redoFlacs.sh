@@ -36,7 +36,6 @@ tags=(
 
 TITLE
 ARTIST
-ALBUMARTIST
 ALBUM
 DISCNUMBER
 DATE
@@ -78,6 +77,15 @@ REPLAYGAIN_ALBUM_PEAK
 
 )
 
+# Set whether to remove embedded artwork within FLAC
+# files.  By default, this script will remove any
+# artwork it can find, whether it's in the legacy
+# COVERART tag or METADATA_BLOCK_PICTURE.  Legal
+# values are:
+#    "true"  (Remove Artwork)
+#    "false" (Keep Artwork)
+REMOVE_ARTWORK="true"
+
 # Set the type of COMPRESSION to compress the
 # FLAC files.  Numbers range from 1-8, with 1 being
 # the lowest compression and 8 being the highest
@@ -111,7 +119,10 @@ AUCDTECT_COMMAND="$(command -v auCDtect)"
 # Version
 VERSION="0.12.2"
 
-# Export COMPRESSION_LEVEL command to allow subshell access
+# Export REMOVE_ARTWORK to allow subshell access
+export REMOVE_ARTWORK
+
+# Export COMPRESSION_LEVEL to allow subshell access
 export COMPRESSION_LEVEL
 
 # Export auCDtect command to allow subshell access
@@ -701,7 +712,8 @@ function replaygain {
 
 			# Test to make sure FLAC file can have ReplayGain tags added to it
 			if [[ "$CHECK_FLAC" == "FLAC__METADATA_CHAIN_STATUS_NOT_A_FLAC_FILE" ]] ; then
-				echo -e "[[$i]]\n" "The above file does not appear to be a FLAC file\n" >> "$REPLAY_TEST_ERRORS"
+				echo -e "[[$i]]\n" "The above file does not appear to be a FLAC file" >> "$REPLAY_TEST_ERRORS"
+				echo -e "------------------------------------------------------------------" >> "$REPLAY_TEST_ERRORS"
 				# File is not a FLAC file, display failed
 				print_failed_flac
 			else
@@ -774,7 +786,8 @@ function replaygain {
 			ERROR="$((metaflac --add-replay-gain "${FLAC_LOCATION}"/*.[Ff][Ll][Aa][Cc]) 2>&1)"
 			if [[ -n "$ERROR" ]] ; then
 				print_failed_replaygain
-				echo -e "[[$FLAC_LOCATION]]\n" "$ERROR\n" >> "$REPLAY_ADD_ERRORS"
+				echo -e "[[$FLAC_LOCATION]]\n" "$ERROR" >> "$REPLAY_ADD_ERRORS"
+				echo -e "------------------------------------------------------------------" >> "$REPLAY_ADD_ERRORS"
 				# Set variable to let script know this album failed and not NOT
 				# continue checking the files in this album
 				REPLAYGAIN_ALBUM_FAILED="${ALBUM_BASENAME} FAILED"
@@ -823,7 +836,8 @@ function compress_flacs {
 				ERROR="$((flac -f -${COMPRESSION_LEVEL} -V -s "$i") 2>&1)"
 				if [[ ! -z "$ERROR" ]] ; then
 					print_failed_flac
-					echo -e "[[$i]]\n"  "$ERROR\n" >> "$VERIFY_ERRORS"
+					echo -e "[[$i]]\n"  "$ERROR" >> "$VERIFY_ERRORS"
+					echo -e "------------------------------------------------------------------" >> "$VERIFY_ERRORS"
 				else
 					metaflac --remove-tag=COMPRESSION "$i"
 					metaflac --set-tag=COMPRESSION=${COMPRESSION_LEVEL} "$i"
@@ -838,7 +852,8 @@ function compress_flacs {
 					ERROR="$((flac -ts "$i") 2>&1)"
 					if [[ ! -z "$ERROR" ]] ; then
 						print_failed_flac
-						echo -e "[[$i]]\n"  "$ERROR\n" >> "$VERIFY_ERRORS"
+						echo -e "[[$i]]\n"  "$ERROR" >> "$VERIFY_ERRORS"
+						echo -e "------------------------------------------------------------------" >> "$VERIFY_ERRORS"
 					else 
 						print_ok_flac
 					fi
@@ -881,7 +896,8 @@ function test_flacs {
 			ERROR="$((flac -ts "$i") 2>&1)"
 			if [[ ! -z "$ERROR" ]] ; then
 				print_failed_flac
-				echo -e "[[$i]]\n"  "$ERROR\n" >> "$TEST_ERRORS"
+				echo -e "[[$i]]\n"  "$ERROR" >> "$TEST_ERRORS"
+				echo -e "------------------------------------------------------------------" >> "$TEST_ERRORS"
 			else
 				print_ok_flac
 			fi
@@ -943,7 +959,8 @@ function aucdtect {
 			CHECK_FLAC="$(metaflac --show-md5sum "$i" 2>&1 | grep -o "FLAC__METADATA_CHAIN_STATUS_NOT_A_FLAC_FILE")"
 
 			if [[ "$CHECK_FLAC" == "FLAC__METADATA_CHAIN_STATUS_NOT_A_FLAC_FILE" ]] ; then
-				echo -e "[[$i]]\n"  "The above file does not appear to be a FLAC file\n" >> "$AUCDTECT_ERRORS"
+				echo -e "[[$i]]\n"  "The above file does not appear to be a FLAC file" >> "$AUCDTECT_ERRORS"
+				echo -e "------------------------------------------------------------------" >> "$AUCDTECT_ERRORS"
 				# File is not a FLAC file, display failed
 				print_failed_flac
 			else
@@ -955,7 +972,8 @@ function aucdtect {
 				# files with a higher resolution than a CD.
 				if [[ "$BITS" -gt "16" ]] ; then
 					print_aucdtect_skip
-					echo -e "[[$i]]\n"  "The above file has a bit depth greater than 16 and was skipped\n" >> "$AUCDTECT_ERRORS"
+					echo -e "[[$i]]\n"  "The above file has a bit depth greater than 16 and was skipped" >> "$AUCDTECT_ERRORS"
+					echo -e "------------------------------------------------------------------" >> "$AUCDTECT_ERRORS"
 					continue
 				fi
 
@@ -972,7 +990,8 @@ function aucdtect {
 
 				if [[ "$ERROR" != "This track looks like CDDA with probability 100%" ]] ; then
 					print_aucdtect_issue
-					echo -e "[[$i]]\n"  "$ERROR\n" >> "$AUCDTECT_ERRORS"
+					echo -e "[[$i]]\n"  "$ERROR" >> "$AUCDTECT_ERRORS"
+					echo -e "------------------------------------------------------------------" >> "$AUCDTECT_ERRORS"
 				else
 					print_ok_flac
 				fi
@@ -1019,9 +1038,11 @@ function md5_check {
 			if [[ "$MD5_SUM" == "00000000000000000000000000000000" ]] ; then
 				print_failed_flac
 				echo -e "[[$i]]\n"  "MD5 Signature: $MD5_SUM" >> "$MD5_ERRORS"
+				echo -e "------------------------------------------------------------------" >> "$MD5_ERRORS"
 			elif [[ "$MD5_NOT_FLAC" == "FLAC__METADATA_CHAIN_STATUS_NOT_A_FLAC_FILE" ]] ; then
 				print_failed_flac
-				echo -e "[[$i]]\n"  "The above file does not appear to be a FLAC file\n" >> "$MD5_ERRORS"
+				echo -e "[[$i]]\n"  "The above file does not appear to be a FLAC file" >> "$MD5_ERRORS"
+				echo -e "------------------------------------------------------------------" >> "$MD5_ERRORS"
 			else
 				print_ok_flac
 			fi
@@ -1040,130 +1061,263 @@ function md5_check {
 	fi  
 }
 
-# Extract wanted FLAC metadata
-function extract_vorbis_tags {
-	# Check if file is a FLAC file
-	CHECK_FLAC="$(metaflac --show-md5sum "$i" 2>&1 | grep -o "FLAC__METADATA_CHAIN_STATUS_NOT_A_FLAC_FILE")"
-
-	if [[ "$CHECK_FLAC" == "FLAC__METADATA_CHAIN_STATUS_NOT_A_FLAC_FILE" ]] ; then
-		echo -e "[[$i]]\n"  "The above file does not appear to be a FLAC file\n" >> "$METADATA_ERRORS"
-		# File is not a FLAC file, display failed
-		print_failed_flac
-	else
-		# Recreate the tags array so it can be used by the child process
-		eval "tags=(${EXPORT_TAG[*]})"
-		# Iterate through the tag array and test to see if each tag is set
-		for j in "${tags[@]}" ; do
-			# Check if ALBUMARTIST is two words as well (ie 'album artist')
-			if [[ "$j" == "ALBUMARTIST" ]] ; then
-				# Check for 'album artist' and 'album_artist' tag variable (case insensitive)
-				# "album artist"
-				if [[ -n "$(metaflac --show-tag="album artist" "$i")" ]] ; then
-					# Set a temporary variable to be easily parsed by `eval`
-					local TEMP_TAG="$(metaflac --show-tag="album artist" "$i" | sed "s/^album artist=//i")"
-				# "ALBUM ARTIST"
-				elif [[ -n "$(metaflac --show-tag="ALBUM ARTIST" "$i")" ]] ; then
-					# Set a temporary variable to be easily parsed by `eval`
-					local TEMP_TAG="$(metaflac --show-tag="ALBUM ARTIST" "$i" | sed "s/^ALBUM ARTIST=//i")"
-				# "album_artist"
-				elif [[ -n "$(metaflac --show-tag="album_artist" "$i")" ]] ; then
-					# Set a temporary variable to be easily parsed by `eval`
-					local TEMP_TAG="$(metaflac --show-tag="album_artist" "$i" | sed "s/^album_artist=//i")"
-				# "ALBUM_ARTIST"
-				elif [[ -n "$(metaflac --show-tag="ALBUM_ARTIST" "$i")" ]] ; then
-					# Set a temporary variable to be easily parsed by `eval`
-					local TEMP_TAG="$(metaflac --show-tag="ALBUM_ARTIST" "$i" | sed "s/^ALBUM_ARTIST=//i")"
-				else
-					# Set a temporary variable to be easily parsed by `eval`
-					local TEMP_TAG="$(metaflac --show-tag="$j" "$i" | sed "s/^${j}=//i")"
-				fi
-			else
-				# Set a temporary variable to be easily parsed by `eval`
-				local TEMP_TAG="$(metaflac --show-tag="$j" "$i" | sed "s/^${j}=//i")"
-			fi
-
-			# Evaluate TEMP_TAG into the dynamic tag
-			eval "${j}"_TAG='"${TEMP_TAG}"'
-			# If tags are not found, log output
-			if [[ -z "$(eval "echo "\$${j}_TAG"")" ]] ; then
-				echo -e "${j} tag not found for $i" >> "$METADATA_ERRORS"
-			fi
-		done
-		# Done analyzing FLAC file tags
-		print_done_flac
-	fi
-}
-export -f extract_vorbis_tags
-
-# Set the FLAC metadata to each FLAC file
-function set_vorbis_tags {
-	# Iterate through the tag array and set a variable for each tag
-	for j in "${tags[@]}" ; do
-		# Check if ALBUMARTIST is two words as well (ie 'album artist')
-		if [[ "$j" == "ALBUMARTIST" ]] ; then
-			# Check for 'album artist' and 'album_artist' tag variable (case insensitive)
-			# "album artist"
-			if [[ -n "$(metaflac --show-tag="album artist" "$i")" ]] ; then
-				# Set a temporary variable to be easily parsed by `eval`
-				local TEMP_TAG="$(metaflac --show-tag="album artist" "$i" | sed "s/^album artist=//i")"
-			# "ALBUM ARTIST"
-			elif [[ -n "$(metaflac --show-tag="ALBUM ARTIST" "$i")" ]] ; then
-				# Set a temporary variable to be easily parsed by `eval`
-				local TEMP_TAG="$(metaflac --show-tag="ALBUM ARTIST" "$i" | sed "s/^ALBUM ARTIST=//i")"
-			# "album_artist"
-			elif [[ -n "$(metaflac --show-tag="album_artist" "$i")" ]] ; then
-				# Set a temporary variable to be easily parsed by `eval`
-				local TEMP_TAG="$(metaflac --show-tag="album_artist" "$i" | sed "s/^album_artist=//i")"
-			# "ALBUM_ARTIST"
-			elif [[ -n "$(metaflac --show-tag="ALBUM_ARTIST" "$i")" ]] ; then
-				# Set a temporary variable to be easily parsed by `eval`
-				local TEMP_TAG="$(metaflac --show-tag="ALBUM_ARTIST" "$i" | sed "s/^ALBUM_ARTIST=//i")"
-			else
-				# Set a temporary variable to be easily parsed by `eval`
-				local TEMP_TAG="$(metaflac --show-tag="$j" "$i" | sed "s/^${j}=//i")"
-			fi
-		else
-			# Set a temporary variable to be easily parsed by `eval`
-			local TEMP_TAG="$(metaflac --show-tag="$j" "$i" | sed "s/^${j}=//i")"
-		fi
-
-		# Evaluate TEMP_TAG into the dynamic tag
-		eval "${j}"_SET='"${TEMP_TAG}"'
-	done
-
-	# Remove all the tags
-	metaflac --remove-all "$i"
-
-	# Iterate through the tag array and add the saved tags back
-	for j in "${tags[@]}" ; do
-		metaflac --set-tag="${j}"="$(eval "echo \$${j}_SET")" "$i"
-	done
-}
-export -f set_vorbis_tags
-
 # Check for missing tags and retag FLAC files if all files
 # are not missing tags
 function redo_tags {
-	title_analyze_tags
-
 	# Keep SIGINT from exiting the script (Can cause all tags
 	# to be lost if done when tags are being removed!)
 	trap '' SIGINT
 
+	################
+	# ANALYZE TAGS #
+	################
+
+	# Display why COVERART tag should not be used
+	function coverart_warning {
+		echo -e " ${YELLOW}*${NORMAL} The COVERART tag is deprecated and should not be"
+		echo -e " ${YELLOW}*${NORMAL} used. Instead, consider migrating over to the new format:"
+		echo -e " ${YELLOW}*${NORMAL} METADATA_BLOCK_PICTURE, using modern tag editors. Read:"
+		echo -e " ${YELLOW}*${NORMAL} http://wiki.xiph.org/VorbisComment#Unofficial_COVERART_field_.28deprecated.29"
+		echo -e " ${YELLOW}*${NORMAL} for more details."
+	}
+
+	# Check if COVERART exists in the tag array.  Notify user
+	# of its deprecation and advise against using it, preferring
+	# METADATA_BLOCK_PICTURE
+	for j in "${tags[@]}" ; do
+		if [[ "$j" == "COVERART" ]] ; then
+			# If REMOVE_ARTWORK is "true" (remove the artwork), then
+			# exit and warn the user you can't specify whether you want to
+			# remove artwork, yet keep the COVERART tag in USER CONFIGURATION
+			if [[ "$REMOVE_ARTWORK" == "true" ]] ; then
+				# Display COVERART tag warning
+				coverart_warning
+
+				echo -e "\n ${BOLD_RED}*${NORMAL} It appears you have REMOVE_ARTWORK set to \"true\" under"
+				echo -e " ${BOLD_RED}*${NORMAL} USER CONFIGURATION, yet COVERART is specified as one"
+				echo -e " ${BOLD_RED}*${NORMAL} (or more) of the FLAC tags to be kept. Please choose either"
+				echo -e " ${BOLD_RED}*${NORMAL} to keep album artwork (ie REMOVE_ARTWORK=\"false\") or remove"
+				echo -e " ${BOLD_RED}*${NORMAL} the COVERART tag under the USER CONFIGURATION portion of this"
+				echo -e " ${BOLD_RED}*${NORMAL} script."
+				exit 1
+			else
+				# Create COVERART_WARNING variable, so script can append
+				# the coverart_warning function after completion as well as
+				# determine the correct tag array to use (whether we should
+				# add COVERART or not)
+				COVERART_WARNING="true"
+			fi
+		fi
+	done
+
 	function analyze_tags {
-		# Recreate the tags array so it can be used by the child process
-		eval "tags=(${EXPORT_TAG[*]})"
-		for i ; do
-			print_analyzing_tags
-			extract_vorbis_tags
-		done
+		# Check if file is a FLAC file
+		CHECK_FLAC="$(metaflac --show-md5sum "$i" 2>&1 | grep -o "FLAC__METADATA_CHAIN_STATUS_NOT_A_FLAC_FILE")"
+
+		if [[ "$CHECK_FLAC" == "FLAC__METADATA_CHAIN_STATUS_NOT_A_FLAC_FILE" ]] ; then
+			echo -e "[[$i]]\n"  "The above file does not appear to be a FLAC file" >> "$METADATA_ERRORS"
+			echo -e "------------------------------------------------------------------" >> "$METADATA_ERRORS"
+			# File is not a FLAC file, display failed
+			print_failed_flac
+		else
+			# Recreate the tags array so it can be used by the child process
+			eval "tags=(${EXPORT_TAG[*]})"
+
+			# Iterate through each tag field and check if tag is missing
+			for j in "${tags[@]}" ; do
+				# Check if ALBUMARTIST is in tag array and apply operations on
+				# the tag field if it exists
+				if [[ "$j" == "ALBUMARTIST" ]] ; then
+					# ALBUMARTIST exists in tag array so allow script to check the
+					# various naming conventions within the FLAC files (ie,
+					# 'album artist' or 'album_artist')
+
+					# "ALBUMARTIST"
+					if [[ -n "$(metaflac --show-tag=ALBUMARTIST "$i")" ]] ; then
+						# Set a temporary variable to be easily parsed by `eval`
+						local TEMP_TAG="$(metaflac --show-tag=ALBUMARTIST "$i" | sed "s/^ALBUMARTIST=//i")"
+					# "album artist"
+					elif [[ -n "$(metaflac --show-tag="album artist" "$i")" ]] ; then
+						# Set a temporary variable to be easily parsed by `eval`
+						local TEMP_TAG="$(metaflac --show-tag="album artist" "$i" | sed "s/^album artist=//i")"
+					# "album_artist"
+					elif [[ -n "$(metaflac --show-tag="album_artist" "$i")" ]] ; then
+						# Set a temporary variable to be easily parsed by `eval`
+						local TEMP_TAG="$(metaflac --show-tag="album_artist" "$i" | sed "s/^album_artist=//i")"
+					fi
+				else
+					# Set a temporary variable to be easily parsed by `eval`
+					local TEMP_TAG="$(metaflac --show-tag="$j" "$i" | sed "s/^${j}=//i")"
+				fi
+
+				# Evaluate TEMP_TAG into the dynamic tag
+				eval "${j}"_TAG='"${TEMP_TAG}"'
+
+				# If tags are not found, log output
+				if [[ -z "$(eval "echo "\$${j}_TAG"")" ]] ; then
+					echo -e "${j} tag not found for $i" >> "$METADATA_ERRORS"
+					echo -e "------------------------------------------------------------------" >> "$METADATA_ERRORS"
+				fi
+			done
+		fi
 	}
 	export -f analyze_tags
 
-	# Run the above function with the configured threads (multithreaded)
-	find "$DIRECTORY" -name "*.[Ff][Ll][Aa][Cc]" -print0 | xargs -0 -n 1 -P "$CORES" bash -c 'analyze_tags "$@"' --
+	function analyze_tags_dont_log_coverart {
+		# Check if file is a FLAC file
+		CHECK_FLAC="$(metaflac --show-md5sum "$i" 2>&1 | grep -o "FLAC__METADATA_CHAIN_STATUS_NOT_A_FLAC_FILE")"
 
-	if [[ -f "$METADATA_ERRORS" ]] ; then
+		if [[ "$CHECK_FLAC" == "FLAC__METADATA_CHAIN_STATUS_NOT_A_FLAC_FILE" ]] ; then
+			echo -e "[[$i]]\n"  "The above file does not appear to be a FLAC file" >> "$METADATA_ERRORS"
+			echo -e "------------------------------------------------------------------" >> "$METADATA_ERRORS"
+			# File is not a FLAC file, display failed
+			print_failed_flac
+		else
+			# Recreate the tags array so it can be used by the child process
+			eval "tags=(${EXPORT_TAG[*]})"
+
+			# Album artwork is to be kept so preserve COVERART
+			tags=( "${tags[@]}" COVERART )
+
+			# Iterate through each tag field and check if tag is missing (except
+			# for the COVERART tag)
+			for j in "${tags[@]}" ; do
+				# Check if ALBUMARTIST is in tag array and apply operations on
+				# the tag field if it exists
+				if [[ "$j" == "ALBUMARTIST" ]] ; then
+					# ALBUMARTIST exists in tag array so allow script to check the
+					# various naming conventions within the FLAC files (ie,
+					# 'album artist' or 'album_artist')
+
+					# "ALBUMARTIST"
+					if [[ -n "$(metaflac --show-tag=ALBUMARTIST "$i")" ]] ; then
+						# Set a temporary variable to be easily parsed by `eval`
+						local TEMP_TAG="$(metaflac --show-tag=ALBUMARTIST "$i" | sed "s/^ALBUMARTIST=//i")"
+					# "album artist"
+					elif [[ -n "$(metaflac --show-tag="album artist" "$i")" ]] ; then
+						# Set a temporary variable to be easily parsed by `eval`
+						local TEMP_TAG="$(metaflac --show-tag="album artist" "$i" | sed "s/^album artist=//i")"
+					# "album_artist"
+					elif [[ -n "$(metaflac --show-tag="album_artist" "$i")" ]] ; then
+						# Set a temporary variable to be easily parsed by `eval`
+						local TEMP_TAG="$(metaflac --show-tag="album_artist" "$i" | sed "s/^album_artist=//i")"
+					fi
+				else
+					# Set a temporary variable to be easily parsed by `eval`
+					local TEMP_TAG="$(metaflac --show-tag="$j" "$i" | sed "s/^${j}=//i")"
+				fi
+
+				# Evaluate TEMP_TAG into the dynamic tag
+				eval "${j}"_TAG='"${TEMP_TAG}"'
+
+				# If COVERART_TAG is not null, then log file that has
+				# the COVERART tag embedded within it about deprecation
+				if [[ -n "$COVERART_TAG" ]] ; then
+					echo "$i" >> "$METADATA_ERRORS"
+					echo -e "\"${j}\" tag is DEPRECATED in above file. Consider migrating to" >> "$METADATA_ERRORS"
+					echo -e "the new format: METADATA_BLOCK_PICTURE." >> "$METADATA_ERRORS"
+					echo -e "------------------------------------------------------------------" >> "$METADATA_ERRORS"
+				fi
+
+				# If tags are not found, log output. Skip output
+				# of COVERART tag as this is a temporary addition to
+				# the tag array (for processing legacy artwork)
+				if [[ -z "$(eval "echo "\$${j}_TAG"")" && "${j}" != "COVERART" ]] ; then
+					echo -e "${j} tag not found for $i" >> "$METADATA_ERRORS"
+					echo -e "------------------------------------------------------------------" >> "$METADATA_ERRORS"
+				fi
+			done
+		fi
+	}
+	export -f analyze_tags_dont_log_coverart
+
+	# If COVERART was specified under USER CONFIGURATION
+	# set the tag array accordingly and test whether there
+	# are missing tags in each FLAC file
+	if [[ "$COVERART_WARNING" == "true" ]] ; then
+		title_analyze_tags
+
+		# COVERART is already in the tag array. Implies album
+		# artwork is to be kept, so log if COVERART tag is missing
+		# Function check_tags to allow multithreading
+		function check_tags {
+			for i ; do
+				# Print script operation title
+				print_analyzing_tags
+
+				# Analyze FLACs for missing tags
+				analyze_tags
+
+				# Done analyzing FLAC file tags
+				print_done_flac
+			done
+		}
+		export -f check_tags
+	else
+		# COVERART is not in the tag array, so add it if album artwork
+		# is to be kept
+		if [[ "$REMOVE_ARTWORK" == "false" ]] ; then
+			title_analyze_tags
+
+			# Analyze tags but don't log COVERART is missing tag
+			# Function check_tags to allow multithreading
+			function check_tags {
+				for i ; do
+					# Print script operation title
+					print_analyzing_tags
+
+					# Analyze FLACs for missing tags
+					# (except for COVERART tag)
+					analyze_tags_dont_log_coverart
+
+					# Done analyzing FLAC file tags
+					print_done_flac
+				done
+			}
+			export -f check_tags
+		else
+			title_analyze_tags
+
+			# Album artwork is NOT kept, so process tag fields, omitting COVERART
+			# Function check_tags to allow multithreading
+			function check_tags {
+				for i ; do
+					# Print script operation title
+					print_analyzing_tags
+
+					# Analyze FLACs for missing tags
+					analyze_tags
+
+					# Done analyzing FLAC file tags
+					print_done_flac
+				done
+			}
+			export -f check_tags
+		fi
+	fi
+
+	# Run the "check_tags" function with the configured threads (multithreaded)
+	find "$DIRECTORY" -name "*.[Ff][Ll][Aa][Cc]" -print0 | xargs -0 -n 1 -P "$CORES" bash -c 'check_tags "$@"' --
+
+	# Test for DEPRECATED tag, COVERART in METADATA_ERROR log.  If it
+	# exists, set COVERART_WARNING variable to make script output
+	# warning upon completion
+	grep -sq METADATA_BLOCK_PICTURE "$METADATA_ERRORS"
+	if [[ $? -eq 0 ]] ; then
+		COVERART_WARNING="true"
+	fi
+
+	if [[ -f "$METADATA_ERRORS"  && "$COVERART_WARNING" == "true" ]] ; then
+		# Display COVERART warning function and metadata issues
+		echo
+		coverart_warning
+		echo -e "\n ${BOLD_RED}*${NORMAL} Some FLAC files have missing tags or there were"
+		echo -e " ${BOLD_RED}*${NORMAL} issues with some of the FLAC files, please check:"
+		echo -e " ${BOLD_RED}*${NORMAL} \"$METADATA_ERRORS\" for details."
+		echo -e " ${BOLD_RED}*${NORMAL} Not Re-Tagging files."
+		exit 1
+	elif [[ -f "$METADATA_ERRORS" ]] ; then
+		# Just display metadata issues
 		echo -e "\n ${BOLD_RED}*${NORMAL} Some FLAC files have missing tags or there were"
 		echo -e " ${BOLD_RED}*${NORMAL} issues with some of the FLAC files, please check:"
 		echo -e " ${BOLD_RED}*${NORMAL} \"$METADATA_ERRORS\" for details."
@@ -1171,21 +1325,74 @@ function redo_tags {
 		exit 1
 	fi
 
+	############
+	# SET TAGS #
+	############
+
+	# Recreate the tags array as it may have added the
+	# COVEART tag.  This way, we ensure that the COVERART
+	# tag is, in fact, temporary.
+	eval "tags=(${EXPORT_TAG[*]})"
+
 	title_setting_tags
 
-	function set_tags {
+	# Set the FLAC metadata to each FLAC file
+	function remove_set_tags {
+		# Iterate through the tag array and set a variable for each tag
+		for j in "${tags[@]}" ; do
+			# Check if ALBUMARTIST is in tag array and apply operations on
+			# the tag field if it exists
+			if [[ "$j" == "ALBUMARTIST" ]] ; then
+				# ALBUMARTIST exists in tag array so allow script to check the
+				# various naming conventions within the FLAC files (ie,
+				# 'album artist' or 'album_artist')
+
+				# "ALBUMARTIST"
+				if [[ -n "$(metaflac --show-tag=ALBUMARTIST "$i")" ]] ; then
+					# Set a temporary variable to be easily parsed by `eval`
+					local TEMP_TAG="$(metaflac --show-tag=ALBUMARTIST "$i" | sed "s/^ALBUMARTIST=//i")"
+				# "album artist"
+				elif [[ -n "$(metaflac --show-tag="album artist" "$i")" ]] ; then
+					# Set a temporary variable to be easily parsed by `eval`
+					local TEMP_TAG="$(metaflac --show-tag="album artist" "$i" | sed "s/^album artist=//i")"
+				# "album_artist"
+				elif [[ -n "$(metaflac --show-tag="album_artist" "$i")" ]] ; then
+					# Set a temporary variable to be easily parsed by `eval`
+					local TEMP_TAG="$(metaflac --show-tag="album_artist" "$i" | sed "s/^album_artist=//i")"
+				fi
+			else
+				# Set a temporary variable to be easily parsed by `eval`
+				local TEMP_TAG="$(metaflac --show-tag="$j" "$i" | sed "s/^${j}=//i")"
+			fi
+
+			# Evaluate TEMP_TAG into the dynamic tag
+			eval "${j}"_SET='"${TEMP_TAG}"'
+		done
+	
+		# Remove all the tags
+		metaflac --remove --block-type=VORBIS_COMMENT "$i"
+
+		# Iterate through the tag array and add the saved tags back
+		for j in "${tags[@]}" ; do
+			metaflac --set-tag="${j}"="$(eval "echo \$${j}_SET")" "$i"
+		done
+	}
+	export -f remove_set_tags
+
+	# Function retag_flacs to allow multithreading
+	function retag_flacs {
 		# Recreate the tags array so it can be used by the child process
 		eval "tags=(${EXPORT_TAG[*]})"
 		for i ; do
 			print_setting_tags
-			set_vorbis_tags
+			remove_set_tags
 			print_ok_flac
 		done
 	}
-	export -f set_tags
+	export -f retag_flacs
 	
 	# Run the above function with the configured threads (multithreaded)
-	find "$DIRECTORY" -name "*.[Ff][Ll][Aa][Cc]" -print0 | xargs -0 -n 1 -P "$CORES" bash -c 'set_tags "$@"' --
+	find "$DIRECTORY" -name "*.[Ff][Ll][Aa][Cc]" -print0 | xargs -0 -n 1 -P "$CORES" bash -c 'retag_flacs "$@"' --
 }
 
 # Clear excess FLAC metadata from each FLAC file
@@ -1207,6 +1414,16 @@ function prune_flacs {
 	trap prune_abort SIGINT
 
 	function prune_f {
+		# Don't remove artwork if user wants it kept.  We don't have to check
+		# for the legacy COVERART tag as we are NOT removing any VORBIS_COMMENTs.
+		if [[ "$REMOVE_ARTWORK" == "true" ]] ; then
+			# Remove artwork (exported for subshell access)
+			export DONT_PRUNE_FLAC_METADATA="STREAMINFO,VORBIS_COMMENT"
+		else
+			# Don't remove artwork (exported for subshell access)
+			export DONT_PRUNE_FLAC_METADATA="STREAMINFO,PICTURE,VORBIS_COMMENT"
+		fi
+
 		for i ; do
 			print_prune_flac
 
@@ -1214,12 +1431,14 @@ function prune_flacs {
 			CHECK_FLAC="$(metaflac --show-md5sum "$i" 2>&1 | grep -o "FLAC__METADATA_CHAIN_STATUS_NOT_A_FLAC_FILE")"
 
 			if [[ "$CHECK_FLAC" == "FLAC__METADATA_CHAIN_STATUS_NOT_A_FLAC_FILE" ]] ; then
-				echo -e "[[$i]]\n"  "The above file does not appear to be a FLAC file\n" >> "$PRUNE_ERRORS"
+				echo -e "[[$i]]\n"  "The above file does not appear to be a FLAC file" >> "$PRUNE_ERRORS"
+				echo -e "------------------------------------------------------------------" >> "$PRUNE_ERRORS"
 				# File is not a FLAC file, display failed
 				print_failed_flac
 			else
-				metaflac --remove --block-type=SEEKTABLE "$i"
-				metaflac --remove --dont-use-padding --block-type=PADDING "$i"
+				# Remove all information but STREAMINFO,VORBIS_COMMENTs, and
+				# possibly METADATA_BLOCK_PICTURE
+				metaflac --remove --dont-use-padding --except-block-type="${DONT_PRUNE_FLAC_METADATA}" "$i"
 				print_ok_flac
 			fi
 		done
@@ -1228,6 +1447,7 @@ function prune_flacs {
 	
 	# Run the above function with the configured threads (multithreaded)
 	find "$DIRECTORY" -name "*.[Ff][Ll][Aa][Cc]" -print0 | xargs -0 -n 1 -P "$CORES" bash -c 'prune_f "$@"' --
+
 	if [[ -f "$PRUNE_ERRORS" ]] ; then
 		echo -e "\n ${BOLD_RED}*${NORMAL} There were issues with some of the FLAC files,"
 		echo -e " ${BOLD_RED}*${NORMAL} please check:"
@@ -1610,4 +1830,10 @@ fi
 
 if [[ "$PRUNE" == "true" ]] ; then
 	prune_flacs
+fi
+
+# Display warning about legacy COVERART tag, if applicable
+if [[ "$COVERART_WARNING" == "true" ]] ; then
+	echo
+	coverart_warning
 fi
