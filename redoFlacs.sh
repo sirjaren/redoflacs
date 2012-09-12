@@ -32,10 +32,13 @@ tags=(
 # The default is listed below.
 # Be sure not to delete the parenthesis ")" below
 # or put wanted tags below it! Another common tag
-# not added by default is ALBUMARTIST.
+# not added by default is ALBUMARTIST.  Uncomment
+# ALBUMARTIST below to allow script to keep this
+# tag.
 
 TITLE
 ARTIST
+#ALBUMARTIST
 ALBUM
 DISCNUMBER
 DATE
@@ -688,7 +691,11 @@ function countdown_metadata {
 	echo -e " ${YELLOW}*${NORMAL} CAUTION! These are the tag fields that will be kept"
 	echo -e " ${YELLOW}*${NORMAL} when re-tagging the selected files:\n"
 	tags_countdown
-	echo -e "\n ${YELLOW}*${NORMAL} Waiting 10 seconds before starting script..."
+	echo -e "\n ${BOLD_RED}*${NORMAL} By default, this script will REMOVE embedded coverart"
+	echo -e " ${BOLD_RED}*${NORMAL} when re-tagging the files (that have the legacy COVERART"
+	echo -e " ${BOLD_RED}*${NORMAL} tag).  Change the REMOVE_ARTWORK option under USER"
+	echo -e " ${BOLD_RED}*${NORMAL} CONFIGURATION to \"false\" to keep embedded artwork.\n"
+	echo -e " ${YELLOW}*${NORMAL} Waiting 10 seconds before starting script..."
 	echo -e " ${YELLOW}*${NORMAL} Ctrl+C (Control-C) to abort..."
 	echo -en " ${BOLD_GREEN}*${NORMAL} Starting in: "
 	countdown_10
@@ -1593,10 +1600,6 @@ function long_help {
 
     -n, --no-color          Turn off color output
 
-    -d, --disable-warning   Disable the FLAC metadata warning about the TAG fields to be displayed
-                            before beginning the script.  This will also disable the countdown
-                            timer that prefaces the script.
-
     -v, --version           Display script version and exit.
 
     -h, --help              Shows this help message.
@@ -1631,8 +1634,7 @@ function long_help {
     $0 --redo /some/path/to/files
 
     # Compress FLAC files and redo the FLAC tags
-    # without the warning/countdown
-    $0 -c -r -d /some/path/to/files
+    $0 -c -r /some/path/to/files
 EOF
 }
 
@@ -1649,7 +1651,6 @@ function short_help {
 	echo "    -g, --replaygain"
 	echo "    -r, --redo"
 	echo "    -n, --no-color"
-	echo "    -d, --disable-warning"
 	echo "    -v, --version"
 	echo "    -h, --help"
 	echo "  This is the short help; for details use '$0 --help' or '$0 -h'"
@@ -1723,10 +1724,6 @@ while [[ "$#" -gt 1 ]] ; do
 			NO_COLOR="true"
 			shift
 			;;
-		--disable-warning|-d)
-			DISABLE_WARNING="true"
-			shift
-			;;
 		*)
 			short_help
 			exit 0
@@ -1792,7 +1789,7 @@ fi
 # The below order is probably the best bet in ensuring time
 # isn't wasted on doing unnecessary operations if the
 # FLAC files are corrupt or have metadata issues
-if [[ "$REDO" == "true" && "$DISABLE_WARNING" != "true" ]] ; then
+if [[ "$REDO" == "true" ]] ; then
 	countdown_metadata
 fi
 
