@@ -2,7 +2,7 @@
 
 #------------------------------------------------------------
 # Re-compress, Verify, Test, Re-tag, and Clean Up FLAC Files
-#                     Version 0.13
+#                     Version 0.13.1
 #                       sirjaren
 #------------------------------------------------------------
 
@@ -120,7 +120,7 @@ AUCDTECT_COMMAND="$(command -v auCDtect)"
 #  STATIC VARIABLES  #
 ######################
 # Version
-VERSION="0.13"
+VERSION="0.13.1"
 
 # Export REMOVE_ARTWORK to allow subshell access
 export REMOVE_ARTWORK
