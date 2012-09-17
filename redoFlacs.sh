@@ -1710,8 +1710,16 @@ if [[ "$#" -eq 1 ]] ; then
 			exit 0
 			;;
 		--help|-h)
-			long_help
-			exit 0
+			# Check for less pager.  If available,
+			# lets use it.  If not, just display it
+			LESS_COMMAND="$(command -v less)"
+			if [[ -n "$LESS_COMMAND" ]] ; then
+				long_help | less
+				exit 0
+			else
+				long_help
+				exit 0
+			fi
 			;;
 		*)
 			short_help
