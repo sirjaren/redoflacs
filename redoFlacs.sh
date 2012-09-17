@@ -1545,8 +1545,9 @@ function long_help {
                             a FLAC file is corrupt, and can be repaired with a re-encoding of said
                             FLAC file.
 
-    -p, --prune             Delete the SEEKTABLE from each FLAC file and follow up with the removal
-                            of any excess PADDING in each FLAC file.
+    -p, --prune             Delete every METADATA block in each FLAC file except the STREAMINFO and
+                            VORBIS_COMMENT block.  If REMOVE_ARTWORK is set to "false", then the
+                            PICTURE block will NOT be removed.
 
     -g, --replaygain        Add ReplayGain tags to the FLAC files.  The ReplayGain is calculated
                             for ALBUM and TRACK values. ReplayGain is applied via VORBIS_TAGS and
@@ -1628,7 +1629,7 @@ function long_help {
                             If the (-d, --disable-warning) option is used, this warning will not
                             appear.  This is useful for veteran users.
 
-    -n, --no-color          Turn off color output
+    -n, --no-color          Turn off color output.
 
     -v, --version           Display script version and exit.
 
@@ -1642,7 +1643,8 @@ function long_help {
     "find" command.  While not true multithreading, this psuedo multithreading will greatly speed
     up the processing if the host has more than one CPU.
 
-  Invcation Examples:
+
+  Invocation Examples:
     # Compress and verify FLAC files
     $0 --compress /media/Music_Files
 
