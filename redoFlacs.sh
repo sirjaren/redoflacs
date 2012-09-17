@@ -215,7 +215,7 @@ function no_flacs {
 function print_compressing_flac {
 	if [[ "$FALLBACK" == "true" ]] ; then
 		printf "\r${NORMAL}%74s${BOLD_BLUE}%s${NORMAL}%s${YELLOW}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}\r%s${NORMAL}${YELLOW}%s${NORMAL}%s" \
-		"" "[" " " "Compressing FLAC" " " "]" "     " "*" " $(basename "$i" | gawk '{print substr($0,0,65)}')"
+		"" "[" " " "Compressing FLAC" " " "]" "     " "*" " $(basename "$i" | awk '{print substr($0,0,65)}')"
 	else
 		COLUMNS="$(tput cols)"
 
@@ -227,7 +227,7 @@ function print_compressing_flac {
 		FILENAME_LENGTH="$(basename "$i" | wc -m)"
 
 		if [[ "$FILENAME_LENGTH" -gt "$MAX_FILENAME_LENGTH" ]] ; then
-			FILENAME="$(echo "$(basename "$i" | gawk '{print substr($0,0,"'"$MAX_FILENAME_LENGTH"'")}')…" )"
+			FILENAME="$(echo "$(basename "$i" | awk '{print substr($0,0,"'"$MAX_FILENAME_LENGTH"'")}')…" )"
 		else
 			FILENAME="$(basename "$i")"
 		fi
@@ -240,7 +240,7 @@ function print_compressing_flac {
 function print_test_replaygain {
 	if [[ "$FALLBACK" == "true" ]] ; then
 		printf "\r${NORMAL}%74s${BOLD_BLUE}%s${NORMAL}%s${YELLOW}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}\r%s${NORMAL}${YELLOW}%s${NORMAL}%s" \
-		"" "[" " " "Testing ReplayGain" " " "]" "     " "*" " $(basename "$i" | gawk '{print substr($0,0,65)}')"
+		"" "[" " " "Testing ReplayGain" " " "]" "     " "*" " $(basename "$i" | awk '{print substr($0,0,65)}')"
 	else
 		COLUMNS="$(tput cols)"
 
@@ -252,7 +252,7 @@ function print_test_replaygain {
 		FILENAME_LENGTH="$(basename "$i" | wc -m)"
 
 		if [[ "$FILENAME_LENGTH" -gt "$MAX_FILENAME_LENGTH" ]] ; then
-			FILENAME="$(echo "$(basename "$i" | gawk '{print substr($0,0,"'"$MAX_FILENAME_LENGTH"'")}')…" )"
+			FILENAME="$(echo "$(basename "$i" | awk '{print substr($0,0,"'"$MAX_FILENAME_LENGTH"'")}')…" )"
 		else
 			FILENAME="$(basename "$i")"
 		fi
@@ -265,7 +265,7 @@ function print_test_replaygain {
 function print_add_replaygain {
 	if [[ "$FALLBACK" == "true" ]] ; then
 		printf "\r${NORMAL}%74s${BOLD_BLUE}%s${NORMAL}%s${YELLOW}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}\r%s${NORMAL}${YELLOW}%s${NORMAL}%s${CYAN}%s${NORMAL}" \
-		"" "[" " " "Adding ReplayGain" " " "]" "     " "*" " $(basename "$FLAC_LOCATION" | gawk '{print substr($0,0,65)}') " "[Directory]"
+		"" "[" " " "Adding ReplayGain" " " "]" "     " "*" " $(basename "$FLAC_LOCATION" | awk '{print substr($0,0,65)}') " "[Directory]"
 	else
 		COLUMNS="$(tput cols)"
 
@@ -277,7 +277,7 @@ function print_add_replaygain {
 		FILENAME_LENGTH="$(basename "$FLAC_LOCATION" | wc -m)"
 
 		if [[ "$FILENAME_LENGTH" -gt "$MAX_FILENAME_LENGTH" ]] ; then
-			FILENAME="$(echo "$(basename "$FLAC_LOCATION" | gawk '{print substr($0,0,"'"$MAX_FILENAME_LENGTH"'")}')…" )"
+			FILENAME="$(echo "$(basename "$FLAC_LOCATION" | awk '{print substr($0,0,"'"$MAX_FILENAME_LENGTH"'")}')…" )"
 		else
 			FILENAME="$(basename "$FLAC_LOCATION")"
 		fi
@@ -290,7 +290,7 @@ function print_add_replaygain {
 function print_testing_flac {
 	if [[ "$FALLBACK" == "true" ]] ; then
 		printf "\r${NORMAL}%74s${BOLD_BLUE}%s${NORMAL}%s${YELLOW}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}\r%s${NORMAL}${YELLOW}%s${NORMAL}%s" \
-		"" "[" " " "Testing FLAC" " " "]" "     " "*" " $(basename "$i" | gawk '{print substr($0,0,65)}')"
+		"" "[" " " "Testing FLAC" " " "]" "     " "*" " $(basename "$i" | awk '{print substr($0,0,65)}')"
 	else
 		COLUMNS="$(tput cols)"
 
@@ -302,7 +302,7 @@ function print_testing_flac {
 		FILENAME_LENGTH="$(basename "$i" | wc -m)"
 
 		if [[ "$FILENAME_LENGTH" -gt "$MAX_FILENAME_LENGTH" ]] ; then
-			FILENAME="$(echo "$(basename "$i" | gawk '{print substr($0,0,"'"$MAX_FILENAME_LENGTH"'")}')…" )"
+			FILENAME="$(echo "$(basename "$i" | awk '{print substr($0,0,"'"$MAX_FILENAME_LENGTH"'")}')…" )"
 		else
 			FILENAME="$(basename "$i")"
 		fi
@@ -315,7 +315,7 @@ function print_testing_flac {
 function print_failed_flac {
 	if [[ "$FALLBACK" == "true" ]] ; then
 		printf "\r${NORMAL}%74s${BOLD_BLUE}%s${NORMAL}%s${BOLD_RED}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}%s\r%s${YELLOW}%s${NORMAL}%s\n" \
-		"" "[" " " "FAILED" " " "]" "          " "     " "*" " $(basename "$i" | gawk '{print substr($0,0,65)}')"
+		"" "[" " " "FAILED" " " "]" "          " "     " "*" " $(basename "$i" | awk '{print substr($0,0,65)}')"
 	else
 		COLUMNS="$(tput cols)"
 
@@ -326,7 +326,7 @@ function print_failed_flac {
 		FILENAME_LENGTH="$(basename "$i" | wc -m)"
 
 		if [[ "$FILENAME_LENGTH" -gt "$MAX_FILENAME_LENGTH" ]] ; then
-			FILENAME="$(echo "$(basename "$i" | gawk '{print substr($0,0,"'"$MAX_FILENAME_LENGTH"'")}')…" )"
+			FILENAME="$(echo "$(basename "$i" | awk '{print substr($0,0,"'"$MAX_FILENAME_LENGTH"'")}')…" )"
 		else
 			FILENAME="$(basename "$i")"
 		fi
@@ -339,7 +339,7 @@ function print_failed_flac {
 function print_failed_replaygain {
 	if [[ "$FALLBACK" == "true" ]] ; then
 		printf "\r${NORMAL}%74s${BOLD_BLUE}%s${NORMAL}%s${BOLD_RED}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}\r%s${YELLOW}%s${NORMAL}%s${CYAN}%s${NORMAL}\n" \
-		"" "[" " " "FAILED" " " "]" "          " "*" " $(basename "$FLAC_LOCATION" | gawk '{print substr($0,0,65)}') " "[Directory]"
+		"" "[" " " "FAILED" " " "]" "          " "*" " $(basename "$FLAC_LOCATION" | awk '{print substr($0,0,65)}') " "[Directory]"
 	else
 		COLUMNS="$(tput cols)"
 
@@ -351,7 +351,7 @@ function print_failed_replaygain {
 		FILENAME_LENGTH="$(basename "$FLAC_LOCATION" | wc -m)"
 
 		if [[ "$FILENAME_LENGTH" -gt "$MAX_FILENAME_LENGTH" ]] ; then
-			FILENAME="$(echo "$(basename "$FLAC_LOCATION" | gawk '{print substr($0,0,"'"$MAX_FILENAME_LENGTH"'")}')…" )"
+			FILENAME="$(echo "$(basename "$FLAC_LOCATION" | awk '{print substr($0,0,"'"$MAX_FILENAME_LENGTH"'")}')…" )"
 		else
 			FILENAME="$(basename "$FLAC_LOCATION")"
 		fi
@@ -364,7 +364,7 @@ function print_failed_replaygain {
 function print_checking_md5 {
 	if [[ "$FALLBACK" == "true" ]] ; then
 		printf "\r${NORMAL}%74s${BOLD_BLUE}%s${NORMAL}%s${YELLOW}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}\r%s${NORMAL}${YELLOW}%s${NORMAL}%s" \
-		"" "[" " " "Checking MD5" " " "]" "     " "*" " $(basename "$i" | gawk '{print substr($0,0,65)}')"
+		"" "[" " " "Checking MD5" " " "]" "     " "*" " $(basename "$i" | awk '{print substr($0,0,65)}')"
 	else
 		COLUMNS="$(tput cols)"
 
@@ -376,7 +376,7 @@ function print_checking_md5 {
 		FILENAME_LENGTH="$(basename "$i" | wc -m)"
 
 		if [[ "$FILENAME_LENGTH" -gt "$MAX_FILENAME_LENGTH" ]] ; then
-			FILENAME="$(echo "$(basename "$i" | gawk '{print substr($0,0,"'"$MAX_FILENAME_LENGTH"'")}')…" )"
+			FILENAME="$(echo "$(basename "$i" | awk '{print substr($0,0,"'"$MAX_FILENAME_LENGTH"'")}')…" )"
 		else
 			FILENAME="$(basename "$i")"
 		fi
@@ -389,7 +389,7 @@ function print_checking_md5 {
 function print_ok_flac {
 	if [[ "$FALLBACK" == "true" ]] ; then
 		printf "\r${NORMAL}%74s${BOLD_BLUE}%s${NORMAL}%s${BOLD_GREEN}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}%s\r%s${YELLOW}%s${NORMAL}%s\n" \
-		"" "[" " " "OK" " " "]" "              " "     " "*" " $(basename "$i" | gawk '{print substr($0,0,65)}')"
+		"" "[" " " "OK" " " "]" "              " "     " "*" " $(basename "$i" | awk '{print substr($0,0,65)}')"
 	else
 		COLUMNS="$(tput cols)"
 
@@ -400,7 +400,7 @@ function print_ok_flac {
 		FILENAME_LENGTH="$(basename "$i" | wc -m)"
 
 		if [[ "$FILENAME_LENGTH" -gt "$MAX_FILENAME_LENGTH" ]] ; then
-			FILENAME="$(echo "$(basename "$i" | gawk '{print substr($0,0,"'"$MAX_FILENAME_LENGTH"'")}')…" )"
+			FILENAME="$(echo "$(basename "$i" | awk '{print substr($0,0,"'"$MAX_FILENAME_LENGTH"'")}')…" )"
 		else
 			FILENAME="$(basename "$i")"
 		fi
@@ -413,7 +413,7 @@ function print_ok_flac {
 function print_ok_replaygain {
 	if [[ "$FALLBACK" == "true" ]] ; then
 		printf "\r${NORMAL}%74s${BOLD_BLUE}%s${NORMAL}%s${BOLD_GREEN}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}\r%s${YELLOW}%s${NORMAL}%s${CYAN}%s${NORMAL}\n" \
-		"" "[" " " "OK" " " "]" "              " "*" " $(basename "$FLAC_LOCATION" | gawk '{print substr($0,0,65)}') " "[Directory]"
+		"" "[" " " "OK" " " "]" "              " "*" " $(basename "$FLAC_LOCATION" | awk '{print substr($0,0,65)}') " "[Directory]"
 	else
 		COLUMNS="$(tput cols)"
 
@@ -425,7 +425,7 @@ function print_ok_replaygain {
 		FILENAME_LENGTH="$(basename "$FLAC_LOCATION" | wc -m)"
 
 		if [[ "$FILENAME_LENGTH" -gt "$MAX_FILENAME_LENGTH" ]] ; then
-			FILENAME="$(echo "$(basename "$FLAC_LOCATION" | gawk '{print substr($0,0,"'"$MAX_FILENAME_LENGTH"'")}')…" )"
+			FILENAME="$(echo "$(basename "$FLAC_LOCATION" | awk '{print substr($0,0,"'"$MAX_FILENAME_LENGTH"'")}')…" )"
 		else
 			FILENAME="$(basename "$FLAC_LOCATION")"
 		fi
@@ -438,7 +438,7 @@ function print_ok_replaygain {
 function print_aucdtect_flac {
 	if [[ "$FALLBACK" == "true" ]] ; then
 		printf "\r${NORMAL}%74s${BOLD_BLUE}%s${NORMAL}%s${YELLOW}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}\r%s${NORMAL}${YELLOW}%s${NORMAL}%s" \
-		"" "[" " " "Validating FLAC" " " "]" "     " "*" " $(basename "$i" | gawk '{print substr($0,0,65)}')"
+		"" "[" " " "Validating FLAC" " " "]" "     " "*" " $(basename "$i" | awk '{print substr($0,0,65)}')"
 	else
 		COLUMNS="$(tput cols)"
 
@@ -450,7 +450,7 @@ function print_aucdtect_flac {
 		FILENAME_LENGTH="$(basename "$i" | wc -m)"
 
 		if [[ "$FILENAME_LENGTH" -gt "$MAX_FILENAME_LENGTH" ]] ; then
-			FILENAME="$(echo "$(basename "$i" | gawk '{print substr($0,0,"'"$MAX_FILENAME_LENGTH"'")}')…" )"
+			FILENAME="$(echo "$(basename "$i" | awk '{print substr($0,0,"'"$MAX_FILENAME_LENGTH"'")}')…" )"
 		else
 			FILENAME="$(basename "$i")"
 		fi
@@ -463,7 +463,7 @@ function print_aucdtect_flac {
 function print_aucdtect_issue {
 	if [[ "$FALLBACK" == "true" ]] ; then
 		printf "\r${NORMAL}%74s${BOLD_BLUE}%s${NORMAL}%s${YELLOW}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}%s\r%s${YELLOW}%s${NORMAL}%s\n" \
-		"" "[" " " "ISSUE" " " "]" "           " "     " "*" " $(basename "$i" | gawk '{print substr($0,0,65)}')"
+		"" "[" " " "ISSUE" " " "]" "           " "     " "*" " $(basename "$i" | awk '{print substr($0,0,65)}')"
 	else
 		COLUMNS="$(tput cols)"
 
@@ -474,7 +474,7 @@ function print_aucdtect_issue {
 		FILENAME_LENGTH="$(basename "$i" | wc -m)"
 
 		if [[ "$FILENAME_LENGTH" -gt "$MAX_FILENAME_LENGTH" ]] ; then
-			FILENAME="$(echo "$(basename "$i" | gawk '{print substr($0,0,"'"$MAX_FILENAME_LENGTH"'")}')…" )"
+			FILENAME="$(echo "$(basename "$i" | awk '{print substr($0,0,"'"$MAX_FILENAME_LENGTH"'")}')…" )"
 		else
 			FILENAME="$(basename "$i")"
 		fi
@@ -487,7 +487,7 @@ function print_aucdtect_issue {
 function print_aucdtect_skip {
 	if [[ "$FALLBACK" == "true" ]] ; then
 		printf "\r${NORMAL}%74s${BOLD_BLUE}%s${NORMAL}%s${YELLOW}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}%s\r%s${YELLOW}%s${NORMAL}%s\n" \
-		"" "[" " " "SKIPPED" " " "]" "         " "     " "*" " $(basename "$i" | gawk '{print substr($0,0,65)}')"
+		"" "[" " " "SKIPPED" " " "]" "         " "     " "*" " $(basename "$i" | awk '{print substr($0,0,65)}')"
 	else
 		COLUMNS="$(tput cols)"
 
@@ -498,7 +498,7 @@ function print_aucdtect_skip {
 		FILENAME_LENGTH="$(basename "$i" | wc -m)"
 
 		if [[ "$FILENAME_LENGTH" -gt "$MAX_FILENAME_LENGTH" ]] ; then
-			FILENAME="$(echo "$(basename "$i" | gawk '{print substr($0,0,"'"$MAX_FILENAME_LENGTH"'")}')…" )"
+			FILENAME="$(echo "$(basename "$i" | awk '{print substr($0,0,"'"$MAX_FILENAME_LENGTH"'")}')…" )"
 		else
 			FILENAME="$(basename "$i")"
 		fi
@@ -511,7 +511,7 @@ function print_aucdtect_skip {
 function print_done_flac {
 	if [[ "$FALLBACK" == "true" ]] ; then
 		printf "\r${NORMAL}%74s${BOLD_BLUE}%s${NORMAL}%s${BOLD_GREEN}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}%s\r%s${YELLOW}%s${NORMAL}%s\n" \
-		"" "[" " " "DONE" " " "]" "            " "     " "*" " $(basename "$i" | gawk '{print substr($0,0,65)}')"
+		"" "[" " " "DONE" " " "]" "            " "     " "*" " $(basename "$i" | awk '{print substr($0,0,65)}')"
 	else
 		COLUMNS="$(tput cols)"
 
@@ -522,7 +522,7 @@ function print_done_flac {
 		FILENAME_LENGTH="$(basename "$i" | wc -m)"
 
 		if [[ "$FILENAME_LENGTH" -gt "$MAX_FILENAME_LENGTH" ]] ; then
-			FILENAME="$(echo "$(basename "$i" | gawk '{print substr($0,0,"'"$MAX_FILENAME_LENGTH"'")}')…" )"
+			FILENAME="$(echo "$(basename "$i" | awk '{print substr($0,0,"'"$MAX_FILENAME_LENGTH"'")}')…" )"
 		else
 			FILENAME="$(basename "$i")"
 		fi
@@ -535,7 +535,7 @@ function print_done_flac {
 function print_level_same_compression {
 	if [[ "$FALLBACK" == "true" ]] ; then
 		printf "\r${NORMAL}%74s${BOLD_BLUE}%s${NORMAL}%s${YELLOW}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}\r%s${YELLOW}%s${NORMAL}%s\n" \
-		"" "[" " " "Already At Level ${COMPRESSION_LEVEL}" " " "]" "     " "*" " $(basename "$i" | gawk '{print substr($0,0,65)}')"
+		"" "[" " " "Already At Level ${COMPRESSION_LEVEL}" " " "]" "     " "*" " $(basename "$i" | awk '{print substr($0,0,65)}')"
 	else
 		COLUMNS="$(tput cols)"
 
@@ -547,7 +547,7 @@ function print_level_same_compression {
 		FILENAME_LENGTH="$(basename "$i" | wc -m)"
 
 		if [[ "$FILENAME_LENGTH" -gt "$MAX_FILENAME_LENGTH" ]] ; then
-			FILENAME="$(echo "$(basename "$i" | gawk '{print substr($0,0,"'"$MAX_FILENAME_LENGTH"'")}')…" )"
+			FILENAME="$(echo "$(basename "$i" | awk '{print substr($0,0,"'"$MAX_FILENAME_LENGTH"'")}')…" )"
 		else
 			FILENAME="$(basename "$i")"
 		fi
@@ -560,7 +560,7 @@ function print_level_same_compression {
 function print_analyzing_tags {
 	if [[ "$FALLBACK" == "true" ]] ; then
 		printf "\r${NORMAL}%74s${BOLD_BLUE}%s${NORMAL}%s${YELLOW}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}\r%s${NORMAL}${YELLOW}%s${NORMAL}%s" \
-		"" "[" " " "Analyzing Tags" " " "]" "     " "*" " $(basename "$i" | gawk '{print substr($0,0,65)}')"
+		"" "[" " " "Analyzing Tags" " " "]" "     " "*" " $(basename "$i" | awk '{print substr($0,0,65)}')"
 	else
 		COLUMNS="$(tput cols)"
 
@@ -572,7 +572,7 @@ function print_analyzing_tags {
 		FILENAME_LENGTH="$(basename "$i" | wc -m)"
 
 		if [[ "$FILENAME_LENGTH" -gt "$MAX_FILENAME_LENGTH" ]] ; then
-			FILENAME="$(echo "$(basename "$i" | gawk '{print substr($0,0,"'"$MAX_FILENAME_LENGTH"'")}')…" )"
+			FILENAME="$(echo "$(basename "$i" | awk '{print substr($0,0,"'"$MAX_FILENAME_LENGTH"'")}')…" )"
 		else
 			FILENAME="$(basename "$i")"
 		fi
@@ -585,7 +585,7 @@ function print_analyzing_tags {
 function print_setting_tags {
 	if [[ "$FALLBACK" == "true" ]] ; then
 		printf "\r${NORMAL}%74s${BOLD_BLUE}%s${NORMAL}%s${YELLOW}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}\r%s${NORMAL}${YELLOW}%s${NORMAL}%s" \
-		"" "[" " " "Setting Tags" " " "]" "     " "*" " $(basename "$i" | gawk '{print substr($0,0,65)}')"
+		"" "[" " " "Setting Tags" " " "]" "     " "*" " $(basename "$i" | awk '{print substr($0,0,65)}')"
 	else
 		COLUMNS="$(tput cols)"
 
@@ -597,7 +597,7 @@ function print_setting_tags {
 		FILENAME_LENGTH="$(basename "$i" | wc -m)"
 
 		if [[ "$FILENAME_LENGTH" -gt "$MAX_FILENAME_LENGTH" ]] ; then
-			FILENAME="$(echo "$(basename "$i" | gawk '{print substr($0,0,"'"$MAX_FILENAME_LENGTH"'")}')…" )"
+			FILENAME="$(echo "$(basename "$i" | awk '{print substr($0,0,"'"$MAX_FILENAME_LENGTH"'")}')…" )"
 		else
 			FILENAME="$(basename "$i")"
 		fi
@@ -610,7 +610,7 @@ function print_setting_tags {
 function print_prune_flac {
 	if [[ "$FALLBACK" == "true" ]] ; then
 		printf "\r${NORMAL}%74s${BOLD_BLUE}%s${NORMAL}%s${YELLOW}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}\r%s${NORMAL}${YELLOW}%s${NORMAL}%s" \
-		"" "[" " " "Pruning Metadata" " " "]" "     " "*" " $(basename "$i" | gawk '{print substr($0,0,65)}')"
+		"" "[" " " "Pruning Metadata" " " "]" "     " "*" " $(basename "$i" | awk '{print substr($0,0,65)}')"
 	else
 		COLUMNS="$(tput cols)"
 
@@ -622,7 +622,7 @@ function print_prune_flac {
 		FILENAME_LENGTH="$(basename "$i" | wc -m)"
 
 		if [[ "$FILENAME_LENGTH" -gt "$MAX_FILENAME_LENGTH" ]] ; then
-			FILENAME="$(echo "$(basename "$i" | gawk '{print substr($0,0,"'"$MAX_FILENAME_LENGTH"'")}')…" )"
+			FILENAME="$(echo "$(basename "$i" | awk '{print substr($0,0,"'"$MAX_FILENAME_LENGTH"'")}')…" )"
 		else
 			FILENAME="$(basename "$i")"
 		fi
@@ -986,7 +986,7 @@ function aucdtect {
 				print_failed_flac
 			else
 				# Get the bit depth of a FLAC file
-				BITS="$(metaflac --list --block-type=STREAMINFO "$i" | grep "bits-per-sample" | gawk '{print $2}')"
+				BITS="$(metaflac --list --block-type=STREAMINFO "$i" | grep "bits-per-sample" | awk '{print $2}')"
 
 				# Skip the FLAC file if it has a bit depth greater
 				# than 16 since auCDtect doesn't support audio
@@ -1768,6 +1768,111 @@ while [[ "$#" -gt 1 ]] ; do
 	esac
 done
 
+# This must come before the other options in
+# order for it to take effect
+if [[ "$NO_COLOR" == "true" ]] ; then
+	BOLD_GREEN=""
+	BOLD_RED=""
+	BOLD_BLUE=""
+	CYAN=""
+	NORMAL=""
+	YELLOW=""
+fi
+
+# Check to make sure script has all the dependencies
+# necessary to complete script succesfully
+# Check if each command can be found in $PATH
+PRINTF_EXISTS="$(command -v printf)"
+BASENAME_EXISTS="$(command -v basename)"
+DIRNAME_EXISTS="$(command -v dirname)"
+SLEEP_EXISTS="$(command -v sleep)"
+WC_EXISTS="$(command -v wc)"
+CAT_EXISTS="$(command -v cat)"
+FIND_EXISTS="$(command -v find)"
+XARGS_EXISTS="$(command -v xargs)"
+METAFLAC_EXISTS="$(command -v metaflac)"
+FLAC_EXISTS="$(command -v flac)"
+AWK_EXISTS="$(command -v awk)"
+GREP_EXISTS="$(command -v grep)"
+
+# Go through and test if each command was found (by displaying its $PATH).  If
+# it's empty, add where you can find the package to an array to be displayed.
+if [[ -z "$PRINTF_EXISTS" ]] ; then
+	command_exists_array=( "${command_exists_array[@]}
+     ${YELLOW}*${NORMAL} You can generally install \"printf\" with the \"coreutils\" package." )
+fi
+
+if [[ -z "$BASENAME_EXISTS" ]] ; then
+	command_exists_array=( "${command_exists_array[@]}
+     ${YELLOW}*${NORMAL} You can generally install \"basename\" with the \"coreutils\" package." )
+fi
+
+if [[ -z "$DIRNAME_EXISTS" ]] ; then
+	command_exists_array=( "${command_exists_array[@]}
+     ${YELLOW}*${NORMAL} You can generally install \"dirname\" with the \"coreutils\" package." )
+fi
+
+if [[ -z "$SLEEP_EXISTS" ]] ; then
+	command_exists_array=( "${command_exists_array[@]}
+     ${YELLOW}*${NORMAL} You can generally install \"sleep\" with the \"coreutils\" package." )
+fi
+
+if [[ -z "$WC_EXISTS" ]] ; then
+	command_exists_array=( "${command_exists_array[@]}
+     ${YELLOW}*${NORMAL} You can generally install \"wc\" with the \"coreutils\" package." )
+fi
+
+if [[ -z "$CAT_EXISTS" ]] ; then
+	command_exists_array=( "${command_exists_array[@]}
+     ${YELLOW}*${NORMAL} You can generally install \"cat\" with the \"coreutils\" package." )
+fi
+
+if [[ -z "$FIND_EXISTS" ]] ; then
+	command_exists_array=( "${command_exists_array[@]}
+     ${YELLOW}*${NORMAL} You can generally install \"find\" with the \"findutils\" package." )
+fi
+
+if [[ -z "$XARGS_EXISTS" ]] ; then
+	command_exists_array=( "${command_exists_array[@]}
+     ${YELLOW}*${NORMAL} You can generally install \"xargs\" with the \"findutils\" package." )
+fi
+
+if [[ -z "$METAFLAC_EXISTS" ]] ; then
+	command_exists_array=( "${command_exists_array[@]}
+     ${YELLOW}*${NORMAL} You can generally install \"metaflac\" with the \"flac\" package." )
+fi
+
+if [[ -z "$FLAC_EXISTS" ]] ; then
+	command_exists_array=( "${command_exists_array[@]}
+     ${YELLOW}*${NORMAL} You can generally install \"flac\" with the \"flac\" package." )
+fi
+
+if [[ -z "$AWK_EXISTS" ]] ; then
+	command_exists_array=( "${command_exists_array[@]}
+     ${YELLOW}*${NORMAL} You can generally install \"awk\" with the \"awk\", \"gawk\", \"nawk\", or \"mawk\" package." )
+fi
+
+if [[ -z "$GREP_EXISTS" ]] ; then
+	command_exists_array=( "${command_exists_array[@]}
+     ${YELLOW}*${NORMAL} You can generally install \"grep\" with the \"grep\" package." )
+fi
+
+# Display (in bold red) message that system is missing vital programs
+function display_missing_commands_header {
+	echo -e " ${BOLD_RED}*${NORMAL} You seem to be missing one or more necessary programs"
+	echo -e " ${BOLD_RED}*${NORMAL} to run this script reliably.  Below shows the program(s)"
+	echo -en " ${BOLD_RED}*${NORMAL} missing, as well as where you can install them from:"
+}
+
+# If all the programs above were found, continue with script.  Else
+# display warning and exit script, printing out which package has
+# the missing programs
+if [[ -n "${command_exists_array[@]}" ]] ; then
+	display_missing_commands_header
+	echo -e "${command_exists_array[@]}"
+	exit 1
+fi
+
 # Set the last argument as the directory
 DIRECTORY="$1"
 
@@ -1806,17 +1911,6 @@ fi
 ##################
 #  Begin Script  #
 ##################
-
-# This must come before the other options in
-# order for it to take effect
-if [[ "$NO_COLOR" == "true" ]] ; then
-	BOLD_GREEN=""
-	BOLD_RED=""
-	BOLD_BLUE=""
-	CYAN=""
-	NORMAL=""
-	YELLOW=""
-fi
 
 # Check if `tput` is installed and do a fallback if not
 # installed
