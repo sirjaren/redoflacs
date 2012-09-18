@@ -109,9 +109,22 @@ ERROR_LOG="$HOME"
 # By default, the script will look in $PATH
 # An example of changing where to find auCDtect
 # is below:
-# AUCDTECT_COMMAND="/home/$USER/auCDtect"
+# AUCDTECT_COMMAND="/${HOME}/auCDtect"
 AUCDTECT_COMMAND="$(command -v auCDtect)"
 
+# Set where the created spectrogram files should
+# be placed. By default, the spectrogram PNG files
+# will be placed in the same directory as the tested
+# FLAC files. Each PNG will have the same name as
+# the tested FLAC file but with the extension ".png"
+#
+# The special value, "default" does the default
+# action.  Other values are interpreted as a
+# directory. An example of a user-defined location:
+# SPECTROGRAM_LOCATION="${HOME}/Spectrogram_Images"
+#
+# See "--help" or "-h" for more information.
+SPECTROGRAM_LOCATION="default"
 ##########################
 #  END OF CONFIGURATION  #
 ##########################
@@ -130,6 +143,9 @@ export COMPRESSION_LEVEL
 
 # Export auCDtect command to allow subshell access
 export AUCDTECT_COMMAND
+
+# Export SPECTROGRAM_LOCATION to allow subshell access
+export SPECTROGRAM_LOCATION
 
 # Export the tag array using some trickery (BASH doesn't
 # support exporting arrays natively)
@@ -943,6 +959,17 @@ function test_flacs {
 #######################################
 # Use auCDtect to check FLAC validity
 function aucdtect {
+	# Check if SPECTROGRAM_LOCATION is user-defined
+	if [[ "$SPECTROGRAM_LOCATION" != "default" ]] ; then
+		# Put spectrograms in user-defined location
+		# Test to make sure directory exists
+		if [[ ! -d "$SPECTROGRAM_LOCATION" ]] ; then
+			echo -e " ${BOLD_RED}*${NORMAL} \"$SPECTROGRAM_LOCATION\" doesn't exist!"
+			echo -e " ${BOLD_RED}*${NORMAL} Please choose a valid directory under USER CONFIGURATION!"
+			exit 1
+		fi
+	fi
+
 	title_aucdtect_flac
 
 	# Abort script and check for any errors thus far
@@ -1021,14 +1048,21 @@ function aucdtect {
 					# If user specified --aucdtect-spectrogram (-A), then
 					# create a spectrogram with SoX and change logging accordingly
 					if [[ "$CREATE_SPECTROGRAM" == "true" ]] ; then
-						# Make sure we don't clobber any picture files
-						if [[ -f "${i%.[Ff][Ll][Aa][Cc]}.png" ]] ; then
-							# File exists so prepend "spectrogram" before ".png"
-							SPECTROGRAM_PICTURE="$(echo "${i%.[Ff][Ll][Aa][Cc]}.spectrogram.png")"
+						# Check whether to place spectrogram images in user-defined location
+						if [[ "$SPECTROGRAM_LOCATION" == "default" ]] ; then
+							# Place images in same directory as the FLAC files
+							# Make sure we don't clobber any picture files
+							if [[ -f "${i%.[Ff][Ll][Aa][Cc]}.png" ]] ; then
+								# File exists so prepend "spectrogram" before ".png"
+								SPECTROGRAM_PICTURE="$(echo "${i%.[Ff][Ll][Aa][Cc]}.spectrogram.png")"
+							else
+								# File doesn't exist, so create the spectrogram with the basename of "$i"
+								# with ".png" as the extension
+								SPECTROGRAM_PICTURE="$(echo "${i%.[Ff][Ll][Aa][Cc]}.png")"
+							fi
 						else
-							# File doesn't exist, so create the spectrogram with the basename of "$i"
-							# with ".png" as the extension
-							SPECTROGRAM_PICTURE="$(echo "${i%.[Ff][Ll][Aa][Cc]}.png")"
+							# Place images in user-defined location
+							SPECTROGRAM_PICTURE="${SPECTROGRAM_LOCATION}/$(basename "${i%.[Ff][Ll][Aa][Cc]}.png")"
 						fi
 
 						# Let's create the spectrogram for the failed FLAC file
@@ -1607,6 +1641,12 @@ function long_help {
 
                03 - Some FLAC File.flac --> 03 - Some FLAC File.spectrogram.png
 
+           The user can change the location of where to store the created
+           spectrogram images by changing the value of SPECTROGRAM_LOCATION under
+           the USER CONFIGURATION section of this script.  The location defined by
+           the user will be tested to see if it exists before starting the script.
+           If the location does NOT exist, the script will warn the user and exit.
+
            The created PNG file is large in resolution to best capture the
            FLAC file's waveform (roughly 5140x2149).
 
@@ -2029,7 +2069,7 @@ if [[ "$AUCDTECT" == "true" ]] ; then
 
 		# If "--aucdtect-spectrogram, -A" was called
 		# make sure SoX is installed before starting
-		if [[ "$CREATE_SPECTROGRAPH" == "true" ]] ; then
+		if [[ "$CREATE_SPECTROGRAM" == "true" ]] ; then
 			SOX_COMMAND="$(command -v sox)"
 			if [[ -z "$SOX_COMMAND" ]] ; then
 				# SoX can't be found, exit
