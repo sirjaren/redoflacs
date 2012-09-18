@@ -223,8 +223,9 @@ function title_prune_flac {
 }
 
 # Error messages
+# Don't display threads as script will quit after diplaying
 function no_flacs {
-	echo -e " ${BOLD_RED}*${NORMAL} There are not any FLAC files to process :: ${BOLD_BLUE}[${CORES} Thread(s)]${NORMAL}"
+	echo -e " ${BOLD_RED}*${NORMAL} There are not any FLAC files to process!"
 }
 
 # Information relating to currently running tasks
