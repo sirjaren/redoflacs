@@ -724,7 +724,8 @@ function replaygain {
 
 			# Test to make sure FLAC file can have ReplayGain tags added to it
 			if [[ "$CHECK_FLAC" == "FLAC__METADATA_CHAIN_STATUS_NOT_A_FLAC_FILE" ]] ; then
-				echo -e "[[$i]]\n" "The above file does not appear to be a FLAC file" >> "$REPLAY_TEST_ERRORS"
+				echo -e "File:  $i" >> "$REPLAY_TEST_ERRORS"
+				echo -e "Error: The above file does not appear to be a FLAC file" >> "$REPLAY_TEST_ERRORS"
 				echo -e "------------------------------------------------------------------" >> "$REPLAY_TEST_ERRORS"
 				# File is not a FLAC file, display failed
 				print_failed_flac
@@ -798,7 +799,8 @@ function replaygain {
 			ERROR="$((metaflac --add-replay-gain "${FLAC_LOCATION}"/*.[Ff][Ll][Aa][Cc]) 2>&1)"
 			if [[ -n "$ERROR" ]] ; then
 				print_failed_replaygain
-				echo -e "[[$FLAC_LOCATION]]\n" "$ERROR" >> "$REPLAY_ADD_ERRORS"
+				echo -e "Directory: $FLAC_LOCATION" >> "$REPLAY_ADD_ERRORS"
+				echo -e "Error:     $ERROR" >> "$REPLAY_ADD_ERRORS"
 				echo -e "------------------------------------------------------------------" >> "$REPLAY_ADD_ERRORS"
 				# Set variable to let script know this album failed and not NOT
 				# continue checking the files in this album
@@ -851,7 +853,8 @@ function compress_flacs {
 				ERROR="$((flac -f -${COMPRESSION_LEVEL} -V -s "$i") 2>&1)"
 				if [[ ! -z "$ERROR" ]] ; then
 					print_failed_flac
-					echo -e "[[$i]]\n"  "$ERROR" >> "$VERIFY_ERRORS"
+					echo -e "File:  $i" >> "$VERIFY_ERRORS"
+					echo -e "Error: $ERROR" >> "$VERIFY_ERRORS"
 					echo -e "------------------------------------------------------------------" >> "$VERIFY_ERRORS"
 				else
 					metaflac --remove-tag=COMPRESSION "$i"
@@ -867,7 +870,8 @@ function compress_flacs {
 					ERROR="$((flac -ts "$i") 2>&1)"
 					if [[ ! -z "$ERROR" ]] ; then
 						print_failed_flac
-						echo -e "[[$i]]\n"  "$ERROR" >> "$VERIFY_ERRORS"
+						echo -e "File:  $i" >> "$VERIFY_ERRORS"
+						echo -e "Error: $ERROR" >> "$VERIFY_ERRORS"
 						echo -e "------------------------------------------------------------------" >> "$VERIFY_ERRORS"
 					else 
 						print_ok_flac
@@ -914,7 +918,8 @@ function test_flacs {
 			ERROR="$((flac -ts "$i") 2>&1)"
 			if [[ ! -z "$ERROR" ]] ; then
 				print_failed_flac
-				echo -e "[[$i]]\n"  "$ERROR" >> "$TEST_ERRORS"
+				echo -e "File:  $i" >> "$TEST_ERRORS"
+				echo -e "Error: $ERROR" >> "$TEST_ERRORS"
 				echo -e "------------------------------------------------------------------" >> "$TEST_ERRORS"
 			else
 				print_ok_flac
@@ -980,7 +985,8 @@ function aucdtect {
 			CHECK_FLAC="$(metaflac --show-md5sum "$i" 2>&1 | grep -o "FLAC__METADATA_CHAIN_STATUS_NOT_A_FLAC_FILE")"
 
 			if [[ "$CHECK_FLAC" == "FLAC__METADATA_CHAIN_STATUS_NOT_A_FLAC_FILE" ]] ; then
-				echo -e "[[$i]]\n"  "The above file does not appear to be a FLAC file" >> "$AUCDTECT_ERRORS"
+				echo -e "File:  $i" >> "$AUCDTECT_ERRORS"
+				echo -e "Error: The above file does not appear to be a FLAC file" >> "$AUCDTECT_ERRORS"
 				echo -e "------------------------------------------------------------------" >> "$AUCDTECT_ERRORS"
 				# File is not a FLAC file, display failed
 				print_failed_flac
@@ -993,7 +999,8 @@ function aucdtect {
 				# files with a higher resolution than a CD.
 				if [[ "$BITS" -gt "16" ]] ; then
 					print_aucdtect_skip
-					echo -e "[[$i]]\n"  "The above file has a bit depth greater than 16 and was skipped" >> "$AUCDTECT_ERRORS"
+					echo -e "File:  $i" >> "$AUCDTECT_ERRORS"
+					echo -e "Error: The above file has a bit depth greater than 16 and was skipped" >> "$AUCDTECT_ERRORS"
 					echo -e "------------------------------------------------------------------" >> "$AUCDTECT_ERRORS"
 					continue
 				fi
@@ -1003,21 +1010,51 @@ function aucdtect {
 
 				# The actual auCDtect command with highest accuracy setting
 				# 2> hides the displayed progress to /dev/null so nothing is shown
-				AUCDTECT_CHECK="$("$AUCDTECT_COMMAND" -m0 "${i%.flac}.wav" 2> /dev/null)"
+				AUCDTECT_CHECK="$("$AUCDTECT_COMMAND" -m0 "${i%.[Ff][Ll][Aa][Cc]}.wav" 2> /dev/null)"
 
 				# Reads the last line of the above command which tells what
 				# auCDtect came up with for the WAV file
 				ERROR="$(echo "$AUCDTECT_CHECK" | tail -n1)"
 
+				# There is an issue with the processed FLAC file
 				if [[ "$ERROR" != "This track looks like CDDA with probability 100%" ]] ; then
-					print_aucdtect_issue
-					echo -e "[[$i]]\n"  "$ERROR" >> "$AUCDTECT_ERRORS"
-					echo -e "------------------------------------------------------------------" >> "$AUCDTECT_ERRORS"
+					# If user specified --aucdtect-spectrogram (-A), then
+					# create a spectrogram with SoX and change logging accordingly
+					if [[ "$CREATE_SPECTROGRAM" == "true" ]] ; then
+						# Make sure we don't clobber any picture files
+						if [[ -f "${i%.[Ff][Ll][Aa][Cc]}.png" ]] ; then
+							# File exists so prepend "spectrogram" before ".png"
+							SPECTROGRAM_PICTURE="$(echo "${i%.[Ff][Ll][Aa][Cc]}.spectrogram.png")"
+						else
+							# File doesn't exist, so create the spectrogram with the basename of "$i"
+							# with ".png" as the extension
+							SPECTROGRAM_PICTURE="$(echo "${i%.[Ff][Ll][Aa][Cc]}.png")"
+						fi
+
+						# Let's create the spectrogram for the failed FLAC file
+						sox "$i" -n spectrogram -c '' -t "$i" -p1 -z90 -Z0 -q249 -wHann -x5000 -y1025 -o "${SPECTROGRAM_PICTURE}"
+
+						# Print ISSUE and log error, and show where to find
+						# the created spectrogram of processed FLAC file
+						print_aucdtect_issue
+						echo -e "File:        $i" >> "$AUCDTECT_ERRORS"
+						echo -e "Error:       $ERROR" >> "$AUCDTECT_ERRORS"
+						echo -e "Spectrogram: $SPECTROGRAM_PICTURE" >> "$AUCDTECT_ERRORS"
+						echo -e "------------------------------------------------------------------" >> "$AUCDTECT_ERRORS"
+					else
+						# Print ISSUE and log error
+						print_aucdtect_issue
+						echo -e "File:  $i" >> "$AUCDTECT_ERRORS"
+						echo -e "Error: $ERROR" >> "$AUCDTECT_ERRORS"
+						echo -e "------------------------------------------------------------------" >> "$AUCDTECT_ERRORS"
+					fi
+				# The processed FLAC file is OK
 				else
 					print_ok_flac
 				fi
+
 				# Remove temporary WAV file
-				rm "${i%.flac}.wav"
+				rm "${i%.[Ff][Ll][Aa][Cc]}.wav"
 			fi
 		done
 	}
@@ -1061,11 +1098,13 @@ function md5_check {
 			MD5_NOT_FLAC="$(echo "$MD5_SUM" | grep -o "FLAC__METADATA_CHAIN_STATUS_NOT_A_FLAC_FILE")"
 			if [[ "$MD5_SUM" == "00000000000000000000000000000000" ]] ; then
 				print_failed_flac
-				echo -e "[[$i]]\n"  "MD5 Signature: $MD5_SUM" >> "$MD5_ERRORS"
+				echo -e "File:  $i" >> "$MD5_ERRORS"
+				echo -e "Error: MD5 Signature unset ($MD5_SUM)" >> "$MD5_ERRORS"
 				echo -e "------------------------------------------------------------------" >> "$MD5_ERRORS"
 			elif [[ "$MD5_NOT_FLAC" == "FLAC__METADATA_CHAIN_STATUS_NOT_A_FLAC_FILE" ]] ; then
 				print_failed_flac
-				echo -e "[[$i]]\n"  "The above file does not appear to be a FLAC file" >> "$MD5_ERRORS"
+				echo -e "File:  $i" >> "$MD5_ERRORS"
+				echo -e "Error: The above file does not appear to be a FLAC file" >> "$MD5_ERRORS"
 				echo -e "------------------------------------------------------------------" >> "$MD5_ERRORS"
 			else
 				print_ok_flac
@@ -1142,7 +1181,8 @@ function redo_tags {
 		CHECK_FLAC="$(metaflac --show-md5sum "$i" 2>&1 | grep -o "FLAC__METADATA_CHAIN_STATUS_NOT_A_FLAC_FILE")"
 
 		if [[ "$CHECK_FLAC" == "FLAC__METADATA_CHAIN_STATUS_NOT_A_FLAC_FILE" ]] ; then
-			echo -e "[[$i]]\n"  "The above file does not appear to be a FLAC file" >> "$METADATA_ERRORS"
+			echo -e "File:  $i" >> "$METADATA_ERRORS"
+			echo -e "Error: The above file does not appear to be a FLAC file" >> "$METADATA_ERRORS"
 			echo -e "------------------------------------------------------------------" >> "$METADATA_ERRORS"
 			# File is not a FLAC file, display failed
 			print_failed_flac
@@ -1182,7 +1222,8 @@ function redo_tags {
 
 				# If tags are not found, log output
 				if [[ -z "$(eval "echo "\$${j}_TAG"")" ]] ; then
-					echo -e "${j} tag not found for $i" >> "$METADATA_ERRORS"
+					echo -e "File:  $i" >> "$METADATA_ERRORS"
+					echo -e "Error: ${j} tag not found" >> "$METADATA_ERRORS"
 					echo -e "------------------------------------------------------------------" >> "$METADATA_ERRORS"
 				fi
 			done
@@ -1195,7 +1236,8 @@ function redo_tags {
 		CHECK_FLAC="$(metaflac --show-md5sum "$i" 2>&1 | grep -o "FLAC__METADATA_CHAIN_STATUS_NOT_A_FLAC_FILE")"
 
 		if [[ "$CHECK_FLAC" == "FLAC__METADATA_CHAIN_STATUS_NOT_A_FLAC_FILE" ]] ; then
-			echo -e "[[$i]]\n"  "The above file does not appear to be a FLAC file" >> "$METADATA_ERRORS"
+			echo -e "File:  $i" >> "$METADATA_ERRORS"
+			echo -e "Error: The above file does not appear to be a FLAC file" >> "$METADATA_ERRORS"
 			echo -e "------------------------------------------------------------------" >> "$METADATA_ERRORS"
 			# File is not a FLAC file, display failed
 			print_failed_flac
@@ -1240,9 +1282,9 @@ function redo_tags {
 				# If COVERART_TAG is not null, then log file that has
 				# the COVERART tag embedded within it about deprecation
 				if [[ -n "$COVERART_TAG" ]] ; then
-					echo "$i" >> "$METADATA_ERRORS"
-					echo -e "\"${j}\" tag is DEPRECATED in above file. Consider migrating to" >> "$METADATA_ERRORS"
-					echo -e "the new format: METADATA_BLOCK_PICTURE." >> "$METADATA_ERRORS"
+					echo -e "File:  $i" >> "$METADATA_ERRORS"
+					echo -e "Error: \"${j}\" tag is DEPRECATED in above file. Consider migrating to" >> "$METADATA_ERRORS"
+					echo -e "       the new format: METADATA_BLOCK_PICTURE." >> "$METADATA_ERRORS"
 					echo -e "------------------------------------------------------------------" >> "$METADATA_ERRORS"
 				fi
 
@@ -1250,7 +1292,8 @@ function redo_tags {
 				# of COVERART tag as this is a temporary addition to
 				# the tag array (for processing legacy artwork)
 				if [[ -z "$(eval "echo "\$${j}_TAG"")" && "${j}" != "COVERART" ]] ; then
-					echo -e "${j} tag not found for $i" >> "$METADATA_ERRORS"
+					echo -e "File:  $i" >> "$METADATA_ERRORS"
+					echo -e "Error: ${j} tag not found" >> "$METADATA_ERRORS"
 					echo -e "------------------------------------------------------------------" >> "$METADATA_ERRORS"
 				fi
 			done
@@ -1461,7 +1504,8 @@ function prune_flacs {
 			CHECK_FLAC="$(metaflac --show-md5sum "$i" 2>&1 | grep -o "FLAC__METADATA_CHAIN_STATUS_NOT_A_FLAC_FILE")"
 
 			if [[ "$CHECK_FLAC" == "FLAC__METADATA_CHAIN_STATUS_NOT_A_FLAC_FILE" ]] ; then
-				echo -e "[[$i]]\n"  "The above file does not appear to be a FLAC file" >> "$PRUNE_ERRORS"
+				echo -e "File:  $i" >> "$PRUNE_ERRORS"
+				echo -e "Error: The above file does not appear to be a FLAC file" >> "$PRUNE_ERRORS"
 				echo -e "------------------------------------------------------------------" >> "$PRUNE_ERRORS"
 				# File is not a FLAC file, display failed
 				print_failed_flac
@@ -1751,6 +1795,11 @@ while [[ "$#" -gt 1 ]] ; do
 			;;
 		--aucdtect|-a)
 			AUCDTECT="true"
+			shift
+			;;
+		--aucdtect-spectrogram|-A)
+			AUCDTECT="true"
+			export CREATE_SPECTROGRAM="true"
 			shift
 			;;
 		--md5check|-m)
