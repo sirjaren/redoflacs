@@ -478,8 +478,17 @@ function print_aucdtect_flac {
 
 function print_aucdtect_issue {
 	if [[ "$FALLBACK" == "true" ]] ; then
-		printf "\r${NORMAL}%74s${BOLD_BLUE}%s${NORMAL}%s${YELLOW}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}%s\r%s${YELLOW}%s${NORMAL}%s\n" \
-		"" "[" " " "ISSUE" " " "]" "           " "     " "*" " $(basename "$i" | awk '{print substr($0,0,65)}')"
+		# If CREATE_SPECTROGRAM is true, add spacing after [ ISSUE ]
+		# so the last 4 characters are hidden from [ Creating Spectrogram ]
+		if [[ "$CREATE_SPECTROGRAM" == "true" ]] ; then
+			# Add spacing (4 characters)
+			printf "\r${NORMAL}%74s${BOLD_BLUE}%s${NORMAL}%s${YELLOW}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}%s\r%s${YELLOW}%s${NORMAL}%s\n" \
+			"" "[" " " "ISSUE" " " "]" "               " "     " "*" " $(basename "$i" | awk '{print substr($0,0,65)}')"
+		else
+			# Don't add spacing
+			printf "\r${NORMAL}%74s${BOLD_BLUE}%s${NORMAL}%s${YELLOW}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}%s\r%s${YELLOW}%s${NORMAL}%s\n" \
+			"" "[" " " "ISSUE" " " "]" "           " "     " "*" " $(basename "$i" | awk '{print substr($0,0,65)}')"
+		fi
 	else
 		COLUMNS="$(tput cols)"
 
@@ -497,6 +506,31 @@ function print_aucdtect_issue {
 
 		printf "\r${NORMAL}%$((${COLUMNS} - 9))s${BOLD_BLUE}%s${NORMAL}%s${YELLOW}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}\r%s${YELLOW}%s${NORMAL}%s\n" \
 		"" "[" " " "ISSUE" " " "]" "     " "*" " ${FILENAME}"
+	fi
+}
+
+function print_aucdtect_spectrogram {
+	if [[ "$FALLBACK" == "true" ]] ; then
+		printf "\r${NORMAL}%74s${BOLD_BLUE}%s${NORMAL}%s${YELLOW}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}\r%s${NORMAL}${YELLOW}%s${NORMAL}%s" \
+		"" "[" " " "Creating Spectrogram" " " "]" "     " "*" " $(basename "$i" | awk '{print substr($0,0,65)}')"
+	else
+		COLUMNS="$(tput cols)"
+
+		# This is the number of $COLUMNS minus the indent (7) minus length of the printed
+		# message, [ Creating Spectrogram ] (24) minus 3 (leaves a gap and the gives room for the
+		# ellipsis (…) and cursor)
+		MAX_FILENAME_LENGTH="$((${COLUMNS} - 34))"
+
+		FILENAME_LENGTH="$(basename "$i" | wc -m)"
+
+		if [[ "$FILENAME_LENGTH" -gt "$MAX_FILENAME_LENGTH" ]] ; then
+			FILENAME="$(echo "$(basename "$i" | awk '{print substr($0,0,"'"$MAX_FILENAME_LENGTH"'")}')…" )"
+		else
+			FILENAME="$(basename "$i")"
+		fi
+
+		printf "\r${NORMAL}%$((${COLUMNS} - 24))s${BOLD_BLUE}%s${NORMAL}%s${YELLOW}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}\r%s${NORMAL}${YELLOW}%s${NORMAL}%s" \
+		"" "[" " " "Creating Spectrogram" " " "]" "     " "*" " ${FILENAME}"
 	fi
 }
 
@@ -659,6 +693,7 @@ export -f print_ok_flac
 export -f print_ok_replaygain
 export -f print_aucdtect_flac
 export -f print_aucdtect_issue
+export -f print_aucdtect_spectrogram
 export -f print_aucdtect_skip
 export -f print_done_flac
 export -f print_level_same_compression
@@ -1066,6 +1101,8 @@ function aucdtect {
 						fi
 
 						# Let's create the spectrogram for the failed FLAC file
+						# and output progress
+						print_aucdtect_spectrogram
 						sox "$i" -n spectrogram -c '' -t "$i" -p1 -z90 -Z0 -q249 -wHann -x5000 -y1025 -o "${SPECTROGRAM_PICTURE}"
 
 						# Print ISSUE and log error, and show where to find
