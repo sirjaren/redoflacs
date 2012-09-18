@@ -1537,155 +1537,192 @@ function long_help {
 	cat << EOF
   Usage: $0 [OPTION] [OPTION]... [PATH_TO_FLAC(s)]
   Options:
-    -c, --compress          Compress the FLAC files with the user-specified level of compression
-                            defined under USER CONFIGURATION (as the variable COMPRESSION_LEVEL)
-                            and verify the resultant files.
+    -c, --compress
+           Compress the FLAC files with the user-specified level of compression
+           defined under USER CONFIGURATION (as the variable COMPRESSION_LEVEL)
+           and verify the resultant files.
 
-                            The default is 8, with the range of values starting from 1 to 8 with
-                            the smallest compression at 1, and the highest at 8.  This option
-                            will add a tag to all successfully verified FLAC files.  Below
-                            shows the default COMPRESSION tag added to each successfully
-                            verified FLAC:
+           The default is 8, with the range of values starting from 1 to 8 with
+           the smallest compression at 1, and the highest at 8.  This option
+           will add a tag to all successfully verified FLAC files.  Below
+           shows the default COMPRESSION tag added to each successfully
+           verified FLAC:
 
-                                        COMPRESSION=8
+                       COMPRESSION=8
 
-                            If any FLAC files already have the defined COMPRESSION_LEVEL tag (a
-                            good indicator the files are already compressed at that level), the
-                            script will instead test the FLAC files for any errors.  This is useful
-                            to check your entire music library to make sure all the FLAC files are
-                            compressed at the level specified as well as make sure they are intact.
+           If any FLAC files already have the defined COMPRESSION_LEVEL tag (a
+           good indicator the files are already compressed at that level), the
+           script will instead test the FLAC files for any errors.  This is useful
+           to check your entire music library to make sure all the FLAC files are
+           compressed at the level specified as well as make sure they are intact.
 
-                            If any files are found to be corrupt, this script will quit upon
-                            finishing the compression of any other files and produce an error
-                            log.
+           If any files are found to be corrupt, this script will quit upon
+           finishing the compression of any other files and produce an error
+           log.
 
-    -C, --compress-notest   Same as the "--compress" option, but if any FLAC files already have the
-                            defined COMPRESSION_LEVEL tag, the script will skip the file and continue
-                            on to the next without test the FLAC file's integrity.  Useful for
-                            checking all your FLAC files are compressed at the level specified.
+    -C, --compress-notest
+           Same as the "--compress" option, but if any FLAC files already have the
+           defined COMPRESSION_LEVEL tag, the script will skip the file and continue
+           on to the next without test the FLAC file's integrity.  Useful for
+           checking all your FLAC files are compressed at the level specified.
 
-    -t, --test              Same as compress but instead of compressing the FLAC files, this
-                            script just verfies the files.  This option will NOT add the
-                            COMPRESSION tag to the files.
+    -t, --test
+           Same as compress but instead of compressing the FLAC files, this
+           script just verfies the files.  This option will NOT add the
+           COMPRESSION tag to the files.
 
-                            As with the "--compress" option, this will produce an error log if
-                            any FLAC files are found to be corrupt.
+           As with the "--compress" option, this will produce an error log if
+           any FLAC files are found to be corrupt.
 
-    -a, --aucdtect          Uses the auCDtect program by Oleg Berngardt and Alexander Djourik to
-                            analyze FLAC files and check with fairly accurate precision whether
-                            the FLAC files are lossy sourced or not.  For example, an MP3 file
-                            converted to FLAC is no longer lossless therefore lossy sourced.
+    -a, --aucdtect
+           Uses the auCDtect program by Oleg Berngardt and Alexander Djourik to
+           analyze FLAC files and check with fairly accurate precision whether
+           the FLAC files are lossy sourced or not.  For example, an MP3 file
+           converted to FLAC is no longer lossless therefore lossy sourced.
 
-                            While this program isn't foolproof, it gives a good idea which FLAC
-                            files will need further investigation (ie a spectrogram).  This program
-                            does not work on FLAC files which have a bit depth more than a typical
-                            audio CD (16bit), and will skip the files that have a higher bit depth.
+           While this program isn't foolproof, it gives a good idea which FLAC
+           files will need further investigation (ie a spectrogram).  This program
+           does not work on FLAC files which have a bit depth more than a typical
+           audio CD (16bit), and will skip the files that have a higher bit depth.
 
-                            If any files are found to not be perfect (100% CDDA), a log will be created
-                            with the questionable FLAC files recorded in it.
+           If any files are found to not be perfect (100% CDDA), a log will be created
+           with the questionable FLAC files recorded in it.
 
-    -m, --md5check          Check the FLAC files for unset MD5 Signatures and log the output of
-                            any unset signatures.  An unset MD5 signature doesn't necessarily mean
-                            a FLAC file is corrupt, and can be repaired with a re-encoding of said
-                            FLAC file.
+    -A, --aucdtect-spectrogram
+           Same as "-a, --aucdtect" with the addition of creating a spectrogram for
+           each FLAC file that fails auCDtect, that is, any FLAC file that does not
+           returna 100% CDDA from auCDtect will be scanned and a spectrogram will be
+           created.
 
-    -p, --prune             Delete every METADATA block in each FLAC file except the STREAMINFO and
-                            VORBIS_COMMENT block.  If REMOVE_ARTWORK is set to "false", then the
-                            PICTURE block will NOT be removed.
+           Any FLAC file skipped (due to having a higher bit depth than 16), will
+           NOT have a spectrogram created.
 
-    -g, --replaygain        Add ReplayGain tags to the FLAC files.  The ReplayGain is calculated
-                            for ALBUM and TRACK values. ReplayGain is applied via VORBIS_TAGS and
-                            as such, will require the redo, --r argument to have these tags kept
-                            in order to preserve the added ReplayGain values.  The tags added are:
+           By default, each spectrogram will be created in the same folder as the
+           tested FLAC file with the same name as the tested FLAC file:
 
-                                        REPLAYGAIN_REFERENCE_LOUDNESS
-                                        REPLAYGAIN_TRACK_GAIN
-                                        REPLAYGAIN_TRACK_PEAK
-                                        REPLAYGAIN_ALBUM_GAIN
-                                        REPLAYGAIN_ALBUM_PEAK
+               03 - Some FLAC File.flac --> 03 - Some FLAC File.png
 
-                            In order for the ReplayGain values to be applied correctly, the
-                            script has to determine which FLAC files to add values by directory.
-                            What this means is that the script must add the ReplayGain values by
-                            working off the FLAC files' parent directory.  If there are some FLAC
-                            files found, the script will move up one directory and begin applying
-                            the ReplayGain values.  This is necessary in order to get the
-                            REPLAYGAIN_ALBUM_GAIN and REPLAYGAIN_ALBUM_PEAK values set correctly.
-                            Without doing this, the ALBUM and TRACK values would be identical.
+           If there already is a PNG file with the same name as the tested FLAC,
+           the name "spectrogram" will prepend the ".png" extension:
 
-                            Ideally, this script would like to be able to apply the values on each
-                            FLAC file individually, but due to how metaflac determines the
-                            ReplayGain values for ALBUM values (ie with wildcard characters), this
-                            isn't simple and/or straightforward.
+               03 - Some FLAC File.flac --> 03 - Some FLAC File.spectrogram.png
 
-                            A limitation of this option can now be seen.  If a user has many FLAC
-                            files under one directory (of different albums/artists), the
-                            ReplayGain ALBUM values are going to be incorrect as the script will
-                            perceive all those FLAC files to essentially be an album.  For now,
-                            this is mitigated by having your music library somewhat organized with
-                            each album housing the correct FLAC files and no others.
+           The created PNG file is large in resolution to best capture the
+           FLAC file's waveform (roughly 5140x2149).
 
-                            In the future, this script will ideally choose which FLAC files will
-                            be processed by ARTIST and ALBUM metadata, not requiring physical
-                            directories to process said FLAC files.
+           The spectrogram is created using the program SoX.  If the user tries
+           to use this option without having SoX installed, the script will warn
+           the user that SoX is missing and exit.
 
-                            Due to the nature of how ALBUM values are processed, this option cannot
-                            use more than one thread, so the CORES configuration option will not be
-                            honored -- enforcing only one thread.
+    -m, --md5check
+           Check the FLAC files for unset MD5 Signatures and log the output of
+           any unset signatures.  An unset MD5 signature doesn't necessarily mean
+           a FLAC file is corrupt, and can be repaired with a re-encoding of said
+           FLAC file.
 
-                            If there are any errors found while creating the ReplayGain values
-                            and/or setting the values, an error log will be produced.
+    -p, --prune
+           Delete every METADATA block in each FLAC file except the STREAMINFO and
+           VORBIS_COMMENT block.  If REMOVE_ARTWORK is set to "false", then the
+           PICTURE block will NOT be removed.
 
-    -r, --redo              Extract the configured tags in each FLAC file and clear the rest before
-                            retagging the file.  The default tags kept are:
+    -g, --replaygain
+           Add ReplayGain tags to the FLAC files.  The ReplayGain is calculated
+           for ALBUM and TRACK values. ReplayGain is applied via VORBIS_TAGS and
+           as such, will require the redo, --r argument to have these tags kept
+           in order to preserve the added ReplayGain values.  The tags added are:
 
-                                        TITLE
-                                        ARTIST
-                                        ALBUM
-                                        DISCNUMBER
-                                        DATE
-                                        TRACKNUMBER
-                                        TRACKTOTAL
-                                        GENRE
-                                        COMPRESSION
-                                        RELEASETYPE
-                                        SOURCE
-                                        MASTERING
-                                        REPLAYGAIN_REFERENCE_LOUDNESS
-                                        REPLAYGAIN_TRACK_GAIN
-                                        REPLAYGAIN_TRACK_PEAK
-                                        REPLAYGAIN_ALBUM_GAIN
-                                        REPLAYGAIN_ALBUM_PEAK
+                      REPLAYGAIN_REFERENCE_LOUDNESS
+                      REPLAYGAIN_TRACK_GAIN
+                      REPLAYGAIN_TRACK_PEAK
+                      REPLAYGAIN_ALBUM_GAIN
+                      REPLAYGAIN_ALBUM_PEAK
 
-                            If any FLAC files have missing tags (from those configured to be kept),
-                            the file and the missing tag will be recorded in a log.
+           In order for the ReplayGain values to be applied correctly, the
+           script has to determine which FLAC files to add values by directory.
+           What this means is that the script must add the ReplayGain values by
+           working off the FLAC files' parent directory.  If there are some FLAC
+           files found, the script will move up one directory and begin applying
+           the ReplayGain values.  This is necessary in order to get the
+           REPLAYGAIN_ALBUM_GAIN and REPLAYGAIN_ALBUM_PEAK values set correctly.
+           Without doing this, the ALBUM and TRACK values would be identical.
 
-                            The tags that can be kept are eseentially infinite, as long as the
-                            tags to be kept are set in the tag configuration located at the top of
-                            this script under USER CONFIGURATION.
+           Ideally, this script would like to be able to apply the values on each
+           FLAC file individually, but due to how metaflac determines the
+           ReplayGain values for ALBUM values (ie with wildcard characters), this
+           isn't simple and/or straightforward.
 
-                            If this option is specified, a warning will appear upon script
-                            execution.  This warning will show which of the configured TAG fields
-                            to keep when re-tagging the FLAC files.  A countdown will appear
-                            giving the user 10 seconds to abort the script, after which, the script
-                            will begin running it's course.
+           A limitation of this option can now be seen.  If a user has many FLAC
+           files under one directory (of different albums/artists), the
+           ReplayGain ALBUM values are going to be incorrect as the script will
+           perceive all those FLAC files to essentially be an album.  For now,
+           this is mitigated by having your music library somewhat organized with
+           each album housing the correct FLAC files and no others.
 
-                            If the (-d, --disable-warning) option is used, this warning will not
-                            appear.  This is useful for veteran users.
+           In the future, this script will ideally choose which FLAC files will
+           be processed by ARTIST and ALBUM metadata, not requiring physical
+           directories to process said FLAC files.
 
-    -n, --no-color          Turn off color output.
+           Due to the nature of how ALBUM values are processed, this option cannot
+           use more than one thread, so the CORES configuration option will not be
+           honored -- enforcing only one thread.
 
-    -v, --version           Display script version and exit.
+           If there are any errors found while creating the ReplayGain values
+           and/or setting the values, an error log will be produced.
 
-    -h, --help              Shows this help message.
+    -r, --redo
+           Extract the configured tags in each FLAC file and clear the rest before
+           retagging the file.  The default tags kept are:
 
-    Pseudo Multithreading is now available throughout this script.  By default, this script will
-    use two (2) threads, which can be configured under USER CONFIGURATION (located near the top
-    of this script).
+                      TITLE
+                      ARTIST
+                      ALBUM
+                      DISCNUMBER
+                      DATE
+                      TRACKNUMBER
+                      TRACKTOTAL
+                      GENRE
+                      COMPRESSION
+                      RELEASETYPE
+                      SOURCE
+                      MASTERING
+                      REPLAYGAIN_REFERENCE_LOUDNESS
+                      REPLAYGAIN_TRACK_GAIN
+                      REPLAYGAIN_TRACK_PEAK
+                      REPLAYGAIN_ALBUM_GAIN
+                      REPLAYGAIN_ALBUM_PEAK
 
-    Multithreading is achieved by utilizing the "xargs" command which comes bundled with the
-    "find" command.  While not true multithreading, this psuedo multithreading will greatly speed
-    up the processing if the host has more than one CPU.
+           If any FLAC files have missing tags (from those configured to be kept),
+           the file and the missing tag will be recorded in a log.
+
+           The tags that can be kept are eseentially infinite, as long as the
+           tags to be kept are set in the tag configuration located at the top of
+           this script under USER CONFIGURATION.
+
+           If this option is specified, a warning will appear upon script
+           execution.  This warning will show which of the configured TAG fields
+           to keep when re-tagging the FLAC files.  A countdown will appear
+           giving the user 10 seconds to abort the script, after which, the script
+           will begin running it's course.
+
+           If the (-d, --disable-warning) option is used, this warning will not
+           appear.  This is useful for veteran users.
+
+    -n, --no-color
+           Turn off color output.
+
+    -v, --version
+           Display script version and exit.
+
+    -h, --help
+           Shows this help message.
+
+           Pseudo Multithreading is now available throughout this script.  By default, this script will
+           use two (2) threads, which can be configured under USER CONFIGURATION (located near the top
+           of this script).
+
+           Multithreading is achieved by utilizing the "xargs" command which comes bundled with the
+           "find" command.  While not true multithreading, this psuedo multithreading will greatly speed
+           up the processing if the host has more than one CPU.
 
 
   Invocation Examples:
@@ -1726,6 +1763,7 @@ function short_help {
 	echo "    -t, --test"
 	echo "    -m, --md5check"
 	echo "    -a, --aucdtect"
+	echo "    -A, --aucdtect-spectrogram"
 	echo "    -p, --prune"
 	echo "    -g, --replaygain"
 	echo "    -r, --redo"
@@ -1988,6 +2026,19 @@ fi
 if [[ "$AUCDTECT" == "true" ]] ; then
 	# Check if auCDtect is found/installed
 	if [[ -f "$AUCDTECT_COMMAND" ]] ; then
+
+		# If "--aucdtect-spectrogram, -A" was called
+		# make sure SoX is installed before starting
+		if [[ "$CREATE_SPECTROGRAPH" == "true" ]] ; then
+			SOX_COMMAND="$(command -v sox)"
+			if [[ -z "$SOX_COMMAND" ]] ; then
+				# SoX can't be found, exit
+				echo -e " ${BOLD_RED}*${NORMAL} It appears SoX is not installed. Please verify you"
+				echo -e " ${BOLD_RED}*${NORMAL} have this program installed and can be found in \$PATH"
+				exit 1
+			fi
+		fi
+
 		aucdtect
 	else
 		echo -e " ${BOLD_RED}*${NORMAL} It appears auCDtect is not installed or you have not"
