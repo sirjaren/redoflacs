@@ -1785,6 +1785,31 @@ function long_help {
            If the (-d, --disable-warning) option is used, this warning will not
            appear.  This is useful for veteran users.
 
+    -l, --all
+           This option is short for:
+
+                      -c, --compress
+                      -m, --md5check
+                      -p, --prune
+                      -g, --replaygain
+                      -r, --redo
+
+           If any of these options (or variations of the above options) are called, this
+           script will warn the user of conflicting options and exit.
+
+    -L, --reallyall
+           This option is short for:
+
+                      -c, --compress
+                      -m, --md5check
+                      -p, --prune
+                      -g, --replaygain
+                      -r, --redo
+                      -A, --aucdtect-spectrogram
+
+           If any of these options (or variations of the above options) are called, this
+           script will warn the user of conflicting options and exit.
+
     -n, --no-color
            Turn off color output.
 
@@ -1794,7 +1819,7 @@ function long_help {
     -h, --help
            Shows this help message.
 
-           Pseudo Multithreading is now available throughout this script.  By default, this script will
+           This script can use more than one CPU/Cores (threads).  By default, this script will
            use two (2) threads, which can be configured under USER CONFIGURATION (located near the top
            of this script).
 
@@ -2167,7 +2192,7 @@ fi
 FIND_FLACS="$(find "$DIRECTORY" -name "*.[Ff][Ll][Aa][Cc]" -print)"
 if [[ -z "$FIND_FLACS" ]] ; then
 	no_flacs
-	exit 0
+	exit 1
 fi
 
 # Check if `tput` is installed and do a fallback if not
@@ -2184,9 +2209,8 @@ fi
 ###########################
 
 ##################
-#  Begin Script  #
+#  BEGIN SCRIPT  #
 ##################
-
 # The below order is probably the best bet in ensuring time
 # isn't wasted on doing unnecessary operations if the
 # FLAC files are corrupt or have metadata issues
@@ -2197,7 +2221,6 @@ fi
 if [[ "$AUCDTECT" == "true" ]] ; then
 	# Check if auCDtect is found/installed
 	if [[ -f "$AUCDTECT_COMMAND" ]] ; then
-
 		# If "--aucdtect-spectrogram, -A" was called
 		# make sure SoX is installed before starting
 		if [[ "$CREATE_SPECTROGRAM" == "true" ]] ; then
@@ -2209,7 +2232,7 @@ if [[ "$AUCDTECT" == "true" ]] ; then
 				exit 1
 			fi
 		fi
-
+		# Run auCDtect function/command
 		aucdtect
 	else
 		echo -e " ${BOLD_RED}*${NORMAL} It appears auCDtect is not installed or you have not"
@@ -2248,3 +2271,8 @@ if [[ "$COVERART_WARNING" == "true" ]] ; then
 	echo
 	coverart_warning
 fi
+
+################
+#  END SCRIPT  #
+################
+
