@@ -18,7 +18,7 @@
 # GNU General Public License for more details.
 #-----------------------------------------------------------------
 # You can follow development of this script on Gitorious at:
-# https://gitorious.org/redoflacs
+# https://github.com/sirjaren/redoflacs
 #
 # Please submit requests/changes/patches and/or comments
 #-----------------------------------------------------------------
