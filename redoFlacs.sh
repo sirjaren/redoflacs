@@ -1663,7 +1663,7 @@ function long_help {
     -A, --aucdtect-spectrogram
            Same as "-a, --aucdtect" with the addition of creating a spectrogram for
            each FLAC file that fails auCDtect, that is, any FLAC file that does not
-           returna 100% CDDA from auCDtect will be scanned and a spectrogram will be
+           return 100% CDDA from auCDtect will be scanned and a spectrogram will be
            created.
 
            Any FLAC file skipped (due to having a higher bit depth than 16), will
@@ -1845,6 +1845,8 @@ function short_help {
 	echo "    -p, --prune"
 	echo "    -g, --replaygain"
 	echo "    -r, --redo"
+	echo "    -l, --all"
+	echo "    -L, --reallyall"
 	echo "    -n, --no-color"
 	echo "    -v, --version"
 	echo "    -h, --help"
@@ -1891,6 +1893,14 @@ fi
 # Handle various command switches
 while [[ "$#" -gt 1 ]] ; do
 	case "$1" in
+		--all|-l)
+			ALL="true"
+			shift
+			;;
+		--reallyall|-L)
+			REALLYALL="true"
+			shift
+			;;
 		--compress|-c)
 			COMPRESS="true"
 			COMPRESS_TEST="true"
@@ -1911,6 +1921,8 @@ while [[ "$#" -gt 1 ]] ; do
 			;;
 		--aucdtect|-a)
 			AUCDTECT="true"
+			# Not used in subshell(s)
+			NO_SPECTROGRAM="true"
 			shift
 			;;
 		--aucdtect-spectrogram|-A)
@@ -1971,70 +1983,58 @@ GREP_EXISTS="$(command -v grep)"
 # Go through and test if each command was found (by displaying its $PATH).  If
 # it's empty, add where you can find the package to an array to be displayed.
 if [[ -z "$PRINTF_EXISTS" ]] ; then
-	command_exists_array=( "${command_exists_array[@]}
-     ${YELLOW}*${NORMAL} You can generally install \"printf\" with the \"coreutils\" package." )
+	command_exists_array=( "${command_exists_array[@]}" "You can generally install \"printf\" with the \"coreutils\" package." )
 fi
 
 if [[ -z "$BASENAME_EXISTS" ]] ; then
-	command_exists_array=( "${command_exists_array[@]}
-     ${YELLOW}*${NORMAL} You can generally install \"basename\" with the \"coreutils\" package." )
+	command_exists_array=( "${command_exists_array[@]}" "You can generally install \"basename\" with the \"coreutils\" package." )
 fi
 
 if [[ -z "$DIRNAME_EXISTS" ]] ; then
-	command_exists_array=( "${command_exists_array[@]}
-     ${YELLOW}*${NORMAL} You can generally install \"dirname\" with the \"coreutils\" package." )
+	command_exists_array=( "${command_exists_array[@]}" "You can generally install \"dirname\" with the \"coreutils\" package." )
 fi
 
 if [[ -z "$SLEEP_EXISTS" ]] ; then
-	command_exists_array=( "${command_exists_array[@]}
-     ${YELLOW}*${NORMAL} You can generally install \"sleep\" with the \"coreutils\" package." )
+	command_exists_array=( "${command_exists_array[@]}" "You can generally install \"sleep\" with the \"coreutils\" package." )
 fi
 
 if [[ -z "$WC_EXISTS" ]] ; then
-	command_exists_array=( "${command_exists_array[@]}
-     ${YELLOW}*${NORMAL} You can generally install \"wc\" with the \"coreutils\" package." )
+	command_exists_array=( "${command_exists_array[@]}" "You can generally install \"wc\" with the \"coreutils\" package." )
 fi
 
 if [[ -z "$CAT_EXISTS" ]] ; then
-	command_exists_array=( "${command_exists_array[@]}
-     ${YELLOW}*${NORMAL} You can generally install \"cat\" with the \"coreutils\" package." )
+	command_exists_array=( "${command_exists_array[@]}" "You can generally install \"cat\" with the \"coreutils\" package." )
 fi
 
 if [[ -z "$FIND_EXISTS" ]] ; then
-	command_exists_array=( "${command_exists_array[@]}
-     ${YELLOW}*${NORMAL} You can generally install \"find\" with the \"findutils\" package." )
+	command_exists_array=( "${command_exists_array[@]}" "You can generally install \"find\" with the \"findutils\" package." )
 fi
 
 if [[ -z "$XARGS_EXISTS" ]] ; then
-	command_exists_array=( "${command_exists_array[@]}
-     ${YELLOW}*${NORMAL} You can generally install \"xargs\" with the \"findutils\" package." )
+	command_exists_array=( "${command_exists_array[@]}" "You can generally install \"xargs\" with the \"findutils\" package." )
 fi
 
 if [[ -z "$METAFLAC_EXISTS" ]] ; then
-	command_exists_array=( "${command_exists_array[@]}
-     ${YELLOW}*${NORMAL} You can generally install \"metaflac\" with the \"flac\" package." )
+	command_exists_array=( "${command_exists_array[@]}" "You can generally install \"metaflac\" with the \"flac\" package." )
 fi
 
 if [[ -z "$FLAC_EXISTS" ]] ; then
-	command_exists_array=( "${command_exists_array[@]}
-     ${YELLOW}*${NORMAL} You can generally install \"flac\" with the \"flac\" package." )
+	command_exists_array=( "${command_exists_array[@]}" "You can generally install \"flac\" with the \"flac\" package." )
 fi
 
 if [[ -z "$AWK_EXISTS" ]] ; then
-	command_exists_array=( "${command_exists_array[@]}
-     ${YELLOW}*${NORMAL} You can generally install \"awk\" with the \"awk\", \"gawk\", \"nawk\", or \"mawk\" package." )
+	command_exists_array=( "${command_exists_array[@]}" "You can generally install \"awk\" with the \"awk\", \"gawk\", \"nawk\", or \"mawk\" package." )
 fi
 
 if [[ -z "$GREP_EXISTS" ]] ; then
-	command_exists_array=( "${command_exists_array[@]}
-     ${YELLOW}*${NORMAL} You can generally install \"grep\" with the \"grep\" package." )
+	command_exists_array=( "${command_exists_array[@]}" "You can generally install \"grep\" with the \"grep\" package." )
 fi
 
 # Display (in bold red) message that system is missing vital programs
 function display_missing_commands_header {
 	echo -e " ${BOLD_RED}*${NORMAL} You seem to be missing one or more necessary programs"
 	echo -e " ${BOLD_RED}*${NORMAL} to run this script reliably.  Below shows the program(s)"
-	echo -en " ${BOLD_RED}*${NORMAL} missing, as well as where you can install them from:"
+	echo -e " ${BOLD_RED}*${NORMAL} missing, as well as where you can install them from:\n"
 }
 
 # If all the programs above were found, continue with script.  Else
@@ -2042,7 +2042,10 @@ function display_missing_commands_header {
 # the missing programs
 if [[ -n "${command_exists_array[@]}" ]] ; then
 	display_missing_commands_header
-	echo -e "${command_exists_array[@]}"
+	# Iterate through array and print each value
+	for i in "${command_exists_array[@]}" ; do
+		echo -e " ${YELLOW}*${NORMAL} $i"
+	done
 	exit 1
 fi
 
@@ -2050,10 +2053,10 @@ fi
 DIRECTORY="$1"
 
 # Check whether DIRECTORY is not null and whether the directory exists
-if [[ ! -z "$DIRECTORY" && ! -d "$DIRECTORY" ]] ; then
+if [[ -n "$DIRECTORY" && ! -d "$DIRECTORY" ]] ; then
 	echo -e "  Usage: $0 [OPTION] [PATH_TO_FLAC(s)]...\n"
 	echo -e " ${BOLD_RED}*${NORMAL} Please specify a directory!"
-	exit 0
+	exit 1
 fi
 
 # If no arguments are made to the script show usage
@@ -2062,12 +2065,102 @@ if [[ "$#" -eq 0 ]] ; then
 	exit 0
 fi
 
-# Make sure compress and test aren't both specified
+# If "-l, --all" and "-L, --reallyall" are both called, warn and exit
+if [[ "$ALL" == "true" && "$REALLYALL" == "true" ]] ; then
+	echo -e " ${BOLD_RED}*${NORMAL} Running both \"-l, --all\" and \"-L, --reallyall\" conflict!"
+	echo -e " ${BOLD_RED}*${NORMAL} Please choose one or the other." 
+	exit 1
+fi
+
+# If "-l, --all" or "-L, --reallyall" was called, check if arguments
+# were called that already will be performed by the above argument.
+# If any were called, display a warning and continue with script
+if [[ "$ALL" == "true" || "$REALLYALL" == "true" ]] ; then
+
+	# Check for "-c, --compress".  If used add it to array
+	if [[ "$COMPRESS" == "true" && "$SKIP_TEST" == "false" ]] ; then
+		argumentConflict=( "${argumentConflict[@]}" "-c, --compress" )
+	# Check for "-C, --compress-notest".  If used add it to array
+	elif [[ "$COMPRESS" == "true" && "$SKIP_TEST" == "true" ]] ; then
+		argumentConflict=( "${argumentConflict[@]}" "-C, --compress-notest" )
+	fi
+
+	# Check for "-t, --test".  If used add it to array
+	if [[ "$TEST" == "true" ]] ; then
+		argumentConflict=( "${argumentConflict[@]}" "-t, --test" )
+	fi
+
+	# Check for "-m, --md5check".  If used add it to array
+	if [[ "$MD5CHECK" == "true" ]] ; then
+		argumentConflict=( "${argumentConflict[@]}" "-m, --md5check" )
+	fi
+
+	# Check for "-p, --prune".  If used add it to array
+	if [[ "$PRUNE" == "true" ]] ; then
+		argumentConflict=( "${argumentConflict[@]}" "-p, --prune" )
+	fi
+
+	# Check for "-g, --replaygain".  If used add it to array
+	if [[ "$REPLAYGAIN" == "true" ]] ; then
+		argumentConflict=( "${argumentConflict[@]}" "-g, --replaygain" )
+	fi
+
+	# Check for "-r, --redo".  If used add it to array
+	if [[ "$REDO" == "true" ]] ; then
+		argumentConflict=( "${argumentConflict[@]}" "-r, --redo" )
+	fi
+
+	# If "-L, --reallyall" was called, check for the various forms of calling
+	# auCDtect.  If it was called, add it to array
+	if [[ "$REALLYALL" == "true" ]] ; then
+		if [[ "$AUCDTECT" == "true" && "$CREATE_SPECTROGRAM" == "true" ]] ; then
+			argumentConflict=( "${argumentConflict[@]}" "-A, --aucdtect-spectrogram" )
+		elif [[ "$AUCDTECT" == "true" && "$CREATE_SPECTROGRAM" != "true" ]] ; then
+			argumentConflict=( "${argumentConflict[@]}" "-a, --aucdtect" )
+		fi
+	fi
+
+	# If the array is not empty, the user called some incompatible options with
+	# "-l, --all" or "-L, --reallyall", so print which options were called that
+	# are incompatible and exit script
+	if [[ -n "${argumentConflict[@]}" ]] ; then
+		# "-l, --all"
+		if [[ "$ALL" == "true" ]] ; then
+			echo -e " ${BOLD_RED}*${NORMAL} The below options conflict with \"-l, --all\""
+		# "-L, --reallyall"
+		elif [[ "$REALLYALL" == "true" ]] ; then
+			echo -e " ${BOLD_RED}*${NORMAL} The below options conflict with \"-L, --reallyall\""
+		fi
+
+		# Iterate through array and print each value
+		for i in "${argumentConflict[@]}" ; do
+			echo -e " ${BOLD_RED}*${NORMAL}     $i"
+		done
+
+		echo -e " ${BOLD_RED}*${NORMAL} Please remove incompatible options."
+		exit 1
+	fi
+fi
+
+# If "-C, --compress-notest" and "-c, --compress" are both called, warn and exit
+if [[ "$SKIP_TEST" == "true" && "$COMPRESS_TEST" == "true" ]] ; then
+	echo -e " ${BOLD_RED}*${NORMAL} Running both \"-c, --compress\" and \"-C, --compress-notest\" conflict!"
+	echo -e " ${BOLD_RED}*${NORMAL} Please choose one or the other."
+	exit 1
+fi
+
+# If "-c, --compress" and "-t, --test" are both called, warn and exit
 if [[ "$COMPRESS_TEST" == "true" && "$TEST" == "true" ]] ; then
-	echo -e " ${BOLD_RED}*${NORMAL} Running both \"--compress\" and \"--test\" is redundant as \"--compress\""
-	echo -e " ${BOLD_RED}*${NORMAL} already tests the FLAC files while compressing them.  Please"
-	echo -e " ${BOLD_RED}*${NORMAL} choose one or the other."
-	exit 0
+	echo -e " ${BOLD_RED}*${NORMAL} Running both \"-c, --compress\" and \"-t, --test\" conflict!"
+	echo -e " ${BOLD_RED}*${NORMAL} Please choose one or the other."
+	exit 1
+fi
+
+# If "-a, --aucdtect" and "-A, --aucdtect-spectrogram" are both called, warn and exit
+if [[ "$NO_SPECTROGRAM" == "true"  && "$CREATE_SPECTROGRAM" == "true" ]] ; then
+	echo -e " ${BOLD_RED}*${NORMAL} Running both \"-a, --aucdtect\" and \"-A, --aucdtect-spectrogram\" conflict!"
+	echo -e " ${BOLD_RED}*${NORMAL} Please choose one or the other."
+	exit 1
 fi
 
 # Check if FLAC files exist
@@ -2077,14 +2170,6 @@ if [[ -z "$FIND_FLACS" ]] ; then
 	exit 0
 fi
 
-###########################
-#  END PRE-SCRIPT CHECKS  #
-###########################
-
-##################
-#  Begin Script  #
-##################
-
 # Check if `tput` is installed and do a fallback if not
 # installed
 hash tput
@@ -2093,6 +2178,14 @@ if [[ "$?" -eq 1 ]] ; then
 	# Export to allow subshell access
 	export FALLBACK="true"
 fi
+
+###########################
+#  END PRE-SCRIPT CHECKS  #
+###########################
+
+##################
+#  Begin Script  #
+##################
 
 # The below order is probably the best bet in ensuring time
 # isn't wasted on doing unnecessary operations if the
