@@ -1782,9 +1782,6 @@ function long_help {
            giving the user 10 seconds to abort the script, after which, the script
            will begin running it's course.
 
-           If the (-d, --disable-warning) option is used, this warning will not
-           appear.  This is useful for veteran users.
-
     -l, --all
            This option is short for:
 
