@@ -17,7 +17,7 @@
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 # GNU General Public License for more details.
 #-----------------------------------------------------------------
-# You can follow development of this script on Gitorious at:
+# You can follow development of this script on Github at:
 # https://github.com/sirjaren/redoflacs
 #
 # Please submit requests/changes/patches and/or comments
@@ -2098,8 +2098,8 @@ if [[ "$ALL" == "true" && "$REALLYALL" == "true" ]] ; then
 fi
 
 # If "-l, --all" or "-L, --reallyall" was called, check if arguments
-# were called that already will be performed by the above argument.
-# If any were called, display a warning and continue with script
+# were called that already will be performed by the above argument(s).
+# If any were called, display a warning and exit the script
 if [[ "$ALL" == "true" || "$REALLYALL" == "true" ]] ; then
 
 	# Check for "-c, --compress".  If used add it to array
@@ -2211,6 +2211,27 @@ fi
 ##################
 #  BEGIN SCRIPT  #
 ##################
+# If "-l, --all" or "-L, --reallyall" was called,
+# enable the various arguments to allow script to
+# run them
+if [[ "$ALL" == "true" ]] ; then
+	COMPRESS="true"
+	MD5CHECK="true"
+	PRUNE="true"
+	REPLAYGAIN="true"
+	REDO="true"
+elif [[ "$REALLYALL" == "true" ]] ; then
+	COMPRESS="true"
+	MD5CHECK="true"
+	PRUNE="true"
+	REPLAYGAIN="true"
+	REDO="true"
+	AUCDTECT="true"
+	# This is needed to let script know that we want auCDtect
+	# to create a spectrogram (ie "-A, --aucdtect-spectrogram)
+	CREATE_SPECTROGRAM="true"
+fi
+
 # The below order is probably the best bet in ensuring time
 # isn't wasted on doing unnecessary operations if the
 # FLAC files are corrupt or have metadata issues
@@ -2275,4 +2296,3 @@ fi
 ################
 #  END SCRIPT  #
 ################
-
