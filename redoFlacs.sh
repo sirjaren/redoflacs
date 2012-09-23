@@ -162,14 +162,14 @@ export YELLOW="\033[0;33m"
 
 # Log files with timestamp
 # Export to allow subshell access
-export VERIFY_ERRORS="$ERROR_LOG/FLAC_Verify_Errors $(date "+[%Y-%m-%d %R]")"
-export TEST_ERRORS="$ERROR_LOG/FLAC_Test_Errors $(date "+[%Y-%m-%d %R]")"
-export MD5_ERRORS="$ERROR_LOG/MD5_Signature_Errors $(date "+[%Y-%m-%d %R]")"
-export METADATA_ERRORS="$ERROR_LOG/FLAC_Metadata_Errors $(date "+[%Y-%m-%d %R]")"
-export REPLAY_TEST_ERRORS="$ERROR_LOG/ReplayGain_Test_Errors $(date "+[%Y-%m-%d %R]")"
-export REPLAY_ADD_ERRORS="$ERROR_LOG/ReplayGain_Add_Errors $(date "+[%Y-%m-%d %R]")"
-export AUCDTECT_ERRORS="$ERROR_LOG/auCDtect_Errors $(date "+[%Y-%m-%d %R]")"
-export PRUNE_ERRORS="$ERROR_LOG/FLAC_Prune_Errors $(date "+[%Y-%m-%d %R]")"
+export VERIFY_ERRORS="${ERROR_LOG}/FLAC_Verify_Errors $(date "+[%Y-%m-%d %R]")"
+export TEST_ERRORS="${ERROR_LOG}/FLAC_Test_Errors $(date "+[%Y-%m-%d %R]")"
+export MD5_ERRORS="${ERROR_LOG}/MD5_Signature_Errors $(date "+[%Y-%m-%d %R]")"
+export METADATA_ERRORS="${ERROR_LOG}/FLAC_Metadata_Errors $(date "+[%Y-%m-%d %R]")"
+export REPLAY_TEST_ERRORS="${ERROR_LOG}/ReplayGain_Test_Errors $(date "+[%Y-%m-%d %R]")"
+export REPLAY_ADD_ERRORS="${ERROR_LOG}/ReplayGain_Add_Errors $(date "+[%Y-%m-%d %R]")"
+export AUCDTECT_ERRORS="${ERROR_LOG}/auCDtect_Errors $(date "+[%Y-%m-%d %R]")"
+export PRUNE_ERRORS="${ERROR_LOG}/FLAC_Prune_Errors $(date "+[%Y-%m-%d %R]")"
 
 # Set arguments to false
 # If enabled they will be changed to true
@@ -230,9 +230,9 @@ function no_flacs {
 
 # Information relating to currently running tasks
 function print_compressing_flac {
-	if [[ "$FALLBACK" == "true" ]] ; then
+	if [[ "${FALLBACK}" == "true" ]] ; then
 		printf "\r${NORMAL}%74s${BOLD_BLUE}%s${NORMAL}%s${YELLOW}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}\r%s${NORMAL}${YELLOW}%s${NORMAL}%s" \
-		"" "[" " " "Compressing FLAC" " " "]" "     " "*" " $(basename "$i" | awk '{print substr($0,0,65)}')"
+		"" "[" " " "Compressing FLAC" " " "]" "     " "*" " $(basename "${i}" | awk '{print substr($0,0,65)}')"
 	else
 		COLUMNS="$(tput cols)"
 
@@ -241,12 +241,12 @@ function print_compressing_flac {
 		# ellipsis (…) and cursor)
 		MAX_FILENAME_LENGTH="$((${COLUMNS} - 30))"
 
-		FILENAME_LENGTH="$(basename "$i" | wc -m)"
+		FILENAME_LENGTH="$(basename "${i}" | wc -m)"
 
-		if [[ "$FILENAME_LENGTH" -gt "$MAX_FILENAME_LENGTH" ]] ; then
-			FILENAME="$(echo "$(basename "$i" | awk '{print substr($0,0,"'"$MAX_FILENAME_LENGTH"'")}')…" )"
+		if [[ "${FILENAME_LENGTH}" -gt "${MAX_FILENAME_LENGTH}" ]] ; then
+			FILENAME="$(echo "$(basename "${i}" | awk '{print substr($0,0,"'"${MAX_FILENAME_LENGTH}"'")}')…" )"
 		else
-			FILENAME="$(basename "$i")"
+			FILENAME="$(basename "${i}")"
 		fi
 
 		printf "\r${NORMAL}%$((${COLUMNS} - 20))s${BOLD_BLUE}%s${NORMAL}%s${YELLOW}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}\r%s${NORMAL}${YELLOW}%s${NORMAL}%s" \
@@ -255,9 +255,9 @@ function print_compressing_flac {
 }
 
 function print_test_replaygain {
-	if [[ "$FALLBACK" == "true" ]] ; then
+	if [[ "${FALLBACK}" == "true" ]] ; then
 		printf "\r${NORMAL}%74s${BOLD_BLUE}%s${NORMAL}%s${YELLOW}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}\r%s${NORMAL}${YELLOW}%s${NORMAL}%s" \
-		"" "[" " " "Testing ReplayGain" " " "]" "     " "*" " $(basename "$i" | awk '{print substr($0,0,65)}')"
+		"" "[" " " "Testing ReplayGain" " " "]" "     " "*" " $(basename "${i}" | awk '{print substr($0,0,65)}')"
 	else
 		COLUMNS="$(tput cols)"
 
@@ -266,12 +266,12 @@ function print_test_replaygain {
 		# ellipsis (…) and cursor)
 		MAX_FILENAME_LENGTH="$((${COLUMNS} - 32))"
 
-		FILENAME_LENGTH="$(basename "$i" | wc -m)"
+		FILENAME_LENGTH="$(basename "${i}" | wc -m)"
 
-		if [[ "$FILENAME_LENGTH" -gt "$MAX_FILENAME_LENGTH" ]] ; then
-			FILENAME="$(echo "$(basename "$i" | awk '{print substr($0,0,"'"$MAX_FILENAME_LENGTH"'")}')…" )"
+		if [[ "${FILENAME_LENGTH}" -gt "${MAX_FILENAME_LENGTH}" ]] ; then
+			FILENAME="$(echo "$(basename "${i}" | awk '{print substr($0,0,"'"${MAX_FILENAME_LENGTH}"'")}')…" )"
 		else
-			FILENAME="$(basename "$i")"
+			FILENAME="$(basename "${i}")"
 		fi
 
 		printf "\r${NORMAL}%$((${COLUMNS} - 22))s${BOLD_BLUE}%s${NORMAL}%s${YELLOW}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}\r%s${NORMAL}${YELLOW}%s${NORMAL}%s" \
@@ -280,9 +280,9 @@ function print_test_replaygain {
 }
 
 function print_add_replaygain {
-	if [[ "$FALLBACK" == "true" ]] ; then
+	if [[ "${FALLBACK}" == "true" ]] ; then
 		printf "\r${NORMAL}%74s${BOLD_BLUE}%s${NORMAL}%s${YELLOW}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}\r%s${NORMAL}${YELLOW}%s${NORMAL}%s${CYAN}%s${NORMAL}" \
-		"" "[" " " "Adding ReplayGain" " " "]" "     " "*" " $(basename "$FLAC_LOCATION" | awk '{print substr($0,0,65)}') " "[Directory]"
+		"" "[" " " "Adding ReplayGain" " " "]" "     " "*" " $(basename "${FLAC_LOCATION}" | awk '{print substr($0,0,65)}') " "[Directory]"
 	else
 		COLUMNS="$(tput cols)"
 
@@ -291,12 +291,12 @@ function print_add_replaygain {
 		# ellipsis (…) and cursor)
 		MAX_FILENAME_LENGTH="$((${COLUMNS} - 31))"
 
-		FILENAME_LENGTH="$(basename "$FLAC_LOCATION" | wc -m)"
+		FILENAME_LENGTH="$(basename "${FLAC_LOCATION}" | wc -m)"
 
-		if [[ "$FILENAME_LENGTH" -gt "$MAX_FILENAME_LENGTH" ]] ; then
-			FILENAME="$(echo "$(basename "$FLAC_LOCATION" | awk '{print substr($0,0,"'"$MAX_FILENAME_LENGTH"'")}')…" )"
+		if [[ "${FILENAME_LENGTH}" -gt "${MAX_FILENAME_LENGTH}" ]] ; then
+			FILENAME="$(echo "$(basename "${FLAC_LOCATION}" | awk '{print substr($0,0,"'"${MAX_FILENAME_LENGTH}"'")}')…" )"
 		else
-			FILENAME="$(basename "$FLAC_LOCATION")"
+			FILENAME="$(basename "${FLAC_LOCATION}")"
 		fi
 
 		printf "\r${NORMAL}%$((${COLUMNS} - 21))s${BOLD_BLUE}%s${NORMAL}%s${YELLOW}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}\r%s${NORMAL}${YELLOW}%s${NORMAL}%s${CYAN}%s${NORMAL}" \
@@ -305,9 +305,9 @@ function print_add_replaygain {
 }
 
 function print_testing_flac {
-	if [[ "$FALLBACK" == "true" ]] ; then
+	if [[ "${FALLBACK}" == "true" ]] ; then
 		printf "\r${NORMAL}%74s${BOLD_BLUE}%s${NORMAL}%s${YELLOW}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}\r%s${NORMAL}${YELLOW}%s${NORMAL}%s" \
-		"" "[" " " "Testing FLAC" " " "]" "     " "*" " $(basename "$i" | awk '{print substr($0,0,65)}')"
+		"" "[" " " "Testing FLAC" " " "]" "     " "*" " $(basename "${i}" | awk '{print substr($0,0,65)}')"
 	else
 		COLUMNS="$(tput cols)"
 
@@ -316,12 +316,12 @@ function print_testing_flac {
 		# ellipsis (…) and cursor)
 		MAX_FILENAME_LENGTH="$((${COLUMNS} - 26))"
 
-		FILENAME_LENGTH="$(basename "$i" | wc -m)"
+		FILENAME_LENGTH="$(basename "${i}" | wc -m)"
 
-		if [[ "$FILENAME_LENGTH" -gt "$MAX_FILENAME_LENGTH" ]] ; then
-			FILENAME="$(echo "$(basename "$i" | awk '{print substr($0,0,"'"$MAX_FILENAME_LENGTH"'")}')…" )"
+		if [[ "${FILENAME_LENGTH}" -gt "${MAX_FILENAME_LENGTH}" ]] ; then
+			FILENAME="$(echo "$(basename "${i}" | awk '{print substr($0,0,"'"${MAX_FILENAME_LENGTH}"'")}')…" )"
 		else
-			FILENAME="$(basename "$i")"
+			FILENAME="$(basename "${i}")"
 		fi
 		
 		printf "\r${NORMAL}%$((${COLUMNS} - 16))s${BOLD_BLUE}%s${NORMAL}%s${YELLOW}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}\r%s${NORMAL}${YELLOW}%s${NORMAL}%s" \
@@ -330,9 +330,9 @@ function print_testing_flac {
 }
 
 function print_failed_flac {
-	if [[ "$FALLBACK" == "true" ]] ; then
+	if [[ "${FALLBACK}" == "true" ]] ; then
 		printf "\r${NORMAL}%74s${BOLD_BLUE}%s${NORMAL}%s${BOLD_RED}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}%s\r%s${YELLOW}%s${NORMAL}%s\n" \
-		"" "[" " " "FAILED" " " "]" "          " "     " "*" " $(basename "$i" | awk '{print substr($0,0,65)}')"
+		"" "[" " " "FAILED" " " "]" "          " "     " "*" " $(basename "${i}" | awk '{print substr($0,0,65)}')"
 	else
 		COLUMNS="$(tput cols)"
 
@@ -340,12 +340,12 @@ function print_failed_flac {
 		# message, [ FAILED ] (10) minus 2 (leaves a gap and the gives room for the ellipsis (…))
 		MAX_FILENAME_LENGTH="$((${COLUMNS} - 19))"
 
-		FILENAME_LENGTH="$(basename "$i" | wc -m)"
+		FILENAME_LENGTH="$(basename "${i}" | wc -m)"
 
-		if [[ "$FILENAME_LENGTH" -gt "$MAX_FILENAME_LENGTH" ]] ; then
-			FILENAME="$(echo "$(basename "$i" | awk '{print substr($0,0,"'"$MAX_FILENAME_LENGTH"'")}')…" )"
+		if [[ "${FILENAME_LENGTH}" -gt "${MAX_FILENAME_LENGTH}" ]] ; then
+			FILENAME="$(echo "$(basename "${i}" | awk '{print substr($0,0,"'"${MAX_FILENAME_LENGTH}"'")}')…" )"
 		else
-			FILENAME="$(basename "$i")"
+			FILENAME="$(basename "${i}")"
 		fi
 
 		printf "\r${NORMAL}%$((${COLUMNS} - 10))s${BOLD_BLUE}%s${NORMAL}%s${BOLD_RED}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}\r%s${YELLOW}%s${NORMAL}%s\n" \
@@ -354,9 +354,9 @@ function print_failed_flac {
 }
 
 function print_failed_replaygain {
-	if [[ "$FALLBACK" == "true" ]] ; then
+	if [[ "${FALLBACK}" == "true" ]] ; then
 		printf "\r${NORMAL}%74s${BOLD_BLUE}%s${NORMAL}%s${BOLD_RED}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}\r%s${YELLOW}%s${NORMAL}%s${CYAN}%s${NORMAL}\n" \
-		"" "[" " " "FAILED" " " "]" "          " "*" " $(basename "$FLAC_LOCATION" | awk '{print substr($0,0,65)}') " "[Directory]"
+		"" "[" " " "FAILED" " " "]" "          " "*" " $(basename "${FLAC_LOCATION}" | awk '{print substr($0,0,65)}') " "[Directory]"
 	else
 		COLUMNS="$(tput cols)"
 
@@ -365,12 +365,12 @@ function print_failed_replaygain {
 		# ellipsis (…) and cursor)
 		MAX_FILENAME_LENGTH="$((${COLUMNS} - 19))"
 
-		FILENAME_LENGTH="$(basename "$FLAC_LOCATION" | wc -m)"
+		FILENAME_LENGTH="$(basename "${FLAC_LOCATION}" | wc -m)"
 
-		if [[ "$FILENAME_LENGTH" -gt "$MAX_FILENAME_LENGTH" ]] ; then
-			FILENAME="$(echo "$(basename "$FLAC_LOCATION" | awk '{print substr($0,0,"'"$MAX_FILENAME_LENGTH"'")}')…" )"
+		if [[ "${FILENAME_LENGTH}" -gt "${MAX_FILENAME_LENGTH}" ]] ; then
+			FILENAME="$(echo "$(basename "${FLAC_LOCATION}" | awk '{print substr($0,0,"'"${MAX_FILENAME_LENGTH}"'")}')…" )"
 		else
-			FILENAME="$(basename "$FLAC_LOCATION")"
+			FILENAME="$(basename "${FLAC_LOCATION}")"
 		fi
 
 		printf "\r${NORMAL}%$((${COLUMNS} - 10))s${BOLD_BLUE}%s${NORMAL}%s${BOLD_RED}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}\r%s${NORMAL}${YELLOW}%s${NORMAL}%s${CYAN}%s${NORMAL}\n" \
@@ -379,9 +379,9 @@ function print_failed_replaygain {
 }
 
 function print_checking_md5 {
-	if [[ "$FALLBACK" == "true" ]] ; then
+	if [[ "${FALLBACK}" == "true" ]] ; then
 		printf "\r${NORMAL}%74s${BOLD_BLUE}%s${NORMAL}%s${YELLOW}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}\r%s${NORMAL}${YELLOW}%s${NORMAL}%s" \
-		"" "[" " " "Checking MD5" " " "]" "     " "*" " $(basename "$i" | awk '{print substr($0,0,65)}')"
+		"" "[" " " "Checking MD5" " " "]" "     " "*" " $(basename "${i}" | awk '{print substr($0,0,65)}')"
 	else
 		COLUMNS="$(tput cols)"
 
@@ -390,12 +390,12 @@ function print_checking_md5 {
 		# ellipsis (…) and cursor)
 		MAX_FILENAME_LENGTH="$((${COLUMNS} - 26))"
 
-		FILENAME_LENGTH="$(basename "$i" | wc -m)"
+		FILENAME_LENGTH="$(basename "${i}" | wc -m)"
 
-		if [[ "$FILENAME_LENGTH" -gt "$MAX_FILENAME_LENGTH" ]] ; then
-			FILENAME="$(echo "$(basename "$i" | awk '{print substr($0,0,"'"$MAX_FILENAME_LENGTH"'")}')…" )"
+		if [[ "${FILENAME_LENGTH}" -gt "${MAX_FILENAME_LENGTH}" ]] ; then
+			FILENAME="$(echo "$(basename "${i}" | awk '{print substr($0,0,"'"${MAX_FILENAME_LENGTH}"'")}')…" )"
 		else
-			FILENAME="$(basename "$i")"
+			FILENAME="$(basename "${i}")"
 		fi
 
 		printf "\r${NORMAL}%$((${COLUMNS} - 16))s${BOLD_BLUE}%s${NORMAL}%s${YELLOW}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}\r%s${NORMAL}${YELLOW}%s${NORMAL}%s" \
@@ -404,9 +404,9 @@ function print_checking_md5 {
 }
 
 function print_ok_flac {
-	if [[ "$FALLBACK" == "true" ]] ; then
+	if [[ "${FALLBACK}" == "true" ]] ; then
 		printf "\r${NORMAL}%74s${BOLD_BLUE}%s${NORMAL}%s${BOLD_GREEN}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}%s\r%s${YELLOW}%s${NORMAL}%s\n" \
-		"" "[" " " "OK" " " "]" "              " "     " "*" " $(basename "$i" | awk '{print substr($0,0,65)}')"
+		"" "[" " " "OK" " " "]" "              " "     " "*" " $(basename "${i}" | awk '{print substr($0,0,65)}')"
 	else
 		COLUMNS="$(tput cols)"
 
@@ -414,12 +414,12 @@ function print_ok_flac {
 		# message, [ OK ] (6) minus 2 (leaves a gap and the gives room for the ellipsis (…))
 		MAX_FILENAME_LENGTH="$((${COLUMNS} - 15))"
 
-		FILENAME_LENGTH="$(basename "$i" | wc -m)"
+		FILENAME_LENGTH="$(basename "${i}" | wc -m)"
 
-		if [[ "$FILENAME_LENGTH" -gt "$MAX_FILENAME_LENGTH" ]] ; then
-			FILENAME="$(echo "$(basename "$i" | awk '{print substr($0,0,"'"$MAX_FILENAME_LENGTH"'")}')…" )"
+		if [[ "${FILENAME_LENGTH}" -gt "${MAX_FILENAME_LENGTH}" ]] ; then
+			FILENAME="$(echo "$(basename "${i}" | awk '{print substr($0,0,"'"${MAX_FILENAME_LENGTH}"'")}')…" )"
 		else
-			FILENAME="$(basename "$i")"
+			FILENAME="$(basename "${i}")"
 		fi
 
 		printf "\r${NORMAL}%$((${COLUMNS} - 6))s${BOLD_BLUE}%s${NORMAL}%s${BOLD_GREEN}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}\r%s${YELLOW}%s${NORMAL}%s\n" \
@@ -428,9 +428,9 @@ function print_ok_flac {
 }
 
 function print_ok_replaygain {
-	if [[ "$FALLBACK" == "true" ]] ; then
+	if [[ "${FALLBACK}" == "true" ]] ; then
 		printf "\r${NORMAL}%74s${BOLD_BLUE}%s${NORMAL}%s${BOLD_GREEN}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}\r%s${YELLOW}%s${NORMAL}%s${CYAN}%s${NORMAL}\n" \
-		"" "[" " " "OK" " " "]" "              " "*" " $(basename "$FLAC_LOCATION" | awk '{print substr($0,0,65)}') " "[Directory]"
+		"" "[" " " "OK" " " "]" "              " "*" " $(basename "${FLAC_LOCATION}" | awk '{print substr($0,0,65)}') " "[Directory]"
 	else
 		COLUMNS="$(tput cols)"
 
@@ -439,12 +439,12 @@ function print_ok_replaygain {
 		# ellipsis (…) and cursor)
 		MAX_FILENAME_LENGTH="$((${COLUMNS} - 15))"
 
-		FILENAME_LENGTH="$(basename "$FLAC_LOCATION" | wc -m)"
+		FILENAME_LENGTH="$(basename "${FLAC_LOCATION}" | wc -m)"
 
-		if [[ "$FILENAME_LENGTH" -gt "$MAX_FILENAME_LENGTH" ]] ; then
-			FILENAME="$(echo "$(basename "$FLAC_LOCATION" | awk '{print substr($0,0,"'"$MAX_FILENAME_LENGTH"'")}')…" )"
+		if [[ "${FILENAME_LENGTH}" -gt "${MAX_FILENAME_LENGTH}" ]] ; then
+			FILENAME="$(echo "$(basename "${FLAC_LOCATION}" | awk '{print substr($0,0,"'"${MAX_FILENAME_LENGTH}"'")}')…" )"
 		else
-			FILENAME="$(basename "$FLAC_LOCATION")"
+			FILENAME="$(basename "${FLAC_LOCATION}")"
 		fi
 
 		printf "\r${NORMAL}%$((${COLUMNS} - 6))s${BOLD_BLUE}%s${NORMAL}%s${BOLD_GREEN}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}\r%s${NORMAL}${YELLOW}%s${NORMAL}%s${CYAN}%s${NORMAL}\n" \
@@ -453,9 +453,9 @@ function print_ok_replaygain {
 }
 
 function print_aucdtect_flac {
-	if [[ "$FALLBACK" == "true" ]] ; then
+	if [[ "${FALLBACK}" == "true" ]] ; then
 		printf "\r${NORMAL}%74s${BOLD_BLUE}%s${NORMAL}%s${YELLOW}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}\r%s${NORMAL}${YELLOW}%s${NORMAL}%s" \
-		"" "[" " " "Validating FLAC" " " "]" "     " "*" " $(basename "$i" | awk '{print substr($0,0,65)}')"
+		"" "[" " " "Validating FLAC" " " "]" "     " "*" " $(basename "${i}" | awk '{print substr($0,0,65)}')"
 	else
 		COLUMNS="$(tput cols)"
 
@@ -464,12 +464,12 @@ function print_aucdtect_flac {
 		# ellipsis (…) and cursor)
 		MAX_FILENAME_LENGTH="$((${COLUMNS} - 29))"
 
-		FILENAME_LENGTH="$(basename "$i" | wc -m)"
+		FILENAME_LENGTH="$(basename "${i}" | wc -m)"
 
-		if [[ "$FILENAME_LENGTH" -gt "$MAX_FILENAME_LENGTH" ]] ; then
-			FILENAME="$(echo "$(basename "$i" | awk '{print substr($0,0,"'"$MAX_FILENAME_LENGTH"'")}')…" )"
+		if [[ "${FILENAME_LENGTH}" -gt "${MAX_FILENAME_LENGTH}" ]] ; then
+			FILENAME="$(echo "$(basename "${i}" | awk '{print substr($0,0,"'"${MAX_FILENAME_LENGTH}"'")}')…" )"
 		else
-			FILENAME="$(basename "$i")"
+			FILENAME="$(basename "${i}")"
 		fi
 
 		printf "\r${NORMAL}%$((${COLUMNS} - 19))s${BOLD_BLUE}%s${NORMAL}%s${YELLOW}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}\r%s${NORMAL}${YELLOW}%s${NORMAL}%s" \
@@ -478,17 +478,17 @@ function print_aucdtect_flac {
 }
 
 function print_aucdtect_issue {
-	if [[ "$FALLBACK" == "true" ]] ; then
+	if [[ "${FALLBACK}" == "true" ]] ; then
 		# If CREATE_SPECTROGRAM is true, add spacing after [ ISSUE ]
 		# so the last 4 characters are hidden from [ Creating Spectrogram ]
-		if [[ "$CREATE_SPECTROGRAM" == "true" ]] ; then
+		if [[ "${CREATE_SPECTROGRAM}" == "true" ]] ; then
 			# Add spacing (4 characters)
 			printf "\r${NORMAL}%74s${BOLD_BLUE}%s${NORMAL}%s${YELLOW}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}%s\r%s${YELLOW}%s${NORMAL}%s\n" \
-			"" "[" " " "ISSUE" " " "]" "               " "     " "*" " $(basename "$i" | awk '{print substr($0,0,65)}')"
+			"" "[" " " "ISSUE" " " "]" "               " "     " "*" " $(basename "${i}" | awk '{print substr($0,0,65)}')"
 		else
 			# Don't add spacing
 			printf "\r${NORMAL}%74s${BOLD_BLUE}%s${NORMAL}%s${YELLOW}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}%s\r%s${YELLOW}%s${NORMAL}%s\n" \
-			"" "[" " " "ISSUE" " " "]" "           " "     " "*" " $(basename "$i" | awk '{print substr($0,0,65)}')"
+			"" "[" " " "ISSUE" " " "]" "           " "     " "*" " $(basename "${i}" | awk '{print substr($0,0,65)}')"
 		fi
 	else
 		COLUMNS="$(tput cols)"
@@ -497,12 +497,12 @@ function print_aucdtect_issue {
 		# message, [ ISSUE ] (9) minus 2 (leaves a gap and the gives room for the ellipsis (…))
 		MAX_FILENAME_LENGTH="$((${COLUMNS} - 18))"
 
-		FILENAME_LENGTH="$(basename "$i" | wc -m)"
+		FILENAME_LENGTH="$(basename "${i}" | wc -m)"
 
-		if [[ "$FILENAME_LENGTH" -gt "$MAX_FILENAME_LENGTH" ]] ; then
-			FILENAME="$(echo "$(basename "$i" | awk '{print substr($0,0,"'"$MAX_FILENAME_LENGTH"'")}')…" )"
+		if [[ "${FILENAME_LENGTH}" -gt "${MAX_FILENAME_LENGTH}" ]] ; then
+			FILENAME="$(echo "$(basename "${i}" | awk '{print substr($0,0,"'"${MAX_FILENAME_LENGTH}"'")}')…" )"
 		else
-			FILENAME="$(basename "$i")"
+			FILENAME="$(basename "${i}")"
 		fi
 
 		printf "\r${NORMAL}%$((${COLUMNS} - 9))s${BOLD_BLUE}%s${NORMAL}%s${YELLOW}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}\r%s${YELLOW}%s${NORMAL}%s\n" \
@@ -511,9 +511,9 @@ function print_aucdtect_issue {
 }
 
 function print_aucdtect_spectrogram {
-	if [[ "$FALLBACK" == "true" ]] ; then
+	if [[ "${FALLBACK}" == "true" ]] ; then
 		printf "\r${NORMAL}%74s${BOLD_BLUE}%s${NORMAL}%s${YELLOW}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}\r%s${NORMAL}${YELLOW}%s${NORMAL}%s" \
-		"" "[" " " "Creating Spectrogram" " " "]" "     " "*" " $(basename "$i" | awk '{print substr($0,0,65)}')"
+		"" "[" " " "Creating Spectrogram" " " "]" "     " "*" " $(basename "${i}" | awk '{print substr($0,0,65)}')"
 	else
 		COLUMNS="$(tput cols)"
 
@@ -522,12 +522,12 @@ function print_aucdtect_spectrogram {
 		# ellipsis (…) and cursor)
 		MAX_FILENAME_LENGTH="$((${COLUMNS} - 34))"
 
-		FILENAME_LENGTH="$(basename "$i" | wc -m)"
+		FILENAME_LENGTH="$(basename "${i}" | wc -m)"
 
-		if [[ "$FILENAME_LENGTH" -gt "$MAX_FILENAME_LENGTH" ]] ; then
-			FILENAME="$(echo "$(basename "$i" | awk '{print substr($0,0,"'"$MAX_FILENAME_LENGTH"'")}')…" )"
+		if [[ "${FILENAME_LENGTH}" -gt "${MAX_FILENAME_LENGTH}" ]] ; then
+			FILENAME="$(echo "$(basename "${i}" | awk '{print substr($0,0,"'"${MAX_FILENAME_LENGTH}"'")}')…" )"
 		else
-			FILENAME="$(basename "$i")"
+			FILENAME="$(basename "${i}")"
 		fi
 
 		printf "\r${NORMAL}%$((${COLUMNS} - 24))s${BOLD_BLUE}%s${NORMAL}%s${YELLOW}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}\r%s${NORMAL}${YELLOW}%s${NORMAL}%s" \
@@ -536,7 +536,7 @@ function print_aucdtect_spectrogram {
 }
 
 function print_aucdtect_skip {
-	if [[ "$FALLBACK" == "true" ]] ; then
+	if [[ "${FALLBACK}" == "true" ]] ; then
 		printf "\r${NORMAL}%74s${BOLD_BLUE}%s${NORMAL}%s${YELLOW}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}%s\r%s${YELLOW}%s${NORMAL}%s\n" \
 		"" "[" " " "SKIPPED" " " "]" "         " "     " "*" " $(basename "$i" | awk '{print substr($0,0,65)}')"
 	else
@@ -546,12 +546,12 @@ function print_aucdtect_skip {
 		# message, [ SKIPPED ] (11) minus 2 (leaves a gap and the gives room for the ellipsis (…))
 		MAX_FILENAME_LENGTH="$((${COLUMNS} - 20))"
 
-		FILENAME_LENGTH="$(basename "$i" | wc -m)"
+		FILENAME_LENGTH="$(basename "${i}" | wc -m)"
 
-		if [[ "$FILENAME_LENGTH" -gt "$MAX_FILENAME_LENGTH" ]] ; then
-			FILENAME="$(echo "$(basename "$i" | awk '{print substr($0,0,"'"$MAX_FILENAME_LENGTH"'")}')…" )"
+		if [[ "${FILENAME_LENGTH}" -gt "${MAX_FILENAME_LENGTH}" ]] ; then
+			FILENAME="$(echo "$(basename "${i}" | awk '{print substr($0,0,"'"${MAX_FILENAME_LENGTH}"'")}')…" )"
 		else
-			FILENAME="$(basename "$i")"
+			FILENAME="$(basename "${i}")"
 		fi
 
 		printf "\r${NORMAL}%$((${COLUMNS} - 11))s${BOLD_BLUE}%s${NORMAL}%s${YELLOW}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}\r%s${YELLOW}%s${NORMAL}%s\n" \
@@ -560,9 +560,9 @@ function print_aucdtect_skip {
 }
 
 function print_done_flac {
-	if [[ "$FALLBACK" == "true" ]] ; then
+	if [[ "${FALLBACK}" == "true" ]] ; then
 		printf "\r${NORMAL}%74s${BOLD_BLUE}%s${NORMAL}%s${BOLD_GREEN}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}%s\r%s${YELLOW}%s${NORMAL}%s\n" \
-		"" "[" " " "DONE" " " "]" "            " "     " "*" " $(basename "$i" | awk '{print substr($0,0,65)}')"
+		"" "[" " " "DONE" " " "]" "            " "     " "*" " $(basename "${i}" | awk '{print substr($0,0,65)}')"
 	else
 		COLUMNS="$(tput cols)"
 
@@ -570,12 +570,12 @@ function print_done_flac {
 		# message, [ DONE ] (8) minus 2 (leaves a gap and the gives room for the ellipsis (…))
 		MAX_FILENAME_LENGTH="$((${COLUMNS} - 17))"
 
-		FILENAME_LENGTH="$(basename "$i" | wc -m)"
+		FILENAME_LENGTH="$(basename "${i}" | wc -m)"
 
-		if [[ "$FILENAME_LENGTH" -gt "$MAX_FILENAME_LENGTH" ]] ; then
-			FILENAME="$(echo "$(basename "$i" | awk '{print substr($0,0,"'"$MAX_FILENAME_LENGTH"'")}')…" )"
+		if [[ "${FILENAME_LENGTH}" -gt "${MAX_FILENAME_LENGTH}" ]] ; then
+			FILENAME="$(echo "$(basename "${i}" | awk '{print substr($0,0,"'"${MAX_FILENAME_LENGTH}"'")}')…" )"
 		else
-			FILENAME="$(basename "$i")"
+			FILENAME="$(basename "${i}")"
 		fi
 
 		printf "\r${NORMAL}%$((${COLUMNS} - 8))s${BOLD_BLUE}%s${NORMAL}%s${BOLD_GREEN}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}\r%s${YELLOW}%s${NORMAL}%s\n" \
@@ -584,9 +584,9 @@ function print_done_flac {
 }
 
 function print_level_same_compression {
-	if [[ "$FALLBACK" == "true" ]] ; then
+	if [[ "${FALLBACK}" == "true" ]] ; then
 		printf "\r${NORMAL}%74s${BOLD_BLUE}%s${NORMAL}%s${YELLOW}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}\r%s${YELLOW}%s${NORMAL}%s\n" \
-		"" "[" " " "Already At Level ${COMPRESSION_LEVEL}" " " "]" "     " "*" " $(basename "$i" | awk '{print substr($0,0,65)}')"
+		"" "[" " " "Already At Level ${COMPRESSION_LEVEL}" " " "]" "     " "*" " $(basename "${i}" | awk '{print substr($0,0,65)}')"
 	else
 		COLUMNS="$(tput cols)"
 
@@ -595,12 +595,12 @@ function print_level_same_compression {
 		#the ellipsis (…))
 		MAX_FILENAME_LENGTH="$((${COLUMNS} - 31))"
 
-		FILENAME_LENGTH="$(basename "$i" | wc -m)"
+		FILENAME_LENGTH="$(basename "${i}" | wc -m)"
 
-		if [[ "$FILENAME_LENGTH" -gt "$MAX_FILENAME_LENGTH" ]] ; then
-			FILENAME="$(echo "$(basename "$i" | awk '{print substr($0,0,"'"$MAX_FILENAME_LENGTH"'")}')…" )"
+		if [[ "${FILENAME_LENGTH}" -gt "${MAX_FILENAME_LENGTH}" ]] ; then
+			FILENAME="$(echo "$(basename "${i}" | awk '{print substr($0,0,"'"${MAX_FILENAME_LENGTH}"'")}')…" )"
 		else
-			FILENAME="$(basename "$i")"
+			FILENAME="$(basename "${i}")"
 		fi
 
 		printf "\r${NORMAL}%$((${COLUMNS} - 22))s${BOLD_BLUE}%s${NORMAL}%s${YELLOW}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}\r%s${YELLOW}%s${NORMAL}%s\n" \
@@ -609,9 +609,9 @@ function print_level_same_compression {
 }
 
 function print_analyzing_tags {
-	if [[ "$FALLBACK" == "true" ]] ; then
+	if [[ "${FALLBACK}" == "true" ]] ; then
 		printf "\r${NORMAL}%74s${BOLD_BLUE}%s${NORMAL}%s${YELLOW}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}\r%s${NORMAL}${YELLOW}%s${NORMAL}%s" \
-		"" "[" " " "Analyzing Tags" " " "]" "     " "*" " $(basename "$i" | awk '{print substr($0,0,65)}')"
+		"" "[" " " "Analyzing Tags" " " "]" "     " "*" " $(basename "${i}" | awk '{print substr($0,0,65)}')"
 	else
 		COLUMNS="$(tput cols)"
 
@@ -620,12 +620,12 @@ function print_analyzing_tags {
 		# ellipsis (…) and cursor)
 		MAX_FILENAME_LENGTH="$((${COLUMNS} - 28))"
 
-		FILENAME_LENGTH="$(basename "$i" | wc -m)"
+		FILENAME_LENGTH="$(basename "${i}" | wc -m)"
 
-		if [[ "$FILENAME_LENGTH" -gt "$MAX_FILENAME_LENGTH" ]] ; then
-			FILENAME="$(echo "$(basename "$i" | awk '{print substr($0,0,"'"$MAX_FILENAME_LENGTH"'")}')…" )"
+		if [[ "${FILENAME_LENGTH}" -gt "${MAX_FILENAME_LENGTH}" ]] ; then
+			FILENAME="$(echo "$(basename "${i}" | awk '{print substr($0,0,"'"${MAX_FILENAME_LENGTH}"'")}')…" )"
 		else
-			FILENAME="$(basename "$i")"
+			FILENAME="$(basename "${i}")"
 		fi
 
 		printf "\r${NORMAL}%$((${COLUMNS} - 18))s${BOLD_BLUE}%s${NORMAL}%s${YELLOW}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}\r%s${NORMAL}${YELLOW}%s${NORMAL}%s" \
@@ -634,9 +634,9 @@ function print_analyzing_tags {
 }
 
 function print_setting_tags {
-	if [[ "$FALLBACK" == "true" ]] ; then
+	if [[ "${FALLBACK}" == "true" ]] ; then
 		printf "\r${NORMAL}%74s${BOLD_BLUE}%s${NORMAL}%s${YELLOW}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}\r%s${NORMAL}${YELLOW}%s${NORMAL}%s" \
-		"" "[" " " "Setting Tags" " " "]" "     " "*" " $(basename "$i" | awk '{print substr($0,0,65)}')"
+		"" "[" " " "Setting Tags" " " "]" "     " "*" " $(basename "${i}" | awk '{print substr($0,0,65)}')"
 	else
 		COLUMNS="$(tput cols)"
 
@@ -645,12 +645,12 @@ function print_setting_tags {
 		# ellipsis (…) and cursor)
 		MAX_FILENAME_LENGTH="$((${COLUMNS} - 26))"
 
-		FILENAME_LENGTH="$(basename "$i" | wc -m)"
+		FILENAME_LENGTH="$(basename "${i}" | wc -m)"
 
-		if [[ "$FILENAME_LENGTH" -gt "$MAX_FILENAME_LENGTH" ]] ; then
-			FILENAME="$(echo "$(basename "$i" | awk '{print substr($0,0,"'"$MAX_FILENAME_LENGTH"'")}')…" )"
+		if [[ "${FILENAME_LENGTH}" -gt "${MAX_FILENAME_LENGTH}" ]] ; then
+			FILENAME="$(echo "$(basename "${i}" | awk '{print substr($0,0,"'"${MAX_FILENAME_LENGTH}"'")}')…" )"
 		else
-			FILENAME="$(basename "$i")"
+			FILENAME="$(basename "${i}")"
 		fi
 
 		printf "\r${NORMAL}%$((${COLUMNS} - 16))s${BOLD_BLUE}%s${NORMAL}%s${YELLOW}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}\r%s${NORMAL}${YELLOW}%s${NORMAL}%s" \
@@ -659,9 +659,9 @@ function print_setting_tags {
 }
 
 function print_prune_flac {
-	if [[ "$FALLBACK" == "true" ]] ; then
+	if [[ "${FALLBACK}" == "true" ]] ; then
 		printf "\r${NORMAL}%74s${BOLD_BLUE}%s${NORMAL}%s${YELLOW}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}\r%s${NORMAL}${YELLOW}%s${NORMAL}%s" \
-		"" "[" " " "Pruning Metadata" " " "]" "     " "*" " $(basename "$i" | awk '{print substr($0,0,65)}')"
+		"" "[" " " "Pruning Metadata" " " "]" "     " "*" " $(basename "${i}" | awk '{print substr($0,0,65)}')"
 	else
 		COLUMNS="$(tput cols)"
 
@@ -670,12 +670,12 @@ function print_prune_flac {
 		# ellipsis (…) and cursor)
 		MAX_FILENAME_LENGTH="$((${COLUMNS} - 30))"
 
-		FILENAME_LENGTH="$(basename "$i" | wc -m)"
+		FILENAME_LENGTH="$(basename "${i}" | wc -m)"
 
-		if [[ "$FILENAME_LENGTH" -gt "$MAX_FILENAME_LENGTH" ]] ; then
-			FILENAME="$(echo "$(basename "$i" | awk '{print substr($0,0,"'"$MAX_FILENAME_LENGTH"'")}')…" )"
+		if [[ "${FILENAME_LENGTH}" -gt "${MAX_FILENAME_LENGTH}" ]] ; then
+			FILENAME="$(echo "$(basename "${i}" | awk '{print substr($0,0,"'"${MAX_FILENAME_LENGTH}"'")}')…" )"
 		else
-			FILENAME="$(basename "$i")"
+			FILENAME="$(basename "${i}")"
 		fi
 
 		printf "\r${NORMAL}%$((${COLUMNS} - 20))s${BOLD_BLUE}%s${NORMAL}%s${YELLOW}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}\r%s${NORMAL}${YELLOW}%s${NORMAL}%s" \
@@ -720,14 +720,14 @@ function countdown_metadata {
 		# Recreate the tags array so it can be parsed easily
 		eval "tags=(${EXPORT_TAG[*]})"
 		for i in "${tags[@]}" ; do
-			echo -e "     $i"
+			echo -e "     ${i}"
 		done
 	}
 
 	# Creates the 10 second countdown
 	function countdown_10 {
 		COUNT=10
-		while [[ $COUNT -gt 1 ]] ; do
+		while [[ ${COUNT} -gt 1 ]] ; do
 			echo -en "${BOLD_RED}${COUNT}${NORMAL} "
 			sleep 1
 			((COUNT--))
@@ -772,18 +772,18 @@ function replaygain {
 			print_test_replaygain
 
 			# Variable to check if file is a FLAC file
-			CHECK_FLAC="$(metaflac --show-md5sum "$i" 2>&1 | grep -o "FLAC__METADATA_CHAIN_STATUS_NOT_A_FLAC_FILE")"
+			CHECK_FLAC="$(metaflac --show-md5sum "${i}" 2>&1 | grep -o "FLAC__METADATA_CHAIN_STATUS_NOT_A_FLAC_FILE")"
 
 			# Test to make sure FLAC file can have ReplayGain tags added to it
-			if [[ "$CHECK_FLAC" == "FLAC__METADATA_CHAIN_STATUS_NOT_A_FLAC_FILE" ]] ; then
-				echo -e "File:  $i" >> "$REPLAY_TEST_ERRORS"
-				echo -e "Error: The above file does not appear to be a FLAC file" >> "$REPLAY_TEST_ERRORS"
-				echo -e "------------------------------------------------------------------" >> "$REPLAY_TEST_ERRORS"
+			if [[ "${CHECK_FLAC}" == "FLAC__METADATA_CHAIN_STATUS_NOT_A_FLAC_FILE" ]] ; then
+				echo -e "File:  ${i}" >> "${REPLAY_TEST_ERRORS}"
+				echo -e "Error: The above file does not appear to be a FLAC file" >> "${REPLAY_TEST_ERRORS}"
+				echo -e "------------------------------------------------------------------" >> "${REPLAY_TEST_ERRORS}"
 				# File is not a FLAC file, display failed
 				print_failed_flac
 			else
 				# File is a FLAC file, erase any ReplayGain tags, display ok
-				metaflac --remove-replay-gain "$i"
+				metaflac --remove-replay-gain "${i}"
 				print_ok_flac
 			fi
 		done
@@ -791,12 +791,12 @@ function replaygain {
 	export -f test_replaygain
 
 	# Run the above function with the configured threads (multithreaded)
-	find "$DIRECTORY" -name "*.[Ff][Ll][Aa][Cc]" -print0 | xargs -0 -n 1 -P "$CORES" bash -c 'test_replaygain "$@"' --
+	find "${DIRECTORY}" -name "*.[Ff][Ll][Aa][Cc]" -print0 | xargs -0 -n 1 -P "${CORES}" bash -c 'test_replaygain "${@}"' --
 
-	if [[ -f "$REPLAY_TEST_ERRORS" ]] ; then
+	if [[ -f "${REPLAY_TEST_ERRORS}" ]] ; then
 		echo -e "\n ${BOLD_RED}*${NORMAL} There were issues with some of the FLAC files,"
 		echo -e " ${BOLD_RED}*${NORMAL} please check:"
-		echo -e " ${BOLD_RED}*${NORMAL} \"$REPLAY_TEST_ERRORS\" for details."
+		echo -e " ${BOLD_RED}*${NORMAL} \"${REPLAY_TEST_ERRORS}\" for details."
 		exit 1
 	fi
 
@@ -807,40 +807,40 @@ function replaygain {
 
 	title_add_replaygain
 
-	find "$DIRECTORY" -name "*.[Ff][Ll][Aa][Cc]" -print | while read i ; do
+	find "${DIRECTORY}" -name "*.[Ff][Ll][Aa][Cc]" -print | while read i ; do
 		# Find where the FLAC file is in the DIRECTORY hierarchy
 		FLAC_LOCATION="$(dirname "${i}")"
 
 		# Test if DIRECTORY is the current working directory (AKA: ./)
 		# as well as check if FLAC_LOCATION is equal to "./"
-		if [[ "$DIRECTORY" == "." && "$FLAC_LOCATION" = "." ]] ; then
+		if [[ "${DIRECTORY}" == "." && "${FLAC_LOCATION}" = "." ]] ; then
 			# We want to be able to display a directory path, so we create
 			# the pathname to the FLAC files
-			FLAC_LOCATION="$PWD"
+			FLAC_LOCATION="${PWD}"
 		fi
 
 		# Find the basename directory from FLAC_LOCATION (this is the supposed
 		# album name to be printed)
-		ALBUM_BASENAME="$(basename "$FLAC_LOCATION")"
+		ALBUM_BASENAME="$(basename "${FLAC_LOCATION}")"
 
 		# Check if FLAC files have existing ReplayGain tags
-		REPLAYGAIN_REFERENCE_LOUDNESS="$(metaflac --show-tag=REPLAYGAIN_REFERENCE_LOUDNESS "$i" \
+		REPLAYGAIN_REFERENCE_LOUDNESS="$(metaflac --show-tag=REPLAYGAIN_REFERENCE_LOUDNESS "${i}" \
 			| sed 's/REPLAYGAIN_REFERENCE_LOUDNESS=//i')"
-		REPLAYGAIN_TRACK_GAIN="$(metaflac --show-tag=REPLAYGAIN_TRACK_GAIN "$i" \
+		REPLAYGAIN_TRACK_GAIN="$(metaflac --show-tag=REPLAYGAIN_TRACK_GAIN "${i}" \
 			| sed 's/REPLAYGAIN_TRACK_GAIN=//i')"
-		REPLAYGAIN_TRACK_PEAK="$(metaflac --show-tag=REPLAYGAIN_TRACK_PEAK "$i" \
+		REPLAYGAIN_TRACK_PEAK="$(metaflac --show-tag=REPLAYGAIN_TRACK_PEAK "${i}" \
 			| sed 's/REPLAYGAIN_TRACK_PEAK=//i')"
-		REPLAYGAIN_ALBUM_GAIN="$(metaflac --show-tag=REPLAYGAIN_ALBUM_GAIN "$i" \
+		REPLAYGAIN_ALBUM_GAIN="$(metaflac --show-tag=REPLAYGAIN_ALBUM_GAIN "${i}" \
 			| sed 's/REPLAYGAIN_ALBUM_GAIN=//i')"
-		REPLAYGAIN_ALBUM_PEAK="$(metaflac --show-tag=REPLAYGAIN_ALBUM_PEAK "$i" \
+		REPLAYGAIN_ALBUM_PEAK="$(metaflac --show-tag=REPLAYGAIN_ALBUM_PEAK "${i}" \
 			| sed 's/REPLAYGAIN_ALBUM_PEAK=//i')"
 
-		if [[ -n "$REPLAYGAIN_REFERENCE_LOUDNESS" && -n "$REPLAYGAIN_TRACK_GAIN" && \
-			  -n "$REPLAYGAIN_TRACK_PEAK" && -n "$REPLAYGAIN_ALBUM_GAIN" && \
-			  -n "$REPLAYGAIN_ALBUM_PEAK" ]] ; then
+		if [[ -n "${REPLAYGAIN_REFERENCE_LOUDNESS}" && -n "${REPLAYGAIN_TRACK_GAIN}" && \
+			  -n "${REPLAYGAIN_TRACK_PEAK}" && -n "${REPLAYGAIN_ALBUM_GAIN}" && \
+			  -n "${REPLAYGAIN_ALBUM_PEAK}" ]] ; then
 			# All ReplayGain tags accounted for, skip this file
 			continue
-		elif [[ "$REPLAYGAIN_ALBUM_FAILED" == "${ALBUM_BASENAME} FAILED" ]] ; then
+		elif [[ "${REPLAYGAIN_ALBUM_FAILED}" == "${ALBUM_BASENAME} FAILED" ]] ; then
 			# This album (directory of FLACS) had at LEAST one FLAC fail, so skip
 			# files that are in this album (directory)
 			continue
@@ -849,11 +849,11 @@ function replaygain {
 			# the current working FLAC file [$i])
 			print_add_replaygain
 			ERROR="$((metaflac --add-replay-gain "${FLAC_LOCATION}"/*.[Ff][Ll][Aa][Cc]) 2>&1)"
-			if [[ -n "$ERROR" ]] ; then
+			if [[ -n "${ERROR}" ]] ; then
 				print_failed_replaygain
-				echo -e "Directory: $FLAC_LOCATION" >> "$REPLAY_ADD_ERRORS"
-				echo -e "Error:     $ERROR" >> "$REPLAY_ADD_ERRORS"
-				echo -e "------------------------------------------------------------------" >> "$REPLAY_ADD_ERRORS"
+				echo -e "Directory: ${FLAC_LOCATION}" >> "${REPLAY_ADD_ERRORS}"
+				echo -e "Error:     ${ERROR}" >> "${REPLAY_ADD_ERRORS}"
+				echo -e "------------------------------------------------------------------" >> "${REPLAY_ADD_ERRORS}"
 				# Set variable to let script know this album failed and not NOT
 				# continue checking the files in this album
 				REPLAYGAIN_ALBUM_FAILED="${ALBUM_BASENAME} FAILED"
@@ -863,10 +863,10 @@ function replaygain {
 		fi
 	done
 
-	if [[ -f "$REPLAY_ADD_ERRORS" ]] ; then
+	if [[ -f "${REPLAY_ADD_ERRORS}" ]] ; then
 		echo -e "\n ${BOLD_RED}*${NORMAL} There were issues with some of the FLAC files,"
 		echo -e " ${BOLD_RED}*${NORMAL} please check:"
-		echo -e " ${BOLD_RED}*${NORMAL} \"$REPLAY_TEST_ERRORS\" for details."
+		echo -e " ${BOLD_RED}*${NORMAL} \"${REPLAY_TEST_ERRORS}\" for details."
 		exit 1
 	fi
 }
@@ -882,10 +882,10 @@ function compress_flacs {
 	# and check for any errors thus far
 	function compress_abort {
 		echo -e "\n ${BOLD_GREEN}*${NORMAL} Control-C received, removing temporary files and exiting script..."
-		find "$DIRECTORY" -name "*.tmp,fl-ac+en\'c" -exec rm "{}" \;
-		if [[ -f "$VERIFY_ERRORS" ]] ; then
+		find "${DIRECTORY}" -name "*.tmp,fl-ac+en\'c" -exec rm "{}" \;
+		if [[ -f "${VERIFY_ERRORS}" ]] ; then
 			echo -e "\n ${BOLD_RED}*${NORMAL} Errors found in some FLAC files, please check:"
-			echo -e " ${BOLD_RED}*${NORMAL} \"$VERIFY_ERRORS\" for errors"
+			echo -e " ${BOLD_RED}*${NORMAL} \"${VERIFY_ERRORS}\" for errors"
 		fi
 		exit 1
 	}
@@ -898,33 +898,33 @@ function compress_flacs {
 			# Trap errors into a variable as the output doesn't help
 			# for there is a better way to test below using the
 			# ERROR variable
-			COMPRESSION="$((metaflac --show-tag=COMPRESSION "$i" | sed 's/^COMPRESSION=//i') 2>&1)"
-			if [[ "$COMPRESSION" != "$COMPRESSION_LEVEL" ]] ; then
+			COMPRESSION="$((metaflac --show-tag=COMPRESSION "${i}" | sed 's/^COMPRESSION=//i') 2>&1)"
+			if [[ "${COMPRESSION}" != "${COMPRESSION_LEVEL}" ]] ; then
 				print_compressing_flac
 				# This must come after the above command for proper formatting
-				ERROR="$((flac -f -${COMPRESSION_LEVEL} -V -s "$i") 2>&1)"
-				if [[ ! -z "$ERROR" ]] ; then
+				ERROR="$((flac -f -${COMPRESSION_LEVEL} -V -s "${i}") 2>&1)"
+				if [[ -n "${ERROR}" ]] ; then
 					print_failed_flac
-					echo -e "File:  $i" >> "$VERIFY_ERRORS"
-					echo -e "Error: $ERROR" >> "$VERIFY_ERRORS"
-					echo -e "------------------------------------------------------------------" >> "$VERIFY_ERRORS"
+					echo -e "File:  ${i}" >> "${VERIFY_ERRORS}"
+					echo -e "Error: ${ERROR}" >> "${VERIFY_ERRORS}"
+					echo -e "------------------------------------------------------------------" >> "${VERIFY_ERRORS}"
 				else
-					metaflac --remove-tag=COMPRESSION "$i"
-					metaflac --set-tag=COMPRESSION=${COMPRESSION_LEVEL} "$i"
+					metaflac --remove-tag=COMPRESSION "${i}"
+					metaflac --set-tag=COMPRESSION=${COMPRESSION_LEVEL} "${i}"
 					print_ok_flac
 				fi
 			# If already at COMPRESSION_LEVEL, test the FLAC file instead
 			# or skip the file if --compress-notest,-C was specified
 			else
 				print_level_same_compression
-				if [[ "$SKIP_TEST" != "true" ]] ; then
+				if [[ "${SKIP_TEST}" != "true" ]] ; then
 					print_testing_flac
-					ERROR="$((flac -ts "$i") 2>&1)"
-					if [[ ! -z "$ERROR" ]] ; then
+					ERROR="$((flac -ts "${i}") 2>&1)"
+					if [[ -n "${ERROR}" ]] ; then
 						print_failed_flac
-						echo -e "File:  $i" >> "$VERIFY_ERRORS"
-						echo -e "Error: $ERROR" >> "$VERIFY_ERRORS"
-						echo -e "------------------------------------------------------------------" >> "$VERIFY_ERRORS"
+						echo -e "File:  ${i}" >> "${VERIFY_ERRORS}"
+						echo -e "Error: ${ERROR}" >> "${VERIFY_ERRORS}"
+						echo -e "------------------------------------------------------------------" >> "${VERIFY_ERRORS}"
 					else 
 						print_ok_flac
 					fi
@@ -935,11 +935,11 @@ function compress_flacs {
 	export -f compress_f
 
 	# Run the above function with the configured threads (multithreaded)
-	find "$DIRECTORY" -name "*.[Ff][Ll][Aa][Cc]" -print0 | xargs -0 -n 1 -P "$CORES" bash -c 'compress_f "$@"' --
+	find "${DIRECTORY}" -name "*.[Ff][Ll][Aa][Cc]" -print0 | xargs -0 -n 1 -P "${CORES}" bash -c 'compress_f "${@}"' --
 	
-	if [[ -f "$VERIFY_ERRORS" ]] ; then
+	if [[ -f "${VERIFY_ERRORS}" ]] ; then
 		echo -e "\n ${BOLD_RED}*${NORMAL} Errors found in some FLAC files, please check:"
-		echo -e " ${BOLD_RED}*${NORMAL} \"$VERIFY_ERRORS\" for errors"
+		echo -e " ${BOLD_RED}*${NORMAL} \"${VERIFY_ERRORS}\" for errors"
 		exit 1
 	fi
 }
@@ -954,9 +954,9 @@ function test_flacs {
 	# Abort script and check for any errors thus far
 	function test_abort {
 		echo -e "\n ${BOLD_GREEN}*${NORMAL} Control-C received, exiting script..."
-		if [[ -f "$TEST_ERRORS" ]] ; then
+		if [[ -f "${TEST_ERRORS}" ]] ; then
 			echo -e "\n ${BOLD_RED}*${NORMAL} Errors found in some FLAC files, please check:"
-			echo -e " ${BOLD_RED}*${NORMAL} \"$TEST_ERRORS\" for errors"
+			echo -e " ${BOLD_RED}*${NORMAL} \"${TEST_ERRORS}\" for errors"
 			exit 1
 		fi
 	}
@@ -967,12 +967,12 @@ function test_flacs {
 	function test_f {
 		for i ; do
 			print_testing_flac
-			ERROR="$((flac -ts "$i") 2>&1)"
-			if [[ ! -z "$ERROR" ]] ; then
+			ERROR="$((flac -ts "${i}") 2>&1)"
+			if [[ -n "${ERROR}" ]] ; then
 				print_failed_flac
-				echo -e "File:  $i" >> "$TEST_ERRORS"
-				echo -e "Error: $ERROR" >> "$TEST_ERRORS"
-				echo -e "------------------------------------------------------------------" >> "$TEST_ERRORS"
+				echo -e "File:  ${i}" >> "${TEST_ERRORS}"
+				echo -e "Error: ${ERROR}" >> "${TEST_ERRORS}"
+				echo -e "------------------------------------------------------------------" >> "${TEST_ERRORS}"
 			else
 				print_ok_flac
 			fi
@@ -981,11 +981,11 @@ function test_flacs {
 	export -f test_f
 
 	# Run the above function with the configured threads (multithreaded)
-	find "$DIRECTORY" -name "*.[Ff][Ll][Aa][Cc]" -print0 | xargs -0 -n 1 -P "$CORES" bash -c 'test_f "$@"' --
+	find "${DIRECTORY}" -name "*.[Ff][Ll][Aa][Cc]" -print0 | xargs -0 -n 1 -P "${CORES}" bash -c 'test_f "${@}"' --
 
-	if [[ -f "$TEST_ERRORS" ]] ; then
+	if [[ -f "${TEST_ERRORS}" ]] ; then
 		echo -e "\n ${BOLD_RED}*${NORMAL} Errors found in some FLAC files, please check:"
-		echo -e " ${BOLD_RED}*${NORMAL} \"$TEST_ERRORS\" for errors"
+		echo -e " ${BOLD_RED}*${NORMAL} \"${TEST_ERRORS}\" for errors"
 		exit 1
 	fi
 }
@@ -996,11 +996,11 @@ function test_flacs {
 # Use auCDtect to check FLAC validity
 function aucdtect {
 	# Check if SPECTROGRAM_LOCATION is user-defined
-	if [[ "$SPECTROGRAM_LOCATION" != "default" ]] ; then
+	if [[ "${SPECTROGRAM_LOCATION}" != "default" ]] ; then
 		# Put spectrograms in user-defined location
 		# Test to make sure directory exists
-		if [[ ! -d "$SPECTROGRAM_LOCATION" ]] ; then
-			echo -e " ${BOLD_RED}*${NORMAL} \"$SPECTROGRAM_LOCATION\" doesn't exist!"
+		if [[ ! -d "${SPECTROGRAM_LOCATION}" ]] ; then
+			echo -e " ${BOLD_RED}*${NORMAL} \"${SPECTROGRAM_LOCATION}\" doesn't exist!"
 			echo -e " ${BOLD_RED}*${NORMAL} Please choose a valid directory under USER CONFIGURATION!"
 			exit 1
 		fi
@@ -1014,14 +1014,14 @@ function aucdtect {
 
 		# Don't remove WAV files in case user has WAV files there purposefully
 		# The script cannot determine between existing and script-created WAV files
-		WAV_FILES="$(find "$DIRECTORY" -name "*.[Ww][Aa][Vv]" -print)"
+		WAV_FILES="$(find "${DIRECTORY}" -name "*.[Ww][Aa][Vv]" -print)"
 
-		if [[ -f "$AUCDTECT_ERRORS" ]] ; then
+		if [[ -f "${AUCDTECT_ERRORS}" ]] ; then
 			echo -e "\n ${BOLD_RED}*${NORMAL} Some FLAC files may be lossy sourced, please check:"
-			echo -e " ${BOLD_RED}*${NORMAL} \"$AUCDTECT_ERRORS\" for details"
+			echo -e " ${BOLD_RED}*${NORMAL} \"${AUCDTECT_ERRORS}\" for details"
 		fi
 
-		if [[ -n "$WAV_FILES" ]] ; then
+		if [[ -n "${WAV_FILES}" ]] ; then
 			echo -e "\n ${BOLD_RED}*${NORMAL} There are some temporary WAV files leftover that"
 			echo -e " ${BOLD_RED}*${NORMAL} couldn't be deleted because of script interruption"
 			echo
@@ -1029,8 +1029,8 @@ function aucdtect {
 			echo -e " ${YELLOW}*${NORMAL} and script-created files by design.  Please delete the"
 			echo -e " ${YELLOW}*${NORMAL} below files manually:"
 			# Find all WAV files in chosen directory to display for manual deletion
-			find "$DIRECTORY" -name "*.[Ww][Aa][Vv]" -print | while read i ; do
-				echo -e " ${YELLOW}*${NORMAL}     $i"
+			find "${DIRECTORY}" -name "*.[Ww][Aa][Vv]" -print | while read i ; do
+				echo -e " ${YELLOW}*${NORMAL}     ${i}"
 			done
 		fi
 
@@ -1045,47 +1045,47 @@ function aucdtect {
 			print_aucdtect_flac
 
 			# Check if file is a FLAC file
-			CHECK_FLAC="$(metaflac --show-md5sum "$i" 2>&1 | grep -o "FLAC__METADATA_CHAIN_STATUS_NOT_A_FLAC_FILE")"
+			CHECK_FLAC="$(metaflac --show-md5sum "${i}" 2>&1 | grep -o "FLAC__METADATA_CHAIN_STATUS_NOT_A_FLAC_FILE")"
 
-			if [[ "$CHECK_FLAC" == "FLAC__METADATA_CHAIN_STATUS_NOT_A_FLAC_FILE" ]] ; then
-				echo -e "File:  $i" >> "$AUCDTECT_ERRORS"
-				echo -e "Error: The above file does not appear to be a FLAC file" >> "$AUCDTECT_ERRORS"
-				echo -e "------------------------------------------------------------------" >> "$AUCDTECT_ERRORS"
+			if [[ "${CHECK_FLAC}" == "FLAC__METADATA_CHAIN_STATUS_NOT_A_FLAC_FILE" ]] ; then
+				echo -e "File:  ${i}" >> "${AUCDTECT_ERRORS}"
+				echo -e "Error: The above file does not appear to be a FLAC file" >> "${AUCDTECT_ERRORS}"
+				echo -e "------------------------------------------------------------------" >> "${AUCDTECT_ERRORS}"
 				# File is not a FLAC file, display failed
 				print_failed_flac
 			else
 				# Get the bit depth of a FLAC file
-				BITS="$(metaflac --list --block-type=STREAMINFO "$i" | grep "bits-per-sample" | awk '{print $2}')"
+				BITS="$(metaflac --list --block-type=STREAMINFO "${i}" | grep "bits-per-sample" | awk '{print $2}')"
 
 				# Skip the FLAC file if it has a bit depth greater
 				# than 16 since auCDtect doesn't support audio
 				# files with a higher resolution than a CD.
-				if [[ "$BITS" -gt "16" ]] ; then
+				if [[ "${BITS}" -gt "16" ]] ; then
 					print_aucdtect_skip
-					echo -e "File:  $i" >> "$AUCDTECT_ERRORS"
-					echo -e "Error: The above file has a bit depth greater than 16 and was skipped" >> "$AUCDTECT_ERRORS"
-					echo -e "------------------------------------------------------------------" >> "$AUCDTECT_ERRORS"
+					echo -e "File:  ${i}" >> "${AUCDTECT_ERRORS}"
+					echo -e "Error: The above file has a bit depth greater than 16 and was skipped" >> "${AUCDTECT_ERRORS}"
+					echo -e "------------------------------------------------------------------" >> "${AUCDTECT_ERRORS}"
 					continue
 				fi
 
 				# Decompress FLAC to WAV so auCDtect can read the audio file
-				flac --totally-silent -d "$i"
+				flac --totally-silent -d "${i}"
 
 				# The actual auCDtect command with highest accuracy setting
 				# 2> hides the displayed progress to /dev/null so nothing is shown
-				AUCDTECT_CHECK="$("$AUCDTECT_COMMAND" -m0 "${i%.[Ff][Ll][Aa][Cc]}.wav" 2> /dev/null)"
+				AUCDTECT_CHECK="$("${AUCDTECT_COMMAND}" -m0 "${i%.[Ff][Ll][Aa][Cc]}.wav" 2> /dev/null)"
 
 				# Reads the last line of the above command which tells what
 				# auCDtect came up with for the WAV file
-				ERROR="$(echo "$AUCDTECT_CHECK" | tail -n1)"
+				ERROR="$(echo "${AUCDTECT_CHECK}" | tail -n1)"
 
 				# There is an issue with the processed FLAC file
-				if [[ "$ERROR" != "This track looks like CDDA with probability 100%" ]] ; then
-					# If user specified --aucdtect-spectrogram (-A), then
+				if [[ "${ERROR}" != "This track looks like CDDA with probability 100%" ]] ; then
+					# If user specified '-A, --aucdtect-spectrogram', then
 					# create a spectrogram with SoX and change logging accordingly
-					if [[ "$CREATE_SPECTROGRAM" == "true" ]] ; then
+					if [[ "${CREATE_SPECTROGRAM}" == "true" ]] ; then
 						# Check whether to place spectrogram images in user-defined location
-						if [[ "$SPECTROGRAM_LOCATION" == "default" ]] ; then
+						if [[ "${SPECTROGRAM_LOCATION}" == "default" ]] ; then
 							# Place images in same directory as the FLAC files
 							# Make sure we don't clobber any picture files
 							if [[ -f "${i%.[Ff][Ll][Aa][Cc]}.png" ]] ; then
@@ -1104,21 +1104,21 @@ function aucdtect {
 						# Let's create the spectrogram for the failed FLAC file
 						# and output progress
 						print_aucdtect_spectrogram
-						sox "$i" -n spectrogram -c '' -t "$i" -p1 -z90 -Z0 -q249 -wHann -x5000 -y1025 -o "${SPECTROGRAM_PICTURE}"
+						sox "${i}" -n spectrogram -c '' -t "${i}" -p1 -z90 -Z0 -q249 -wHann -x5000 -y1025 -o "${SPECTROGRAM_PICTURE}"
 
 						# Print ISSUE and log error, and show where to find
 						# the created spectrogram of processed FLAC file
 						print_aucdtect_issue
-						echo -e "File:        $i" >> "$AUCDTECT_ERRORS"
-						echo -e "Error:       $ERROR" >> "$AUCDTECT_ERRORS"
-						echo -e "Spectrogram: $SPECTROGRAM_PICTURE" >> "$AUCDTECT_ERRORS"
-						echo -e "------------------------------------------------------------------" >> "$AUCDTECT_ERRORS"
+						echo -e "File:        ${i}" >> "${AUCDTECT_ERRORS}"
+						echo -e "Error:       ${ERROR}" >> "${AUCDTECT_ERRORS}"
+						echo -e "Spectrogram: ${SPECTROGRAM_PICTURE}" >> "${AUCDTECT_ERRORS}"
+						echo -e "------------------------------------------------------------------" >> "${AUCDTECT_ERRORS}"
 					else
 						# Print ISSUE and log error
 						print_aucdtect_issue
-						echo -e "File:  $i" >> "$AUCDTECT_ERRORS"
-						echo -e "Error: $ERROR" >> "$AUCDTECT_ERRORS"
-						echo -e "------------------------------------------------------------------" >> "$AUCDTECT_ERRORS"
+						echo -e "File:  ${i}" >> "${AUCDTECT_ERRORS}"
+						echo -e "Error: ${ERROR}" >> "${AUCDTECT_ERRORS}"
+						echo -e "------------------------------------------------------------------" >> "${AUCDTECT_ERRORS}"
 					fi
 				# The processed FLAC file is OK
 				else
@@ -1133,11 +1133,11 @@ function aucdtect {
 	export -f aucdtect_f
 
 	# Run the above function with the configured threads (multithreaded)
-	find "$DIRECTORY" -name "*.[Ff][Ll][Aa][Cc]" -print0 | xargs -0 -n 1 -P "$CORES" bash -c 'aucdtect_f "$@"' --
+	find "${DIRECTORY}" -name "*.[Ff][Ll][Aa][Cc]" -print0 | xargs -0 -n 1 -P "${CORES}" bash -c 'aucdtect_f "${@}"' --
 
-	if [[ -f "$AUCDTECT_ERRORS" ]] ; then
+	if [[ -f "${AUCDTECT_ERRORS}" ]] ; then
 		echo -e "\n ${BOLD_RED}*${NORMAL} Some FLAC files may be lossy sourced, please check:"
-		echo -e " ${BOLD_RED}*${NORMAL} \"$AUCDTECT_ERRORS\" for details"
+		echo -e " ${BOLD_RED}*${NORMAL} \"${AUCDTECT_ERRORS}\" for details"
 		exit 1
 	fi
 }
@@ -1152,10 +1152,10 @@ function md5_check {
 	# Abort script and check for any errors thus far
 	function md5_check_abort {
 		echo -e "\n ${BOLD_GREEN}*${NORMAL} Control-C received, exiting script..."
-		if [[ -f "$MD5_ERRORS" ]] ; then
+		if [[ -f "${MD5_ERRORS}" ]] ; then
 			echo -e "\n ${BOLD_RED}*${NORMAL} The MD5 Signature is unset for some FLAC files or there were"
 			echo -e " ${BOLD_RED}*${NORMAL} issues with some of the FLAC files, please check:"
-			echo -e " ${BOLD_RED}*${NORMAL} \"$MD5_ERRORS\" for details"
+			echo -e " ${BOLD_RED}*${NORMAL} \"${MD5_ERRORS}\" for details"
 			exit 1
 		fi
 	}
@@ -1166,18 +1166,18 @@ function md5_check {
 	function md5_c {
 		for i ; do
 			print_checking_md5
-			MD5_SUM="$(metaflac --show-md5sum "$i" 2>&1)"
-			MD5_NOT_FLAC="$(echo "$MD5_SUM" | grep -o "FLAC__METADATA_CHAIN_STATUS_NOT_A_FLAC_FILE")"
-			if [[ "$MD5_SUM" == "00000000000000000000000000000000" ]] ; then
+			MD5_SUM="$(metaflac --show-md5sum "${i}" 2>&1)"
+			MD5_NOT_FLAC="$(echo "${MD5_SUM}" | grep -o "FLAC__METADATA_CHAIN_STATUS_NOT_A_FLAC_FILE")"
+			if [[ "${MD5_SUM}" == "00000000000000000000000000000000" ]] ; then
 				print_failed_flac
-				echo -e "File:  $i" >> "$MD5_ERRORS"
-				echo -e "Error: MD5 Signature unset ($MD5_SUM)" >> "$MD5_ERRORS"
-				echo -e "------------------------------------------------------------------" >> "$MD5_ERRORS"
-			elif [[ "$MD5_NOT_FLAC" == "FLAC__METADATA_CHAIN_STATUS_NOT_A_FLAC_FILE" ]] ; then
+				echo -e "File:  ${i}" >> "${MD5_ERRORS}"
+				echo -e "Error: MD5 Signature unset (${MD5_SUM})" >> "${MD5_ERRORS}"
+				echo -e "------------------------------------------------------------------" >> "${MD5_ERRORS}"
+			elif [[ "${MD5_NOT_FLAC}" == "FLAC__METADATA_CHAIN_STATUS_NOT_A_FLAC_FILE" ]] ; then
 				print_failed_flac
-				echo -e "File:  $i" >> "$MD5_ERRORS"
-				echo -e "Error: The above file does not appear to be a FLAC file" >> "$MD5_ERRORS"
-				echo -e "------------------------------------------------------------------" >> "$MD5_ERRORS"
+				echo -e "File:  ${i}" >> "${MD5_ERRORS}"
+				echo -e "Error: The above file does not appear to be a FLAC file" >> "${MD5_ERRORS}"
+				echo -e "------------------------------------------------------------------" >> "${MD5_ERRORS}"
 			else
 				print_ok_flac
 			fi
@@ -1186,12 +1186,12 @@ function md5_check {
 	export -f md5_c
 
 	# Run the above function with the configured threads (multithreaded)
-	find "$DIRECTORY" -name "*.[Ff][Ll][Aa][Cc]" -print0 | xargs -0 -n 1 -P "$CORES" bash -c 'md5_c "$@"' --
+	find "${DIRECTORY}" -name "*.[Ff][Ll][Aa][Cc]" -print0 | xargs -0 -n 1 -P "${CORES}" bash -c 'md5_c "${@}"' --
 	
-	if [[ -f "$MD5_ERRORS" ]] ; then
+	if [[ -f "${MD5_ERRORS}" ]] ; then
 		echo -e "\n ${BOLD_RED}*${NORMAL} The MD5 Signature is unset for some FLAC files or there were"
 		echo -e " ${BOLD_RED}*${NORMAL} issues with some of the FLAC files, please check:"
-		echo -e " ${BOLD_RED}*${NORMAL} \"$MD5_ERRORS\" for details"
+		echo -e " ${BOLD_RED}*${NORMAL} \"${MD5_ERRORS}\" for details"
 		exit 1
 	fi  
 }
@@ -1223,11 +1223,11 @@ function redo_tags {
 	# of its deprecation and advise against using it, preferring
 	# METADATA_BLOCK_PICTURE
 	for j in "${tags[@]}" ; do
-		if [[ "$j" == "COVERART" ]] ; then
+		if [[ "${j}" == "COVERART" ]] ; then
 			# If REMOVE_ARTWORK is "true" (remove the artwork), then
 			# exit and warn the user you can't specify whether you want to
 			# remove artwork, yet keep the COVERART tag in USER CONFIGURATION
-			if [[ "$REMOVE_ARTWORK" == "true" ]] ; then
+			if [[ "${REMOVE_ARTWORK}" == "true" ]] ; then
 				# Display COVERART tag warning
 				coverart_warning
 
@@ -1250,12 +1250,12 @@ function redo_tags {
 
 	function analyze_tags {
 		# Check if file is a FLAC file
-		CHECK_FLAC="$(metaflac --show-md5sum "$i" 2>&1 | grep -o "FLAC__METADATA_CHAIN_STATUS_NOT_A_FLAC_FILE")"
+		CHECK_FLAC="$(metaflac --show-md5sum "${i}" 2>&1 | grep -o "FLAC__METADATA_CHAIN_STATUS_NOT_A_FLAC_FILE")"
 
-		if [[ "$CHECK_FLAC" == "FLAC__METADATA_CHAIN_STATUS_NOT_A_FLAC_FILE" ]] ; then
-			echo -e "File:  $i" >> "$METADATA_ERRORS"
-			echo -e "Error: The above file does not appear to be a FLAC file" >> "$METADATA_ERRORS"
-			echo -e "------------------------------------------------------------------" >> "$METADATA_ERRORS"
+		if [[ "${CHECK_FLAC}" == "FLAC__METADATA_CHAIN_STATUS_NOT_A_FLAC_FILE" ]] ; then
+			echo -e "File:  ${i}" >> "${METADATA_ERRORS}"
+			echo -e "Error: The above file does not appear to be a FLAC file" >> "${METADATA_ERRORS}"
+			echo -e "------------------------------------------------------------------" >> "${METADATA_ERRORS}"
 			# File is not a FLAC file, display failed
 			print_failed_flac
 		else
@@ -1266,27 +1266,27 @@ function redo_tags {
 			for j in "${tags[@]}" ; do
 				# Check if ALBUMARTIST is in tag array and apply operations on
 				# the tag field if it exists
-				if [[ "$j" == "ALBUMARTIST" ]] ; then
+				if [[ "${j}" == "ALBUMARTIST" ]] ; then
 					# ALBUMARTIST exists in tag array so allow script to check the
 					# various naming conventions within the FLAC files (ie,
 					# 'album artist' or 'album_artist')
 
 					# "ALBUMARTIST"
-					if [[ -n "$(metaflac --show-tag=ALBUMARTIST "$i")" ]] ; then
+					if [[ -n "$(metaflac --show-tag=ALBUMARTIST "${i}")" ]] ; then
 						# Set a temporary variable to be easily parsed by `eval`
-						local TEMP_TAG="$(metaflac --show-tag=ALBUMARTIST "$i" | sed "s/^ALBUMARTIST=//i")"
+						local TEMP_TAG="$(metaflac --show-tag=ALBUMARTIST "${i}" | sed "s/^ALBUMARTIST=//i")"
 					# "album artist"
-					elif [[ -n "$(metaflac --show-tag="album artist" "$i")" ]] ; then
+					elif [[ -n "$(metaflac --show-tag="album artist" "${i}")" ]] ; then
 						# Set a temporary variable to be easily parsed by `eval`
-						local TEMP_TAG="$(metaflac --show-tag="album artist" "$i" | sed "s/^album artist=//i")"
+						local TEMP_TAG="$(metaflac --show-tag="album artist" "${i}" | sed "s/^album artist=//i")"
 					# "album_artist"
-					elif [[ -n "$(metaflac --show-tag="album_artist" "$i")" ]] ; then
+					elif [[ -n "$(metaflac --show-tag="album_artist" "${i}")" ]] ; then
 						# Set a temporary variable to be easily parsed by `eval`
-						local TEMP_TAG="$(metaflac --show-tag="album_artist" "$i" | sed "s/^album_artist=//i")"
+						local TEMP_TAG="$(metaflac --show-tag="album_artist" "${i}" | sed "s/^album_artist=//i")"
 					fi
 				else
 					# Set a temporary variable to be easily parsed by `eval`
-					local TEMP_TAG="$(metaflac --show-tag="$j" "$i" | sed "s/^${j}=//i")"
+					local TEMP_TAG="$(metaflac --show-tag="${j}" "${i}" | sed "s/^${j}=//i")"
 				fi
 
 				# Evaluate TEMP_TAG into the dynamic tag
@@ -1294,9 +1294,9 @@ function redo_tags {
 
 				# If tags are not found, log output
 				if [[ -z "$(eval "echo "\$${j}_TAG"")" ]] ; then
-					echo -e "File:  $i" >> "$METADATA_ERRORS"
-					echo -e "Error: ${j} tag not found" >> "$METADATA_ERRORS"
-					echo -e "------------------------------------------------------------------" >> "$METADATA_ERRORS"
+					echo -e "File:  ${i}" >> "${METADATA_ERRORS}"
+					echo -e "Error: ${j} tag not found" >> "${METADATA_ERRORS}"
+					echo -e "------------------------------------------------------------------" >> "${METADATA_ERRORS}"
 				fi
 			done
 		fi
@@ -1305,12 +1305,12 @@ function redo_tags {
 
 	function analyze_tags_dont_log_coverart {
 		# Check if file is a FLAC file
-		CHECK_FLAC="$(metaflac --show-md5sum "$i" 2>&1 | grep -o "FLAC__METADATA_CHAIN_STATUS_NOT_A_FLAC_FILE")"
+		CHECK_FLAC="$(metaflac --show-md5sum "${i}" 2>&1 | grep -o "FLAC__METADATA_CHAIN_STATUS_NOT_A_FLAC_FILE")"
 
-		if [[ "$CHECK_FLAC" == "FLAC__METADATA_CHAIN_STATUS_NOT_A_FLAC_FILE" ]] ; then
-			echo -e "File:  $i" >> "$METADATA_ERRORS"
-			echo -e "Error: The above file does not appear to be a FLAC file" >> "$METADATA_ERRORS"
-			echo -e "------------------------------------------------------------------" >> "$METADATA_ERRORS"
+		if [[ "${CHECK_FLAC}" == "FLAC__METADATA_CHAIN_STATUS_NOT_A_FLAC_FILE" ]] ; then
+			echo -e "File:  ${i}" >> "${METADATA_ERRORS}"
+			echo -e "Error: The above file does not appear to be a FLAC file" >> "${METADATA_ERRORS}"
+			echo -e "------------------------------------------------------------------" >> "${METADATA_ERRORS}"
 			# File is not a FLAC file, display failed
 			print_failed_flac
 		else
@@ -1325,27 +1325,27 @@ function redo_tags {
 			for j in "${tags[@]}" ; do
 				# Check if ALBUMARTIST is in tag array and apply operations on
 				# the tag field if it exists
-				if [[ "$j" == "ALBUMARTIST" ]] ; then
+				if [[ "${j}" == "ALBUMARTIST" ]] ; then
 					# ALBUMARTIST exists in tag array so allow script to check the
 					# various naming conventions within the FLAC files (ie,
 					# 'album artist' or 'album_artist')
 
 					# "ALBUMARTIST"
-					if [[ -n "$(metaflac --show-tag=ALBUMARTIST "$i")" ]] ; then
+					if [[ -n "$(metaflac --show-tag=ALBUMARTIST "${i}")" ]] ; then
 						# Set a temporary variable to be easily parsed by `eval`
-						local TEMP_TAG="$(metaflac --show-tag=ALBUMARTIST "$i" | sed "s/^ALBUMARTIST=//i")"
+						local TEMP_TAG="$(metaflac --show-tag=ALBUMARTIST "${i}" | sed "s/^ALBUMARTIST=//i")"
 					# "album artist"
-					elif [[ -n "$(metaflac --show-tag="album artist" "$i")" ]] ; then
+					elif [[ -n "$(metaflac --show-tag="album artist" "${i}")" ]] ; then
 						# Set a temporary variable to be easily parsed by `eval`
-						local TEMP_TAG="$(metaflac --show-tag="album artist" "$i" | sed "s/^album artist=//i")"
+						local TEMP_TAG="$(metaflac --show-tag="album artist" "${i}" | sed "s/^album artist=//i")"
 					# "album_artist"
-					elif [[ -n "$(metaflac --show-tag="album_artist" "$i")" ]] ; then
+					elif [[ -n "$(metaflac --show-tag="album_artist" "${i}")" ]] ; then
 						# Set a temporary variable to be easily parsed by `eval`
-						local TEMP_TAG="$(metaflac --show-tag="album_artist" "$i" | sed "s/^album_artist=//i")"
+						local TEMP_TAG="$(metaflac --show-tag="album_artist" "${i}" | sed "s/^album_artist=//i")"
 					fi
 				else
 					# Set a temporary variable to be easily parsed by `eval`
-					local TEMP_TAG="$(metaflac --show-tag="$j" "$i" | sed "s/^${j}=//i")"
+					local TEMP_TAG="$(metaflac --show-tag="${j}" "${i}" | sed "s/^${j}=//i")"
 				fi
 
 				# Evaluate TEMP_TAG into the dynamic tag
@@ -1353,20 +1353,20 @@ function redo_tags {
 
 				# If COVERART_TAG is not null, then log file that has
 				# the COVERART tag embedded within it about deprecation
-				if [[ -n "$COVERART_TAG" ]] ; then
-					echo -e "File:  $i" >> "$METADATA_ERRORS"
-					echo -e "Error: \"${j}\" tag is DEPRECATED in above file. Consider migrating to" >> "$METADATA_ERRORS"
-					echo -e "       the new format: METADATA_BLOCK_PICTURE." >> "$METADATA_ERRORS"
-					echo -e "------------------------------------------------------------------" >> "$METADATA_ERRORS"
+				if [[ -n "${COVERART_TAG}" ]] ; then
+					echo -e "File:  ${i}" >> "${METADATA_ERRORS}"
+					echo -e "Error: \"${j}\" tag is DEPRECATED in above file. Consider migrating to" >> "${METADATA_ERRORS}"
+					echo -e "       the new format: METADATA_BLOCK_PICTURE." >> "${METADATA_ERRORS}"
+					echo -e "------------------------------------------------------------------" >> "${METADATA_ERRORS}"
 				fi
 
 				# If tags are not found, log output. Skip output
 				# of COVERART tag as this is a temporary addition to
 				# the tag array (for processing legacy artwork)
 				if [[ -z "$(eval "echo "\$${j}_TAG"")" && "${j}" != "COVERART" ]] ; then
-					echo -e "File:  $i" >> "$METADATA_ERRORS"
-					echo -e "Error: ${j} tag not found" >> "$METADATA_ERRORS"
-					echo -e "------------------------------------------------------------------" >> "$METADATA_ERRORS"
+					echo -e "File:  ${i}" >> "${METADATA_ERRORS}"
+					echo -e "Error: ${j} tag not found" >> "${METADATA_ERRORS}"
+					echo -e "------------------------------------------------------------------" >> "${METADATA_ERRORS}"
 				fi
 			done
 		fi
@@ -1376,7 +1376,7 @@ function redo_tags {
 	# If COVERART was specified under USER CONFIGURATION
 	# set the tag array accordingly and test whether there
 	# are missing tags in each FLAC file
-	if [[ "$COVERART_WARNING" == "true" ]] ; then
+	if [[ "${COVERART_WARNING}" == "true" ]] ; then
 		title_analyze_tags
 
 		# COVERART is already in the tag array. Implies album
@@ -1398,7 +1398,7 @@ function redo_tags {
 	else
 		# COVERART is not in the tag array, so add it if album artwork
 		# is to be kept
-		if [[ "$REMOVE_ARTWORK" == "false" ]] ; then
+		if [[ "${REMOVE_ARTWORK}" == "false" ]] ; then
 			title_analyze_tags
 
 			# Analyze tags but don't log COVERART is missing tag
@@ -1439,30 +1439,30 @@ function redo_tags {
 	fi
 
 	# Run the "check_tags" function with the configured threads (multithreaded)
-	find "$DIRECTORY" -name "*.[Ff][Ll][Aa][Cc]" -print0 | xargs -0 -n 1 -P "$CORES" bash -c 'check_tags "$@"' --
+	find "${DIRECTORY}" -name "*.[Ff][Ll][Aa][Cc]" -print0 | xargs -0 -n 1 -P "${CORES}" bash -c 'check_tags "${@}"' --
 
 	# Test for DEPRECATED tag, COVERART in METADATA_ERROR log.  If it
 	# exists, set COVERART_WARNING variable to make script output
 	# warning upon completion
-	grep -sq METADATA_BLOCK_PICTURE "$METADATA_ERRORS"
-	if [[ $? -eq 0 ]] ; then
+	grep -sq METADATA_BLOCK_PICTURE "${METADATA_ERRORS}"
+	if [[ ${?} -eq 0 ]] ; then
 		COVERART_WARNING="true"
 	fi
 
-	if [[ -f "$METADATA_ERRORS"  && "$COVERART_WARNING" == "true" ]] ; then
+	if [[ -f "${METADATA_ERRORS}"  && "${COVERART_WARNING}" == "true" ]] ; then
 		# Display COVERART warning function and metadata issues
 		echo
 		coverart_warning
 		echo -e "\n ${BOLD_RED}*${NORMAL} Some FLAC files have missing tags or there were"
 		echo -e " ${BOLD_RED}*${NORMAL} issues with some of the FLAC files, please check:"
-		echo -e " ${BOLD_RED}*${NORMAL} \"$METADATA_ERRORS\" for details."
+		echo -e " ${BOLD_RED}*${NORMAL} \"${METADATA_ERRORS}\" for details."
 		echo -e " ${BOLD_RED}*${NORMAL} Not Re-Tagging files."
 		exit 1
-	elif [[ -f "$METADATA_ERRORS" ]] ; then
+	elif [[ -f "${METADATA_ERRORS}" ]] ; then
 		# Just display metadata issues
 		echo -e "\n ${BOLD_RED}*${NORMAL} Some FLAC files have missing tags or there were"
 		echo -e " ${BOLD_RED}*${NORMAL} issues with some of the FLAC files, please check:"
-		echo -e " ${BOLD_RED}*${NORMAL} \"$METADATA_ERRORS\" for details."
+		echo -e " ${BOLD_RED}*${NORMAL} \"${METADATA_ERRORS}\" for details."
 		echo -e " ${BOLD_RED}*${NORMAL} Not Re-Tagging files."
 		exit 1
 	fi
@@ -1484,27 +1484,27 @@ function redo_tags {
 		for j in "${tags[@]}" ; do
 			# Check if ALBUMARTIST is in tag array and apply operations on
 			# the tag field if it exists
-			if [[ "$j" == "ALBUMARTIST" ]] ; then
+			if [[ "${j}" == "ALBUMARTIST" ]] ; then
 				# ALBUMARTIST exists in tag array so allow script to check the
 				# various naming conventions within the FLAC files (ie,
 				# 'album artist' or 'album_artist')
 
 				# "ALBUMARTIST"
-				if [[ -n "$(metaflac --show-tag=ALBUMARTIST "$i")" ]] ; then
+				if [[ -n "$(metaflac --show-tag=ALBUMARTIST "${i}")" ]] ; then
 					# Set a temporary variable to be easily parsed by `eval`
-					local TEMP_TAG="$(metaflac --show-tag=ALBUMARTIST "$i" | sed "s/^ALBUMARTIST=//i")"
+					local TEMP_TAG="$(metaflac --show-tag=ALBUMARTIST "${i}" | sed "s/^ALBUMARTIST=//i")"
 				# "album artist"
-				elif [[ -n "$(metaflac --show-tag="album artist" "$i")" ]] ; then
+				elif [[ -n "$(metaflac --show-tag="album artist" "${i}")" ]] ; then
 					# Set a temporary variable to be easily parsed by `eval`
-					local TEMP_TAG="$(metaflac --show-tag="album artist" "$i" | sed "s/^album artist=//i")"
+					local TEMP_TAG="$(metaflac --show-tag="album artist" "${i}" | sed "s/^album artist=//i")"
 				# "album_artist"
-				elif [[ -n "$(metaflac --show-tag="album_artist" "$i")" ]] ; then
+				elif [[ -n "$(metaflac --show-tag="album_artist" "${i}")" ]] ; then
 					# Set a temporary variable to be easily parsed by `eval`
-					local TEMP_TAG="$(metaflac --show-tag="album_artist" "$i" | sed "s/^album_artist=//i")"
+					local TEMP_TAG="$(metaflac --show-tag="album_artist" "${i}" | sed "s/^album_artist=//i")"
 				fi
 			else
 				# Set a temporary variable to be easily parsed by `eval`
-				local TEMP_TAG="$(metaflac --show-tag="$j" "$i" | sed "s/^${j}=//i")"
+				local TEMP_TAG="$(metaflac --show-tag="${j}" "${i}" | sed "s/^${j}=//i")"
 			fi
 
 			# Evaluate TEMP_TAG into the dynamic tag
@@ -1512,11 +1512,11 @@ function redo_tags {
 		done
 	
 		# Remove all the tags
-		metaflac --remove --block-type=VORBIS_COMMENT "$i"
+		metaflac --remove --block-type=VORBIS_COMMENT "${i}"
 
 		# Iterate through the tag array and add the saved tags back
 		for j in "${tags[@]}" ; do
-			metaflac --set-tag="${j}"="$(eval "echo \$${j}_SET")" "$i"
+			metaflac --set-tag="${j}"="$(eval "echo \$${j}_SET")" "${i}"
 		done
 	}
 	export -f remove_set_tags
@@ -1534,7 +1534,7 @@ function redo_tags {
 	export -f retag_flacs
 	
 	# Run the above function with the configured threads (multithreaded)
-	find "$DIRECTORY" -name "*.[Ff][Ll][Aa][Cc]" -print0 | xargs -0 -n 1 -P "$CORES" bash -c 'retag_flacs "$@"' --
+	find "${DIRECTORY}" -name "*.[Ff][Ll][Aa][Cc]" -print0 | xargs -0 -n 1 -P "${CORES}" bash -c 'retag_flacs "${@}"' --
 }
 
 #################
@@ -1547,10 +1547,10 @@ function prune_flacs {
 	# Abort script and check for any errors thus far
 	function prune_abort {
 		echo -e "\n ${BOLD_GREEN}*${NORMAL} Control-C received, exiting script..."
-		if [[ -f "$PRUNE_ERRORS" ]] ; then
+		if [[ -f "${PRUNE_ERRORS}" ]] ; then
 			echo -e "\n ${BOLD_RED}*${NORMAL} There were issues with some of the FLAC files,"
 			echo -e " ${BOLD_RED}*${NORMAL} please check:"
-			echo -e " ${BOLD_RED}*${NORMAL} \"$PRUNE_ERRORS\" for details."
+			echo -e " ${BOLD_RED}*${NORMAL} \"${PRUNE_ERRORS}\" for details."
 			exit 1
 		fi
 	}
@@ -1561,7 +1561,7 @@ function prune_flacs {
 	function prune_f {
 		# Don't remove artwork if user wants it kept.  We don't have to check
 		# for the legacy COVERART tag as we are NOT removing any VORBIS_COMMENTs.
-		if [[ "$REMOVE_ARTWORK" == "true" ]] ; then
+		if [[ "${REMOVE_ARTWORK}" == "true" ]] ; then
 			# Remove artwork (exported for subshell access)
 			export DONT_PRUNE_FLAC_METADATA="STREAMINFO,VORBIS_COMMENT"
 		else
@@ -1573,18 +1573,18 @@ function prune_flacs {
 			print_prune_flac
 
 			# Check if file is a FLAC file
-			CHECK_FLAC="$(metaflac --show-md5sum "$i" 2>&1 | grep -o "FLAC__METADATA_CHAIN_STATUS_NOT_A_FLAC_FILE")"
+			CHECK_FLAC="$(metaflac --show-md5sum "${i}" 2>&1 | grep -o "FLAC__METADATA_CHAIN_STATUS_NOT_A_FLAC_FILE")"
 
-			if [[ "$CHECK_FLAC" == "FLAC__METADATA_CHAIN_STATUS_NOT_A_FLAC_FILE" ]] ; then
-				echo -e "File:  $i" >> "$PRUNE_ERRORS"
-				echo -e "Error: The above file does not appear to be a FLAC file" >> "$PRUNE_ERRORS"
-				echo -e "------------------------------------------------------------------" >> "$PRUNE_ERRORS"
+			if [[ "${CHECK_FLAC}" == "FLAC__METADATA_CHAIN_STATUS_NOT_A_FLAC_FILE" ]] ; then
+				echo -e "File:  ${i}" >> "${PRUNE_ERRORS}"
+				echo -e "Error: The above file does not appear to be a FLAC file" >> "${PRUNE_ERRORS}"
+				echo -e "------------------------------------------------------------------" >> "${PRUNE_ERRORS}"
 				# File is not a FLAC file, display failed
 				print_failed_flac
 			else
 				# Remove all information but STREAMINFO,VORBIS_COMMENTs, and
 				# possibly METADATA_BLOCK_PICTURE
-				metaflac --remove --dont-use-padding --except-block-type="${DONT_PRUNE_FLAC_METADATA}" "$i"
+				metaflac --remove --dont-use-padding --except-block-type="${DONT_PRUNE_FLAC_METADATA}" "${i}"
 				print_ok_flac
 			fi
 		done
@@ -1592,12 +1592,12 @@ function prune_flacs {
 	export -f prune_f
 	
 	# Run the above function with the configured threads (multithreaded)
-	find "$DIRECTORY" -name "*.[Ff][Ll][Aa][Cc]" -print0 | xargs -0 -n 1 -P "$CORES" bash -c 'prune_f "$@"' --
+	find "${DIRECTORY}" -name "*.[Ff][Ll][Aa][Cc]" -print0 | xargs -0 -n 1 -P "${CORES}" bash -c 'prune_f "${@}"' --
 
-	if [[ -f "$PRUNE_ERRORS" ]] ; then
+	if [[ -f "${PRUNE_ERRORS}" ]] ; then
 		echo -e "\n ${BOLD_RED}*${NORMAL} There were issues with some of the FLAC files,"
 		echo -e " ${BOLD_RED}*${NORMAL} please check:"
-		echo -e " ${BOLD_RED}*${NORMAL} \"$PRUNE_ERRORS\" for details."
+		echo -e " ${BOLD_RED}*${NORMAL} \"${PRUNE_ERRORS}\" for details."
 	fi
 }
 
@@ -1607,7 +1607,7 @@ function prune_flacs {
 # Display a lot of help
 function long_help {
 	cat << EOF
-  Usage: $0 [OPTION] [OPTION]... [PATH_TO_FLAC(s)]
+  Usage: ${0} [OPTION] [OPTION]... [PATH_TO_FLAC(s)]
   Options:
     -c, --compress
            Compress the FLAC files with the user-specified level of compression
@@ -1827,27 +1827,27 @@ function long_help {
 
   Invocation Examples:
     # Compress and verify FLAC files
-    $0 --compress /media/Music_Files
+    ${0} --compress /media/Music_Files
 
     # Same as above but check MD5 Signature of all FLAC files if all files are verified as OK
     # from previous command
-    $0 -c -m Music/FLACS    <--- **RELATIVE PATHS ALLOWED**
+    ${0} -c -m Music/FLACS    <--- **RELATIVE PATHS ALLOWED**
 
     # Same as above but remove the SEEKTABLE and excess PADDING in all of the FLAC files if all
     # files are verified as OK from previous command
-    $0 -c -m -p /some/path/to/files
+    ${0} -c -m -p /some/path/to/files
 
     # Same as above but with long argument notation
-    $0 --compress --md5check --prune /some/path/to/files
+    ${0} --compress --md5check --prune /some/path/to/files
 
     # Same as above but with mixed argument notation
-    $0 --compress -m -p /some/path/to/files
+    ${0} --compress -m -p /some/path/to/files
 
     # Clear excess tags from each FLAC file
-    $0 --redo /some/path/to/files
+    ${0} --redo /some/path/to/files
 
     # Compress FLAC files and redo the FLAC tags
-    $0 -c -r /some/path/to/files
+    ${0} -c -r /some/path/to/files
 EOF
 }
 
@@ -1856,7 +1856,7 @@ EOF
 ########################
 # Display short help
 function short_help {
-	echo "  Usage: $0 [OPTION] [OPTION]... [PATH_TO_FLAC(s)]"
+	echo "  Usage: ${0} [OPTION] [OPTION]... [PATH_TO_FLAC(s)]"
 	echo "  Options:"
 	echo "    -c, --compress"
 	echo "    -C, --compress-notest"
@@ -1872,7 +1872,7 @@ function short_help {
 	echo "    -n, --no-color"
 	echo "    -v, --version"
 	echo "    -h, --help"
-	echo "  This is the short help; for details use '$0 --help' or '$0 -h'"
+	echo "  This is the short help; for details use '${0} --help' or '${0} -h'"
 }
 
 ############################
@@ -1880,24 +1880,24 @@ function short_help {
 ############################
 # Display script version
 function print_version {
-	echo "Version $VERSION"
+	echo "Version ${VERSION}"
 }
 
 #######################
 #  PRE-SCRIPT CHECKS  #
 #######################
 # Add case where only one argument is specified
-if [[ "$#" -eq 1 ]] ; then
-	case "$1" in
+if [[ "${#}" -eq 1 ]] ; then
+	case "${1}" in
 		--version|-v)
 			print_version
 			exit 0
 			;;
 		--help|-h)
-			# Check for $PAGER. If a pager is available
+			# Check for ${PAGER}. If a pager is available
 			# lets use it. If not, just display help
-			if [[ -n "$PAGER" ]] ; then
-				long_help | $PAGER
+			if [[ -n "${PAGER}" ]] ; then
+				long_help | "${PAGER}"
 				exit 0
 			else
 				long_help
@@ -1912,8 +1912,8 @@ if [[ "$#" -eq 1 ]] ; then
 fi
 
 # Handle various command switches
-while [[ "$#" -gt 1 ]] ; do
-	case "$1" in
+while [[ "${#}" -gt 1 ]] ; do
+	case "${1}" in
 		--all|-l)
 			ALL="true"
 			shift
@@ -1976,7 +1976,7 @@ done
 
 # This must come before the other options in
 # order for it to take effect
-if [[ "$NO_COLOR" == "true" ]] ; then
+if [[ "${NO_COLOR}" == "true" ]] ; then
 	BOLD_GREEN=""
 	BOLD_RED=""
 	BOLD_BLUE=""
@@ -2003,51 +2003,51 @@ GREP_EXISTS="$(command -v grep)"
 
 # Go through and test if each command was found (by displaying its $PATH).  If
 # it's empty, add where you can find the package to an array to be displayed.
-if [[ -z "$PRINTF_EXISTS" ]] ; then
+if [[ -z "${PRINTF_EXISTS}" ]] ; then
 	command_exists_array=( "${command_exists_array[@]}" "You can generally install \"printf\" with the \"coreutils\" package." )
 fi
 
-if [[ -z "$BASENAME_EXISTS" ]] ; then
+if [[ -z "${BASENAME_EXISTS}" ]] ; then
 	command_exists_array=( "${command_exists_array[@]}" "You can generally install \"basename\" with the \"coreutils\" package." )
 fi
 
-if [[ -z "$DIRNAME_EXISTS" ]] ; then
+if [[ -z "${DIRNAME_EXISTS}" ]] ; then
 	command_exists_array=( "${command_exists_array[@]}" "You can generally install \"dirname\" with the \"coreutils\" package." )
 fi
 
-if [[ -z "$SLEEP_EXISTS" ]] ; then
+if [[ -z "${SLEEP_EXISTS}" ]] ; then
 	command_exists_array=( "${command_exists_array[@]}" "You can generally install \"sleep\" with the \"coreutils\" package." )
 fi
 
-if [[ -z "$WC_EXISTS" ]] ; then
+if [[ -z "${WC_EXISTS}" ]] ; then
 	command_exists_array=( "${command_exists_array[@]}" "You can generally install \"wc\" with the \"coreutils\" package." )
 fi
 
-if [[ -z "$CAT_EXISTS" ]] ; then
+if [[ -z "${CAT_EXISTS}" ]] ; then
 	command_exists_array=( "${command_exists_array[@]}" "You can generally install \"cat\" with the \"coreutils\" package." )
 fi
 
-if [[ -z "$FIND_EXISTS" ]] ; then
+if [[ -z "${FIND_EXISTS}" ]] ; then
 	command_exists_array=( "${command_exists_array[@]}" "You can generally install \"find\" with the \"findutils\" package." )
 fi
 
-if [[ -z "$XARGS_EXISTS" ]] ; then
+if [[ -z "${XARGS_EXISTS}" ]] ; then
 	command_exists_array=( "${command_exists_array[@]}" "You can generally install \"xargs\" with the \"findutils\" package." )
 fi
 
-if [[ -z "$METAFLAC_EXISTS" ]] ; then
+if [[ -z "${METAFLAC_EXISTS}" ]] ; then
 	command_exists_array=( "${command_exists_array[@]}" "You can generally install \"metaflac\" with the \"flac\" package." )
 fi
 
-if [[ -z "$FLAC_EXISTS" ]] ; then
+if [[ -z "${FLAC_EXISTS}" ]] ; then
 	command_exists_array=( "${command_exists_array[@]}" "You can generally install \"flac\" with the \"flac\" package." )
 fi
 
-if [[ -z "$AWK_EXISTS" ]] ; then
+if [[ -z "${AWK_EXISTS}" ]] ; then
 	command_exists_array=( "${command_exists_array[@]}" "You can generally install \"awk\" with the \"awk\", \"gawk\", \"nawk\", or \"mawk\" package." )
 fi
 
-if [[ -z "$GREP_EXISTS" ]] ; then
+if [[ -z "${GREP_EXISTS}" ]] ; then
 	command_exists_array=( "${command_exists_array[@]}" "You can generally install \"grep\" with the \"grep\" package." )
 fi
 
@@ -2065,29 +2065,29 @@ if [[ -n "${command_exists_array[@]}" ]] ; then
 	display_missing_commands_header
 	# Iterate through array and print each value
 	for i in "${command_exists_array[@]}" ; do
-		echo -e " ${YELLOW}*${NORMAL} $i"
+		echo -e " ${YELLOW}*${NORMAL} ${i}"
 	done
 	exit 1
 fi
 
 # Set the last argument as the directory
-DIRECTORY="$1"
+DIRECTORY="${1}"
 
 # Check whether DIRECTORY is not null and whether the directory exists
-if [[ -n "$DIRECTORY" && ! -d "$DIRECTORY" ]] ; then
+if [[ -n "${DIRECTORY}" && ! -d "${DIRECTORY}" ]] ; then
 	echo -e "  Usage: $0 [OPTION] [PATH_TO_FLAC(s)]...\n"
 	echo -e " ${BOLD_RED}*${NORMAL} Please specify a directory!"
 	exit 1
 fi
 
 # If no arguments are made to the script show usage
-if [[ "$#" -eq 0 ]] ; then
+if [[ "${#}" -eq 0 ]] ; then
 	short_help
 	exit 0
 fi
 
 # If "-l, --all" and "-L, --reallyall" are both called, warn and exit
-if [[ "$ALL" == "true" && "$REALLYALL" == "true" ]] ; then
+if [[ "${ALL}" == "true" && "${REALLYALL}" == "true" ]] ; then
 	echo -e " ${BOLD_RED}*${NORMAL} Running both \"-l, --all\" and \"-L, --reallyall\" conflict!"
 	echo -e " ${BOLD_RED}*${NORMAL} Please choose one or the other." 
 	exit 1
@@ -2096,47 +2096,47 @@ fi
 # If "-l, --all" or "-L, --reallyall" was called, check if arguments
 # were called that already will be performed by the above argument(s).
 # If any were called, display a warning and exit the script
-if [[ "$ALL" == "true" || "$REALLYALL" == "true" ]] ; then
+if [[ "${ALL}" == "true" || "${REALLYALL}" == "true" ]] ; then
 
 	# Check for "-c, --compress".  If used add it to array
-	if [[ "$COMPRESS" == "true" && "$SKIP_TEST" == "false" ]] ; then
+	if [[ "${COMPRESS}" == "true" && "${SKIP_TEST}" == "false" ]] ; then
 		argumentConflict=( "${argumentConflict[@]}" "-c, --compress" )
 	# Check for "-C, --compress-notest".  If used add it to array
-	elif [[ "$COMPRESS" == "true" && "$SKIP_TEST" == "true" ]] ; then
+	elif [[ "${COMPRESS}" == "true" && "${SKIP_TEST}" == "true" ]] ; then
 		argumentConflict=( "${argumentConflict[@]}" "-C, --compress-notest" )
 	fi
 
 	# Check for "-t, --test".  If used add it to array
-	if [[ "$TEST" == "true" ]] ; then
+	if [[ "${TEST}" == "true" ]] ; then
 		argumentConflict=( "${argumentConflict[@]}" "-t, --test" )
 	fi
 
 	# Check for "-m, --md5check".  If used add it to array
-	if [[ "$MD5CHECK" == "true" ]] ; then
+	if [[ "${MD5CHECK}" == "true" ]] ; then
 		argumentConflict=( "${argumentConflict[@]}" "-m, --md5check" )
 	fi
 
 	# Check for "-p, --prune".  If used add it to array
-	if [[ "$PRUNE" == "true" ]] ; then
+	if [[ "${PRUNE}" == "true" ]] ; then
 		argumentConflict=( "${argumentConflict[@]}" "-p, --prune" )
 	fi
 
 	# Check for "-g, --replaygain".  If used add it to array
-	if [[ "$REPLAYGAIN" == "true" ]] ; then
+	if [[ "${REPLAYGAIN}" == "true" ]] ; then
 		argumentConflict=( "${argumentConflict[@]}" "-g, --replaygain" )
 	fi
 
 	# Check for "-r, --redo".  If used add it to array
-	if [[ "$REDO" == "true" ]] ; then
+	if [[ "${REDO}" == "true" ]] ; then
 		argumentConflict=( "${argumentConflict[@]}" "-r, --redo" )
 	fi
 
 	# If "-L, --reallyall" was called, check for the various forms of calling
 	# auCDtect.  If it was called, add it to array
-	if [[ "$REALLYALL" == "true" ]] ; then
-		if [[ "$AUCDTECT" == "true" && "$CREATE_SPECTROGRAM" == "true" ]] ; then
+	if [[ "${REALLYALL}" == "true" ]] ; then
+		if [[ "${AUCDTECT}" == "true" && "${CREATE_SPECTROGRAM}" == "true" ]] ; then
 			argumentConflict=( "${argumentConflict[@]}" "-A, --aucdtect-spectrogram" )
-		elif [[ "$AUCDTECT" == "true" && "$CREATE_SPECTROGRAM" != "true" ]] ; then
+		elif [[ "${AUCDTECT}" == "true" && "${CREATE_SPECTROGRAM}" != "true" ]] ; then
 			argumentConflict=( "${argumentConflict[@]}" "-a, --aucdtect" )
 		fi
 	fi
@@ -2146,16 +2146,16 @@ if [[ "$ALL" == "true" || "$REALLYALL" == "true" ]] ; then
 	# are incompatible and exit script
 	if [[ -n "${argumentConflict[@]}" ]] ; then
 		# "-l, --all"
-		if [[ "$ALL" == "true" ]] ; then
+		if [[ "${ALL}" == "true" ]] ; then
 			echo -e " ${BOLD_RED}*${NORMAL} The below options conflict with \"-l, --all\""
 		# "-L, --reallyall"
-		elif [[ "$REALLYALL" == "true" ]] ; then
+		elif [[ "${REALLYALL}" == "true" ]] ; then
 			echo -e " ${BOLD_RED}*${NORMAL} The below options conflict with \"-L, --reallyall\""
 		fi
 
 		# Iterate through array and print each value
 		for i in "${argumentConflict[@]}" ; do
-			echo -e " ${BOLD_RED}*${NORMAL}     $i"
+			echo -e " ${BOLD_RED}*${NORMAL}     ${i}"
 		done
 
 		echo -e " ${BOLD_RED}*${NORMAL} Please remove incompatible options."
@@ -2164,29 +2164,29 @@ if [[ "$ALL" == "true" || "$REALLYALL" == "true" ]] ; then
 fi
 
 # If "-C, --compress-notest" and "-c, --compress" are both called, warn and exit
-if [[ "$SKIP_TEST" == "true" && "$COMPRESS_TEST" == "true" ]] ; then
+if [[ "${SKIP_TEST}" == "true" && "${COMPRESS_TEST}" == "true" ]] ; then
 	echo -e " ${BOLD_RED}*${NORMAL} Running both \"-c, --compress\" and \"-C, --compress-notest\" conflict!"
 	echo -e " ${BOLD_RED}*${NORMAL} Please choose one or the other."
 	exit 1
 fi
 
 # If "-c, --compress" and "-t, --test" are both called, warn and exit
-if [[ "$COMPRESS_TEST" == "true" && "$TEST" == "true" ]] ; then
+if [[ "${COMPRESS_TEST}" == "true" && "${TEST}" == "true" ]] ; then
 	echo -e " ${BOLD_RED}*${NORMAL} Running both \"-c, --compress\" and \"-t, --test\" conflict!"
 	echo -e " ${BOLD_RED}*${NORMAL} Please choose one or the other."
 	exit 1
 fi
 
 # If "-a, --aucdtect" and "-A, --aucdtect-spectrogram" are both called, warn and exit
-if [[ "$NO_SPECTROGRAM" == "true"  && "$CREATE_SPECTROGRAM" == "true" ]] ; then
+if [[ "${NO_SPECTROGRAM}" == "true"  && "${CREATE_SPECTROGRAM}" == "true" ]] ; then
 	echo -e " ${BOLD_RED}*${NORMAL} Running both \"-a, --aucdtect\" and \"-A, --aucdtect-spectrogram\" conflict!"
 	echo -e " ${BOLD_RED}*${NORMAL} Please choose one or the other."
 	exit 1
 fi
 
 # Check if FLAC files exist
-FIND_FLACS="$(find "$DIRECTORY" -name "*.[Ff][Ll][Aa][Cc]" -print)"
-if [[ -z "$FIND_FLACS" ]] ; then
+FIND_FLACS="$(find "${DIRECTORY}" -name "*.[Ff][Ll][Aa][Cc]" -print)"
+if [[ -z "${FIND_FLACS}" ]] ; then
 	no_flacs
 	exit 1
 fi
@@ -2195,7 +2195,7 @@ fi
 # installed
 hash tput
 # Check exit code. If 1, then `tput` is not installed
-if [[ "$?" -eq 1 ]] ; then
+if [[ "${?}" -eq 1 ]] ; then
 	# Export to allow subshell access
 	export FALLBACK="true"
 fi
@@ -2210,13 +2210,13 @@ fi
 # If "-l, --all" or "-L, --reallyall" was called,
 # enable the various arguments to allow script to
 # run them
-if [[ "$ALL" == "true" ]] ; then
+if [[ "${ALL}" == "true" ]] ; then
 	COMPRESS="true"
 	MD5CHECK="true"
 	PRUNE="true"
 	REPLAYGAIN="true"
 	REDO="true"
-elif [[ "$REALLYALL" == "true" ]] ; then
+elif [[ "${REALLYALL}" == "true" ]] ; then
 	COMPRESS="true"
 	MD5CHECK="true"
 	PRUNE="true"
@@ -2231,18 +2231,18 @@ fi
 # The below order is probably the best bet in ensuring time
 # isn't wasted on doing unnecessary operations if the
 # FLAC files are corrupt or have metadata issues
-if [[ "$REDO" == "true" ]] ; then
+if [[ "${REDO}" == "true" ]] ; then
 	countdown_metadata
 fi
 
-if [[ "$AUCDTECT" == "true" ]] ; then
+if [[ "${AUCDTECT}" == "true" ]] ; then
 	# Check if auCDtect is found/installed
-	if [[ -f "$AUCDTECT_COMMAND" ]] ; then
+	if [[ -f "${AUCDTECT_COMMAND}" ]] ; then
 		# If "--aucdtect-spectrogram, -A" was called
 		# make sure SoX is installed before starting
-		if [[ "$CREATE_SPECTROGRAM" == "true" ]] ; then
+		if [[ "${CREATE_SPECTROGRAM}" == "true" ]] ; then
 			SOX_COMMAND="$(command -v sox)"
-			if [[ -z "$SOX_COMMAND" ]] ; then
+			if [[ -z "${SOX_COMMAND}" ]] ; then
 				# SoX can't be found, exit
 				echo -e " ${BOLD_RED}*${NORMAL} It appears SoX is not installed. Please verify you"
 				echo -e " ${BOLD_RED}*${NORMAL} have this program installed and can be found in \$PATH"
@@ -2259,32 +2259,32 @@ if [[ "$AUCDTECT" == "true" ]] ; then
 	fi
 fi
 
-if [[ "$COMPRESS" == "true" ]] ; then
+if [[ "${COMPRESS}" == "true" ]] ; then
 	compress_flacs
 fi
 
-if [[ "$TEST" == "true" ]] ; then
+if [[ "${TEST}" == "true" ]] ; then
 	test_flacs
 fi
 
-if [[ "$MD5CHECK" == "true" ]] ; then
+if [[ "${MD5CHECK}" == "true" ]] ; then
 	md5_check
 fi
 
-if [[ "$REPLAYGAIN" == "true" ]] ; then
+if [[ "${REPLAYGAIN}" == "true" ]] ; then
 	replaygain
 fi
 
-if [[ "$REDO" == "true" ]] ; then
+if [[ "${REDO}" == "true" ]] ; then
 	redo_tags
 fi
 
-if [[ "$PRUNE" == "true" ]] ; then
+if [[ "${PRUNE}" == "true" ]] ; then
 	prune_flacs
 fi
 
 # Display warning about legacy COVERART tag, if applicable
-if [[ "$COVERART_WARNING" == "true" ]] ; then
+if [[ "${COVERART_WARNING}" == "true" ]] ; then
 	echo
 	coverart_warning
 fi
