@@ -1894,11 +1894,10 @@ if [[ "$#" -eq 1 ]] ; then
 			exit 0
 			;;
 		--help|-h)
-			# Check for less pager.  If available,
-			# lets use it.  If not, just display it
-			LESS_COMMAND="$(command -v less)"
-			if [[ -n "$LESS_COMMAND" ]] ; then
-				long_help | less
+			# Check for $PAGER. If a pager is available
+			# lets use it. If not, just display help
+			if [[ -n "$PAGER" ]] ; then
+				long_help | $PAGER
 				exit 0
 			else
 				long_help
