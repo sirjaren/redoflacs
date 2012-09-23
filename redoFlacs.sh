@@ -28,7 +28,6 @@ tags=(
 #  USER CONFIGURATION  #
 ########################
 # List the tags to be kept in each FLAC file
-# The tags are case sensitive!
 # The default is listed below.
 # Be sure not to delete the parenthesis ")" below
 # or put wanted tags below it! Another common tag
@@ -171,14 +170,14 @@ export REPLAY_ADD_ERRORS="${ERROR_LOG}/ReplayGain_Add_Errors $(date "+[%Y-%m-%d 
 export AUCDTECT_ERRORS="${ERROR_LOG}/auCDtect_Errors $(date "+[%Y-%m-%d %R]")"
 export PRUNE_ERRORS="${ERROR_LOG}/FLAC_Prune_Errors $(date "+[%Y-%m-%d %R]")"
 
-# Set arguments to false
+# Set arguments to null
 # If enabled they will be changed to true
-COMPRESS="false"
-TEST="false"
-AUCDTECT="false"
-MD5CHECK="false"
-PRUNE="false"
-REDO="false"
+COMPRESS=""
+TEST=""
+AUCDTECT=""
+MD5CHECK=""
+PRUNE=""
+REDO=""
 
 ###################################
 #  INFORMATION PRINTED TO STDOUT  # 
@@ -186,6 +185,10 @@ REDO="false"
 # Displaying currently running tasks
 function title_compress_flac {
 	echo -e " ${BOLD_GREEN}*${NORMAL} Compressing FLAC files with level ${COMPRESSION_LEVEL} compression and verifying output :: ${BOLD_BLUE}[${CORES} Thread(s)]${NORMAL}"
+}
+
+function title_compress_notest_flac {
+	echo -e " ${BOLD_GREEN}*${NORMAL} Compressing FLAC files with level ${COMPRESSION_LEVEL} compression :: ${BOLD_BLUE}[${CORES} Thread(s)]${NORMAL}"
 }
 
 function title_test_replaygain {
@@ -876,7 +879,14 @@ function replaygain {
 #############################
 # Compress FLAC files and verify output
 function compress_flacs {
-	title_compress_flac
+
+	# If '-C, --compress-notest' was called, print the
+	# correct title
+	if [[ "${SKIP_TEST}" == "true" ]] ; then
+		title_compress_notest_flac
+	else
+		title_compress_flac
+	fi
 
 	# Abort script and remove temporarily encoded FLAC files (if any)
 	# and check for any errors thus far
@@ -914,7 +924,7 @@ function compress_flacs {
 					print_ok_flac
 				fi
 			# If already at COMPRESSION_LEVEL, test the FLAC file instead
-			# or skip the file if --compress-notest,-C was specified
+			# or skip the file if '-C, --compress-notest' was specified
 			else
 				print_level_same_compression
 				if [[ "${SKIP_TEST}" != "true" ]] ; then
