@@ -77,7 +77,7 @@ REPLAYGAIN_TRACK_PEAK
 REPLAYGAIN_ALBUM_GAIN
 REPLAYGAIN_ALBUM_PEAK
 
-)
+) # <- DO NOT DELETE PARENTHESIS!
 
 # Set whether to remove embedded artwork within FLAC
 # files.  By default, this script will remove any
@@ -102,7 +102,7 @@ CORES=2
 # Set the where you want the error logs to
 # be placed. By default, they are placed in
 # the user's HOME directory.
-ERROR_LOG="$HOME"
+ERROR_LOG="${HOME}"
 
 # Set where the auCDtect command is located.
 # By default, the script will look in $PATH
@@ -196,7 +196,7 @@ function title_test_replaygain {
 }
 
 # This is NOT multithreaded (1 thread only)
-# This is intentional and intended
+# This is intentional
 function title_add_replaygain {
 	echo -e " ${BOLD_GREEN}*${NORMAL} Applying ReplayGain values by album directory :: ${BOLD_BLUE}[1 Thread(s)]${NORMAL}"
 }
@@ -1065,7 +1065,7 @@ function aucdtect {
 				print_failed_flac
 			else
 				# Get the bit depth of a FLAC file
-				BITS="$(metaflac --list --block-type=STREAMINFO "${i}" | grep "bits-per-sample" | awk '{print $2}')"
+				BITS="$(metaflac --show-bps "${i}")"
 
 				# Skip the FLAC file if it has a bit depth greater
 				# than 16 since auCDtect doesn't support audio
@@ -1114,6 +1114,9 @@ function aucdtect {
 						# Let's create the spectrogram for the failed FLAC file
 						# and output progress
 						print_aucdtect_spectrogram
+
+						# SoX command to create the spectrogram and place it in
+						# SPECTROGRAM_PICTURE
 						sox "${i}" -n spectrogram -c '' -t "${i}" -p1 -z90 -Z0 -q249 -wHann -x5000 -y1025 -o "${SPECTROGRAM_PICTURE}"
 
 						# Print ISSUE and log error, and show where to find
@@ -2248,7 +2251,7 @@ fi
 if [[ "${AUCDTECT}" == "true" ]] ; then
 	# Check if auCDtect is found/installed
 	if [[ -f "${AUCDTECT_COMMAND}" ]] ; then
-		# If "--aucdtect-spectrogram, -A" was called
+		# If "-A, --aucdtect-spectrogram" was called
 		# make sure SoX is installed before starting
 		if [[ "${CREATE_SPECTROGRAM}" == "true" ]] ; then
 			SOX_COMMAND="$(command -v sox)"
