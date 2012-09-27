@@ -231,12 +231,108 @@ function no_flacs {
 	echo -e " ${BOLD_RED}*${NORMAL} There are not any FLAC files to process!"
 }
 
-# Information relating to currently running tasks
-function print_compressing_flac {
-	if [[ "${FALLBACK}" == "true" ]] ; then
+# Check if `tput` is installed and do a fallback if not
+# installed
+hash tput
+# Check exit code. If not 0, then `tput` is not installed
+if [[ "${?}" -ne 0 ]] ; then
+	# Export to allow subshell access
+	export FALLBACK="true"
+fi
+
+# If 'tput' wasn't found, fallback to static
+# display
+if [[ "${FALLBACK}" == "true" ]] ; then
+	# Information relating to currently running tasks
+	#######################
+	#  FALLBACK PRINTING  #
+	#######################
+	function print_compressing_flac {
 		printf "\r${NORMAL}%74s${BOLD_BLUE}%s${NORMAL}%s${YELLOW}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}\r%s${NORMAL}${YELLOW}%s${NORMAL}%s" \
 		"" "[" " " "Compressing FLAC" " " "]" "     " "*" " $(basename "${i}" | awk '{print substr($0,0,65)}')"
-	else
+	}
+	function print_test_replaygain {
+		printf "\r${NORMAL}%74s${BOLD_BLUE}%s${NORMAL}%s${YELLOW}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}\r%s${NORMAL}${YELLOW}%s${NORMAL}%s" \
+		"" "[" " " "Testing ReplayGain" " " "]" "     " "*" " $(basename "${i}" | awk '{print substr($0,0,65)}')"
+	}
+	function print_add_replaygain {
+		printf "\r${NORMAL}%74s${BOLD_BLUE}%s${NORMAL}%s${YELLOW}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}\r%s${NORMAL}${YELLOW}%s${NORMAL}%s${CYAN}%s${NORMAL}" \
+		"" "[" " " "Adding ReplayGain" " " "]" "     " "*" " $(basename "${FLAC_LOCATION}" | awk '{print substr($0,0,65)}') " "[Directory]"
+	}
+	function print_testing_flac {
+		printf "\r${NORMAL}%74s${BOLD_BLUE}%s${NORMAL}%s${YELLOW}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}\r%s${NORMAL}${YELLOW}%s${NORMAL}%s" \
+		"" "[" " " "Testing FLAC" " " "]" "     " "*" " $(basename "${i}" | awk '{print substr($0,0,65)}')"
+	}
+	function print_failed_flac {
+		printf "\r${NORMAL}%74s${BOLD_BLUE}%s${NORMAL}%s${BOLD_RED}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}%s\r%s${YELLOW}%s${NORMAL}%s\n" \
+		"" "[" " " "FAILED" " " "]" "          " "     " "*" " $(basename "${i}" | awk '{print substr($0,0,65)}')"
+	}
+	function print_failed_replaygain {
+		printf "\r${NORMAL}%74s${BOLD_BLUE}%s${NORMAL}%s${BOLD_RED}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}\r%s${YELLOW}%s${NORMAL}%s${CYAN}%s${NORMAL}\n" \
+		"" "[" " " "FAILED" " " "]" "          " "*" " $(basename "${FLAC_LOCATION}" | awk '{print substr($0,0,65)}') " "[Directory]"
+	}
+	function print_checking_md5 {
+		printf "\r${NORMAL}%74s${BOLD_BLUE}%s${NORMAL}%s${YELLOW}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}\r%s${NORMAL}${YELLOW}%s${NORMAL}%s" \
+		"" "[" " " "Checking MD5" " " "]" "     " "*" " $(basename "${i}" | awk '{print substr($0,0,65)}')"
+	}
+	function print_ok_flac {
+		printf "\r${NORMAL}%74s${BOLD_BLUE}%s${NORMAL}%s${BOLD_GREEN}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}%s\r%s${YELLOW}%s${NORMAL}%s\n" \
+		"" "[" " " "OK" " " "]" "              " "     " "*" " $(basename "${i}" | awk '{print substr($0,0,65)}')"
+	}
+	function print_ok_replaygain {
+		printf "\r${NORMAL}%74s${BOLD_BLUE}%s${NORMAL}%s${BOLD_GREEN}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}\r%s${YELLOW}%s${NORMAL}%s${CYAN}%s${NORMAL}\n" \
+		"" "[" " " "OK" " " "]" "              " "*" " $(basename "${FLAC_LOCATION}" | awk '{print substr($0,0,65)}') " "[Directory]"
+	}
+	function print_aucdtect_flac {
+		printf "\r${NORMAL}%74s${BOLD_BLUE}%s${NORMAL}%s${YELLOW}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}\r%s${NORMAL}${YELLOW}%s${NORMAL}%s" \
+		"" "[" " " "Validating FLAC" " " "]" "     " "*" " $(basename "${i}" | awk '{print substr($0,0,65)}')"
+	}
+	function print_aucdtect_issue {
+		# If CREATE_SPECTROGRAM is true, add spacing after [ ISSUE ]
+		# so the last 4 characters are hidden from [ Creating Spectrogram ]
+		if [[ "${CREATE_SPECTROGRAM}" == "true" ]] ; then
+			# Add spacing (4 characters)
+			printf "\r${NORMAL}%74s${BOLD_BLUE}%s${NORMAL}%s${YELLOW}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}%s\r%s${YELLOW}%s${NORMAL}%s\n" \
+			"" "[" " " "ISSUE" " " "]" "               " "     " "*" " $(basename "${i}" | awk '{print substr($0,0,65)}')"
+		else
+			# Don't add spacing
+			printf "\r${NORMAL}%74s${BOLD_BLUE}%s${NORMAL}%s${YELLOW}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}%s\r%s${YELLOW}%s${NORMAL}%s\n" \
+			"" "[" " " "ISSUE" " " "]" "           " "     " "*" " $(basename "${i}" | awk '{print substr($0,0,65)}')"
+		fi
+	}
+	function print_aucdtect_spectrogram {
+		printf "\r${NORMAL}%74s${BOLD_BLUE}%s${NORMAL}%s${YELLOW}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}\r%s${NORMAL}${YELLOW}%s${NORMAL}%s" \
+		"" "[" " " "Creating Spectrogram" " " "]" "     " "*" " $(basename "${i}" | awk '{print substr($0,0,65)}')"
+	}
+	function print_aucdtect_skip {
+		printf "\r${NORMAL}%74s${BOLD_BLUE}%s${NORMAL}%s${YELLOW}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}%s\r%s${YELLOW}%s${NORMAL}%s\n" \
+		"" "[" " " "SKIPPED" " " "]" "         " "     " "*" " $(basename "$i" | awk '{print substr($0,0,65)}')"
+	}
+	function print_done_flac {
+		printf "\r${NORMAL}%74s${BOLD_BLUE}%s${NORMAL}%s${BOLD_GREEN}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}%s\r%s${YELLOW}%s${NORMAL}%s\n" \
+		"" "[" " " "DONE" " " "]" "            " "     " "*" " $(basename "${i}" | awk '{print substr($0,0,65)}')"
+	}
+	function print_level_same_compression {
+		printf "\r${NORMAL}%74s${BOLD_BLUE}%s${NORMAL}%s${YELLOW}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}\r%s${YELLOW}%s${NORMAL}%s\n" \
+		"" "[" " " "Already At Level ${COMPRESSION_LEVEL}" " " "]" "     " "*" " $(basename "${i}" | awk '{print substr($0,0,65)}')"
+	}
+	function print_analyzing_tags {
+		printf "\r${NORMAL}%74s${BOLD_BLUE}%s${NORMAL}%s${YELLOW}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}\r%s${NORMAL}${YELLOW}%s${NORMAL}%s" \
+		"" "[" " " "Analyzing Tags" " " "]" "     " "*" " $(basename "${i}" | awk '{print substr($0,0,65)}')"
+	}
+	function print_setting_tags {
+		printf "\r${NORMAL}%74s${BOLD_BLUE}%s${NORMAL}%s${YELLOW}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}\r%s${NORMAL}${YELLOW}%s${NORMAL}%s" \
+		"" "[" " " "Setting Tags" " " "]" "     " "*" " $(basename "${i}" | awk '{print substr($0,0,65)}')"
+	}
+	function print_prune_flac {
+		printf "\r${NORMAL}%74s${BOLD_BLUE}%s${NORMAL}%s${YELLOW}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}\r%s${NORMAL}${YELLOW}%s${NORMAL}%s" \
+		"" "[" " " "Pruning Metadata" " " "]" "     " "*" " $(basename "${i}" | awk '{print substr($0,0,65)}')"
+	}
+else
+	######################
+	#  DYNAMIC PRINTING  #
+	######################
+	function print_compressing_flac {
 		COLUMNS="$(tput cols)"
 
 		# This is the number of $COLUMNS minus the indent (7) minus length of the printed
@@ -254,14 +350,8 @@ function print_compressing_flac {
 
 		printf "\r${NORMAL}%$((${COLUMNS} - 20))s${BOLD_BLUE}%s${NORMAL}%s${YELLOW}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}\r%s${NORMAL}${YELLOW}%s${NORMAL}%s" \
 		"" "[" " " "Compressing FLAC" " " "]" "     " "*" " ${FILENAME}"
-	fi
-}
-
-function print_test_replaygain {
-	if [[ "${FALLBACK}" == "true" ]] ; then
-		printf "\r${NORMAL}%74s${BOLD_BLUE}%s${NORMAL}%s${YELLOW}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}\r%s${NORMAL}${YELLOW}%s${NORMAL}%s" \
-		"" "[" " " "Testing ReplayGain" " " "]" "     " "*" " $(basename "${i}" | awk '{print substr($0,0,65)}')"
-	else
+	}
+	function print_test_replaygain {
 		COLUMNS="$(tput cols)"
 
 		# This is the number of $COLUMNS minus the indent (7) minus length of the printed
@@ -279,14 +369,8 @@ function print_test_replaygain {
 
 		printf "\r${NORMAL}%$((${COLUMNS} - 22))s${BOLD_BLUE}%s${NORMAL}%s${YELLOW}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}\r%s${NORMAL}${YELLOW}%s${NORMAL}%s" \
 		"" "[" " " "Testing ReplayGain" " " "]" "     " "*" " ${FILENAME}"
-	fi
-}
-
-function print_add_replaygain {
-	if [[ "${FALLBACK}" == "true" ]] ; then
-		printf "\r${NORMAL}%74s${BOLD_BLUE}%s${NORMAL}%s${YELLOW}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}\r%s${NORMAL}${YELLOW}%s${NORMAL}%s${CYAN}%s${NORMAL}" \
-		"" "[" " " "Adding ReplayGain" " " "]" "     " "*" " $(basename "${FLAC_LOCATION}" | awk '{print substr($0,0,65)}') " "[Directory]"
-	else
+	}
+	function print_add_replaygain {
 		COLUMNS="$(tput cols)"
 
 		# This is the number of $COLUMNS minus the indent (7) minus length of the printed
@@ -304,14 +388,8 @@ function print_add_replaygain {
 
 		printf "\r${NORMAL}%$((${COLUMNS} - 21))s${BOLD_BLUE}%s${NORMAL}%s${YELLOW}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}\r%s${NORMAL}${YELLOW}%s${NORMAL}%s${CYAN}%s${NORMAL}" \
 		"" "[" " " "Adding ReplayGain" " " "]" "     " "*" " ${FILENAME} " "[Directory]"
-	fi
-}
-
-function print_testing_flac {
-	if [[ "${FALLBACK}" == "true" ]] ; then
-		printf "\r${NORMAL}%74s${BOLD_BLUE}%s${NORMAL}%s${YELLOW}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}\r%s${NORMAL}${YELLOW}%s${NORMAL}%s" \
-		"" "[" " " "Testing FLAC" " " "]" "     " "*" " $(basename "${i}" | awk '{print substr($0,0,65)}')"
-	else
+	}
+	function print_testing_flac {
 		COLUMNS="$(tput cols)"
 
 		# This is the number of $COLUMNS minus the indent (7) minus length of the printed
@@ -329,14 +407,8 @@ function print_testing_flac {
 		
 		printf "\r${NORMAL}%$((${COLUMNS} - 16))s${BOLD_BLUE}%s${NORMAL}%s${YELLOW}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}\r%s${NORMAL}${YELLOW}%s${NORMAL}%s" \
 		"" "[" " " "Testing FLAC" " " "]" "     " "*" " ${FILENAME}"
-	fi
-}
-
-function print_failed_flac {
-	if [[ "${FALLBACK}" == "true" ]] ; then
-		printf "\r${NORMAL}%74s${BOLD_BLUE}%s${NORMAL}%s${BOLD_RED}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}%s\r%s${YELLOW}%s${NORMAL}%s\n" \
-		"" "[" " " "FAILED" " " "]" "          " "     " "*" " $(basename "${i}" | awk '{print substr($0,0,65)}')"
-	else
+	}
+	function print_failed_flac {
 		COLUMNS="$(tput cols)"
 
 		# This is the number of $COLUMNS minus the indent (7) minus length of the printed
@@ -353,14 +425,8 @@ function print_failed_flac {
 
 		printf "\r${NORMAL}%$((${COLUMNS} - 10))s${BOLD_BLUE}%s${NORMAL}%s${BOLD_RED}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}\r%s${YELLOW}%s${NORMAL}%s\n" \
 		"" "[" " " "FAILED" " " "]" "     " "*" " ${FILENAME}"
-	fi
-}
-
-function print_failed_replaygain {
-	if [[ "${FALLBACK}" == "true" ]] ; then
-		printf "\r${NORMAL}%74s${BOLD_BLUE}%s${NORMAL}%s${BOLD_RED}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}\r%s${YELLOW}%s${NORMAL}%s${CYAN}%s${NORMAL}\n" \
-		"" "[" " " "FAILED" " " "]" "          " "*" " $(basename "${FLAC_LOCATION}" | awk '{print substr($0,0,65)}') " "[Directory]"
-	else
+	}
+	function print_failed_replaygain {
 		COLUMNS="$(tput cols)"
 
 		# This is the number of $COLUMNS minus the indent (7) minus length of the printed
@@ -378,14 +444,8 @@ function print_failed_replaygain {
 
 		printf "\r${NORMAL}%$((${COLUMNS} - 10))s${BOLD_BLUE}%s${NORMAL}%s${BOLD_RED}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}\r%s${NORMAL}${YELLOW}%s${NORMAL}%s${CYAN}%s${NORMAL}\n" \
 		"" "[" " " "FAILED" " " "]" "     " "*" " ${FILENAME} " "[Directory]"
-	fi
-}
-
-function print_checking_md5 {
-	if [[ "${FALLBACK}" == "true" ]] ; then
-		printf "\r${NORMAL}%74s${BOLD_BLUE}%s${NORMAL}%s${YELLOW}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}\r%s${NORMAL}${YELLOW}%s${NORMAL}%s" \
-		"" "[" " " "Checking MD5" " " "]" "     " "*" " $(basename "${i}" | awk '{print substr($0,0,65)}')"
-	else
+	}
+	function print_checking_md5 {
 		COLUMNS="$(tput cols)"
 
 		# This is the number of $COLUMNS minus the indent (7) minus length of the printed
@@ -403,14 +463,8 @@ function print_checking_md5 {
 
 		printf "\r${NORMAL}%$((${COLUMNS} - 16))s${BOLD_BLUE}%s${NORMAL}%s${YELLOW}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}\r%s${NORMAL}${YELLOW}%s${NORMAL}%s" \
 		"" "[" " " "Checking MD5" " " "]" "     " "*" " ${FILENAME}"
-	fi
-}
-
-function print_ok_flac {
-	if [[ "${FALLBACK}" == "true" ]] ; then
-		printf "\r${NORMAL}%74s${BOLD_BLUE}%s${NORMAL}%s${BOLD_GREEN}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}%s\r%s${YELLOW}%s${NORMAL}%s\n" \
-		"" "[" " " "OK" " " "]" "              " "     " "*" " $(basename "${i}" | awk '{print substr($0,0,65)}')"
-	else
+	}
+	function print_ok_flac {
 		COLUMNS="$(tput cols)"
 
 		# This is the number of $COLUMNS minus the indent (7) minus length of the printed
@@ -427,14 +481,8 @@ function print_ok_flac {
 
 		printf "\r${NORMAL}%$((${COLUMNS} - 6))s${BOLD_BLUE}%s${NORMAL}%s${BOLD_GREEN}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}\r%s${YELLOW}%s${NORMAL}%s\n" \
 		"" "[" " " "OK" " " "]" "     " "*" " ${FILENAME}"
-	fi
-}
-
-function print_ok_replaygain {
-	if [[ "${FALLBACK}" == "true" ]] ; then
-		printf "\r${NORMAL}%74s${BOLD_BLUE}%s${NORMAL}%s${BOLD_GREEN}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}\r%s${YELLOW}%s${NORMAL}%s${CYAN}%s${NORMAL}\n" \
-		"" "[" " " "OK" " " "]" "              " "*" " $(basename "${FLAC_LOCATION}" | awk '{print substr($0,0,65)}') " "[Directory]"
-	else
+	}
+	function print_ok_replaygain {
 		COLUMNS="$(tput cols)"
 
 		# This is the number of $COLUMNS minus the indent (7) minus length of the printed
@@ -452,14 +500,8 @@ function print_ok_replaygain {
 
 		printf "\r${NORMAL}%$((${COLUMNS} - 6))s${BOLD_BLUE}%s${NORMAL}%s${BOLD_GREEN}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}\r%s${NORMAL}${YELLOW}%s${NORMAL}%s${CYAN}%s${NORMAL}\n" \
 		"" "[" " " "OK" " " "]" "     " "*" " ${FILENAME} " "[Directory]"
-	fi
-}
-
-function print_aucdtect_flac {
-	if [[ "${FALLBACK}" == "true" ]] ; then
-		printf "\r${NORMAL}%74s${BOLD_BLUE}%s${NORMAL}%s${YELLOW}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}\r%s${NORMAL}${YELLOW}%s${NORMAL}%s" \
-		"" "[" " " "Validating FLAC" " " "]" "     " "*" " $(basename "${i}" | awk '{print substr($0,0,65)}')"
-	else
+	}
+	function print_aucdtect_flac {
 		COLUMNS="$(tput cols)"
 
 		# This is the number of $COLUMNS minus the indent (7) minus length of the printed
@@ -477,23 +519,8 @@ function print_aucdtect_flac {
 
 		printf "\r${NORMAL}%$((${COLUMNS} - 19))s${BOLD_BLUE}%s${NORMAL}%s${YELLOW}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}\r%s${NORMAL}${YELLOW}%s${NORMAL}%s" \
 		"" "[" " " "Validating FLAC" " " "]" "     " "*" " ${FILENAME}"
-	fi
-}
-
-function print_aucdtect_issue {
-	if [[ "${FALLBACK}" == "true" ]] ; then
-		# If CREATE_SPECTROGRAM is true, add spacing after [ ISSUE ]
-		# so the last 4 characters are hidden from [ Creating Spectrogram ]
-		if [[ "${CREATE_SPECTROGRAM}" == "true" ]] ; then
-			# Add spacing (4 characters)
-			printf "\r${NORMAL}%74s${BOLD_BLUE}%s${NORMAL}%s${YELLOW}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}%s\r%s${YELLOW}%s${NORMAL}%s\n" \
-			"" "[" " " "ISSUE" " " "]" "               " "     " "*" " $(basename "${i}" | awk '{print substr($0,0,65)}')"
-		else
-			# Don't add spacing
-			printf "\r${NORMAL}%74s${BOLD_BLUE}%s${NORMAL}%s${YELLOW}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}%s\r%s${YELLOW}%s${NORMAL}%s\n" \
-			"" "[" " " "ISSUE" " " "]" "           " "     " "*" " $(basename "${i}" | awk '{print substr($0,0,65)}')"
-		fi
-	else
+	}
+	function print_aucdtect_issue {
 		COLUMNS="$(tput cols)"
 
 		# This is the number of $COLUMNS minus the indent (7) minus length of the printed
@@ -510,14 +537,8 @@ function print_aucdtect_issue {
 
 		printf "\r${NORMAL}%$((${COLUMNS} - 9))s${BOLD_BLUE}%s${NORMAL}%s${YELLOW}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}\r%s${YELLOW}%s${NORMAL}%s\n" \
 		"" "[" " " "ISSUE" " " "]" "     " "*" " ${FILENAME}"
-	fi
-}
-
-function print_aucdtect_spectrogram {
-	if [[ "${FALLBACK}" == "true" ]] ; then
-		printf "\r${NORMAL}%74s${BOLD_BLUE}%s${NORMAL}%s${YELLOW}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}\r%s${NORMAL}${YELLOW}%s${NORMAL}%s" \
-		"" "[" " " "Creating Spectrogram" " " "]" "     " "*" " $(basename "${i}" | awk '{print substr($0,0,65)}')"
-	else
+	}
+	function print_aucdtect_spectrogram {
 		COLUMNS="$(tput cols)"
 
 		# This is the number of $COLUMNS minus the indent (7) minus length of the printed
@@ -535,14 +556,8 @@ function print_aucdtect_spectrogram {
 
 		printf "\r${NORMAL}%$((${COLUMNS} - 24))s${BOLD_BLUE}%s${NORMAL}%s${YELLOW}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}\r%s${NORMAL}${YELLOW}%s${NORMAL}%s" \
 		"" "[" " " "Creating Spectrogram" " " "]" "     " "*" " ${FILENAME}"
-	fi
-}
-
-function print_aucdtect_skip {
-	if [[ "${FALLBACK}" == "true" ]] ; then
-		printf "\r${NORMAL}%74s${BOLD_BLUE}%s${NORMAL}%s${YELLOW}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}%s\r%s${YELLOW}%s${NORMAL}%s\n" \
-		"" "[" " " "SKIPPED" " " "]" "         " "     " "*" " $(basename "$i" | awk '{print substr($0,0,65)}')"
-	else
+	}
+	function print_aucdtect_skip {
 		COLUMNS="$(tput cols)"
 
 		# This is the number of $COLUMNS minus the indent (7) minus length of the printed
@@ -559,14 +574,8 @@ function print_aucdtect_skip {
 
 		printf "\r${NORMAL}%$((${COLUMNS} - 11))s${BOLD_BLUE}%s${NORMAL}%s${YELLOW}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}\r%s${YELLOW}%s${NORMAL}%s\n" \
 		"" "[" " " "SKIPPED" " " "]" "     " "*" " ${FILENAME}"
-	fi
-}
-
-function print_done_flac {
-	if [[ "${FALLBACK}" == "true" ]] ; then
-		printf "\r${NORMAL}%74s${BOLD_BLUE}%s${NORMAL}%s${BOLD_GREEN}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}%s\r%s${YELLOW}%s${NORMAL}%s\n" \
-		"" "[" " " "DONE" " " "]" "            " "     " "*" " $(basename "${i}" | awk '{print substr($0,0,65)}')"
-	else
+	}
+	function print_done_flac {
 		COLUMNS="$(tput cols)"
 
 		# This is the number of $COLUMNS minus the indent (7) minus length of the printed
@@ -583,14 +592,8 @@ function print_done_flac {
 
 		printf "\r${NORMAL}%$((${COLUMNS} - 8))s${BOLD_BLUE}%s${NORMAL}%s${BOLD_GREEN}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}\r%s${YELLOW}%s${NORMAL}%s\n" \
 		"" "[" " " "DONE" " " "]" "     " "*" " ${FILENAME}"
-	fi
-}
-
-function print_level_same_compression {
-	if [[ "${FALLBACK}" == "true" ]] ; then
-		printf "\r${NORMAL}%74s${BOLD_BLUE}%s${NORMAL}%s${YELLOW}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}\r%s${YELLOW}%s${NORMAL}%s\n" \
-		"" "[" " " "Already At Level ${COMPRESSION_LEVEL}" " " "]" "     " "*" " $(basename "${i}" | awk '{print substr($0,0,65)}')"
-	else
+	}
+	function print_level_same_compression {
 		COLUMNS="$(tput cols)"
 
 		# This is the number of $COLUMNS minus the indent (7) minus length of the printed
@@ -608,14 +611,8 @@ function print_level_same_compression {
 
 		printf "\r${NORMAL}%$((${COLUMNS} - 22))s${BOLD_BLUE}%s${NORMAL}%s${YELLOW}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}\r%s${YELLOW}%s${NORMAL}%s\n" \
 		"" "[" " " "Already At Level ${COMPRESSION_LEVEL}" " " "]" "     " "*" " ${FILENAME}"
-	fi
-}
-
-function print_analyzing_tags {
-	if [[ "${FALLBACK}" == "true" ]] ; then
-		printf "\r${NORMAL}%74s${BOLD_BLUE}%s${NORMAL}%s${YELLOW}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}\r%s${NORMAL}${YELLOW}%s${NORMAL}%s" \
-		"" "[" " " "Analyzing Tags" " " "]" "     " "*" " $(basename "${i}" | awk '{print substr($0,0,65)}')"
-	else
+	}
+	function print_analyzing_tags {
 		COLUMNS="$(tput cols)"
 
 		# This is the number of $COLUMNS minus the indent (7) minus length of the printed
@@ -633,14 +630,8 @@ function print_analyzing_tags {
 
 		printf "\r${NORMAL}%$((${COLUMNS} - 18))s${BOLD_BLUE}%s${NORMAL}%s${YELLOW}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}\r%s${NORMAL}${YELLOW}%s${NORMAL}%s" \
 		"" "[" " " "Analyzing Tags" " " "]" "     " "*" " ${FILENAME}"
-	fi
-}
-
-function print_setting_tags {
-	if [[ "${FALLBACK}" == "true" ]] ; then
-		printf "\r${NORMAL}%74s${BOLD_BLUE}%s${NORMAL}%s${YELLOW}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}\r%s${NORMAL}${YELLOW}%s${NORMAL}%s" \
-		"" "[" " " "Setting Tags" " " "]" "     " "*" " $(basename "${i}" | awk '{print substr($0,0,65)}')"
-	else
+	}
+	function print_setting_tags {
 		COLUMNS="$(tput cols)"
 
 		# This is the number of $COLUMNS minus the indent (7) minus length of the printed
@@ -658,14 +649,8 @@ function print_setting_tags {
 
 		printf "\r${NORMAL}%$((${COLUMNS} - 16))s${BOLD_BLUE}%s${NORMAL}%s${YELLOW}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}\r%s${NORMAL}${YELLOW}%s${NORMAL}%s" \
 		"" "[" " " "Setting Tags" " " "]" "     " "*" " ${FILENAME}"
-	fi
-}
-
-function print_prune_flac {
-	if [[ "${FALLBACK}" == "true" ]] ; then
-		printf "\r${NORMAL}%74s${BOLD_BLUE}%s${NORMAL}%s${YELLOW}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}\r%s${NORMAL}${YELLOW}%s${NORMAL}%s" \
-		"" "[" " " "Pruning Metadata" " " "]" "     " "*" " $(basename "${i}" | awk '{print substr($0,0,65)}')"
-	else
+	}
+	function print_prune_flac {
 		COLUMNS="$(tput cols)"
 
 		# This is the number of $COLUMNS minus the indent (7) minus length of the printed
@@ -683,8 +668,8 @@ function print_prune_flac {
 
 		printf "\r${NORMAL}%$((${COLUMNS} - 20))s${BOLD_BLUE}%s${NORMAL}%s${YELLOW}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}\r%s${NORMAL}${YELLOW}%s${NORMAL}%s" \
 		"" "[" " " "Pruning Metadata" " " "]" "     " "*" " ${FILENAME}"
-	fi
-}
+	}
+fi
 
 # Export all the above functions for subshell access
 export -f print_compressing_flac
@@ -2202,15 +2187,6 @@ FIND_FLACS="$(find "${DIRECTORY}" -name "*.[Ff][Ll][Aa][Cc]" -print)"
 if [[ -z "${FIND_FLACS}" ]] ; then
 	no_flacs
 	exit 1
-fi
-
-# Check if `tput` is installed and do a fallback if not
-# installed
-hash tput
-# Check exit code. If 1, then `tput` is not installed
-if [[ "${?}" -eq 1 ]] ; then
-	# Export to allow subshell access
-	export FALLBACK="true"
 fi
 
 ###########################
