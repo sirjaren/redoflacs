@@ -249,43 +249,43 @@ if [[ "${FALLBACK}" == "true" ]] ; then
 	#######################
 	function print_compressing_flac {
 		printf "\r${NORMAL}%74s${BOLD_BLUE}%s${NORMAL}%s${YELLOW}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}\r%s${NORMAL}${YELLOW}%s${NORMAL}%s" \
-		"" "[" " " "Compressing FLAC" " " "]" "     " "*" " $(basename "${i}" | awk '{print substr($0,0,65)}')"
+		"" "[" " " "Compressing FLAC" " " "]" "     " "*" " $(echo "${i##*/}" | awk '{print substr($0,0,65)}')"
 	}
 	function print_test_replaygain {
 		printf "\r${NORMAL}%74s${BOLD_BLUE}%s${NORMAL}%s${YELLOW}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}\r%s${NORMAL}${YELLOW}%s${NORMAL}%s" \
-		"" "[" " " "Testing ReplayGain" " " "]" "     " "*" " $(basename "${i}" | awk '{print substr($0,0,65)}')"
+		"" "[" " " "Testing ReplayGain" " " "]" "     " "*" " $(echo "${i##*/}" | awk '{print substr($0,0,65)}')"
 	}
 	function print_add_replaygain {
 		printf "\r${NORMAL}%74s${BOLD_BLUE}%s${NORMAL}%s${YELLOW}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}\r%s${NORMAL}${YELLOW}%s${NORMAL}%s${CYAN}%s${NORMAL}" \
-		"" "[" " " "Adding ReplayGain" " " "]" "     " "*" " $(basename "${FLAC_LOCATION}" | awk '{print substr($0,0,65)}') " "[Directory]"
+		"" "[" " " "Adding ReplayGain" " " "]" "     " "*" " $(echo "${FLAC_LOCATION##*/}" | awk '{print substr($0,0,65)}') " "[Directory]"
 	}
 	function print_testing_flac {
 		printf "\r${NORMAL}%74s${BOLD_BLUE}%s${NORMAL}%s${YELLOW}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}\r%s${NORMAL}${YELLOW}%s${NORMAL}%s" \
-		"" "[" " " "Testing FLAC" " " "]" "     " "*" " $(basename "${i}" | awk '{print substr($0,0,65)}')"
+		"" "[" " " "Testing FLAC" " " "]" "     " "*" " $(echo "${i##*/}" | awk '{print substr($0,0,65)}')"
 	}
 	function print_failed_flac {
 		printf "\r${NORMAL}%74s${BOLD_BLUE}%s${NORMAL}%s${BOLD_RED}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}%s\r%s${YELLOW}%s${NORMAL}%s\n" \
-		"" "[" " " "FAILED" " " "]" "          " "     " "*" " $(basename "${i}" | awk '{print substr($0,0,65)}')"
+		"" "[" " " "FAILED" " " "]" "          " "     " "*" " $(echo "${i##*/}" | awk '{print substr($0,0,65)}')"
 	}
 	function print_failed_replaygain {
 		printf "\r${NORMAL}%74s${BOLD_BLUE}%s${NORMAL}%s${BOLD_RED}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}\r%s${YELLOW}%s${NORMAL}%s${CYAN}%s${NORMAL}\n" \
-		"" "[" " " "FAILED" " " "]" "          " "*" " $(basename "${FLAC_LOCATION}" | awk '{print substr($0,0,65)}') " "[Directory]"
+		"" "[" " " "FAILED" " " "]" "          " "*" " $(echo "${FLAC_LOCATION##*/}" | awk '{print substr($0,0,65)}') " "[Directory]"
 	}
 	function print_checking_md5 {
 		printf "\r${NORMAL}%74s${BOLD_BLUE}%s${NORMAL}%s${YELLOW}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}\r%s${NORMAL}${YELLOW}%s${NORMAL}%s" \
-		"" "[" " " "Checking MD5" " " "]" "     " "*" " $(basename "${i}" | awk '{print substr($0,0,65)}')"
+		"" "[" " " "Checking MD5" " " "]" "     " "*" " $(echo "${i##*/}" | awk '{print substr($0,0,65)}')"
 	}
 	function print_ok_flac {
 		printf "\r${NORMAL}%74s${BOLD_BLUE}%s${NORMAL}%s${BOLD_GREEN}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}%s\r%s${YELLOW}%s${NORMAL}%s\n" \
-		"" "[" " " "OK" " " "]" "              " "     " "*" " $(basename "${i}" | awk '{print substr($0,0,65)}')"
+		"" "[" " " "OK" " " "]" "              " "     " "*" " $(echo "${i##*/}" | awk '{print substr($0,0,65)}')"
 	}
 	function print_ok_replaygain {
 		printf "\r${NORMAL}%74s${BOLD_BLUE}%s${NORMAL}%s${BOLD_GREEN}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}\r%s${YELLOW}%s${NORMAL}%s${CYAN}%s${NORMAL}\n" \
-		"" "[" " " "OK" " " "]" "              " "*" " $(basename "${FLAC_LOCATION}" | awk '{print substr($0,0,65)}') " "[Directory]"
+		"" "[" " " "OK" " " "]" "              " "*" " $(echo "${FLAC_LOCATION##*/}" | awk '{print substr($0,0,65)}') " "[Directory]"
 	}
 	function print_aucdtect_flac {
 		printf "\r${NORMAL}%74s${BOLD_BLUE}%s${NORMAL}%s${YELLOW}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}\r%s${NORMAL}${YELLOW}%s${NORMAL}%s" \
-		"" "[" " " "Validating FLAC" " " "]" "     " "*" " $(basename "${i}" | awk '{print substr($0,0,65)}')"
+		"" "[" " " "Validating FLAC" " " "]" "     " "*" " $(echo "${i##*/}" | awk '{print substr($0,0,65)}')"
 	}
 	function print_aucdtect_issue {
 		# If CREATE_SPECTROGRAM is true, add spacing after [ ISSUE ]
@@ -293,40 +293,40 @@ if [[ "${FALLBACK}" == "true" ]] ; then
 		if [[ "${CREATE_SPECTROGRAM}" == "true" ]] ; then
 			# Add spacing (4 characters)
 			printf "\r${NORMAL}%74s${BOLD_BLUE}%s${NORMAL}%s${YELLOW}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}%s\r%s${YELLOW}%s${NORMAL}%s\n" \
-			"" "[" " " "ISSUE" " " "]" "               " "     " "*" " $(basename "${i}" | awk '{print substr($0,0,65)}')"
+			"" "[" " " "ISSUE" " " "]" "               " "     " "*" " $(echo "${i##*/}" | awk '{print substr($0,0,65)}')"
 		else
 			# Don't add spacing
 			printf "\r${NORMAL}%74s${BOLD_BLUE}%s${NORMAL}%s${YELLOW}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}%s\r%s${YELLOW}%s${NORMAL}%s\n" \
-			"" "[" " " "ISSUE" " " "]" "           " "     " "*" " $(basename "${i}" | awk '{print substr($0,0,65)}')"
+			"" "[" " " "ISSUE" " " "]" "           " "     " "*" " $(echo "${i##*/}" | awk '{print substr($0,0,65)}')"
 		fi
 	}
 	function print_aucdtect_spectrogram {
 		printf "\r${NORMAL}%74s${BOLD_BLUE}%s${NORMAL}%s${YELLOW}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}\r%s${NORMAL}${YELLOW}%s${NORMAL}%s" \
-		"" "[" " " "Creating Spectrogram" " " "]" "     " "*" " $(basename "${i}" | awk '{print substr($0,0,65)}')"
+		"" "[" " " "Creating Spectrogram" " " "]" "     " "*" " $(echo "${i##*/}" | awk '{print substr($0,0,65)}')"
 	}
 	function print_aucdtect_skip {
 		printf "\r${NORMAL}%74s${BOLD_BLUE}%s${NORMAL}%s${YELLOW}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}%s\r%s${YELLOW}%s${NORMAL}%s\n" \
-		"" "[" " " "SKIPPED" " " "]" "         " "     " "*" " $(basename "$i" | awk '{print substr($0,0,65)}')"
+		"" "[" " " "SKIPPED" " " "]" "         " "     " "*" " $(echo "${i##*/}" | awk '{print substr($0,0,65)}')"
 	}
 	function print_done_flac {
 		printf "\r${NORMAL}%74s${BOLD_BLUE}%s${NORMAL}%s${BOLD_GREEN}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}%s\r%s${YELLOW}%s${NORMAL}%s\n" \
-		"" "[" " " "DONE" " " "]" "            " "     " "*" " $(basename "${i}" | awk '{print substr($0,0,65)}')"
+		"" "[" " " "DONE" " " "]" "            " "     " "*" " $(echo "${i##*/}" | awk '{print substr($0,0,65)}')"
 	}
 	function print_level_same_compression {
 		printf "\r${NORMAL}%74s${BOLD_BLUE}%s${NORMAL}%s${YELLOW}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}\r%s${YELLOW}%s${NORMAL}%s\n" \
-		"" "[" " " "Already At Level ${COMPRESSION_LEVEL}" " " "]" "     " "*" " $(basename "${i}" | awk '{print substr($0,0,65)}')"
+		"" "[" " " "Already At Level ${COMPRESSION_LEVEL}" " " "]" "     " "*" " $(echo "${i##*/}" | awk '{print substr($0,0,65)}')"
 	}
 	function print_analyzing_tags {
 		printf "\r${NORMAL}%74s${BOLD_BLUE}%s${NORMAL}%s${YELLOW}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}\r%s${NORMAL}${YELLOW}%s${NORMAL}%s" \
-		"" "[" " " "Analyzing Tags" " " "]" "     " "*" " $(basename "${i}" | awk '{print substr($0,0,65)}')"
+		"" "[" " " "Analyzing Tags" " " "]" "     " "*" " $(echo "${i##*/}" | awk '{print substr($0,0,65)}')"
 	}
 	function print_setting_tags {
 		printf "\r${NORMAL}%74s${BOLD_BLUE}%s${NORMAL}%s${YELLOW}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}\r%s${NORMAL}${YELLOW}%s${NORMAL}%s" \
-		"" "[" " " "Setting Tags" " " "]" "     " "*" " $(basename "${i}" | awk '{print substr($0,0,65)}')"
+		"" "[" " " "Setting Tags" " " "]" "     " "*" " $(echo "${i##*/}" | awk '{print substr($0,0,65)}')"
 	}
 	function print_prune_flac {
 		printf "\r${NORMAL}%74s${BOLD_BLUE}%s${NORMAL}%s${YELLOW}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}\r%s${NORMAL}${YELLOW}%s${NORMAL}%s" \
-		"" "[" " " "Pruning Metadata" " " "]" "     " "*" " $(basename "${i}" | awk '{print substr($0,0,65)}')"
+		"" "[" " " "Pruning Metadata" " " "]" "     " "*" " $(echo "${i##*/}" | awk '{print substr($0,0,65)}')"
 	}
 else
 	######################
@@ -340,12 +340,12 @@ else
 		# ellipsis (…) and cursor)
 		MAX_FILENAME_LENGTH="$((${COLUMNS} - 30))"
 
-		FILENAME_LENGTH="$(basename "${i}" | wc -m)"
+		FILENAME_LENGTH="$(echo "${i##*/}" | wc -m)"
 
 		if [[ "${FILENAME_LENGTH}" -gt "${MAX_FILENAME_LENGTH}" ]] ; then
-			FILENAME="$(echo "$(basename "${i}" | awk '{print substr($0,0,"'"${MAX_FILENAME_LENGTH}"'")}')…" )"
+			FILENAME="$(echo "$(echo "${i##*/}" | awk '{print substr($0,0,"'"${MAX_FILENAME_LENGTH}"'")}')…" )"
 		else
-			FILENAME="$(basename "${i}")"
+			FILENAME="$(echo "${i##*/}")"
 		fi
 
 		printf "\r${NORMAL}%$((${COLUMNS} - 20))s${BOLD_BLUE}%s${NORMAL}%s${YELLOW}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}\r%s${NORMAL}${YELLOW}%s${NORMAL}%s" \
@@ -359,12 +359,12 @@ else
 		# ellipsis (…) and cursor)
 		MAX_FILENAME_LENGTH="$((${COLUMNS} - 32))"
 
-		FILENAME_LENGTH="$(basename "${i}" | wc -m)"
+		FILENAME_LENGTH="$(echo "${i##*/}" | wc -m)"
 
 		if [[ "${FILENAME_LENGTH}" -gt "${MAX_FILENAME_LENGTH}" ]] ; then
-			FILENAME="$(echo "$(basename "${i}" | awk '{print substr($0,0,"'"${MAX_FILENAME_LENGTH}"'")}')…" )"
+			FILENAME="$(echo "$(echo "${i##*/}" | awk '{print substr($0,0,"'"${MAX_FILENAME_LENGTH}"'")}')…" )"
 		else
-			FILENAME="$(basename "${i}")"
+			FILENAME="$(echo "${i##*/}")"
 		fi
 
 		printf "\r${NORMAL}%$((${COLUMNS} - 22))s${BOLD_BLUE}%s${NORMAL}%s${YELLOW}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}\r%s${NORMAL}${YELLOW}%s${NORMAL}%s" \
@@ -378,12 +378,12 @@ else
 		# ellipsis (…) and cursor)
 		MAX_FILENAME_LENGTH="$((${COLUMNS} - 31))"
 
-		FILENAME_LENGTH="$(basename "${FLAC_LOCATION}" | wc -m)"
+		FILENAME_LENGTH="$(echo "${FLAC_LOCATION##*/}" | wc -m)"
 
 		if [[ "${FILENAME_LENGTH}" -gt "${MAX_FILENAME_LENGTH}" ]] ; then
-			FILENAME="$(echo "$(basename "${FLAC_LOCATION}" | awk '{print substr($0,0,"'"${MAX_FILENAME_LENGTH}"'")}')…" )"
+			FILENAME="$(echo "$(echo "${FLAC_LOCATION##*/}" | awk '{print substr($0,0,"'"${MAX_FILENAME_LENGTH}"'")}')…" )"
 		else
-			FILENAME="$(basename "${FLAC_LOCATION}")"
+			FILENAME="$(echo "${FLAC_LOCATION##*/}")"
 		fi
 
 		printf "\r${NORMAL}%$((${COLUMNS} - 21))s${BOLD_BLUE}%s${NORMAL}%s${YELLOW}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}\r%s${NORMAL}${YELLOW}%s${NORMAL}%s${CYAN}%s${NORMAL}" \
@@ -397,12 +397,12 @@ else
 		# ellipsis (…) and cursor)
 		MAX_FILENAME_LENGTH="$((${COLUMNS} - 26))"
 
-		FILENAME_LENGTH="$(basename "${i}" | wc -m)"
+		FILENAME_LENGTH="$(echo "${i##*/}" | wc -m)"
 
 		if [[ "${FILENAME_LENGTH}" -gt "${MAX_FILENAME_LENGTH}" ]] ; then
-			FILENAME="$(echo "$(basename "${i}" | awk '{print substr($0,0,"'"${MAX_FILENAME_LENGTH}"'")}')…" )"
+			FILENAME="$(echo "$(echo "${i##*/}" | awk '{print substr($0,0,"'"${MAX_FILENAME_LENGTH}"'")}')…" )"
 		else
-			FILENAME="$(basename "${i}")"
+			FILENAME="$(echo "${i##*/}")"
 		fi
 		
 		printf "\r${NORMAL}%$((${COLUMNS} - 16))s${BOLD_BLUE}%s${NORMAL}%s${YELLOW}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}\r%s${NORMAL}${YELLOW}%s${NORMAL}%s" \
@@ -415,12 +415,12 @@ else
 		# message, [ FAILED ] (10) minus 2 (leaves a gap and the gives room for the ellipsis (…))
 		MAX_FILENAME_LENGTH="$((${COLUMNS} - 19))"
 
-		FILENAME_LENGTH="$(basename "${i}" | wc -m)"
+		FILENAME_LENGTH="$(echo "${i##*/}" | wc -m)"
 
 		if [[ "${FILENAME_LENGTH}" -gt "${MAX_FILENAME_LENGTH}" ]] ; then
-			FILENAME="$(echo "$(basename "${i}" | awk '{print substr($0,0,"'"${MAX_FILENAME_LENGTH}"'")}')…" )"
+			FILENAME="$(echo "$(echo "${i##*/}" | awk '{print substr($0,0,"'"${MAX_FILENAME_LENGTH}"'")}')…" )"
 		else
-			FILENAME="$(basename "${i}")"
+			FILENAME="$(echo "${i##*/}")"
 		fi
 
 		printf "\r${NORMAL}%$((${COLUMNS} - 10))s${BOLD_BLUE}%s${NORMAL}%s${BOLD_RED}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}\r%s${YELLOW}%s${NORMAL}%s\n" \
@@ -434,12 +434,12 @@ else
 		# ellipsis (…) and cursor)
 		MAX_FILENAME_LENGTH="$((${COLUMNS} - 19))"
 
-		FILENAME_LENGTH="$(basename "${FLAC_LOCATION}" | wc -m)"
+		FILENAME_LENGTH="$(echo "${FLAC_LOCATION##*/}" | wc -m)"
 
 		if [[ "${FILENAME_LENGTH}" -gt "${MAX_FILENAME_LENGTH}" ]] ; then
-			FILENAME="$(echo "$(basename "${FLAC_LOCATION}" | awk '{print substr($0,0,"'"${MAX_FILENAME_LENGTH}"'")}')…" )"
+			FILENAME="$(echo "$(echo "${FLAC_LOCATION##*/}" | awk '{print substr($0,0,"'"${MAX_FILENAME_LENGTH}"'")}')…" )"
 		else
-			FILENAME="$(basename "${FLAC_LOCATION}")"
+			FILENAME="$(echo "${FLAC_LOCATION##*/}")"
 		fi
 
 		printf "\r${NORMAL}%$((${COLUMNS} - 10))s${BOLD_BLUE}%s${NORMAL}%s${BOLD_RED}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}\r%s${NORMAL}${YELLOW}%s${NORMAL}%s${CYAN}%s${NORMAL}\n" \
@@ -453,12 +453,12 @@ else
 		# ellipsis (…) and cursor)
 		MAX_FILENAME_LENGTH="$((${COLUMNS} - 26))"
 
-		FILENAME_LENGTH="$(basename "${i}" | wc -m)"
+		FILENAME_LENGTH="$(echo "${i##*/}" | wc -m)"
 
 		if [[ "${FILENAME_LENGTH}" -gt "${MAX_FILENAME_LENGTH}" ]] ; then
-			FILENAME="$(echo "$(basename "${i}" | awk '{print substr($0,0,"'"${MAX_FILENAME_LENGTH}"'")}')…" )"
+			FILENAME="$(echo "$(echo "${i##*/}" | awk '{print substr($0,0,"'"${MAX_FILENAME_LENGTH}"'")}')…" )"
 		else
-			FILENAME="$(basename "${i}")"
+			FILENAME="$(echo "${i##*/}")"
 		fi
 
 		printf "\r${NORMAL}%$((${COLUMNS} - 16))s${BOLD_BLUE}%s${NORMAL}%s${YELLOW}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}\r%s${NORMAL}${YELLOW}%s${NORMAL}%s" \
@@ -471,12 +471,12 @@ else
 		# message, [ OK ] (6) minus 2 (leaves a gap and the gives room for the ellipsis (…))
 		MAX_FILENAME_LENGTH="$((${COLUMNS} - 15))"
 
-		FILENAME_LENGTH="$(basename "${i}" | wc -m)"
+		FILENAME_LENGTH="$(echo "${i##*/}" | wc -m)"
 
 		if [[ "${FILENAME_LENGTH}" -gt "${MAX_FILENAME_LENGTH}" ]] ; then
-			FILENAME="$(echo "$(basename "${i}" | awk '{print substr($0,0,"'"${MAX_FILENAME_LENGTH}"'")}')…" )"
+			FILENAME="$(echo "$(echo "${i##*/}" | awk '{print substr($0,0,"'"${MAX_FILENAME_LENGTH}"'")}')…" )"
 		else
-			FILENAME="$(basename "${i}")"
+			FILENAME="$(echo "${i##*/}")"
 		fi
 
 		printf "\r${NORMAL}%$((${COLUMNS} - 6))s${BOLD_BLUE}%s${NORMAL}%s${BOLD_GREEN}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}\r%s${YELLOW}%s${NORMAL}%s\n" \
@@ -490,12 +490,12 @@ else
 		# ellipsis (…) and cursor)
 		MAX_FILENAME_LENGTH="$((${COLUMNS} - 15))"
 
-		FILENAME_LENGTH="$(basename "${FLAC_LOCATION}" | wc -m)"
+		FILENAME_LENGTH="$(echo "${FLAC_LOCATION##*/}" | wc -m)"
 
 		if [[ "${FILENAME_LENGTH}" -gt "${MAX_FILENAME_LENGTH}" ]] ; then
-			FILENAME="$(echo "$(basename "${FLAC_LOCATION}" | awk '{print substr($0,0,"'"${MAX_FILENAME_LENGTH}"'")}')…" )"
+			FILENAME="$(echo "$(echo "${FLAC_LOCATION##*/}" | awk '{print substr($0,0,"'"${MAX_FILENAME_LENGTH}"'")}')…" )"
 		else
-			FILENAME="$(basename "${FLAC_LOCATION}")"
+			FILENAME="$(echo "${FLAC_LOCATION##*/}")"
 		fi
 
 		printf "\r${NORMAL}%$((${COLUMNS} - 6))s${BOLD_BLUE}%s${NORMAL}%s${BOLD_GREEN}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}\r%s${NORMAL}${YELLOW}%s${NORMAL}%s${CYAN}%s${NORMAL}\n" \
@@ -509,12 +509,12 @@ else
 		# ellipsis (…) and cursor)
 		MAX_FILENAME_LENGTH="$((${COLUMNS} - 29))"
 
-		FILENAME_LENGTH="$(basename "${i}" | wc -m)"
+		FILENAME_LENGTH="$(echo "${i##*/}" | wc -m)"
 
 		if [[ "${FILENAME_LENGTH}" -gt "${MAX_FILENAME_LENGTH}" ]] ; then
-			FILENAME="$(echo "$(basename "${i}" | awk '{print substr($0,0,"'"${MAX_FILENAME_LENGTH}"'")}')…" )"
+			FILENAME="$(echo "$(echo "${i##*/}" | awk '{print substr($0,0,"'"${MAX_FILENAME_LENGTH}"'")}')…" )"
 		else
-			FILENAME="$(basename "${i}")"
+			FILENAME="$(echo "${i##*/}")"
 		fi
 
 		printf "\r${NORMAL}%$((${COLUMNS} - 19))s${BOLD_BLUE}%s${NORMAL}%s${YELLOW}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}\r%s${NORMAL}${YELLOW}%s${NORMAL}%s" \
@@ -527,12 +527,12 @@ else
 		# message, [ ISSUE ] (9) minus 2 (leaves a gap and the gives room for the ellipsis (…))
 		MAX_FILENAME_LENGTH="$((${COLUMNS} - 18))"
 
-		FILENAME_LENGTH="$(basename "${i}" | wc -m)"
+		FILENAME_LENGTH="$(echo "${i##*/}" | wc -m)"
 
 		if [[ "${FILENAME_LENGTH}" -gt "${MAX_FILENAME_LENGTH}" ]] ; then
-			FILENAME="$(echo "$(basename "${i}" | awk '{print substr($0,0,"'"${MAX_FILENAME_LENGTH}"'")}')…" )"
+			FILENAME="$(echo "$(echo "${i##*/}" | awk '{print substr($0,0,"'"${MAX_FILENAME_LENGTH}"'")}')…" )"
 		else
-			FILENAME="$(basename "${i}")"
+			FILENAME="$(echo "${i##*/}")"
 		fi
 
 		printf "\r${NORMAL}%$((${COLUMNS} - 9))s${BOLD_BLUE}%s${NORMAL}%s${YELLOW}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}\r%s${YELLOW}%s${NORMAL}%s\n" \
@@ -546,12 +546,12 @@ else
 		# ellipsis (…) and cursor)
 		MAX_FILENAME_LENGTH="$((${COLUMNS} - 34))"
 
-		FILENAME_LENGTH="$(basename "${i}" | wc -m)"
+		FILENAME_LENGTH="$(echo "${i##*/}" | wc -m)"
 
 		if [[ "${FILENAME_LENGTH}" -gt "${MAX_FILENAME_LENGTH}" ]] ; then
-			FILENAME="$(echo "$(basename "${i}" | awk '{print substr($0,0,"'"${MAX_FILENAME_LENGTH}"'")}')…" )"
+			FILENAME="$(echo "$(echo "${i##*/}" | awk '{print substr($0,0,"'"${MAX_FILENAME_LENGTH}"'")}')…" )"
 		else
-			FILENAME="$(basename "${i}")"
+			FILENAME="$(echo "${i##*/}")"
 		fi
 
 		printf "\r${NORMAL}%$((${COLUMNS} - 24))s${BOLD_BLUE}%s${NORMAL}%s${YELLOW}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}\r%s${NORMAL}${YELLOW}%s${NORMAL}%s" \
@@ -564,12 +564,12 @@ else
 		# message, [ SKIPPED ] (11) minus 2 (leaves a gap and the gives room for the ellipsis (…))
 		MAX_FILENAME_LENGTH="$((${COLUMNS} - 20))"
 
-		FILENAME_LENGTH="$(basename "${i}" | wc -m)"
+		FILENAME_LENGTH="$(echo "${i##*/}" | wc -m)"
 
 		if [[ "${FILENAME_LENGTH}" -gt "${MAX_FILENAME_LENGTH}" ]] ; then
-			FILENAME="$(echo "$(basename "${i}" | awk '{print substr($0,0,"'"${MAX_FILENAME_LENGTH}"'")}')…" )"
+			FILENAME="$(echo "$(echo "${i##*/}" | awk '{print substr($0,0,"'"${MAX_FILENAME_LENGTH}"'")}')…" )"
 		else
-			FILENAME="$(basename "${i}")"
+			FILENAME="$(echo "${i##*/}")"
 		fi
 
 		printf "\r${NORMAL}%$((${COLUMNS} - 11))s${BOLD_BLUE}%s${NORMAL}%s${YELLOW}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}\r%s${YELLOW}%s${NORMAL}%s\n" \
@@ -582,12 +582,12 @@ else
 		# message, [ DONE ] (8) minus 2 (leaves a gap and the gives room for the ellipsis (…))
 		MAX_FILENAME_LENGTH="$((${COLUMNS} - 17))"
 
-		FILENAME_LENGTH="$(basename "${i}" | wc -m)"
+		FILENAME_LENGTH="$(echo "${i##*/}" | wc -m)"
 
 		if [[ "${FILENAME_LENGTH}" -gt "${MAX_FILENAME_LENGTH}" ]] ; then
-			FILENAME="$(echo "$(basename "${i}" | awk '{print substr($0,0,"'"${MAX_FILENAME_LENGTH}"'")}')…" )"
+			FILENAME="$(echo "$(echo "${i##*/}" | awk '{print substr($0,0,"'"${MAX_FILENAME_LENGTH}"'")}')…" )"
 		else
-			FILENAME="$(basename "${i}")"
+			FILENAME="$(echo "${i##*/}")"
 		fi
 
 		printf "\r${NORMAL}%$((${COLUMNS} - 8))s${BOLD_BLUE}%s${NORMAL}%s${BOLD_GREEN}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}\r%s${YELLOW}%s${NORMAL}%s\n" \
@@ -601,12 +601,12 @@ else
 		#the ellipsis (…))
 		MAX_FILENAME_LENGTH="$((${COLUMNS} - 31))"
 
-		FILENAME_LENGTH="$(basename "${i}" | wc -m)"
+		FILENAME_LENGTH="$(echo "${i##*/}" | wc -m)"
 
 		if [[ "${FILENAME_LENGTH}" -gt "${MAX_FILENAME_LENGTH}" ]] ; then
-			FILENAME="$(echo "$(basename "${i}" | awk '{print substr($0,0,"'"${MAX_FILENAME_LENGTH}"'")}')…" )"
+			FILENAME="$(echo "$(echo "${i##*/}" | awk '{print substr($0,0,"'"${MAX_FILENAME_LENGTH}"'")}')…" )"
 		else
-			FILENAME="$(basename "${i}")"
+			FILENAME="$(echo "${i##*/}")"
 		fi
 
 		printf "\r${NORMAL}%$((${COLUMNS} - 22))s${BOLD_BLUE}%s${NORMAL}%s${YELLOW}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}\r%s${YELLOW}%s${NORMAL}%s\n" \
@@ -620,12 +620,12 @@ else
 		# ellipsis (…) and cursor)
 		MAX_FILENAME_LENGTH="$((${COLUMNS} - 28))"
 
-		FILENAME_LENGTH="$(basename "${i}" | wc -m)"
+		FILENAME_LENGTH="$(echo "${i##*/}" | wc -m)"
 
 		if [[ "${FILENAME_LENGTH}" -gt "${MAX_FILENAME_LENGTH}" ]] ; then
-			FILENAME="$(echo "$(basename "${i}" | awk '{print substr($0,0,"'"${MAX_FILENAME_LENGTH}"'")}')…" )"
+			FILENAME="$(echo "$(echo "${i##*/}" | awk '{print substr($0,0,"'"${MAX_FILENAME_LENGTH}"'")}')…" )"
 		else
-			FILENAME="$(basename "${i}")"
+			FILENAME="$(echo "${i##*/}")"
 		fi
 
 		printf "\r${NORMAL}%$((${COLUMNS} - 18))s${BOLD_BLUE}%s${NORMAL}%s${YELLOW}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}\r%s${NORMAL}${YELLOW}%s${NORMAL}%s" \
@@ -639,12 +639,12 @@ else
 		# ellipsis (…) and cursor)
 		MAX_FILENAME_LENGTH="$((${COLUMNS} - 26))"
 
-		FILENAME_LENGTH="$(basename "${i}" | wc -m)"
+		FILENAME_LENGTH="$(echo "${i##*/}" | wc -m)"
 
 		if [[ "${FILENAME_LENGTH}" -gt "${MAX_FILENAME_LENGTH}" ]] ; then
-			FILENAME="$(echo "$(basename "${i}" | awk '{print substr($0,0,"'"${MAX_FILENAME_LENGTH}"'")}')…" )"
+			FILENAME="$(echo "$(echo "${i##*/}" | awk '{print substr($0,0,"'"${MAX_FILENAME_LENGTH}"'")}')…" )"
 		else
-			FILENAME="$(basename "${i}")"
+			FILENAME="$(echo "${i##*/}")"
 		fi
 
 		printf "\r${NORMAL}%$((${COLUMNS} - 16))s${BOLD_BLUE}%s${NORMAL}%s${YELLOW}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}\r%s${NORMAL}${YELLOW}%s${NORMAL}%s" \
@@ -658,12 +658,12 @@ else
 		# ellipsis (…) and cursor)
 		MAX_FILENAME_LENGTH="$((${COLUMNS} - 30))"
 
-		FILENAME_LENGTH="$(basename "${i}" | wc -m)"
+		FILENAME_LENGTH="$(echo "${i##*/}" | wc -m)"
 
 		if [[ "${FILENAME_LENGTH}" -gt "${MAX_FILENAME_LENGTH}" ]] ; then
-			FILENAME="$(echo "$(basename "${i}" | awk '{print substr($0,0,"'"${MAX_FILENAME_LENGTH}"'")}')…" )"
+			FILENAME="$(echo "$(echo "${i##*/}" | awk '{print substr($0,0,"'"${MAX_FILENAME_LENGTH}"'")}')…" )"
 		else
-			FILENAME="$(basename "${i}")"
+			FILENAME="$(echo "${i##*/}")"
 		fi
 
 		printf "\r${NORMAL}%$((${COLUMNS} - 20))s${BOLD_BLUE}%s${NORMAL}%s${YELLOW}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}\r%s${NORMAL}${YELLOW}%s${NORMAL}%s" \
@@ -797,7 +797,7 @@ function replaygain {
 
 	find "${DIRECTORY}" -name "*.[Ff][Ll][Aa][Cc]" -print | while read i ; do
 		# Find where the FLAC file is in the DIRECTORY hierarchy
-		FLAC_LOCATION="$(dirname "${i}")"
+		FLAC_LOCATION="$(echo "${i%/*}")"
 
 		# Test if DIRECTORY is the current working directory (AKA: ./)
 		# as well as check if FLAC_LOCATION is equal to "./"
@@ -809,7 +809,7 @@ function replaygain {
 
 		# Find the basename directory from FLAC_LOCATION (this is the supposed
 		# album name to be printed)
-		ALBUM_BASENAME="$(basename "${FLAC_LOCATION}")"
+		ALBUM_BASENAME="$(echo "${FLAC_LOCATION##*/}")"
 
 		# Check if FLAC files have existing ReplayGain tags
 		REPLAYGAIN_REFERENCE_LOUDNESS="$(metaflac --show-tag=REPLAYGAIN_REFERENCE_LOUDNESS "${i}" \
@@ -1093,7 +1093,8 @@ function aucdtect {
 							fi
 						else
 							# Place images in user-defined location
-							SPECTROGRAM_PICTURE="${SPECTROGRAM_LOCATION}/$(basename "${i%.[Ff][Ll][Aa][Cc]}.png")"
+							FLAC_FILE="$(echo "${i##*/}")"
+							SPECTROGRAM_PICTURE="${SPECTROGRAM_LOCATION}/$(echo "${FLAC_FILE%.[Ff][Ll][Aa][Cc]}.png")"
 						fi
 
 						# Let's create the spectrogram for the failed FLAC file
@@ -1987,8 +1988,6 @@ fi
 # necessary to complete script succesfully
 # Check if each command can be found in $PATH
 PRINTF_EXISTS="$(command -v printf)"
-BASENAME_EXISTS="$(command -v basename)"
-DIRNAME_EXISTS="$(command -v dirname)"
 SLEEP_EXISTS="$(command -v sleep)"
 WC_EXISTS="$(command -v wc)"
 CAT_EXISTS="$(command -v cat)"
@@ -2003,14 +2002,6 @@ GREP_EXISTS="$(command -v grep)"
 # it's empty, add where you can find the package to an array to be displayed.
 if [[ -z "${PRINTF_EXISTS}" ]] ; then
 	command_exists_array=( "${command_exists_array[@]}" "You can generally install \"printf\" with the \"coreutils\" package." )
-fi
-
-if [[ -z "${BASENAME_EXISTS}" ]] ; then
-	command_exists_array=( "${command_exists_array[@]}" "You can generally install \"basename\" with the \"coreutils\" package." )
-fi
-
-if [[ -z "${DIRNAME_EXISTS}" ]] ; then
-	command_exists_array=( "${command_exists_array[@]}" "You can generally install \"dirname\" with the \"coreutils\" package." )
 fi
 
 if [[ -z "${SLEEP_EXISTS}" ]] ; then
