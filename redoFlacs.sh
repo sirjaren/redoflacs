@@ -1285,7 +1285,7 @@ function redo_tags {
 			for j in "${tags[@]}" ; do
 				# Check if ALBUMARTIST is in tag array and apply operations on
 				# the tag field if it exists
-				if [[ "${j}" == "ALBUMARTIST" ]] ; then
+				if [[ "${j}" == [Aa][Ll][Bb][Uu][Mm][Aa][Rr][Tt][Ii][Ss][Tt] ]] ; then
 					# ALBUMARTIST exists in tag array so allow script to check the
 					# various naming conventions within the FLAC files (ie,
 					# 'album artist' or 'album_artist')
@@ -1294,22 +1294,22 @@ function redo_tags {
 					if [[ -n "$(metaflac --show-tag=ALBUMARTIST "${i}")" ]] ; then
 						# Set a temporary variable to be easily parsed by `eval`
 						local TEMP_TAG="$(metaflac --show-tag=ALBUMARTIST "${i}")"
-						local TEMP_TAG="${TEMP_TAG/#[Aa][Ll]][Bb][Uu][Mm][Aa][Rr][Tt][Ii][Ss][Tt]=}"
+						local TEMP_TAG="${TEMP_TAG/#*=}"
 					# "album artist"
 					elif [[ -n "$(metaflac --show-tag="album artist" "${i}")" ]] ; then
 						# Set a temporary variable to be easily parsed by `eval`
 						local TEMP_TAG="$(metaflac --show-tag="album artist" "${i}")"
-						local TEMP_TAG="${TEMP_TAG/#[Aa][Ll][Bb][Uu][Mm] [Aa][Rr][Tt][Ii][Ss][Tt]=}"
+						local TEMP_TAG="${TEMP_TAG/#*=}"
 					# "album_artist"
 					elif [[ -n "$(metaflac --show-tag="album_artist" "${i}")" ]] ; then
 						# Set a temporary variable to be easily parsed by `eval`
 						local TEMP_TAG="$(metaflac --show-tag="album_artist" "${i}")"
-						local TEMP_TAG="${TEMP_TAG/#[Aa][Ll][Bb][Uu][Mm]_[Aa][Rr][Tt][Ii][Ss][Tt]=}"
+						local TEMP_TAG="${TEMP_TAG/#*=}"
 					fi
 				else
 					# Set a temporary variable to be easily parsed by `eval`
 					local TEMP_TAG="$(metaflac --show-tag="${j}" "${i}")"
-					local TEMP_TAG="${TEMP_TAG/#${j}=}"
+					local TEMP_TAG="${TEMP_TAG/#*=}"
 				fi
 
 				# Evaluate TEMP_TAG into the dynamic tag
@@ -1349,7 +1349,7 @@ function redo_tags {
 			for j in "${tags[@]}" ; do
 				# Check if ALBUMARTIST is in tag array and apply operations on
 				# the tag field if it exists
-				if [[ "${j}" == "ALBUMARTIST" ]] ; then
+				if [[ "${j}" == [Aa][Ll][Bb][Uu][Mm][Aa][Rr][Tt][Ii][Ss][Tt] ]] ; then
 					# ALBUMARTIST exists in tag array so allow script to check the
 					# various naming conventions within the FLAC files (ie,
 					# 'album artist' or 'album_artist')
@@ -1358,22 +1358,22 @@ function redo_tags {
 					if [[ -n "$(metaflac --show-tag=ALBUMARTIST "${i}")" ]] ; then
 						# Set a temporary variable to be easily parsed by `eval`
 						local TEMP_TAG="$(metaflac --show-tag=ALBUMARTIST "${i}")"
-						local TEMP_TAG="${TEMP_TAG/#[Aa][Ll][Bb][Uu][Mm][Aa][Rr][Tt][Ii][Ss][Tt]=}"
+						local TEMP_TAG="${TEMP_TAG/#*=}"
 					# "album artist"
 					elif [[ -n "$(metaflac --show-tag="album artist" "${i}")" ]] ; then
 						# Set a temporary variable to be easily parsed by `eval`
 						local TEMP_TAG="$(metaflac --show-tag="album artist" "${i}")"
-						local TEMP_TAG="${TEMP_TAG/#[Aa][Ll][Bb][Uu][Mm] [Aa][Rr][Tt][Ii][Ss][Tt]=}"
+						local TEMP_TAG="${TEMP_TAG/#*=}"
 					# "album_artist"
 					elif [[ -n "$(metaflac --show-tag="album_artist" "${i}")" ]] ; then
 						# Set a temporary variable to be easily parsed by `eval`
 						local TEMP_TAG="$(metaflac --show-tag="album_artist" "${i}")"
-						local TEMP_TAG="${TEMP_TAG/#[Aa][Ll][Bb][Uu][Mm]_[Aa][Rr][Tt][Ii][Ss][Tt]=}"
+						local TEMP_TAG="${TEMP_TAG/#*=}"
 					fi
 				else
 					# Set a temporary variable to be easily parsed by `eval`
 					local TEMP_TAG="$(metaflac --show-tag="${j}" "${i}")"
-					local TEMP_TAG="${TEMP_TAG/#${j}=}"
+					local TEMP_TAG="${TEMP_TAG/#*=}"
 				fi
 
 				# Evaluate TEMP_TAG into the dynamic tag
@@ -1514,7 +1514,7 @@ function redo_tags {
 		for j in "${tags[@]}" ; do
 			# Check if ALBUMARTIST is in tag array and apply operations on
 			# the tag field if it exists
-			if [[ "${j}" == "ALBUMARTIST" ]] ; then
+			if [[ "${j}" == [Aa][Ll][Bb][Uu][Mm][Aa][Rr][Tt][Ii][Ss][Tt] ]] ; then
 				# ALBUMARTIST exists in tag array so allow script to check the
 				# various naming conventions within the FLAC files (ie,
 				# 'album artist' or 'album_artist')
@@ -1523,22 +1523,22 @@ function redo_tags {
 				if [[ -n "$(metaflac --show-tag=ALBUMARTIST "${i}")" ]] ; then
 					# Set a temporary variable to be easily parsed by `eval`
 					local TEMP_TAG="$(metaflac --show-tag=ALBUMARTIST "${i}")"
-					local TEMP_TAG="${TEMP_TAG/#[Aa][Ll][Bb][Uu][Mm][Aa][Rr][Tt][Ii][Ss][Tt]=}"
+					local TEMP_TAG="${TEMP_TAG/#*=}"
 				# "album artist"
 				elif [[ -n "$(metaflac --show-tag="album artist" "${i}")" ]] ; then
 					# Set a temporary variable to be easily parsed by `eval`
 					local TEMP_TAG="$(metaflac --show-tag="album artist" "${i}")"
-					local TEMP_TAG="${TEMP_TAG/#[Aa][Ll][Bb][Uu][Mm] [Aa][Rr][Tt][Ii][Ss][Tt]=}"
+					local TEMP_TAG="${TEMP_TAG/#*=}"
 				# "album_artist"
 				elif [[ -n "$(metaflac --show-tag="album_artist" "${i}")" ]] ; then
 					# Set a temporary variable to be easily parsed by `eval`
 					local TEMP_TAG="$(metaflac --show-tag="album_artist" "${i}")"
-					local TEMP_TAG="${TEMP_TAG/#[Aa][Ll][Bb][Uu][Mm]_[Aa][Rr][Tt][Ii][Ss][Tt]=}"
+					local TEMP_TAG="${TEMP_TAG/#*=}"
 				fi
 			else
 				# Set a temporary variable to be easily parsed by `eval`
 				local TEMP_TAG="$(metaflac --show-tag="${j}" "${i}")"
-				local TEMP_TAG="${TEMP_TAG/#${j}=}"
+				local TEMP_TAG="${TEMP_TAG/#*=}"
 			fi
 
 			# Evaluate TEMP_TAG into the dynamic tag
