@@ -813,16 +813,20 @@ function replaygain {
 		ALBUM_BASENAME="$(echo "${FLAC_LOCATION##*/}")"
 
 		# Check if FLAC files have existing ReplayGain tags
-		REPLAYGAIN_REFERENCE_LOUDNESS="$(metaflac --show-tag=REPLAYGAIN_REFERENCE_LOUDNESS "${i}" \
-			| sed 's/REPLAYGAIN_REFERENCE_LOUDNESS=//i')"
-		REPLAYGAIN_TRACK_GAIN="$(metaflac --show-tag=REPLAYGAIN_TRACK_GAIN "${i}" \
-			| sed 's/REPLAYGAIN_TRACK_GAIN=//i')"
-		REPLAYGAIN_TRACK_PEAK="$(metaflac --show-tag=REPLAYGAIN_TRACK_PEAK "${i}" \
-			| sed 's/REPLAYGAIN_TRACK_PEAK=//i')"
-		REPLAYGAIN_ALBUM_GAIN="$(metaflac --show-tag=REPLAYGAIN_ALBUM_GAIN "${i}" \
-			| sed 's/REPLAYGAIN_ALBUM_GAIN=//i')"
-		REPLAYGAIN_ALBUM_PEAK="$(metaflac --show-tag=REPLAYGAIN_ALBUM_PEAK "${i}" \
-			| sed 's/REPLAYGAIN_ALBUM_PEAK=//i')"
+		REPLAYGAIN_REFERENCE_LOUDNESS="$(metaflac --show-tag=REPLAYGAIN_REFERENCE_LOUDNESS "${i}")"
+		REPLAYGAIN_REFERENCE_LOUDNESS="${REPLAYGAIN_REFERENCE_LOUDNESS/#[Rr][Ee][Pp][Ll][Aa][Yy][Gg][Aa][Ii][Nn]_[Rr][Ee][Ff][Ee][Rr][Ee][Nn][Cc][Ee]_[Ll][Oo][Uu][Dd][Nn][Ee][Ss][Ss]=}"
+
+		REPLAYGAIN_TRACK_GAIN="$(metaflac --show-tag=REPLAYGAIN_TRACK_GAIN "${i}")"
+		REPLAYGAIN_TRACK_GAIN="${REPLAYGAIN_TRACK_GAIN/#[Rr][Ee][Pp][Ll][Aa][Yy][Gg][Aa][Ii][Nn]_[Tt][Rr][Aa][Cc][Kk]_[Gg][Aa][Ii][Nn]=}"
+
+		REPLAYGAIN_TRACK_PEAK="$(metaflac --show-tag=REPLAYGAIN_TRACK_PEAK "${i}")"
+		REPLAYGAIN_TRACK_PEAK="${REPLAYGAIN_TRACK_PEAK/#[Rr][Ee][Pp][Ll][Aa][Yy][Gg][Aa][Ii][Nn]_[Tt][Rr][Aa][Cc][Kk]_[Pp][Ee][Aa][Kk]=}"
+
+		REPLAYGAIN_ALBUM_GAIN="$(metaflac --show-tag=REPLAYGAIN_ALBUM_GAIN "${i}")"
+		REPLAYGAIN_ALBUM_GAIN="${REPLAYGAIN_ALBUM_GAIN/#[Rr][Ee][Pp][Ll][Aa][Yy][Gg][Aa][Ii][Nn]_[Aa][Ll][Bb][Uu][Mm]_[Gg][Aa][Ii][Nn]=}"
+
+		REPLAYGAIN_ALBUM_PEAK="$(metaflac --show-tag=REPLAYGAIN_ALBUM_PEAK "${i}")"
+		REPLAYGAIN_ALBUM_PEAK="${REPLAYGAIN_ALBUM_PEAK/#[Rr][Ee][Pp][Ll][Aa][Yy][Gg][Aa][Ii][Nn]_[Aa][Ll][Bb][Uu][Mm]_[Pp][Ee][Aa][Kk]=}"
 
 		if [[ -n "${REPLAYGAIN_REFERENCE_LOUDNESS}" && -n "${REPLAYGAIN_TRACK_GAIN}" && \
 			  -n "${REPLAYGAIN_TRACK_PEAK}" && -n "${REPLAYGAIN_ALBUM_GAIN}" && \
@@ -894,7 +898,8 @@ function compress_flacs {
 			# Trap errors into a variable as the output doesn't help
 			# for there is a better way to test below using the
 			# ERROR variable
-			COMPRESSION="$((metaflac --show-tag=COMPRESSION "${i}" | sed 's/^COMPRESSION=//i') 2>&1)"
+			COMPRESSION="$((metaflac --show-tag=COMPRESSION "${i}") 2>&1)"
+			COMPRESSION="${COMPRESSION/#[Cc][Oo][Mm][Pp][Rr][Ee][Ss][Ss][Ii][Oo][Nn]=}"
 			if [[ "${COMPRESSION}" != "${COMPRESSION_LEVEL}" ]] ; then
 				print_compressing_flac
 				# This must come after the above command for proper formatting
@@ -1274,19 +1279,23 @@ function redo_tags {
 					# "ALBUMARTIST"
 					if [[ -n "$(metaflac --show-tag=ALBUMARTIST "${i}")" ]] ; then
 						# Set a temporary variable to be easily parsed by `eval`
-						local TEMP_TAG="$(metaflac --show-tag=ALBUMARTIST "${i}" | sed "s/^ALBUMARTIST=//i")"
+						local TEMP_TAG="$(metaflac --show-tag=ALBUMARTIST "${i}")"
+						local TEMP_TAG="${TEMP_TAG/#[Aa][Ll]][Bb][Uu][Mm][Aa][Rr][Tt][Ii][Ss][Tt]=}"
 					# "album artist"
 					elif [[ -n "$(metaflac --show-tag="album artist" "${i}")" ]] ; then
 						# Set a temporary variable to be easily parsed by `eval`
-						local TEMP_TAG="$(metaflac --show-tag="album artist" "${i}" | sed "s/^album artist=//i")"
+						local TEMP_TAG="$(metaflac --show-tag="album artist" "${i}")"
+						local TEMP_TAG="${TEMP_TAG/#[Aa][Ll][Bb][Uu][Mm] [Aa][Rr][Tt][Ii][Ss][Tt]=}"
 					# "album_artist"
 					elif [[ -n "$(metaflac --show-tag="album_artist" "${i}")" ]] ; then
 						# Set a temporary variable to be easily parsed by `eval`
-						local TEMP_TAG="$(metaflac --show-tag="album_artist" "${i}" | sed "s/^album_artist=//i")"
+						local TEMP_TAG="$(metaflac --show-tag="album_artist" "${i}")"
+						local TEMP_TAG="${TEMP_TAG/#[Aa][Ll][Bb][Uu][Mm]_[Aa][Rr][Tt][Ii][Ss][Tt]=}"
 					fi
 				else
 					# Set a temporary variable to be easily parsed by `eval`
-					local TEMP_TAG="$(metaflac --show-tag="${j}" "${i}" | sed "s/^${j}=//i")"
+					local TEMP_TAG="$(metaflac --show-tag="${j}" "${i}")"
+					local TEMP_TAG="${TEMP_TAG/#${j}=}"
 				fi
 
 				# Evaluate TEMP_TAG into the dynamic tag
@@ -1333,19 +1342,23 @@ function redo_tags {
 					# "ALBUMARTIST"
 					if [[ -n "$(metaflac --show-tag=ALBUMARTIST "${i}")" ]] ; then
 						# Set a temporary variable to be easily parsed by `eval`
-						local TEMP_TAG="$(metaflac --show-tag=ALBUMARTIST "${i}" | sed "s/^ALBUMARTIST=//i")"
+						local TEMP_TAG="$(metaflac --show-tag=ALBUMARTIST "${i}")"
+						local TEMP_TAG="${TEMP_TAG/#[Aa][Ll][Bb][Uu][Mm][Aa][Rr][Tt][Ii][Ss][Tt]=}"
 					# "album artist"
 					elif [[ -n "$(metaflac --show-tag="album artist" "${i}")" ]] ; then
 						# Set a temporary variable to be easily parsed by `eval`
-						local TEMP_TAG="$(metaflac --show-tag="album artist" "${i}" | sed "s/^album artist=//i")"
+						local TEMP_TAG="$(metaflac --show-tag="album artist" "${i}")"
+						local TEMP_TAG="${TEMP_TAG/#[Aa][Ll][Bb][Uu][Mm] [Aa][Rr][Tt][Ii][Ss][Tt]=}"
 					# "album_artist"
 					elif [[ -n "$(metaflac --show-tag="album_artist" "${i}")" ]] ; then
 						# Set a temporary variable to be easily parsed by `eval`
-						local TEMP_TAG="$(metaflac --show-tag="album_artist" "${i}" | sed "s/^album_artist=//i")"
+						local TEMP_TAG="$(metaflac --show-tag="album_artist" "${i}")"
+						local TEMP_TAG="${TEMP_TAG/#[Aa][Ll][Bb][Uu][Mm]_[Aa][Rr][Tt][Ii][Ss][Tt]=}"
 					fi
 				else
 					# Set a temporary variable to be easily parsed by `eval`
-					local TEMP_TAG="$(metaflac --show-tag="${j}" "${i}" | sed "s/^${j}=//i")"
+					local TEMP_TAG="$(metaflac --show-tag="${j}" "${i}")"
+					local TEMP_TAG="${TEMP_TAG/#${j}=}"
 				fi
 
 				# Evaluate TEMP_TAG into the dynamic tag
@@ -1492,19 +1505,23 @@ function redo_tags {
 				# "ALBUMARTIST"
 				if [[ -n "$(metaflac --show-tag=ALBUMARTIST "${i}")" ]] ; then
 					# Set a temporary variable to be easily parsed by `eval`
-					local TEMP_TAG="$(metaflac --show-tag=ALBUMARTIST "${i}" | sed "s/^ALBUMARTIST=//i")"
+					local TEMP_TAG="$(metaflac --show-tag=ALBUMARTIST "${i}")"
+					local TEMP_TAG="${TEMP_TAG/#[Aa][Ll][Bb][Uu][Mm][Aa][Rr][Tt][Ii][Ss][Tt]=}"
 				# "album artist"
 				elif [[ -n "$(metaflac --show-tag="album artist" "${i}")" ]] ; then
 					# Set a temporary variable to be easily parsed by `eval`
-					local TEMP_TAG="$(metaflac --show-tag="album artist" "${i}" | sed "s/^album artist=//i")"
+					local TEMP_TAG="$(metaflac --show-tag="album artist" "${i}")"
+					local TEMP_TAG="${TEMP_TAG/#[Aa][Ll][Bb][Uu][Mm] [Aa][Rr][Tt][Ii][Ss][Tt]=}"
 				# "album_artist"
 				elif [[ -n "$(metaflac --show-tag="album_artist" "${i}")" ]] ; then
 					# Set a temporary variable to be easily parsed by `eval`
-					local TEMP_TAG="$(metaflac --show-tag="album_artist" "${i}" | sed "s/^album_artist=//i")"
+					local TEMP_TAG="$(metaflac --show-tag="album_artist" "${i}")"
+					local TEMP_TAG="${TEMP_TAG/#[Aa][Ll][Bb][Uu][Mm]_[Aa][Rr][Tt][Ii][Ss][Tt]=}"
 				fi
 			else
 				# Set a temporary variable to be easily parsed by `eval`
-				local TEMP_TAG="$(metaflac --show-tag="${j}" "${i}" | sed "s/^${j}=//i")"
+				local TEMP_TAG="$(metaflac --show-tag="${j}" "${i}")"
+				local TEMP_TAG="${TEMP_TAG/#${j}=}"
 			fi
 
 			# Evaluate TEMP_TAG into the dynamic tag
@@ -1990,7 +2007,6 @@ fi
 # Check if each command can be found in $PATH
 PRINTF_EXISTS="$(command -v printf)"
 SLEEP_EXISTS="$(command -v sleep)"
-WC_EXISTS="$(command -v wc)"
 CAT_EXISTS="$(command -v cat)"
 FIND_EXISTS="$(command -v find)"
 XARGS_EXISTS="$(command -v xargs)"
@@ -2006,10 +2022,6 @@ fi
 
 if [[ -z "${SLEEP_EXISTS}" ]] ; then
 	command_exists_array=( "${command_exists_array[@]}" "You can generally install \"sleep\" with the \"coreutils\" package." )
-fi
-
-if [[ -z "${WC_EXISTS}" ]] ; then
-	command_exists_array=( "${command_exists_array[@]}" "You can generally install \"wc\" with the \"coreutils\" package." )
 fi
 
 if [[ -z "${CAT_EXISTS}" ]] ; then
