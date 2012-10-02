@@ -176,8 +176,9 @@ COMPRESS=""
 TEST=""
 AUCDTECT=""
 MD5CHECK=""
-PRUNE=""
+REPLAYGAIN=""
 REDO=""
+PRUNE=""
 
 ###################################
 #  INFORMATION PRINTED TO STDOUT  # 
@@ -352,7 +353,14 @@ else
 	#  DYNAMIC PRINTING  #
 	######################
 	function print_compressing_flac {
-		COLUMNS="$(tput cols)"
+		# Grab the first line of 'stty -a' output
+		# Redirecting '/dev/stderr' to 'stty' allows valid arguments
+		read -r COLUMNS < <(stty -a < /dev/stderr)
+
+		# Remove superflous information from 'stty -a'
+		# Ends up with number of ${COLUMNS}
+		COLUMNS="${COLUMNS/#*columns }"
+		COLUMNS="${COLUMNS/%;*}"
 
 		# This is the number of $COLUMNS minus the indent (7) minus length of the printed
 		# message, [ Compressing FLAC ] (20) minus 3 (leaves a gap and the gives room for the
@@ -370,7 +378,14 @@ else
 		"" "[" " " "Compressing FLAC" " " "]" "     " "*" " ${FILENAME}"
 	}
 	function print_test_replaygain {
-		COLUMNS="$(tput cols)"
+		# Grab the first line of 'stty -a' output
+		# Redirecting '/dev/stderr' to 'stty' allows valid arguments
+		read -r COLUMNS < <(stty -a < /dev/stderr)
+
+		# Remove superflous information from 'stty -a'
+		# Ends up with number of ${COLUMNS}
+		COLUMNS="${COLUMNS/#*columns }"
+		COLUMNS="${COLUMNS/%;*}"
 
 		# This is the number of $COLUMNS minus the indent (7) minus length of the printed
 		# message, [ Testing ReplayGain ] (22) minus 3 (leaves a gap and the gives room for the
@@ -388,7 +403,14 @@ else
 		"" "[" " " "Testing ReplayGain" " " "]" "     " "*" " ${FILENAME}"
 	}
 	function print_add_replaygain {
-		COLUMNS="$(tput cols)"
+		# Grab the first line of 'stty -a' output
+		# Redirecting '/dev/stderr' to 'stty' allows valid arguments
+		read -r COLUMNS < <(stty -a < /dev/stderr)
+
+		# Remove superflous information from 'stty -a'
+		# Ends up with number of ${COLUMNS}
+		COLUMNS="${COLUMNS/#*columns }"
+		COLUMNS="${COLUMNS/%;*}"
 
 		# This is the number of $COLUMNS minus the indent (7) minus length of the printed
 		# message, [ Adding ReplayGain ] (21) minus ' [Directory]' (12) minus 3 (leaves a gap and the gives room for the
@@ -406,7 +428,14 @@ else
 		"" "[" " " "Adding ReplayGain" " " "]" "     " "*" " ${FILENAME} " "[Directory]"
 	}
 	function print_testing_flac {
-		COLUMNS="$(tput cols)"
+		# Grab the first line of 'stty -a' output
+		# Redirecting '/dev/stderr' to 'stty' allows valid arguments
+		read -r COLUMNS < <(stty -a < /dev/stderr)
+
+		# Remove superflous information from 'stty -a'
+		# Ends up with number of ${COLUMNS}
+		COLUMNS="${COLUMNS/#*columns }"
+		COLUMNS="${COLUMNS/%;*}"
 
 		# This is the number of $COLUMNS minus the indent (7) minus length of the printed
 		# message, [ Testing FLAC ] (16) minus 3 (leaves a gap and the gives room for the
@@ -424,7 +453,14 @@ else
 		"" "[" " " "Testing FLAC" " " "]" "     " "*" " ${FILENAME}"
 	}
 	function print_failed_flac {
-		COLUMNS="$(tput cols)"
+		# Grab the first line of 'stty -a' output
+		# Redirecting '/dev/stderr' to 'stty' allows valid arguments
+		read -r COLUMNS < <(stty -a < /dev/stderr)
+
+		# Remove superflous information from 'stty -a'
+		# Ends up with number of ${COLUMNS}
+		COLUMNS="${COLUMNS/#*columns }"
+		COLUMNS="${COLUMNS/%;*}"
 
 		# This is the number of $COLUMNS minus the indent (7) minus length of the printed
 		# message, [ FAILED ] (10) minus 2 (leaves a gap and the gives room for the ellipsis (…))
@@ -441,7 +477,14 @@ else
 		"" "[" " " "FAILED" " " "]" "     " "*" " ${FILENAME}"
 	}
 	function print_failed_replaygain {
-		COLUMNS="$(tput cols)"
+		# Grab the first line of 'stty -a' output
+		# Redirecting '/dev/stderr' to 'stty' allows valid arguments
+		read -r COLUMNS < <(stty -a < /dev/stderr)
+
+		# Remove superflous information from 'stty -a'
+		# Ends up with number of ${COLUMNS}
+		COLUMNS="${COLUMNS/#*columns }"
+		COLUMNS="${COLUMNS/%;*}"
 
 		# This is the number of $COLUMNS minus the indent (7) minus length of the printed
 		# message, [ FAILED ] (10) minus 2 (leaves a gap and the gives room for the
@@ -459,13 +502,22 @@ else
 		"" "[" " " "FAILED" " " "]" "     " "*" " ${FILENAME} " "[Directory]"
 	}
 	function print_checking_md5 {
-		COLUMNS="$(tput cols)"
+		# Grab the first line of 'stty -a' output
+		# Redirecting '/dev/stderr' to 'stty' allows valid arguments
+		read -r COLUMNS < <(stty -a < /dev/stderr)
+
+		# Remove superflous information from 'stty -a'
+		# Ends up with number of ${COLUMNS}
+		COLUMNS="${COLUMNS/#*columns }"
+		COLUMNS="${COLUMNS/%;*}"
 
 		# This is the number of $COLUMNS minus the indent (7) minus length of the printed
 		# message, [ Checking MD5 ] (16) minus 3 (leaves a gap and the gives room for the
 		# ellipsis (…) and cursor)
 		MAX_FILENAME_LENGTH="$((${COLUMNS} - 26))"
 
+		#echo "COLUMNS: $COLUMNS"
+		#echo "MAX_FILENAME_LENGTH: $MAX_FILENAME_LENGTH"
 		FILENAME="${i##*/}"
 		FILENAME_LENGTH="${#FILENAME}"
 
@@ -477,7 +529,14 @@ else
 		"" "[" " " "Checking MD5" " " "]" "     " "*" " ${FILENAME}"
 	}
 	function print_ok_flac {
-		COLUMNS="$(tput cols)"
+		# Grab the first line of 'stty -a' output
+		# Redirecting '/dev/stderr' to 'stty' allows valid arguments
+		read -r COLUMNS < <(stty -a < /dev/stderr)
+
+		# Remove superflous information from 'stty -a'
+		# Ends up with number of ${COLUMNS}
+		COLUMNS="${COLUMNS/#*columns }"
+		COLUMNS="${COLUMNS/%;*}"
 
 		# This is the number of $COLUMNS minus the indent (7) minus length of the printed
 		# message, [ OK ] (6) minus 2 (leaves a gap and the gives room for the ellipsis (…))
@@ -494,7 +553,14 @@ else
 		"" "[" " " "OK" " " "]" "     " "*" " ${FILENAME}"
 	}
 	function print_ok_replaygain {
-		COLUMNS="$(tput cols)"
+		# Grab the first line of 'stty -a' output
+		# Redirecting '/dev/stderr' to 'stty' allows valid arguments
+		read -r COLUMNS < <(stty -a < /dev/stderr)
+
+		# Remove superflous information from 'stty -a'
+		# Ends up with number of ${COLUMNS}
+		COLUMNS="${COLUMNS/#*columns }"
+		COLUMNS="${COLUMNS/%;*}"
 
 		# This is the number of $COLUMNS minus the indent (7) minus length of the printed
 		# message, [ OK ] (6) minus 2 (leaves a gap and the gives room for the
@@ -512,7 +578,14 @@ else
 		"" "[" " " "OK" " " "]" "     " "*" " ${FILENAME} " "[Directory]"
 	}
 	function print_aucdtect_flac {
-		COLUMNS="$(tput cols)"
+		# Grab the first line of 'stty -a' output
+		# Redirecting '/dev/stderr' to 'stty' allows valid arguments
+		read -r COLUMNS < <(stty -a < /dev/stderr)
+
+		# Remove superflous information from 'stty -a'
+		# Ends up with number of ${COLUMNS}
+		COLUMNS="${COLUMNS/#*columns }"
+		COLUMNS="${COLUMNS/%;*}"
 
 		# This is the number of $COLUMNS minus the indent (7) minus length of the printed
 		# message, [ Validating FLAC ] (19) minus 3 (leaves a gap and the gives room for the
@@ -530,7 +603,14 @@ else
 		"" "[" " " "Validating FLAC" " " "]" "     " "*" " ${FILENAME}"
 	}
 	function print_aucdtect_issue {
-		COLUMNS="$(tput cols)"
+		# Grab the first line of 'stty -a' output
+		# Redirecting '/dev/stderr' to 'stty' allows valid arguments
+		read -r COLUMNS < <(stty -a < /dev/stderr)
+
+		# Remove superflous information from 'stty -a'
+		# Ends up with number of ${COLUMNS}
+		COLUMNS="${COLUMNS/#*columns }"
+		COLUMNS="${COLUMNS/%;*}"
 
 		# This is the number of $COLUMNS minus the indent (7) minus length of the printed
 		# message, [ ISSUE ] (9) minus 2 (leaves a gap and the gives room for the ellipsis (…))
@@ -547,7 +627,14 @@ else
 		"" "[" " " "ISSUE" " " "]" "     " "*" " ${FILENAME}"
 	}
 	function print_aucdtect_spectrogram {
-		COLUMNS="$(tput cols)"
+		# Grab the first line of 'stty -a' output
+		# Redirecting '/dev/stderr' to 'stty' allows valid arguments
+		read -r COLUMNS < <(stty -a < /dev/stderr)
+
+		# Remove superflous information from 'stty -a'
+		# Ends up with number of ${COLUMNS}
+		COLUMNS="${COLUMNS/#*columns }"
+		COLUMNS="${COLUMNS/%;*}"
 
 		# This is the number of $COLUMNS minus the indent (7) minus length of the printed
 		# message, [ Creating Spectrogram ] (24) minus 3 (leaves a gap and the gives room for the
@@ -565,7 +652,14 @@ else
 		"" "[" " " "Creating Spectrogram" " " "]" "     " "*" " ${FILENAME}"
 	}
 	function print_aucdtect_skip {
-		COLUMNS="$(tput cols)"
+		# Grab the first line of 'stty -a' output
+		# Redirecting '/dev/stderr' to 'stty' allows valid arguments
+		read -r COLUMNS < <(stty -a < /dev/stderr)
+
+		# Remove superflous information from 'stty -a'
+		# Ends up with number of ${COLUMNS}
+		COLUMNS="${COLUMNS/#*columns }"
+		COLUMNS="${COLUMNS/%;*}"
 
 		# This is the number of $COLUMNS minus the indent (7) minus length of the printed
 		# message, [ SKIPPED ] (11) minus 2 (leaves a gap and the gives room for the ellipsis (…))
@@ -582,7 +676,14 @@ else
 		"" "[" " " "SKIPPED" " " "]" "     " "*" " ${FILENAME}"
 	}
 	function print_done_flac {
-		COLUMNS="$(tput cols)"
+		# Grab the first line of 'stty -a' output
+		# Redirecting '/dev/stderr' to 'stty' allows valid arguments
+		read -r COLUMNS < <(stty -a < /dev/stderr)
+
+		# Remove superflous information from 'stty -a'
+		# Ends up with number of ${COLUMNS}
+		COLUMNS="${COLUMNS/#*columns }"
+		COLUMNS="${COLUMNS/%;*}"
 
 		# This is the number of $COLUMNS minus the indent (7) minus length of the printed
 		# message, [ DONE ] (8) minus 2 (leaves a gap and the gives room for the ellipsis (…))
@@ -599,7 +700,14 @@ else
 		"" "[" " " "DONE" " " "]" "     " "*" " ${FILENAME}"
 	}
 	function print_level_same_compression {
-		COLUMNS="$(tput cols)"
+		# Grab the first line of 'stty -a' output
+		# Redirecting '/dev/stderr' to 'stty' allows valid arguments
+		read -r COLUMNS < <(stty -a < /dev/stderr)
+
+		# Remove superflous information from 'stty -a'
+		# Ends up with number of ${COLUMNS}
+		COLUMNS="${COLUMNS/#*columns }"
+		COLUMNS="${COLUMNS/%;*}"
 
 		# This is the number of $COLUMNS minus the indent (7) minus length of the printed
 		# message, [ Already At Level 8 ] (22) minus 2 (leaves a gap and the gives room for
@@ -617,7 +725,14 @@ else
 		"" "[" " " "Already At Level ${COMPRESSION_LEVEL}" " " "]" "     " "*" " ${FILENAME}"
 	}
 	function print_analyzing_tags {
-		COLUMNS="$(tput cols)"
+		# Grab the first line of 'stty -a' output
+		# Redirecting '/dev/stderr' to 'stty' allows valid arguments
+		read -r COLUMNS < <(stty -a < /dev/stderr)
+
+		# Remove superflous information from 'stty -a'
+		# Ends up with number of ${COLUMNS}
+		COLUMNS="${COLUMNS/#*columns }"
+		COLUMNS="${COLUMNS/%;*}"
 
 		# This is the number of $COLUMNS minus the indent (7) minus length of the printed
 		# message, [ Analyzing Tags ] (18) minus 3 (leaves a gap and the gives room for the
@@ -635,7 +750,14 @@ else
 		"" "[" " " "Analyzing Tags" " " "]" "     " "*" " ${FILENAME}"
 	}
 	function print_setting_tags {
-		COLUMNS="$(tput cols)"
+		# Grab the first line of 'stty -a' output
+		# Redirecting '/dev/stderr' to 'stty' allows valid arguments
+		read -r COLUMNS < <(stty -a < /dev/stderr)
+
+		# Remove superflous information from 'stty -a'
+		# Ends up with number of ${COLUMNS}
+		COLUMNS="${COLUMNS/#*columns }"
+		COLUMNS="${COLUMNS/%;*}"
 
 		# This is the number of $COLUMNS minus the indent (7) minus length of the printed
 		# message, [ Setting Tags ] (16) minus 3 (leaves a gap and the gives room for the
@@ -653,7 +775,14 @@ else
 		"" "[" " " "Setting Tags" " " "]" "     " "*" " ${FILENAME}"
 	}
 	function print_prune_flac {
-		COLUMNS="$(tput cols)"
+		# Grab the first line of 'stty -a' output
+		# Redirecting '/dev/stderr' to 'stty' allows valid arguments
+		read -r COLUMNS < <(stty -a < /dev/stderr)
+
+		# Remove superflous information from 'stty -a'
+		# Ends up with number of ${COLUMNS}
+		COLUMNS="${COLUMNS/#*columns }"
+		COLUMNS="${COLUMNS/%;*}"
 
 		# This is the number of $COLUMNS minus the indent (7) minus length of the printed
 		# message, [Pruning Metadata] (20) minus 3 (leaves a gap and the gives room for the
