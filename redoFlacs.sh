@@ -1472,12 +1472,16 @@ function redo_tags {
 	# Test for DEPRECATED tag, COVERART in METADATA_ERROR log.  If it
 	# exists, set COVERART_WARNING variable to make script output
 	# warning upon completion
-	while read i ; do
-		if [[ "${i}" == "       the new format: METADATA_BLOCK_PICTURE." ]] ; then
-			COVERART_WARNING="true"
-			break
-		fi
-	done < "${METADATA_ERRORS}"
+	if [[ -f "${METADATA_ERRORS}" ]] ; then
+		while read i ; do
+			# Indentation is culled from reading in "${i}"
+			# To change this, set IFS to '\n'
+			if [[ "${i}" == "the new format: METADATA_BLOCK_PICTURE." ]] ; then
+				COVERART_WARNING="true"
+				break
+			fi
+		done < "${METADATA_ERRORS}"
+	fi
 
 	if [[ -f "${METADATA_ERRORS}"  && "${COVERART_WARNING}" == "true" ]] ; then
 		# Display COVERART warning function and metadata issues
