@@ -760,11 +760,11 @@ function replaygain {
 		for i ; do
 			print_test_replaygain
 
-			# Variable to check if file is a FLAC file
-			CHECK_FLAC="$(metaflac --show-md5sum "${i}" 2>&1 | grep -o "FLAC__METADATA_CHAIN_STATUS_NOT_A_FLAC_FILE")"
+			# Check if file is a FLAC file (variable hides output)
+			CHECK_FLAC="$(metaflac --show-md5sum "${i}" 2>&1)"
 
-			# Test to make sure FLAC file can have ReplayGain tags added to it
-			if [[ "${CHECK_FLAC}" == "FLAC__METADATA_CHAIN_STATUS_NOT_A_FLAC_FILE" ]] ; then
+			# If above command return anything other than '0', log output
+			if [[ "${?}" -ne "0" ]] ; then
 				echo -e "File:  ${i}" >> "${REPLAY_TEST_ERRORS}"
 				echo -e "Error: The above file does not appear to be a FLAC file" >> "${REPLAY_TEST_ERRORS}"
 				echo -e "------------------------------------------------------------------" >> "${REPLAY_TEST_ERRORS}"
@@ -1045,10 +1045,11 @@ function aucdtect {
 		for i ; do
 			print_aucdtect_flac
 
-			# Check if file is a FLAC file
-			CHECK_FLAC="$(metaflac --show-md5sum "${i}" 2>&1 | grep -o "FLAC__METADATA_CHAIN_STATUS_NOT_A_FLAC_FILE")"
+			# Check if file is a FLAC file (variable hides output)
+			CHECK_FLAC="$(metaflac --show-md5sum "${i}" 2>&1)"
 
-			if [[ "${CHECK_FLAC}" == "FLAC__METADATA_CHAIN_STATUS_NOT_A_FLAC_FILE" ]] ; then
+			# If above command return anything other than '0', log output
+			if [[ "${?}" -ne "0" ]] ; then
 				echo -e "File:  ${i}" >> "${AUCDTECT_ERRORS}"
 				echo -e "Error: The above file does not appear to be a FLAC file" >> "${AUCDTECT_ERRORS}"
 				echo -e "------------------------------------------------------------------" >> "${AUCDTECT_ERRORS}"
@@ -1171,17 +1172,20 @@ function md5_check {
 	function md5_c {
 		for i ; do
 			print_checking_md5
+
+			# Check if file is a FLAC file (variable hides output)
 			MD5_SUM="$(metaflac --show-md5sum "${i}" 2>&1)"
-			MD5_NOT_FLAC="$(echo "${MD5_SUM}" | grep -o "FLAC__METADATA_CHAIN_STATUS_NOT_A_FLAC_FILE")"
-			if [[ "${MD5_SUM}" == "00000000000000000000000000000000" ]] ; then
-				print_failed_flac
-				echo -e "File:  ${i}" >> "${MD5_ERRORS}"
-				echo -e "Error: MD5 Signature unset (${MD5_SUM})" >> "${MD5_ERRORS}"
-				echo -e "------------------------------------------------------------------" >> "${MD5_ERRORS}"
-			elif [[ "${MD5_NOT_FLAC}" == "FLAC__METADATA_CHAIN_STATUS_NOT_A_FLAC_FILE" ]] ; then
+
+			# If above command return anything other than '0', log output
+			if [[ "${?}" -ne "0" ]] ; then
 				print_failed_flac
 				echo -e "File:  ${i}" >> "${MD5_ERRORS}"
 				echo -e "Error: The above file does not appear to be a FLAC file" >> "${MD5_ERRORS}"
+				echo -e "------------------------------------------------------------------" >> "${MD5_ERRORS}"
+			elif [[ "${MD5_SUM}" == "00000000000000000000000000000000" ]] ; then
+				print_failed_flac
+				echo -e "File:  ${i}" >> "${MD5_ERRORS}"
+				echo -e "Error: MD5 Signature unset (${MD5_SUM})" >> "${MD5_ERRORS}"
 				echo -e "------------------------------------------------------------------" >> "${MD5_ERRORS}"
 			else
 				print_ok_flac
@@ -1254,10 +1258,11 @@ function redo_tags {
 	done
 
 	function analyze_tags {
-		# Check if file is a FLAC file
-		CHECK_FLAC="$(metaflac --show-md5sum "${i}" 2>&1 | grep -o "FLAC__METADATA_CHAIN_STATUS_NOT_A_FLAC_FILE")"
+		# Check if file is a FLAC file (variable hides output)
+		CHECK_FLAC="$(metaflac --show-md5sum "${i}" 2>&1)"
 
-		if [[ "${CHECK_FLAC}" == "FLAC__METADATA_CHAIN_STATUS_NOT_A_FLAC_FILE" ]] ; then
+		# If above command return anything other than '0', log output
+		if [[ "${?}" -ne "0" ]] ; then
 			echo -e "File:  ${i}" >> "${METADATA_ERRORS}"
 			echo -e "Error: The above file does not appear to be a FLAC file" >> "${METADATA_ERRORS}"
 			echo -e "------------------------------------------------------------------" >> "${METADATA_ERRORS}"
@@ -1313,10 +1318,11 @@ function redo_tags {
 	export -f analyze_tags
 
 	function analyze_tags_dont_log_coverart {
-		# Check if file is a FLAC file
-		CHECK_FLAC="$(metaflac --show-md5sum "${i}" 2>&1 | grep -o "FLAC__METADATA_CHAIN_STATUS_NOT_A_FLAC_FILE")"
+		# Check if file is a FLAC file (variable hides output)
+		CHECK_FLAC="$(metaflac --show-md5sum "${i}" 2>&1)"
 
-		if [[ "${CHECK_FLAC}" == "FLAC__METADATA_CHAIN_STATUS_NOT_A_FLAC_FILE" ]] ; then
+		# If above command return anything other than '0', log output
+		if [[ "${?}" -ne "0" ]] ; then
 			echo -e "File:  ${i}" >> "${METADATA_ERRORS}"
 			echo -e "Error: The above file does not appear to be a FLAC file" >> "${METADATA_ERRORS}"
 			echo -e "------------------------------------------------------------------" >> "${METADATA_ERRORS}"
@@ -1457,10 +1463,12 @@ function redo_tags {
 	# Test for DEPRECATED tag, COVERART in METADATA_ERROR log.  If it
 	# exists, set COVERART_WARNING variable to make script output
 	# warning upon completion
-	grep -sq METADATA_BLOCK_PICTURE "${METADATA_ERRORS}"
-	if [[ ${?} -eq 0 ]] ; then
-		COVERART_WARNING="true"
-	fi
+	while read i ; do
+		if [[ "${i}" == "       the new format: METADATA_BLOCK_PICTURE." ]] ; then
+			COVERART_WARNING="true"
+			break
+		fi
+	done < "${METADATA_ERRORS}"
 
 	if [[ -f "${METADATA_ERRORS}"  && "${COVERART_WARNING}" == "true" ]] ; then
 		# Display COVERART warning function and metadata issues
@@ -1589,10 +1597,11 @@ function prune_flacs {
 		for i ; do
 			print_prune_flac
 
-			# Check if file is a FLAC file
-			CHECK_FLAC="$(metaflac --show-md5sum "${i}" 2>&1 | grep -o "FLAC__METADATA_CHAIN_STATUS_NOT_A_FLAC_FILE")"
+			# Check if file is a FLAC file (variable hides output)
+			CHECK_FLAC="$(metaflac --show-md5sum "${i}" 2>&1)"
 
-			if [[ "${CHECK_FLAC}" == "FLAC__METADATA_CHAIN_STATUS_NOT_A_FLAC_FILE" ]] ; then
+			# If above command return anything other than '0', log output
+			if [[ "${?}" -ne "0" ]] ; then
 				echo -e "File:  ${i}" >> "${PRUNE_ERRORS}"
 				echo -e "Error: The above file does not appear to be a FLAC file" >> "${PRUNE_ERRORS}"
 				echo -e "------------------------------------------------------------------" >> "${PRUNE_ERRORS}"
@@ -2019,7 +2028,6 @@ FIND_EXISTS="$(command -v find)"
 XARGS_EXISTS="$(command -v xargs)"
 METAFLAC_EXISTS="$(command -v metaflac)"
 FLAC_EXISTS="$(command -v flac)"
-GREP_EXISTS="$(command -v grep)"
 
 # Go through and test if each command was found (by displaying its $PATH).  If
 # it's empty, add where you can find the package to an array to be displayed.
@@ -2041,10 +2049,6 @@ fi
 
 if [[ -z "${FLAC_EXISTS}" ]] ; then
 	command_exists_array=( "${command_exists_array[@]}" "You can generally install \"flac\" with the \"flac\" package." )
-fi
-
-if [[ -z "${GREP_EXISTS}" ]] ; then
-	command_exists_array=( "${command_exists_array[@]}" "You can generally install \"grep\" with the \"grep\" package." )
 fi
 
 # Display (in bold red) message that system is missing vital programs
@@ -2276,6 +2280,7 @@ if [[ "${COVERART_WARNING}" == "true" ]] ; then
 	coverart_warning
 fi
 
+exit 0
 ################
 #  END SCRIPT  #
 ################
