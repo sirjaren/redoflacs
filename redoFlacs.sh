@@ -232,574 +232,454 @@ function no_flacs {
 	echo -e " ${BOLD_RED}*${NORMAL} There are not any FLAC files to process!"
 }
 
-# Check if `tput` is installed and do a fallback if not
-# installed
-hash tput
-# Check exit code. If not 0, then `tput` is not installed
-if [[ "${?}" -ne 0 ]] ; then
-	# Export to allow subshell access
-	export FALLBACK="true"
-fi
-
-# If 'tput' wasn't found, fallback to static
-# display
-if [[ "${FALLBACK}" == "true" ]] ; then
-	# Information relating to currently running tasks
-	#######################
-	#  FALLBACK PRINTING  #
-	#######################
-	# Fallback uses a static value of 65 characters as the width to print operations
-	function print_compressing_flac {
-		FILENAME="${i##*/}"
-		printf "\r${NORMAL}%74s${BOLD_BLUE}%s${NORMAL}%s${YELLOW}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}\r%s${NORMAL}${YELLOW}%s${NORMAL}%s" \
-		"" "[" " " "Compressing FLAC" " " "]" "     " "*" " $(echo "${FILENAME::65}")"
-	}
-	function print_test_replaygain {
-		FILENAME="${i##*/}"
-		printf "\r${NORMAL}%74s${BOLD_BLUE}%s${NORMAL}%s${YELLOW}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}\r%s${NORMAL}${YELLOW}%s${NORMAL}%s" \
-		"" "[" " " "Testing ReplayGain" " " "]" "     " "*" " $(echo "${FILENAME::65}")"
-	}
-	function print_add_replaygain {
-		FILENAME="${FLAC_LOCATION##*/}"
-		printf "\r${NORMAL}%74s${BOLD_BLUE}%s${NORMAL}%s${YELLOW}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}\r%s${NORMAL}${YELLOW}%s${NORMAL}%s${CYAN}%s${NORMAL}" \
-		"" "[" " " "Adding ReplayGain" " " "]" "     " "*" " $(echo "${FILENAME::54}") " "[Directory]"
-	}
-	function print_testing_flac {
-		FILENAME="${i##*/}"
-		printf "\r${NORMAL}%74s${BOLD_BLUE}%s${NORMAL}%s${YELLOW}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}\r%s${NORMAL}${YELLOW}%s${NORMAL}%s" \
-		"" "[" " " "Testing FLAC" " " "]" "     " "*" " $(echo "${FILENAME::65}")"
-	}
-	function print_failed_flac {
-		FILENAME="${i##*/}"
-		printf "\r${NORMAL}%74s${BOLD_BLUE}%s${NORMAL}%s${BOLD_RED}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}%s\r%s${YELLOW}%s${NORMAL}%s\n" \
-		"" "[" " " "FAILED" " " "]" "          " "     " "*" " $(echo "${FILENAME::65}")"
-	}
-	function print_failed_replaygain {
-		FILENAME="${FLAC_LOCATION##*/}"
-		printf "\r${NORMAL}%74s${BOLD_BLUE}%s${NORMAL}%s${BOLD_RED}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}\r%s${YELLOW}%s${NORMAL}%s${CYAN}%s${NORMAL}%s\n" \
-		"" "[" " " "FAILED" " " "]" "           " "     " "*" " $(echo "${FILENAME::54}") " "[Directory]"
-	}
-	function print_checking_md5 {
-		FILENAME="${i##*/}"
-		printf "\r${NORMAL}%74s${BOLD_BLUE}%s${NORMAL}%s${YELLOW}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}\r%s${NORMAL}${YELLOW}%s${NORMAL}%s" \
-		"" "[" " " "Checking MD5" " " "]" "     " "*" " $(echo "${FILENAME::65}")"
-	}
-	function print_ok_flac {
-		FILENAME="${i##*/}"
-		printf "\r${NORMAL}%74s${BOLD_BLUE}%s${NORMAL}%s${BOLD_GREEN}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}%s\r%s${YELLOW}%s${NORMAL}%s\n" \
-		"" "[" " " "OK" " " "]" "                 " "     " "*" " $(echo "${FILENAME::65}")"
-	}
-	function print_ok_replaygain {
-		FILENAME="${FLAC_LOCATION##*/}"
-		printf "\r${NORMAL}%74s${BOLD_BLUE}%s${NORMAL}%s${BOLD_GREEN}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}%s\r%s${YELLOW}%s${NORMAL}%s${CYAN}%s${NORMAL}\n" \
-		"" "[" " " "OK" " " "]" "               " "     " "*" " $(echo "${FILENAME::54}") " "[Directory]"
-	}
-	function print_aucdtect_flac {
-		FILENAME="${i##*/}"
-		printf "\r${NORMAL}%74s${BOLD_BLUE}%s${NORMAL}%s${YELLOW}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}\r%s${NORMAL}${YELLOW}%s${NORMAL}%s" \
-		"" "[" " " "Validating FLAC" " " "]" "     " "*" " $(echo "${FILENAME::65}")"
-	}
-	function print_aucdtect_issue {
-		FILENAME="${i##*/}"
-		# If CREATE_SPECTROGRAM is true, add spacing after [ ISSUE ]
-		# so the last 4 characters are hidden from [ Creating Spectrogram ]
-		if [[ "${CREATE_SPECTROGRAM}" == "true" ]] ; then
-			# Add spacing (4 characters)
-			printf "\r${NORMAL}%74s${BOLD_BLUE}%s${NORMAL}%s${YELLOW}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}%s\r%s${YELLOW}%s${NORMAL}%s\n" \
-			"" "[" " " "ISSUE" " " "]" "               " "     " "*" " $(echo "${FILENAME::65}")"
-		else
-			# Don't add spacing
-			printf "\r${NORMAL}%74s${BOLD_BLUE}%s${NORMAL}%s${YELLOW}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}%s\r%s${YELLOW}%s${NORMAL}%s\n" \
-			"" "[" " " "ISSUE" " " "]" "           " "     " "*" " $(echo "${FILENAME::65}")"
-		fi
-	}
-	function print_aucdtect_spectrogram {
-		FILENAME="${i##*/}"
-		printf "\r${NORMAL}%74s${BOLD_BLUE}%s${NORMAL}%s${YELLOW}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}\r%s${NORMAL}${YELLOW}%s${NORMAL}%s" \
-		"" "[" " " "Creating Spectrogram" " " "]" "     " "*" " $(echo "${FILENAME::65}")"
-	}
-	function print_aucdtect_skip {
-		FILENAME="${i##*/}"
-		printf "\r${NORMAL}%74s${BOLD_BLUE}%s${NORMAL}%s${YELLOW}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}%s\r%s${YELLOW}%s${NORMAL}%s\n" \
-		"" "[" " " "SKIPPED" " " "]" "         " "     " "*" " $(echo "${FILENAME::65}")"
-	}
-	function print_done_flac {
-		FILENAME="${i##*/}"
-		printf "\r${NORMAL}%74s${BOLD_BLUE}%s${NORMAL}%s${BOLD_GREEN}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}%s\r%s${YELLOW}%s${NORMAL}%s\n" \
-		"" "[" " " "DONE" " " "]" "            " "     " "*" " $(echo "${FILENAME::65}")"
-	}
-	function print_level_same_compression {
-		FILENAME="${i##*/}"
-		printf "\r${NORMAL}%74s${BOLD_BLUE}%s${NORMAL}%s${YELLOW}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}\r%s${YELLOW}%s${NORMAL}%s\n" \
-		"" "[" " " "Already At Level ${COMPRESSION_LEVEL}" " " "]" "     " "*" " $(echo "${FILENAME::65}")"
-	}
-	function print_analyzing_tags {
-		FILENAME="${i##*/}"
-		printf "\r${NORMAL}%74s${BOLD_BLUE}%s${NORMAL}%s${YELLOW}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}\r%s${NORMAL}${YELLOW}%s${NORMAL}%s" \
-		"" "[" " " "Analyzing Tags" " " "]" "     " "*" " $(echo "${FILENAME::65}")"
-	}
-	function print_setting_tags {
-		FILENAME="${i##*/}"
-		printf "\r${NORMAL}%74s${BOLD_BLUE}%s${NORMAL}%s${YELLOW}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}\r%s${NORMAL}${YELLOW}%s${NORMAL}%s" \
-		"" "[" " " "Setting Tags" " " "]" "     " "*" " $(echo "${FILENAME::65}")"
-	}
-	function print_prune_flac {
-		FILENAME="${i##*/}"
-		printf "\r${NORMAL}%74s${BOLD_BLUE}%s${NORMAL}%s${YELLOW}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}\r%s${NORMAL}${YELLOW}%s${NORMAL}%s" \
-		"" "[" " " "Pruning Metadata" " " "]" "     " "*" " $(echo "${FILENAME::65}")"
-	}
-else
-	######################
-	#  DYNAMIC PRINTING  #
-	######################
-	function print_compressing_flac {
-		# Grab the first line of 'stty -a' output
-		# Redirecting '/dev/stderr' to 'stty' allows valid arguments
-		read -r COLUMNS < <(stty -a < /dev/stderr)
-
-		# Remove superflous information from 'stty -a'
-		# Ends up with number of ${COLUMNS}
-		COLUMNS="${COLUMNS/#*columns }"
-		COLUMNS="${COLUMNS/%;*}"
-
-		# This is the number of $COLUMNS minus the indent (7) minus length of the printed
-		# message, [ Compressing FLAC ] (20) minus 3 (leaves a gap and the gives room for the
-		# ellipsis (…) and cursor)
-		MAX_FILENAME_LENGTH="$((${COLUMNS} - 30))"
-
-		FILENAME="${i##*/}"
-		FILENAME_LENGTH="${#FILENAME}"
-
-		if [[ "${FILENAME_LENGTH}" -gt "${MAX_FILENAME_LENGTH}" ]] ; then
-			FILENAME="${FILENAME::$MAX_FILENAME_LENGTH}…"
-		fi
-
-		printf "\r${NORMAL}%$((${COLUMNS} - 20))s${BOLD_BLUE}%s${NORMAL}%s${YELLOW}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}\r%s${NORMAL}${YELLOW}%s${NORMAL}%s" \
-		"" "[" " " "Compressing FLAC" " " "]" "     " "*" " ${FILENAME}"
-	}
-	function print_test_replaygain {
-		# Grab the first line of 'stty -a' output
-		# Redirecting '/dev/stderr' to 'stty' allows valid arguments
-		read -r COLUMNS < <(stty -a < /dev/stderr)
-
-		# Remove superflous information from 'stty -a'
-		# Ends up with number of ${COLUMNS}
-		COLUMNS="${COLUMNS/#*columns }"
-		COLUMNS="${COLUMNS/%;*}"
-
-		# This is the number of $COLUMNS minus the indent (7) minus length of the printed
-		# message, [ Testing ReplayGain ] (22) minus 3 (leaves a gap and the gives room for the
-		# ellipsis (…) and cursor)
-		MAX_FILENAME_LENGTH="$((${COLUMNS} - 32))"
-
-		FILENAME="${i##*/}"
-		FILENAME_LENGTH="${#FILENAME}"
-
-		if [[ "${FILENAME_LENGTH}" -gt "${MAX_FILENAME_LENGTH}" ]] ; then
-			FILENAME="${FILENAME::$MAX_FILENAME_LENGTH}…"
-		fi
-
-		printf "\r${NORMAL}%$((${COLUMNS} - 22))s${BOLD_BLUE}%s${NORMAL}%s${YELLOW}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}\r%s${NORMAL}${YELLOW}%s${NORMAL}%s" \
-		"" "[" " " "Testing ReplayGain" " " "]" "     " "*" " ${FILENAME}"
-	}
-	function print_add_replaygain {
-		# Grab the first line of 'stty -a' output
-		# Redirecting '/dev/stderr' to 'stty' allows valid arguments
-		read -r COLUMNS < <(stty -a < /dev/stderr)
-
-		# Remove superflous information from 'stty -a'
-		# Ends up with number of ${COLUMNS}
-		COLUMNS="${COLUMNS/#*columns }"
-		COLUMNS="${COLUMNS/%;*}"
-
-		# This is the number of $COLUMNS minus the indent (7) minus length of the printed
-		# message, [ Adding ReplayGain ] (21) minus ' [Directory]' (12) minus 3 (leaves a gap and the gives room for the
-		# ellipsis (…) and cursor)
-		MAX_FILENAME_LENGTH="$((${COLUMNS} - 43))"
-
-		FILENAME="${FLAC_LOCATION##*/}"
-		FILENAME_LENGTH="${#FILENAME}"
-
-		if [[ "${FILENAME_LENGTH}" -gt "${MAX_FILENAME_LENGTH}" ]] ; then
-			FILENAME="${FILENAME::$MAX_FILENAME_LENGTH}…"
-		fi
-
-		printf "\r${NORMAL}%$((${COLUMNS} - 21))s${BOLD_BLUE}%s${NORMAL}%s${YELLOW}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}\r%s${NORMAL}${YELLOW}%s${NORMAL}%s${CYAN}%s${NORMAL}" \
-		"" "[" " " "Adding ReplayGain" " " "]" "     " "*" " ${FILENAME} " "[Directory]"
-	}
-	function print_testing_flac {
-		# Grab the first line of 'stty -a' output
-		# Redirecting '/dev/stderr' to 'stty' allows valid arguments
-		read -r COLUMNS < <(stty -a < /dev/stderr)
-
-		# Remove superflous information from 'stty -a'
-		# Ends up with number of ${COLUMNS}
-		COLUMNS="${COLUMNS/#*columns }"
-		COLUMNS="${COLUMNS/%;*}"
-
-		# This is the number of $COLUMNS minus the indent (7) minus length of the printed
-		# message, [ Testing FLAC ] (16) minus 3 (leaves a gap and the gives room for the
-		# ellipsis (…) and cursor)
-		MAX_FILENAME_LENGTH="$((${COLUMNS} - 26))"
-
-		FILENAME="${i##*/}"
-		FILENAME_LENGTH="${#FILENAME}"
-
-		if [[ "${FILENAME_LENGTH}" -gt "${MAX_FILENAME_LENGTH}" ]] ; then
-			FILENAME="${FILENAME::$MAX_FILENAME_LENGTH}…"
-		fi
-		
-		printf "\r${NORMAL}%$((${COLUMNS} - 16))s${BOLD_BLUE}%s${NORMAL}%s${YELLOW}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}\r%s${NORMAL}${YELLOW}%s${NORMAL}%s" \
-		"" "[" " " "Testing FLAC" " " "]" "     " "*" " ${FILENAME}"
-	}
-	function print_failed_flac {
-		# Grab the first line of 'stty -a' output
-		# Redirecting '/dev/stderr' to 'stty' allows valid arguments
-		read -r COLUMNS < <(stty -a < /dev/stderr)
-
-		# Remove superflous information from 'stty -a'
-		# Ends up with number of ${COLUMNS}
-		COLUMNS="${COLUMNS/#*columns }"
-		COLUMNS="${COLUMNS/%;*}"
-
-		# This is the number of $COLUMNS minus the indent (7) minus length of the printed
-		# message, [ FAILED ] (10) minus 2 (leaves a gap and the gives room for the ellipsis (…))
-		MAX_FILENAME_LENGTH="$((${COLUMNS} - 19))"
-
-		FILENAME="${i##*/}"
-		FILENAME_LENGTH="${#FILENAME}"
-
-		if [[ "${FILENAME_LENGTH}" -gt "${MAX_FILENAME_LENGTH}" ]] ; then
-			FILENAME="${FILENAME::$MAX_FILENAME_LENGTH}…"
-		fi
-
-		printf "\r${NORMAL}%$((${COLUMNS} - 10))s${BOLD_BLUE}%s${NORMAL}%s${BOLD_RED}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}\r%s${YELLOW}%s${NORMAL}%s\n" \
-		"" "[" " " "FAILED" " " "]" "     " "*" " ${FILENAME}"
-	}
-	function print_failed_replaygain {
-		# Grab the first line of 'stty -a' output
-		# Redirecting '/dev/stderr' to 'stty' allows valid arguments
-		read -r COLUMNS < <(stty -a < /dev/stderr)
-
-		# Remove superflous information from 'stty -a'
-		# Ends up with number of ${COLUMNS}
-		COLUMNS="${COLUMNS/#*columns }"
-		COLUMNS="${COLUMNS/%;*}"
-
-		# This is the number of $COLUMNS minus the indent (7) minus length of the printed
-		# message, [ FAILED ] (10) minus 2 (leaves a gap and the gives room for the
-		# ellipsis (…) and cursor)
-		MAX_FILENAME_LENGTH="$((${COLUMNS} - 19))"
-
-		FILENAME="${FLAC_LOCATION##*/}"
-		FILENAME_LENGTH="${#FILENAME}"
-
-		if [[ "${FILENAME_LENGTH}" -gt "${MAX_FILENAME_LENGTH}" ]] ; then
-			FILENAME="${FILENAME::$MAX_FILENAME_LENGTH}…"
-		fi
-
-		printf "\r${NORMAL}%$((${COLUMNS} - 10))s${BOLD_BLUE}%s${NORMAL}%s${BOLD_RED}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}\r%s${NORMAL}${YELLOW}%s${NORMAL}%s${CYAN}%s${NORMAL}\n" \
-		"" "[" " " "FAILED" " " "]" "     " "*" " ${FILENAME} " "[Directory]"
-	}
-	function print_checking_md5 {
-		# Grab the first line of 'stty -a' output
-		# Redirecting '/dev/stderr' to 'stty' allows valid arguments
-		read -r COLUMNS < <(stty -a < /dev/stderr)
-
-		# Remove superflous information from 'stty -a'
-		# Ends up with number of ${COLUMNS}
-		COLUMNS="${COLUMNS/#*columns }"
-		COLUMNS="${COLUMNS/%;*}"
-
-		# This is the number of $COLUMNS minus the indent (7) minus length of the printed
-		# message, [ Checking MD5 ] (16) minus 3 (leaves a gap and the gives room for the
-		# ellipsis (…) and cursor)
-		MAX_FILENAME_LENGTH="$((${COLUMNS} - 26))"
-
-		#echo "COLUMNS: $COLUMNS"
-		#echo "MAX_FILENAME_LENGTH: $MAX_FILENAME_LENGTH"
-		FILENAME="${i##*/}"
-		FILENAME_LENGTH="${#FILENAME}"
-
-		if [[ "${FILENAME_LENGTH}" -gt "${MAX_FILENAME_LENGTH}" ]] ; then
-			FILENAME="${FILENAME::$MAX_FILENAME_LENGTH}…"
-		fi
-
-		printf "\r${NORMAL}%$((${COLUMNS} - 16))s${BOLD_BLUE}%s${NORMAL}%s${YELLOW}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}\r%s${NORMAL}${YELLOW}%s${NORMAL}%s" \
-		"" "[" " " "Checking MD5" " " "]" "     " "*" " ${FILENAME}"
-	}
-	function print_ok_flac {
-		# Grab the first line of 'stty -a' output
-		# Redirecting '/dev/stderr' to 'stty' allows valid arguments
-		read -r COLUMNS < <(stty -a < /dev/stderr)
-
-		# Remove superflous information from 'stty -a'
-		# Ends up with number of ${COLUMNS}
-		COLUMNS="${COLUMNS/#*columns }"
-		COLUMNS="${COLUMNS/%;*}"
-
-		# This is the number of $COLUMNS minus the indent (7) minus length of the printed
-		# message, [ OK ] (6) minus 2 (leaves a gap and the gives room for the ellipsis (…))
-		MAX_FILENAME_LENGTH="$((${COLUMNS} - 15))"
-
-		FILENAME="${i##*/}"
-		FILENAME_LENGTH="${#FILENAME}"
-
-		if [[ "${FILENAME_LENGTH}" -gt "${MAX_FILENAME_LENGTH}" ]] ; then
-			FILENAME="${FILENAME::$MAX_FILENAME_LENGTH}…"
-		fi
-
-		printf "\r${NORMAL}%$((${COLUMNS} - 6))s${BOLD_BLUE}%s${NORMAL}%s${BOLD_GREEN}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}\r%s${YELLOW}%s${NORMAL}%s\n" \
-		"" "[" " " "OK" " " "]" "     " "*" " ${FILENAME}"
-	}
-	function print_ok_replaygain {
-		# Grab the first line of 'stty -a' output
-		# Redirecting '/dev/stderr' to 'stty' allows valid arguments
-		read -r COLUMNS < <(stty -a < /dev/stderr)
-
-		# Remove superflous information from 'stty -a'
-		# Ends up with number of ${COLUMNS}
-		COLUMNS="${COLUMNS/#*columns }"
-		COLUMNS="${COLUMNS/%;*}"
-
-		# This is the number of $COLUMNS minus the indent (7) minus length of the printed
-		# message, [ OK ] (6) minus 2 (leaves a gap and the gives room for the
-		# ellipsis (…) and cursor)
-		MAX_FILENAME_LENGTH="$((${COLUMNS} - 15))"
-
-		FILENAME="${FLAC_LOCATION##*/}"
-		FILENAME_LENGTH="${#FILENAME}"
-
-		if [[ "${FILENAME_LENGTH}" -gt "${MAX_FILENAME_LENGTH}" ]] ; then
-			FILENAME="${FILENAME::$MAX_FILENAME_LENGTH}…"
-		fi
-
-		printf "\r${NORMAL}%$((${COLUMNS} - 6))s${BOLD_BLUE}%s${NORMAL}%s${BOLD_GREEN}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}\r%s${NORMAL}${YELLOW}%s${NORMAL}%s${CYAN}%s${NORMAL}\n" \
-		"" "[" " " "OK" " " "]" "     " "*" " ${FILENAME} " "[Directory]"
-	}
-	function print_aucdtect_flac {
-		# Grab the first line of 'stty -a' output
-		# Redirecting '/dev/stderr' to 'stty' allows valid arguments
-		read -r COLUMNS < <(stty -a < /dev/stderr)
-
-		# Remove superflous information from 'stty -a'
-		# Ends up with number of ${COLUMNS}
-		COLUMNS="${COLUMNS/#*columns }"
-		COLUMNS="${COLUMNS/%;*}"
-
-		# This is the number of $COLUMNS minus the indent (7) minus length of the printed
-		# message, [ Validating FLAC ] (19) minus 3 (leaves a gap and the gives room for the
-		# ellipsis (…) and cursor)
-		MAX_FILENAME_LENGTH="$((${COLUMNS} - 29))"
-
-		FILENAME="${i##*/}"
-		FILENAME_LENGTH="${#FILENAME}"
-
-		if [[ "${FILENAME_LENGTH}" -gt "${MAX_FILENAME_LENGTH}" ]] ; then
-			FILENAME="${FILENAME::$MAX_FILENAME_LENGTH}…"
-		fi
-
-		printf "\r${NORMAL}%$((${COLUMNS} - 19))s${BOLD_BLUE}%s${NORMAL}%s${YELLOW}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}\r%s${NORMAL}${YELLOW}%s${NORMAL}%s" \
-		"" "[" " " "Validating FLAC" " " "]" "     " "*" " ${FILENAME}"
-	}
-	function print_aucdtect_issue {
-		# Grab the first line of 'stty -a' output
-		# Redirecting '/dev/stderr' to 'stty' allows valid arguments
-		read -r COLUMNS < <(stty -a < /dev/stderr)
-
-		# Remove superflous information from 'stty -a'
-		# Ends up with number of ${COLUMNS}
-		COLUMNS="${COLUMNS/#*columns }"
-		COLUMNS="${COLUMNS/%;*}"
-
-		# This is the number of $COLUMNS minus the indent (7) minus length of the printed
-		# message, [ ISSUE ] (9) minus 2 (leaves a gap and the gives room for the ellipsis (…))
-		MAX_FILENAME_LENGTH="$((${COLUMNS} - 18))"
-
-		FILENAME="${i##*/}"
-		FILENAME_LENGTH="${#FILENAME}"
-
-		if [[ "${FILENAME_LENGTH}" -gt "${MAX_FILENAME_LENGTH}" ]] ; then
-			FILENAME="${FILENAME::$MAX_FILENAME_LENGTH}…"
-		fi
-
-		printf "\r${NORMAL}%$((${COLUMNS} - 9))s${BOLD_BLUE}%s${NORMAL}%s${YELLOW}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}\r%s${YELLOW}%s${NORMAL}%s\n" \
-		"" "[" " " "ISSUE" " " "]" "     " "*" " ${FILENAME}"
-	}
-	function print_aucdtect_spectrogram {
-		# Grab the first line of 'stty -a' output
-		# Redirecting '/dev/stderr' to 'stty' allows valid arguments
-		read -r COLUMNS < <(stty -a < /dev/stderr)
-
-		# Remove superflous information from 'stty -a'
-		# Ends up with number of ${COLUMNS}
-		COLUMNS="${COLUMNS/#*columns }"
-		COLUMNS="${COLUMNS/%;*}"
-
-		# This is the number of $COLUMNS minus the indent (7) minus length of the printed
-		# message, [ Creating Spectrogram ] (24) minus 3 (leaves a gap and the gives room for the
-		# ellipsis (…) and cursor)
-		MAX_FILENAME_LENGTH="$((${COLUMNS} - 34))"
-
-		FILENAME="${i##*/}"
-		FILENAME_LENGTH="${#FILENAME}"
-
-		if [[ "${FILENAME_LENGTH}" -gt "${MAX_FILENAME_LENGTH}" ]] ; then
-			FILENAME="${FILENAME::$MAX_FILENAME_LENGTH}…"
-		fi
-
-		printf "\r${NORMAL}%$((${COLUMNS} - 24))s${BOLD_BLUE}%s${NORMAL}%s${YELLOW}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}\r%s${NORMAL}${YELLOW}%s${NORMAL}%s" \
-		"" "[" " " "Creating Spectrogram" " " "]" "     " "*" " ${FILENAME}"
-	}
-	function print_aucdtect_skip {
-		# Grab the first line of 'stty -a' output
-		# Redirecting '/dev/stderr' to 'stty' allows valid arguments
-		read -r COLUMNS < <(stty -a < /dev/stderr)
-
-		# Remove superflous information from 'stty -a'
-		# Ends up with number of ${COLUMNS}
-		COLUMNS="${COLUMNS/#*columns }"
-		COLUMNS="${COLUMNS/%;*}"
-
-		# This is the number of $COLUMNS minus the indent (7) minus length of the printed
-		# message, [ SKIPPED ] (11) minus 2 (leaves a gap and the gives room for the ellipsis (…))
-		MAX_FILENAME_LENGTH="$((${COLUMNS} - 20))"
-
-		FILENAME="${i##*/}"
-		FILENAME_LENGTH="${#FILENAME}"
-
-		if [[ "${FILENAME_LENGTH}" -gt "${MAX_FILENAME_LENGTH}" ]] ; then
-			FILENAME="${FILENAME::$MAX_FILENAME_LENGTH}…"
-		fi
-
-		printf "\r${NORMAL}%$((${COLUMNS} - 11))s${BOLD_BLUE}%s${NORMAL}%s${YELLOW}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}\r%s${YELLOW}%s${NORMAL}%s\n" \
-		"" "[" " " "SKIPPED" " " "]" "     " "*" " ${FILENAME}"
-	}
-	function print_done_flac {
-		# Grab the first line of 'stty -a' output
-		# Redirecting '/dev/stderr' to 'stty' allows valid arguments
-		read -r COLUMNS < <(stty -a < /dev/stderr)
-
-		# Remove superflous information from 'stty -a'
-		# Ends up with number of ${COLUMNS}
-		COLUMNS="${COLUMNS/#*columns }"
-		COLUMNS="${COLUMNS/%;*}"
-
-		# This is the number of $COLUMNS minus the indent (7) minus length of the printed
-		# message, [ DONE ] (8) minus 2 (leaves a gap and the gives room for the ellipsis (…))
-		MAX_FILENAME_LENGTH="$((${COLUMNS} - 17))"
-
-		FILENAME="${i##*/}"
-		FILENAME_LENGTH="${#FILENAME}"
-
-		if [[ "${FILENAME_LENGTH}" -gt "${MAX_FILENAME_LENGTH}" ]] ; then
-			FILENAME="${FILENAME::$MAX_FILENAME_LENGTH}…"
-		fi
-
-		printf "\r${NORMAL}%$((${COLUMNS} - 8))s${BOLD_BLUE}%s${NORMAL}%s${BOLD_GREEN}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}\r%s${YELLOW}%s${NORMAL}%s\n" \
-		"" "[" " " "DONE" " " "]" "     " "*" " ${FILENAME}"
-	}
-	function print_level_same_compression {
-		# Grab the first line of 'stty -a' output
-		# Redirecting '/dev/stderr' to 'stty' allows valid arguments
-		read -r COLUMNS < <(stty -a < /dev/stderr)
-
-		# Remove superflous information from 'stty -a'
-		# Ends up with number of ${COLUMNS}
-		COLUMNS="${COLUMNS/#*columns }"
-		COLUMNS="${COLUMNS/%;*}"
-
-		# This is the number of $COLUMNS minus the indent (7) minus length of the printed
-		# message, [ Already At Level 8 ] (22) minus 2 (leaves a gap and the gives room for
-		#the ellipsis (…))
-		MAX_FILENAME_LENGTH="$((${COLUMNS} - 31))"
-
-		FILENAME="${i##*/}"
-		FILENAME_LENGTH="${#FILENAME}"
-
-		if [[ "${FILENAME_LENGTH}" -gt "${MAX_FILENAME_LENGTH}" ]] ; then
-			FILENAME="${FILENAME::$MAX_FILENAME_LENGTH}…"
-		fi
-
-		printf "\r${NORMAL}%$((${COLUMNS} - 22))s${BOLD_BLUE}%s${NORMAL}%s${YELLOW}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}\r%s${YELLOW}%s${NORMAL}%s\n" \
-		"" "[" " " "Already At Level ${COMPRESSION_LEVEL}" " " "]" "     " "*" " ${FILENAME}"
-	}
-	function print_analyzing_tags {
-		# Grab the first line of 'stty -a' output
-		# Redirecting '/dev/stderr' to 'stty' allows valid arguments
-		read -r COLUMNS < <(stty -a < /dev/stderr)
-
-		# Remove superflous information from 'stty -a'
-		# Ends up with number of ${COLUMNS}
-		COLUMNS="${COLUMNS/#*columns }"
-		COLUMNS="${COLUMNS/%;*}"
-
-		# This is the number of $COLUMNS minus the indent (7) minus length of the printed
-		# message, [ Analyzing Tags ] (18) minus 3 (leaves a gap and the gives room for the
-		# ellipsis (…) and cursor)
-		MAX_FILENAME_LENGTH="$((${COLUMNS} - 28))"
-
-		FILENAME="${i##*/}"
-		FILENAME_LENGTH="${#FILENAME}"
-
-		if [[ "${FILENAME_LENGTH}" -gt "${MAX_FILENAME_LENGTH}" ]] ; then
-			FILENAME="${FILENAME::$MAX_FILENAME_LENGTH}…"
-		fi
-
-		printf "\r${NORMAL}%$((${COLUMNS} - 18))s${BOLD_BLUE}%s${NORMAL}%s${YELLOW}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}\r%s${NORMAL}${YELLOW}%s${NORMAL}%s" \
-		"" "[" " " "Analyzing Tags" " " "]" "     " "*" " ${FILENAME}"
-	}
-	function print_setting_tags {
-		# Grab the first line of 'stty -a' output
-		# Redirecting '/dev/stderr' to 'stty' allows valid arguments
-		read -r COLUMNS < <(stty -a < /dev/stderr)
-
-		# Remove superflous information from 'stty -a'
-		# Ends up with number of ${COLUMNS}
-		COLUMNS="${COLUMNS/#*columns }"
-		COLUMNS="${COLUMNS/%;*}"
-
-		# This is the number of $COLUMNS minus the indent (7) minus length of the printed
-		# message, [ Setting Tags ] (16) minus 3 (leaves a gap and the gives room for the
-		# ellipsis (…) and cursor)
-		MAX_FILENAME_LENGTH="$((${COLUMNS} - 26))"
-
-		FILENAME="${i##*/}"
-		FILENAME_LENGTH="${#FILENAME}"
-
-		if [[ "${FILENAME_LENGTH}" -gt "${MAX_FILENAME_LENGTH}" ]] ; then
-			FILENAME="${FILENAME::$MAX_FILENAME_LENGTH}…"
-		fi
-
-		printf "\r${NORMAL}%$((${COLUMNS} - 16))s${BOLD_BLUE}%s${NORMAL}%s${YELLOW}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}\r%s${NORMAL}${YELLOW}%s${NORMAL}%s" \
-		"" "[" " " "Setting Tags" " " "]" "     " "*" " ${FILENAME}"
-	}
-	function print_prune_flac {
-		# Grab the first line of 'stty -a' output
-		# Redirecting '/dev/stderr' to 'stty' allows valid arguments
-		read -r COLUMNS < <(stty -a < /dev/stderr)
-
-		# Remove superflous information from 'stty -a'
-		# Ends up with number of ${COLUMNS}
-		COLUMNS="${COLUMNS/#*columns }"
-		COLUMNS="${COLUMNS/%;*}"
-
-		# This is the number of $COLUMNS minus the indent (7) minus length of the printed
-		# message, [Pruning Metadata] (20) minus 3 (leaves a gap and the gives room for the
-		# ellipsis (…) and cursor)
-		MAX_FILENAME_LENGTH="$((${COLUMNS} - 30))"
-
-		FILENAME="${i##*/}"
-		FILENAME_LENGTH="${#FILENAME}"
-
-		if [[ "${FILENAME_LENGTH}" -gt "${MAX_FILENAME_LENGTH}" ]] ; then
-			FILENAME="${FILENAME::$MAX_FILENAME_LENGTH}…"
-		fi
-
-		printf "\r${NORMAL}%$((${COLUMNS} - 20))s${BOLD_BLUE}%s${NORMAL}%s${YELLOW}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}\r%s${NORMAL}${YELLOW}%s${NORMAL}%s" \
-		"" "[" " " "Pruning Metadata" " " "]" "     " "*" " ${FILENAME}"
-	}
-fi
+# Information relating to currently running tasks
+function print_compressing_flac {
+	# Grab the first line of 'stty -a' output
+	# Redirecting '/dev/stderr' to 'stty' allows valid arguments
+	read -r COLUMNS < <(stty -a < /dev/stderr)
+
+	# Remove superflous information from 'stty -a'
+	# Ends up with number of ${COLUMNS}
+	COLUMNS="${COLUMNS/#*columns }"
+	COLUMNS="${COLUMNS/%;*}"
+
+	# This is the number of $COLUMNS minus the indent (7) minus length of the printed
+	# message, [ Compressing FLAC ] (20) minus 3 (leaves a gap and the gives room for the
+	# ellipsis (…) and cursor)
+	MAX_FILENAME_LENGTH="$((${COLUMNS} - 30))"
+
+	FILENAME="${i##*/}"
+	FILENAME_LENGTH="${#FILENAME}"
+
+	if [[ "${FILENAME_LENGTH}" -gt "${MAX_FILENAME_LENGTH}" ]] ; then
+		FILENAME="${FILENAME::$MAX_FILENAME_LENGTH}…"
+	fi
+
+	printf "\r${NORMAL}%$((${COLUMNS} - 20))s${BOLD_BLUE}%s${NORMAL}%s${YELLOW}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}\r%s${NORMAL}${YELLOW}%s${NORMAL}%s" \
+	"" "[" " " "Compressing FLAC" " " "]" "     " "*" " ${FILENAME}"
+}
+function print_test_replaygain {
+	# Grab the first line of 'stty -a' output
+	# Redirecting '/dev/stderr' to 'stty' allows valid arguments
+	read -r COLUMNS < <(stty -a < /dev/stderr)
+
+	# Remove superflous information from 'stty -a'
+	# Ends up with number of ${COLUMNS}
+	COLUMNS="${COLUMNS/#*columns }"
+	COLUMNS="${COLUMNS/%;*}"
+
+	# This is the number of $COLUMNS minus the indent (7) minus length of the printed
+	# message, [ Testing ReplayGain ] (22) minus 3 (leaves a gap and the gives room for the
+	# ellipsis (…) and cursor)
+	MAX_FILENAME_LENGTH="$((${COLUMNS} - 32))"
+
+	FILENAME="${i##*/}"
+	FILENAME_LENGTH="${#FILENAME}"
+
+	if [[ "${FILENAME_LENGTH}" -gt "${MAX_FILENAME_LENGTH}" ]] ; then
+		FILENAME="${FILENAME::$MAX_FILENAME_LENGTH}…"
+	fi
+
+	printf "\r${NORMAL}%$((${COLUMNS} - 22))s${BOLD_BLUE}%s${NORMAL}%s${YELLOW}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}\r%s${NORMAL}${YELLOW}%s${NORMAL}%s" \
+	"" "[" " " "Testing ReplayGain" " " "]" "     " "*" " ${FILENAME}"
+}
+function print_add_replaygain {
+	# Grab the first line of 'stty -a' output
+	# Redirecting '/dev/stderr' to 'stty' allows valid arguments
+	read -r COLUMNS < <(stty -a < /dev/stderr)
+
+	# Remove superflous information from 'stty -a'
+	# Ends up with number of ${COLUMNS}
+	COLUMNS="${COLUMNS/#*columns }"
+	COLUMNS="${COLUMNS/%;*}"
+
+	# This is the number of $COLUMNS minus the indent (7) minus length of the printed
+	# message, [ Adding ReplayGain ] (21) minus ' [Directory]' (12) minus 3 (leaves a gap and the gives room for the
+	# ellipsis (…) and cursor)
+	MAX_FILENAME_LENGTH="$((${COLUMNS} - 43))"
+
+	FILENAME="${FLAC_LOCATION##*/}"
+	FILENAME_LENGTH="${#FILENAME}"
+
+	if [[ "${FILENAME_LENGTH}" -gt "${MAX_FILENAME_LENGTH}" ]] ; then
+		FILENAME="${FILENAME::$MAX_FILENAME_LENGTH}…"
+	fi
+
+	printf "\r${NORMAL}%$((${COLUMNS} - 21))s${BOLD_BLUE}%s${NORMAL}%s${YELLOW}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}\r%s${NORMAL}${YELLOW}%s${NORMAL}%s${CYAN}%s${NORMAL}" \
+	"" "[" " " "Adding ReplayGain" " " "]" "     " "*" " ${FILENAME} " "[Directory]"
+}
+function print_testing_flac {
+	# Grab the first line of 'stty -a' output
+	# Redirecting '/dev/stderr' to 'stty' allows valid arguments
+	read -r COLUMNS < <(stty -a < /dev/stderr)
+
+	# Remove superflous information from 'stty -a'
+	# Ends up with number of ${COLUMNS}
+	COLUMNS="${COLUMNS/#*columns }"
+	COLUMNS="${COLUMNS/%;*}"
+
+	# This is the number of $COLUMNS minus the indent (7) minus length of the printed
+	# message, [ Testing FLAC ] (16) minus 3 (leaves a gap and the gives room for the
+	# ellipsis (…) and cursor)
+	MAX_FILENAME_LENGTH="$((${COLUMNS} - 26))"
+
+	FILENAME="${i##*/}"
+	FILENAME_LENGTH="${#FILENAME}"
+
+	if [[ "${FILENAME_LENGTH}" -gt "${MAX_FILENAME_LENGTH}" ]] ; then
+		FILENAME="${FILENAME::$MAX_FILENAME_LENGTH}…"
+	fi
+	
+	printf "\r${NORMAL}%$((${COLUMNS} - 16))s${BOLD_BLUE}%s${NORMAL}%s${YELLOW}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}\r%s${NORMAL}${YELLOW}%s${NORMAL}%s" \
+	"" "[" " " "Testing FLAC" " " "]" "     " "*" " ${FILENAME}"
+}
+function print_failed_flac {
+	# Grab the first line of 'stty -a' output
+	# Redirecting '/dev/stderr' to 'stty' allows valid arguments
+	read -r COLUMNS < <(stty -a < /dev/stderr)
+
+	# Remove superflous information from 'stty -a'
+	# Ends up with number of ${COLUMNS}
+	COLUMNS="${COLUMNS/#*columns }"
+	COLUMNS="${COLUMNS/%;*}"
+
+	# This is the number of $COLUMNS minus the indent (7) minus length of the printed
+	# message, [ FAILED ] (10) minus 2 (leaves a gap and the gives room for the ellipsis (…))
+	MAX_FILENAME_LENGTH="$((${COLUMNS} - 19))"
+
+	FILENAME="${i##*/}"
+	FILENAME_LENGTH="${#FILENAME}"
+
+	if [[ "${FILENAME_LENGTH}" -gt "${MAX_FILENAME_LENGTH}" ]] ; then
+		FILENAME="${FILENAME::$MAX_FILENAME_LENGTH}…"
+	fi
+
+	printf "\r${NORMAL}%$((${COLUMNS} - 10))s${BOLD_BLUE}%s${NORMAL}%s${BOLD_RED}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}\r%s${YELLOW}%s${NORMAL}%s\n" \
+	"" "[" " " "FAILED" " " "]" "     " "*" " ${FILENAME}"
+}
+function print_failed_replaygain {
+	# Grab the first line of 'stty -a' output
+	# Redirecting '/dev/stderr' to 'stty' allows valid arguments
+	read -r COLUMNS < <(stty -a < /dev/stderr)
+
+	# Remove superflous information from 'stty -a'
+	# Ends up with number of ${COLUMNS}
+	COLUMNS="${COLUMNS/#*columns }"
+	COLUMNS="${COLUMNS/%;*}"
+
+	# This is the number of $COLUMNS minus the indent (7) minus length of the printed
+	# message, [ FAILED ] (10) minus 2 (leaves a gap and the gives room for the
+	# ellipsis (…) and cursor)
+	MAX_FILENAME_LENGTH="$((${COLUMNS} - 19))"
+
+	FILENAME="${FLAC_LOCATION##*/}"
+	FILENAME_LENGTH="${#FILENAME}"
+
+	if [[ "${FILENAME_LENGTH}" -gt "${MAX_FILENAME_LENGTH}" ]] ; then
+		FILENAME="${FILENAME::$MAX_FILENAME_LENGTH}…"
+	fi
+
+	printf "\r${NORMAL}%$((${COLUMNS} - 10))s${BOLD_BLUE}%s${NORMAL}%s${BOLD_RED}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}\r%s${NORMAL}${YELLOW}%s${NORMAL}%s${CYAN}%s${NORMAL}\n" \
+	"" "[" " " "FAILED" " " "]" "     " "*" " ${FILENAME} " "[Directory]"
+}
+function print_checking_md5 {
+	# Grab the first line of 'stty -a' output
+	# Redirecting '/dev/stderr' to 'stty' allows valid arguments
+	read -r COLUMNS < <(stty -a < /dev/stderr)
+
+	# Remove superflous information from 'stty -a'
+	# Ends up with number of ${COLUMNS}
+	COLUMNS="${COLUMNS/#*columns }"
+	COLUMNS="${COLUMNS/%;*}"
+
+	# This is the number of $COLUMNS minus the indent (7) minus length of the printed
+	# message, [ Checking MD5 ] (16) minus 3 (leaves a gap and the gives room for the
+	# ellipsis (…) and cursor)
+	MAX_FILENAME_LENGTH="$((${COLUMNS} - 26))"
+
+	#echo "COLUMNS: $COLUMNS"
+	#echo "MAX_FILENAME_LENGTH: $MAX_FILENAME_LENGTH"
+	FILENAME="${i##*/}"
+	FILENAME_LENGTH="${#FILENAME}"
+
+	if [[ "${FILENAME_LENGTH}" -gt "${MAX_FILENAME_LENGTH}" ]] ; then
+		FILENAME="${FILENAME::$MAX_FILENAME_LENGTH}…"
+	fi
+
+	printf "\r${NORMAL}%$((${COLUMNS} - 16))s${BOLD_BLUE}%s${NORMAL}%s${YELLOW}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}\r%s${NORMAL}${YELLOW}%s${NORMAL}%s" \
+	"" "[" " " "Checking MD5" " " "]" "     " "*" " ${FILENAME}"
+}
+function print_ok_flac {
+	# Grab the first line of 'stty -a' output
+	# Redirecting '/dev/stderr' to 'stty' allows valid arguments
+	read -r COLUMNS < <(stty -a < /dev/stderr)
+
+	# Remove superflous information from 'stty -a'
+	# Ends up with number of ${COLUMNS}
+	COLUMNS="${COLUMNS/#*columns }"
+	COLUMNS="${COLUMNS/%;*}"
+
+	# This is the number of $COLUMNS minus the indent (7) minus length of the printed
+	# message, [ OK ] (6) minus 2 (leaves a gap and the gives room for the ellipsis (…))
+	MAX_FILENAME_LENGTH="$((${COLUMNS} - 15))"
+
+	FILENAME="${i##*/}"
+	FILENAME_LENGTH="${#FILENAME}"
+
+	if [[ "${FILENAME_LENGTH}" -gt "${MAX_FILENAME_LENGTH}" ]] ; then
+		FILENAME="${FILENAME::$MAX_FILENAME_LENGTH}…"
+	fi
+
+	printf "\r${NORMAL}%$((${COLUMNS} - 6))s${BOLD_BLUE}%s${NORMAL}%s${BOLD_GREEN}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}\r%s${YELLOW}%s${NORMAL}%s\n" \
+	"" "[" " " "OK" " " "]" "     " "*" " ${FILENAME}"
+}
+function print_ok_replaygain {
+	# Grab the first line of 'stty -a' output
+	# Redirecting '/dev/stderr' to 'stty' allows valid arguments
+	read -r COLUMNS < <(stty -a < /dev/stderr)
+
+	# Remove superflous information from 'stty -a'
+	# Ends up with number of ${COLUMNS}
+	COLUMNS="${COLUMNS/#*columns }"
+	COLUMNS="${COLUMNS/%;*}"
+
+	# This is the number of $COLUMNS minus the indent (7) minus length of the printed
+	# message, [ OK ] (6) minus 2 (leaves a gap and the gives room for the
+	# ellipsis (…) and cursor)
+	MAX_FILENAME_LENGTH="$((${COLUMNS} - 15))"
+
+	FILENAME="${FLAC_LOCATION##*/}"
+	FILENAME_LENGTH="${#FILENAME}"
+
+	if [[ "${FILENAME_LENGTH}" -gt "${MAX_FILENAME_LENGTH}" ]] ; then
+		FILENAME="${FILENAME::$MAX_FILENAME_LENGTH}…"
+	fi
+
+	printf "\r${NORMAL}%$((${COLUMNS} - 6))s${BOLD_BLUE}%s${NORMAL}%s${BOLD_GREEN}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}\r%s${NORMAL}${YELLOW}%s${NORMAL}%s${CYAN}%s${NORMAL}\n" \
+	"" "[" " " "OK" " " "]" "     " "*" " ${FILENAME} " "[Directory]"
+}
+function print_aucdtect_flac {
+	# Grab the first line of 'stty -a' output
+	# Redirecting '/dev/stderr' to 'stty' allows valid arguments
+	read -r COLUMNS < <(stty -a < /dev/stderr)
+
+	# Remove superflous information from 'stty -a'
+	# Ends up with number of ${COLUMNS}
+	COLUMNS="${COLUMNS/#*columns }"
+	COLUMNS="${COLUMNS/%;*}"
+
+	# This is the number of $COLUMNS minus the indent (7) minus length of the printed
+	# message, [ Validating FLAC ] (19) minus 3 (leaves a gap and the gives room for the
+	# ellipsis (…) and cursor)
+	MAX_FILENAME_LENGTH="$((${COLUMNS} - 29))"
+
+	FILENAME="${i##*/}"
+	FILENAME_LENGTH="${#FILENAME}"
+
+	if [[ "${FILENAME_LENGTH}" -gt "${MAX_FILENAME_LENGTH}" ]] ; then
+		FILENAME="${FILENAME::$MAX_FILENAME_LENGTH}…"
+	fi
+
+	printf "\r${NORMAL}%$((${COLUMNS} - 19))s${BOLD_BLUE}%s${NORMAL}%s${YELLOW}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}\r%s${NORMAL}${YELLOW}%s${NORMAL}%s" \
+	"" "[" " " "Validating FLAC" " " "]" "     " "*" " ${FILENAME}"
+}
+function print_aucdtect_issue {
+	# Grab the first line of 'stty -a' output
+	# Redirecting '/dev/stderr' to 'stty' allows valid arguments
+	read -r COLUMNS < <(stty -a < /dev/stderr)
+
+	# Remove superflous information from 'stty -a'
+	# Ends up with number of ${COLUMNS}
+	COLUMNS="${COLUMNS/#*columns }"
+	COLUMNS="${COLUMNS/%;*}"
+
+	# This is the number of $COLUMNS minus the indent (7) minus length of the printed
+	# message, [ ISSUE ] (9) minus 2 (leaves a gap and the gives room for the ellipsis (…))
+	MAX_FILENAME_LENGTH="$((${COLUMNS} - 18))"
+
+	FILENAME="${i##*/}"
+	FILENAME_LENGTH="${#FILENAME}"
+
+	if [[ "${FILENAME_LENGTH}" -gt "${MAX_FILENAME_LENGTH}" ]] ; then
+		FILENAME="${FILENAME::$MAX_FILENAME_LENGTH}…"
+	fi
+
+	printf "\r${NORMAL}%$((${COLUMNS} - 9))s${BOLD_BLUE}%s${NORMAL}%s${YELLOW}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}\r%s${YELLOW}%s${NORMAL}%s\n" \
+	"" "[" " " "ISSUE" " " "]" "     " "*" " ${FILENAME}"
+}
+function print_aucdtect_spectrogram {
+	# Grab the first line of 'stty -a' output
+	# Redirecting '/dev/stderr' to 'stty' allows valid arguments
+	read -r COLUMNS < <(stty -a < /dev/stderr)
+
+	# Remove superflous information from 'stty -a'
+	# Ends up with number of ${COLUMNS}
+	COLUMNS="${COLUMNS/#*columns }"
+	COLUMNS="${COLUMNS/%;*}"
+
+	# This is the number of $COLUMNS minus the indent (7) minus length of the printed
+	# message, [ Creating Spectrogram ] (24) minus 3 (leaves a gap and the gives room for the
+	# ellipsis (…) and cursor)
+	MAX_FILENAME_LENGTH="$((${COLUMNS} - 34))"
+
+	FILENAME="${i##*/}"
+	FILENAME_LENGTH="${#FILENAME}"
+
+	if [[ "${FILENAME_LENGTH}" -gt "${MAX_FILENAME_LENGTH}" ]] ; then
+		FILENAME="${FILENAME::$MAX_FILENAME_LENGTH}…"
+	fi
+
+	printf "\r${NORMAL}%$((${COLUMNS} - 24))s${BOLD_BLUE}%s${NORMAL}%s${YELLOW}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}\r%s${NORMAL}${YELLOW}%s${NORMAL}%s" \
+	"" "[" " " "Creating Spectrogram" " " "]" "     " "*" " ${FILENAME}"
+}
+function print_aucdtect_skip {
+	# Grab the first line of 'stty -a' output
+	# Redirecting '/dev/stderr' to 'stty' allows valid arguments
+	read -r COLUMNS < <(stty -a < /dev/stderr)
+
+	# Remove superflous information from 'stty -a'
+	# Ends up with number of ${COLUMNS}
+	COLUMNS="${COLUMNS/#*columns }"
+	COLUMNS="${COLUMNS/%;*}"
+
+	# This is the number of $COLUMNS minus the indent (7) minus length of the printed
+	# message, [ SKIPPED ] (11) minus 2 (leaves a gap and the gives room for the ellipsis (…))
+	MAX_FILENAME_LENGTH="$((${COLUMNS} - 20))"
+
+	FILENAME="${i##*/}"
+	FILENAME_LENGTH="${#FILENAME}"
+
+	if [[ "${FILENAME_LENGTH}" -gt "${MAX_FILENAME_LENGTH}" ]] ; then
+		FILENAME="${FILENAME::$MAX_FILENAME_LENGTH}…"
+	fi
+
+	printf "\r${NORMAL}%$((${COLUMNS} - 11))s${BOLD_BLUE}%s${NORMAL}%s${YELLOW}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}\r%s${YELLOW}%s${NORMAL}%s\n" \
+	"" "[" " " "SKIPPED" " " "]" "     " "*" " ${FILENAME}"
+}
+function print_done_flac {
+	# Grab the first line of 'stty -a' output
+	# Redirecting '/dev/stderr' to 'stty' allows valid arguments
+	read -r COLUMNS < <(stty -a < /dev/stderr)
+
+	# Remove superflous information from 'stty -a'
+	# Ends up with number of ${COLUMNS}
+	COLUMNS="${COLUMNS/#*columns }"
+	COLUMNS="${COLUMNS/%;*}"
+
+	# This is the number of $COLUMNS minus the indent (7) minus length of the printed
+	# message, [ DONE ] (8) minus 2 (leaves a gap and the gives room for the ellipsis (…))
+	MAX_FILENAME_LENGTH="$((${COLUMNS} - 17))"
+
+	FILENAME="${i##*/}"
+	FILENAME_LENGTH="${#FILENAME}"
+
+	if [[ "${FILENAME_LENGTH}" -gt "${MAX_FILENAME_LENGTH}" ]] ; then
+		FILENAME="${FILENAME::$MAX_FILENAME_LENGTH}…"
+	fi
+
+	printf "\r${NORMAL}%$((${COLUMNS} - 8))s${BOLD_BLUE}%s${NORMAL}%s${BOLD_GREEN}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}\r%s${YELLOW}%s${NORMAL}%s\n" \
+	"" "[" " " "DONE" " " "]" "     " "*" " ${FILENAME}"
+}
+function print_level_same_compression {
+	# Grab the first line of 'stty -a' output
+	# Redirecting '/dev/stderr' to 'stty' allows valid arguments
+	read -r COLUMNS < <(stty -a < /dev/stderr)
+
+	# Remove superflous information from 'stty -a'
+	# Ends up with number of ${COLUMNS}
+	COLUMNS="${COLUMNS/#*columns }"
+	COLUMNS="${COLUMNS/%;*}"
+
+	# This is the number of $COLUMNS minus the indent (7) minus length of the printed
+	# message, [ Already At Level 8 ] (22) minus 2 (leaves a gap and the gives room for
+	#the ellipsis (…))
+	MAX_FILENAME_LENGTH="$((${COLUMNS} - 31))"
+
+	FILENAME="${i##*/}"
+	FILENAME_LENGTH="${#FILENAME}"
+
+	if [[ "${FILENAME_LENGTH}" -gt "${MAX_FILENAME_LENGTH}" ]] ; then
+		FILENAME="${FILENAME::$MAX_FILENAME_LENGTH}…"
+	fi
+
+	printf "\r${NORMAL}%$((${COLUMNS} - 22))s${BOLD_BLUE}%s${NORMAL}%s${YELLOW}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}\r%s${YELLOW}%s${NORMAL}%s\n" \
+	"" "[" " " "Already At Level ${COMPRESSION_LEVEL}" " " "]" "     " "*" " ${FILENAME}"
+}
+function print_analyzing_tags {
+	# Grab the first line of 'stty -a' output
+	# Redirecting '/dev/stderr' to 'stty' allows valid arguments
+	read -r COLUMNS < <(stty -a < /dev/stderr)
+
+	# Remove superflous information from 'stty -a'
+	# Ends up with number of ${COLUMNS}
+	COLUMNS="${COLUMNS/#*columns }"
+	COLUMNS="${COLUMNS/%;*}"
+
+	# This is the number of $COLUMNS minus the indent (7) minus length of the printed
+	# message, [ Analyzing Tags ] (18) minus 3 (leaves a gap and the gives room for the
+	# ellipsis (…) and cursor)
+	MAX_FILENAME_LENGTH="$((${COLUMNS} - 28))"
+
+	FILENAME="${i##*/}"
+	FILENAME_LENGTH="${#FILENAME}"
+
+	if [[ "${FILENAME_LENGTH}" -gt "${MAX_FILENAME_LENGTH}" ]] ; then
+		FILENAME="${FILENAME::$MAX_FILENAME_LENGTH}…"
+	fi
+
+	printf "\r${NORMAL}%$((${COLUMNS} - 18))s${BOLD_BLUE}%s${NORMAL}%s${YELLOW}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}\r%s${NORMAL}${YELLOW}%s${NORMAL}%s" \
+	"" "[" " " "Analyzing Tags" " " "]" "     " "*" " ${FILENAME}"
+}
+function print_setting_tags {
+	# Grab the first line of 'stty -a' output
+	# Redirecting '/dev/stderr' to 'stty' allows valid arguments
+	read -r COLUMNS < <(stty -a < /dev/stderr)
+
+	# Remove superflous information from 'stty -a'
+	# Ends up with number of ${COLUMNS}
+	COLUMNS="${COLUMNS/#*columns }"
+	COLUMNS="${COLUMNS/%;*}"
+
+	# This is the number of $COLUMNS minus the indent (7) minus length of the printed
+	# message, [ Setting Tags ] (16) minus 3 (leaves a gap and the gives room for the
+	# ellipsis (…) and cursor)
+	MAX_FILENAME_LENGTH="$((${COLUMNS} - 26))"
+
+	FILENAME="${i##*/}"
+	FILENAME_LENGTH="${#FILENAME}"
+
+	if [[ "${FILENAME_LENGTH}" -gt "${MAX_FILENAME_LENGTH}" ]] ; then
+		FILENAME="${FILENAME::$MAX_FILENAME_LENGTH}…"
+	fi
+
+	printf "\r${NORMAL}%$((${COLUMNS} - 16))s${BOLD_BLUE}%s${NORMAL}%s${YELLOW}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}\r%s${NORMAL}${YELLOW}%s${NORMAL}%s" \
+	"" "[" " " "Setting Tags" " " "]" "     " "*" " ${FILENAME}"
+}
+function print_prune_flac {
+	# Grab the first line of 'stty -a' output
+	# Redirecting '/dev/stderr' to 'stty' allows valid arguments
+	read -r COLUMNS < <(stty -a < /dev/stderr)
+
+	# Remove superflous information from 'stty -a'
+	# Ends up with number of ${COLUMNS}
+	COLUMNS="${COLUMNS/#*columns }"
+	COLUMNS="${COLUMNS/%;*}"
+
+	# This is the number of $COLUMNS minus the indent (7) minus length of the printed
+	# message, [Pruning Metadata] (20) minus 3 (leaves a gap and the gives room for the
+	# ellipsis (…) and cursor)
+	MAX_FILENAME_LENGTH="$((${COLUMNS} - 30))"
+
+	FILENAME="${i##*/}"
+	FILENAME_LENGTH="${#FILENAME}"
+
+	if [[ "${FILENAME_LENGTH}" -gt "${MAX_FILENAME_LENGTH}" ]] ; then
+		FILENAME="${FILENAME::$MAX_FILENAME_LENGTH}…"
+	fi
+
+	printf "\r${NORMAL}%$((${COLUMNS} - 20))s${BOLD_BLUE}%s${NORMAL}%s${YELLOW}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}\r%s${NORMAL}${YELLOW}%s${NORMAL}%s" \
+	"" "[" " " "Pruning Metadata" " " "]" "     " "*" " ${FILENAME}"
+}
 
 # Export all the above functions for subshell access
 export -f print_compressing_flac
@@ -2153,6 +2033,7 @@ fi
 # necessary to complete script succesfully
 # Check if each command can be found in $PATH
 SLEEP_EXISTS="$(command -v sleep)"
+STTY_EXISTS="$(command -v stty)"
 FIND_EXISTS="$(command -v find)"
 XARGS_EXISTS="$(command -v xargs)"
 METAFLAC_EXISTS="$(command -v metaflac)"
@@ -2162,6 +2043,10 @@ FLAC_EXISTS="$(command -v flac)"
 # it's empty, add where you can find the package to an array to be displayed.
 if [[ -z "${SLEEP_EXISTS}" ]] ; then
 	command_exists_array=( "${command_exists_array[@]}" "You can generally install \"sleep\" with the \"coreutils\" package." )
+fi
+
+if [[ -z "${STTY_EXISTS}" ]] ; then
+	command_exists_array=( "${command_exists_array[@]}" "You can generally install \"stty\" with the \"coreutils\" package." )
 fi
 
 if [[ -z "${FIND_EXISTS}" ]] ; then
