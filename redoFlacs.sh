@@ -1623,8 +1623,12 @@ function prune_flacs {
 #######################
 # Display a lot of help
 function long_help {
-	cat << EOF
-  Usage: ${0} [OPTION] [OPTION]... [PATH_TO_FLAC(s)]
+# Keep the ${LONG_HELP} variable from garbling
+# the text spacing
+OLDIFS="${IFS}"
+IFS='\n'
+
+LONG_HELP="  Usage: ${0} [OPTION] [OPTION]... [PATH_TO_FLAC(s)]
   Options:
     -c, --compress
            Compress the FLAC files with the user-specified level of compression
@@ -1650,7 +1654,7 @@ function long_help {
            log.
 
     -C, --compress-notest
-           Same as the "--compress" option, but if any FLAC files already have the
+           Same as the '--compress' option, but if any FLAC files already have the
            defined COMPRESSION_LEVEL tag, the script will skip the file and continue
            on to the next without test the FLAC file's integrity.  Useful for
            checking all your FLAC files are compressed at the level specified.
@@ -1660,7 +1664,7 @@ function long_help {
            script just verfies the files.  This option will NOT add the
            COMPRESSION tag to the files.
 
-           As with the "--compress" option, this will produce an error log if
+           As with the '--compress' option, this will produce an error log if
            any FLAC files are found to be corrupt.
 
     -a, --aucdtect
@@ -1678,7 +1682,7 @@ function long_help {
            with the questionable FLAC files recorded in it.
 
     -A, --aucdtect-spectrogram
-           Same as "-a, --aucdtect" with the addition of creating a spectrogram for
+           Same as '-a, --aucdtect' with the addition of creating a spectrogram for
            each FLAC file that fails auCDtect, that is, any FLAC file that does not
            return 100% CDDA from auCDtect will be scanned and a spectrogram will be
            created.
@@ -1692,7 +1696,7 @@ function long_help {
                03 - Some FLAC File.flac --> 03 - Some FLAC File.png
 
            If there already is a PNG file with the same name as the tested FLAC,
-           the name "spectrogram" will prepend the ".png" extension:
+           the name 'spectrogram' will prepend the '.png' extension:
 
                03 - Some FLAC File.flac --> 03 - Some FLAC File.spectrogram.png
 
@@ -1717,13 +1721,13 @@ function long_help {
 
     -p, --prune
            Delete every METADATA block in each FLAC file except the STREAMINFO and
-           VORBIS_COMMENT block.  If REMOVE_ARTWORK is set to "false", then the
+           VORBIS_COMMENT block.  If REMOVE_ARTWORK is set to 'false', then the
            PICTURE block will NOT be removed.
 
     -g, --replaygain
            Add ReplayGain tags to the FLAC files.  The ReplayGain is calculated
            for ALBUM and TRACK values. ReplayGain is applied via VORBIS_TAGS and
-           as such, will require the redo, --r argument to have these tags kept
+           as such, will require the redo, '--r argument' to have these tags kept
            in order to preserve the added ReplayGain values.  The tags added are:
 
                       REPLAYGAIN_REFERENCE_LOUDNESS
@@ -1837,8 +1841,8 @@ function long_help {
            use two (2) threads, which can be configured under USER CONFIGURATION (located near the top
            of this script).
 
-           Multithreading is achieved by utilizing the "xargs" command which comes bundled with the
-           "find" command.  While not true multithreading, this psuedo multithreading will greatly speed
+           Multithreading is achieved by utilizing the 'xargs' command which comes bundled with the
+           'find' command.  While not true multithreading, this psuedo multithreading will greatly speed
            up the processing if the host has more than one CPU.
 
 
@@ -1864,8 +1868,13 @@ function long_help {
     ${0} --redo /some/path/to/files
 
     # Compress FLAC files and redo the FLAC tags
-    ${0} -c -r /some/path/to/files
-EOF
+    ${0} -c -r /some/path/to/files"
+
+# Restore IFS
+IFS="${OLDIFS}"
+
+# Print out help (will be piped to ${PAGER} elsewhere)
+printf "%s\n" "${LONG_HELP}"
 }
 
 ########################
@@ -2005,9 +2014,7 @@ fi
 # Check to make sure script has all the dependencies
 # necessary to complete script succesfully
 # Check if each command can be found in $PATH
-PRINTF_EXISTS="$(command -v printf)"
 SLEEP_EXISTS="$(command -v sleep)"
-CAT_EXISTS="$(command -v cat)"
 FIND_EXISTS="$(command -v find)"
 XARGS_EXISTS="$(command -v xargs)"
 METAFLAC_EXISTS="$(command -v metaflac)"
@@ -2016,16 +2023,8 @@ GREP_EXISTS="$(command -v grep)"
 
 # Go through and test if each command was found (by displaying its $PATH).  If
 # it's empty, add where you can find the package to an array to be displayed.
-if [[ -z "${PRINTF_EXISTS}" ]] ; then
-	command_exists_array=( "${command_exists_array[@]}" "You can generally install \"printf\" with the \"coreutils\" package." )
-fi
-
 if [[ -z "${SLEEP_EXISTS}" ]] ; then
 	command_exists_array=( "${command_exists_array[@]}" "You can generally install \"sleep\" with the \"coreutils\" package." )
-fi
-
-if [[ -z "${CAT_EXISTS}" ]] ; then
-	command_exists_array=( "${command_exists_array[@]}" "You can generally install \"cat\" with the \"coreutils\" package." )
 fi
 
 if [[ -z "${FIND_EXISTS}" ]] ; then
@@ -2072,7 +2071,7 @@ DIRECTORY="${1}"
 
 # Check whether DIRECTORY is not null and whether the directory exists
 if [[ -n "${DIRECTORY}" && ! -d "${DIRECTORY}" ]] ; then
-	echo -e "  Usage: $0 [OPTION] [PATH_TO_FLAC(s)]...\n"
+	echo -e "  Usage: ${0} [OPTION] [PATH_TO_FLAC(s)]...\n"
 	echo -e " ${BOLD_RED}*${NORMAL} Please specify a directory!"
 	exit 1
 fi
