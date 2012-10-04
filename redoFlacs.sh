@@ -793,9 +793,11 @@ function replaygain {
 
 			# If above command return anything other than '0', log output
 			if [[ "${?}" -ne "0" ]] ; then
-				printf "%s\n" "File:  ${i}" >> "${REPLAY_TEST_ERRORS}"
-				printf "%s\n" "Error: The above file does not appear to be a FLAC file" >> "${REPLAY_TEST_ERRORS}"
-				printf "%s\n" "------------------------------------------------------------------" >> "${REPLAY_TEST_ERRORS}"
+				printf "%s\n%s\n%s\n" \
+					   "File:  ${i}" \
+					   "Error: The above file does not appear to be a FLAC file" \
+					   "------------------------------------------------------------------" \
+					   >> "${REPLAY_TEST_ERRORS}"
 				# File is not a FLAC file, display failed
 				print_failed_flac
 			else
@@ -875,9 +877,11 @@ function replaygain {
 			ERROR="$((metaflac --add-replay-gain "${FLAC_LOCATION}"/*.[Ff][Ll][Aa][Cc]) 2>&1)"
 			if [[ -n "${ERROR}" ]] ; then
 				print_failed_replaygain
-				printf "%s\n" "Directory: ${FLAC_LOCATION}" >> "${REPLAY_ADD_ERRORS}"
-				printf "%s\n" "Error:     ${ERROR}" >> "${REPLAY_ADD_ERRORS}"
-				printf "%s\n" "------------------------------------------------------------------" >> "${REPLAY_ADD_ERRORS}"
+				printf "%s\n%s\n%s\n" \
+					   "Directory: ${FLAC_LOCATION}" \
+					   "Error:     ${ERROR}" \
+					   "------------------------------------------------------------------" \
+					   >> "${REPLAY_ADD_ERRORS}"
 				# Set variable to let script know this album failed and not NOT
 				# continue checking the files in this album
 				REPLAYGAIN_ALBUM_FAILED="${ALBUM_BASENAME} FAILED"
@@ -943,9 +947,11 @@ function compress_flacs {
 				ERROR="$((flac -f -${COMPRESSION_LEVEL} -V -s "${i}") 2>&1)"
 				if [[ -n "${ERROR}" ]] ; then
 					print_failed_flac
-					printf "%s\n" "File:  ${i}" >> "${VERIFY_ERRORS}"
-					printf "%s\n" "Error: ${ERROR}" >> "${VERIFY_ERRORS}"
-					printf "%s\n" "------------------------------------------------------------------" >> "${VERIFY_ERRORS}"
+					printf "%s\n%s\n%s\n" \
+						   "File:  ${i}" \
+						   "Error: ${ERROR}" \
+						   "------------------------------------------------------------------" \
+						   >> "${VERIFY_ERRORS}"
 				else
 					metaflac --remove-tag=COMPRESSION "${i}"
 					metaflac --set-tag=COMPRESSION=${COMPRESSION_LEVEL} "${i}"
@@ -960,9 +966,11 @@ function compress_flacs {
 					ERROR="$((flac -ts "${i}") 2>&1)"
 					if [[ -n "${ERROR}" ]] ; then
 						print_failed_flac
-						printf "%s\n" "File:  ${i}" >> "${VERIFY_ERRORS}"
-						printf "%s\n" "Error: ${ERROR}" >> "${VERIFY_ERRORS}"
-						printf "%s\n" "------------------------------------------------------------------" >> "${VERIFY_ERRORS}"
+						printf "%s\n%s\n%s\n" \
+							   "File:  ${i}" \
+							   "Error: ${ERROR}" \
+							   "------------------------------------------------------------------" \
+							   >> "${VERIFY_ERRORS}"
 					else 
 						print_ok_flac
 					fi
@@ -1013,9 +1021,11 @@ function test_flacs {
 			ERROR="$((flac -ts "${i}") 2>&1)"
 			if [[ -n "${ERROR}" ]] ; then
 				print_failed_flac
-				printf "%s\n" "File:  ${i}" >> "${TEST_ERRORS}"
-				printf "%s\n" "Error: ${ERROR}" >> "${TEST_ERRORS}"
-				printf "%s\n" "------------------------------------------------------------------" >> "${TEST_ERRORS}"
+				printf "%s\n%s\n%s\n" \
+					   "File:  ${i}" \
+					   "Error: ${ERROR}" \
+					   "------------------------------------------------------------------" \
+					   >> "${TEST_ERRORS}"
 			else
 				print_ok_flac
 			fi
@@ -1105,9 +1115,11 @@ function aucdtect {
 
 			# If above command return anything other than '0', log output
 			if [[ "${?}" -ne "0" ]] ; then
-				printf "%s\n" "File:  ${i}" >> "${AUCDTECT_ERRORS}"
-				printf "%s\n" "Error: The above file does not appear to be a FLAC file" >> "${AUCDTECT_ERRORS}"
-				printf "%s\n" "------------------------------------------------------------------" >> "${AUCDTECT_ERRORS}"
+				printf "%s\n%s\n%s\n" \
+					   "File:  ${i}" \
+					   "Error: The above file does not appear to be a FLAC file" \
+					   "------------------------------------------------------------------" \
+					   >> "${AUCDTECT_ERRORS}"
 				# File is not a FLAC file, display failed
 				print_failed_flac
 			else
@@ -1119,9 +1131,11 @@ function aucdtect {
 				# files with a higher resolution than a CD.
 				if [[ "${BITS}" -gt "16" ]] ; then
 					print_aucdtect_skip
-					printf "%s\n" "File:  ${i}" >> "${AUCDTECT_ERRORS}"
-					printf "%s\n" "Error: The above file has a bit depth greater than 16 and was skipped" >> "${AUCDTECT_ERRORS}"
-					printf "%s\n" "------------------------------------------------------------------" >> "${AUCDTECT_ERRORS}"
+					printf "%s\n%s\n%s\n" \
+						   "File:  ${i}" \
+						   "Error: The above file has a bit depth greater than 16 and was skipped" \
+						   "------------------------------------------------------------------" \
+						   >> "${AUCDTECT_ERRORS}"
 					continue
 				fi
 
@@ -1170,16 +1184,20 @@ function aucdtect {
 						# Print ISSUE and log error, and show where to find
 						# the created spectrogram of processed FLAC file
 						print_aucdtect_issue
-						printf "%s\n" "File:        ${i}" >> "${AUCDTECT_ERRORS}"
-						printf "%s\n" "Error:       ${ERROR}" >> "${AUCDTECT_ERRORS}"
-						printf "%s\n" "Spectrogram: ${SPECTROGRAM_PICTURE}" >> "${AUCDTECT_ERRORS}"
-						printf "%s\n" "------------------------------------------------------------------" >> "${AUCDTECT_ERRORS}"
+						printf "%s\n%s\n%s\n%s\n" \
+							   "File:        ${i}" \
+							   "Error:       ${ERROR}" \
+							   "Spectrogram: ${SPECTROGRAM_PICTURE}" \
+							   "------------------------------------------------------------------" \
+							   >> "${AUCDTECT_ERRORS}"
 					else
 						# Print ISSUE and log error
 						print_aucdtect_issue
-						printf "%s\n" "File:  ${i}" >> "${AUCDTECT_ERRORS}"
-						printf "%s\n" "Error: ${ERROR}" >> "${AUCDTECT_ERRORS}"
-						printf "%s\n" "------------------------------------------------------------------" >> "${AUCDTECT_ERRORS}"
+						printf "%s\n%s\n%s\n" \
+							   "File:  ${i}" \
+							   "Error: ${ERROR}" \
+							   "------------------------------------------------------------------" \
+							   >> "${AUCDTECT_ERRORS}"
 					fi
 				# The processed FLAC file is OK
 				else
@@ -1240,14 +1258,18 @@ function md5_check {
 			# If above command return anything other than '0', log output
 			if [[ "${?}" -ne "0" ]] ; then
 				print_failed_flac
-				printf "%s\n" "File:  ${i}" >> "${MD5_ERRORS}"
-				printf "%s\n" "Error: The above file does not appear to be a FLAC file" >> "${MD5_ERRORS}"
-				printf "%s\n" "------------------------------------------------------------------" >> "${MD5_ERRORS}"
+				printf "%s\n%s\n%s\n" \
+					   "File:  ${i}" \
+					   "Error: The above file does not appear to be a FLAC file" \
+					   "------------------------------------------------------------------" \
+					   >> "${MD5_ERRORS}"
 			elif [[ "${MD5_SUM}" == "00000000000000000000000000000000" ]] ; then
 				print_failed_flac
-				printf "%s\n" "File:  ${i}" >> "${MD5_ERRORS}"
-				printf "%s\n" "Error: MD5 Signature unset (${MD5_SUM})" >> "${MD5_ERRORS}"
-				printf "%s\n" "------------------------------------------------------------------" >> "${MD5_ERRORS}"
+				printf "%s\n%s\n%s\n" \
+					   "File:  ${i}" \
+					   "Error: MD5 Signature unset (${MD5_SUM})" \
+					   "------------------------------------------------------------------" \
+					   >> "${MD5_ERRORS}"
 			else
 				print_ok_flac
 			fi
@@ -1352,9 +1374,11 @@ function redo_tags {
 
 		# If above command return anything other than '0', log output
 		if [[ "${?}" -ne "0" ]] ; then
-			print "%s\n" "File:  ${i}" >> "${METADATA_ERRORS}"
-			print "%s\n" "Error: The above file does not appear to be a FLAC file" >> "${METADATA_ERRORS}"
-			print "%s\n" "------------------------------------------------------------------" >> "${METADATA_ERRORS}"
+			printf "%s\n%s\n%s\n" \
+				  "File:  ${i}" \
+				  "Error: The above file does not appear to be a FLAC file" \
+				  "------------------------------------------------------------------" \
+				  >> "${METADATA_ERRORS}"
 			# File is not a FLAC file, display failed
 			print_failed_flac
 		else
@@ -1397,9 +1421,11 @@ function redo_tags {
 
 				# If tags are not found, log output
 				if [[ -z "$(eval "printf "%s" "\$${j}_TAG"")" ]] ; then
-					printf "%s\n" "File:  ${i}" >> "${METADATA_ERRORS}"
-					printf "%s\n" "Error: ${j} tag not found" >> "${METADATA_ERRORS}"
-					printf "%s\n" "------------------------------------------------------------------" >> "${METADATA_ERRORS}"
+					printf "%s\n%s\n%s\n" \
+						   "File:  ${i}" \
+						   "Error: ${j} tag not found" \
+						   "------------------------------------------------------------------" \
+						   >> "${METADATA_ERRORS}"
 				fi
 			done
 		fi
@@ -1412,9 +1438,11 @@ function redo_tags {
 
 		# If above command return anything other than '0', log output
 		if [[ "${?}" -ne "0" ]] ; then
-			printf "$%s\n" "File:  ${i}" >> "${METADATA_ERRORS}"
-			printf "$%s\n" "Error: The above file does not appear to be a FLAC file" >> "${METADATA_ERRORS}"
-			printf "$%s\n" "------------------------------------------------------------------" >> "${METADATA_ERRORS}"
+			printf "$%s\n%s\n%s\n" \
+				   "File:  ${i}" \
+				   "Error: The above file does not appear to be a FLAC file" \
+				   "------------------------------------------------------------------" \
+				   >> "${METADATA_ERRORS}"
 			# File is not a FLAC file, display failed
 			print_failed_flac
 		else
@@ -1462,19 +1490,23 @@ function redo_tags {
 				# If COVERART_TAG is not null, then log file that has
 				# the COVERART tag embedded within it about deprecation
 				if [[ -n "${COVERART_TAG}" ]] ; then
-					printf "%s\n" "File:  ${i}" >> "${METADATA_ERRORS}"
-					printf "%s\n" "Error: \"${j}\" tag is DEPRECATED in above file. Consider migrating to" >> "${METADATA_ERRORS}"
-					printf "%s\n" "       the new format: METADATA_BLOCK_PICTURE." >> "${METADATA_ERRORS}"
-					printf "%s\n" "------------------------------------------------------------------" >> "${METADATA_ERRORS}"
+					printf "%s\n%s\n%s\n%s\n" \
+						   "File:  ${i}" \
+						   "Error: \"${j}\" tag is DEPRECATED in above file. Consider migrating to" \
+						   "       the new format: METADATA_BLOCK_PICTURE." \
+						   "------------------------------------------------------------------" \
+						   >> "${METADATA_ERRORS}"
 				fi
 
 				# If tags are not found, log output. Skip output
 				# of COVERART tag as this is a temporary addition to
 				# the tag array (for processing legacy artwork)
 				if [[ -z "$(eval "printf "%s" "\$${j}_TAG"")" && "${j}" != "COVERART" ]] ; then
-					printf "%s\n" "File:  ${i}" >> "${METADATA_ERRORS}"
-					printf "%s\n" "Error: ${j} tag not found" >> "${METADATA_ERRORS}"
-					printf "%s\n" "------------------------------------------------------------------" >> "${METADATA_ERRORS}"
+					printf "%s\n%s\n%s\n" \
+						   "File:  ${i}" \
+						   "Error: ${j} tag not found" \
+						   "------------------------------------------------------------------" \
+						   >> "${METADATA_ERRORS}"
 				fi
 			done
 		fi
@@ -1707,9 +1739,11 @@ function prune_flacs {
 
 			# If above command return anything other than '0', log output
 			if [[ "${?}" -ne "0" ]] ; then
-				printf "%s\n" "File:  ${i}" >> "${PRUNE_ERRORS}"
-				printf "%s\n" "Error: The above file does not appear to be a FLAC file" >> "${PRUNE_ERRORS}"
-				printf "%s\n" "------------------------------------------------------------------" >> "${PRUNE_ERRORS}"
+				printf "%s\n%s\n%s\n" \
+					   "File:  ${i}" \
+					   "Error: The above file does not appear to be a FLAC file" \
+					   "------------------------------------------------------------------" \
+					   >> "${PRUNE_ERRORS}"
 				# File is not a FLAC file, display failed
 				print_failed_flac
 			else
