@@ -810,7 +810,7 @@ function replaygain {
 	export -f test_replaygain
 
 	# Run the above function with the configured threads (multithreaded)
-	find "${DIRECTORY}" -name "*.[Ff][Ll][Aa][Cc]" -print0 | xargs -0 -n 1 -P "${CORES}" bash -c 'test_replaygain "${@}"' --
+	find "${DIRECTORY}" -name "*.[Ff][Ll][Aa][Cc]" -print0 2> /dev/null | xargs -0 -n 1 -P "${CORES}" bash -c 'test_replaygain "${@}"' --
 
 	if [[ -f "${REPLAY_TEST_ERRORS}" ]] ; then
 		printf "\n%s${BOLD_RED}%s${NORMAL}%s\n" \
@@ -829,7 +829,7 @@ function replaygain {
 
 	title_add_replaygain
 
-	find "${DIRECTORY}" -name "*.[Ff][Ll][Aa][Cc]" -print | while read i ; do
+	find "${DIRECTORY}" -name "*.[Ff][Ll][Aa][Cc]" -print 2> /dev/null | while read i ; do
 		# Find where the FLAC file is in the DIRECTORY hierarchy
 		FLAC_LOCATION="$(printf "%s" "${i%/*}")"
 
@@ -921,7 +921,7 @@ function compress_flacs {
 	function compress_abort {
 		printf "\n%s${BOLD_GREEN}%s${NORMAL}%s\n" \
 		" " "*" " Control-C received, removing temporary files and exiting script..."
-		find "${DIRECTORY}" -name "*.tmp,fl-ac+en\'c" -exec rm "{}" \;
+		find "${DIRECTORY}" -name "*.tmp,fl-ac+en\'c" -exec rm "{}" \; 2> /dev/null
 		if [[ -f "${VERIFY_ERRORS}" ]] ; then
 			printf "\n%s${BOLD_RED}%s${NORMAL}%s\n" \
 			" " "*" " Errors found in some FLAC files, please check:"
@@ -981,7 +981,7 @@ function compress_flacs {
 	export -f compress_f
 
 	# Run the above function with the configured threads (multithreaded)
-	find "${DIRECTORY}" -name "*.[Ff][Ll][Aa][Cc]" -print0 | xargs -0 -n 1 -P "${CORES}" bash -c 'compress_f "${@}"' --
+	find "${DIRECTORY}" -name "*.[Ff][Ll][Aa][Cc]" -print0 2> /dev/null | xargs -0 -n 1 -P "${CORES}" bash -c 'compress_f "${@}"' --
 	
 	if [[ -f "${VERIFY_ERRORS}" ]] ; then
 		printf "\n%s${BOLD_RED}%s${NORMAL}%s\n" \
@@ -1034,7 +1034,7 @@ function test_flacs {
 	export -f test_f
 
 	# Run the above function with the configured threads (multithreaded)
-	find "${DIRECTORY}" -name "*.[Ff][Ll][Aa][Cc]" -print0 | xargs -0 -n 1 -P "${CORES}" bash -c 'test_f "${@}"' --
+	find "${DIRECTORY}" -name "*.[Ff][Ll][Aa][Cc]" -print0 2> /dev/null | xargs -0 -n 1 -P "${CORES}" bash -c 'test_f "${@}"' --
 
 	if [[ -f "${TEST_ERRORS}" ]] ; then
 		printf "\n%s${BOLD_RED}%s${NORMAL}%s\n" \
@@ -1072,7 +1072,7 @@ function aucdtect {
 
 		# Don't remove WAV files in case user has WAV files there purposefully
 		# The script cannot determine between existing and script-created WAV files
-		WAV_FILES="$(find "${DIRECTORY}" -name "*.[Ww][Aa][Vv]" -print)"
+		WAV_FILES="$(find "${DIRECTORY}" -name "*.[Ww][Aa][Vv]" -print 2> /dev/null)"
 
 		if [[ -f "${AUCDTECT_ERRORS}" ]] ; then
 			printf "\n%s${BOLD_RED}%s${NORMAL}%s\n" \
@@ -1212,7 +1212,7 @@ function aucdtect {
 	export -f aucdtect_f
 
 	# Run the above function with the configured threads (multithreaded)
-	find "${DIRECTORY}" -name "*.[Ff][Ll][Aa][Cc]" -print0 | xargs -0 -n 1 -P "${CORES}" bash -c 'aucdtect_f "${@}"' --
+	find "${DIRECTORY}" -name "*.[Ff][Ll][Aa][Cc]" -print0 2> /dev/null | xargs -0 -n 1 -P "${CORES}" bash -c 'aucdtect_f "${@}"' --
 
 	if [[ -f "${AUCDTECT_ERRORS}" ]] ; then
 		printf "\n%s${BOLD_RED}%s${NORMAL}%s\n" \
@@ -1278,7 +1278,7 @@ function md5_check {
 	export -f md5_c
 
 	# Run the above function with the configured threads (multithreaded)
-	find "${DIRECTORY}" -name "*.[Ff][Ll][Aa][Cc]" -print0 | xargs -0 -n 1 -P "${CORES}" bash -c 'md5_c "${@}"' --
+	find "${DIRECTORY}" -name "*.[Ff][Ll][Aa][Cc]" -print0 2> /dev/null | xargs -0 -n 1 -P "${CORES}" bash -c 'md5_c "${@}"' --
 	
 	if [[ -f "${MD5_ERRORS}" ]] ; then
 		printf "\n%s${BOLD_RED}%s${NORMAL}%s\n" \
@@ -1612,7 +1612,7 @@ function redo_tags {
 	fi
 
 	# Run the "check_tags" function with the configured threads (multithreaded)
-	find "${DIRECTORY}" -name "*.[Ff][Ll][Aa][Cc]" -print0 | xargs -0 -n 1 -P "${CORES}" bash -c 'check_tags "${@}"' --
+	find "${DIRECTORY}" -name "*.[Ff][Ll][Aa][Cc]" -print0 2> /dev/null | xargs -0 -n 1 -P "${CORES}" bash -c 'check_tags "${@}"' --
 
 	# Test for DEPRECATED tag, COVERART in METADATA_ERROR log.  If it
 	# exists, set COVERART_WARNING variable to make script output
@@ -1725,7 +1725,7 @@ function redo_tags {
 	export -f retag_flacs
 	
 	# Run the above function with the configured threads (multithreaded)
-	find "${DIRECTORY}" -name "*.[Ff][Ll][Aa][Cc]" -print0 | xargs -0 -n 1 -P "${CORES}" bash -c 'retag_flacs "${@}"' --
+	find "${DIRECTORY}" -name "*.[Ff][Ll][Aa][Cc]" -print0 2> /dev/null | xargs -0 -n 1 -P "${CORES}" bash -c 'retag_flacs "${@}"' --
 }
 
 #################
@@ -1790,7 +1790,7 @@ function prune_flacs {
 	export -f prune_f
 	
 	# Run the above function with the configured threads (multithreaded)
-	find "${DIRECTORY}" -name "*.[Ff][Ll][Aa][Cc]" -print0 | xargs -0 -n 1 -P "${CORES}" bash -c 'prune_f "${@}"' --
+	find "${DIRECTORY}" -name "*.[Ff][Ll][Aa][Cc]" -print0 2> /dev/null | xargs -0 -n 1 -P "${CORES}" bash -c 'prune_f "${@}"' --
 
 	if [[ -f "${PRUNE_ERRORS}" ]] ; then
 		printf "\n%s${BOLD_RED}%s${NORMAL}%s\n" \
@@ -2382,7 +2382,7 @@ if [[ "${NO_SPECTROGRAM}" == "true"  && "${CREATE_SPECTROGRAM}" == "true" ]] ; t
 fi
 
 # Check if FLAC files exist
-FIND_FLACS="$(find "${DIRECTORY}" -name "*.[Ff][Ll][Aa][Cc]" -print)"
+FIND_FLACS="$(find "${DIRECTORY}" -name "*.[Ff][Ll][Aa][Cc]" -print 2> /dev/null)"
 if [[ -z "${FIND_FLACS}" ]] ; then
 	no_flacs
 	exit 1
