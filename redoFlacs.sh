@@ -1419,15 +1419,30 @@ function redo_tags {
 				# Evaluate TEMP_TAG into the dynamic tag
 				eval "${j}"_TAG='"${TEMP_TAG}"'
 
-				# If tags are not found, log output
-				if [[ -z "$(eval "printf "%s" "\$${j}_TAG"")" ]] ; then
-					printf "%s\n%s\n%s\n" \
-						   "File:  ${i}" \
-						   "Error: ${j} tag not found" \
-						   "------------------------------------------------------------------" \
-						   >> "${METADATA_ERRORS}"
+				# If tags are not found store missing information into an array
+				# to be logged
+				if [[ -z "$(eval "printf "%s" "\$${j}_TAG"")" && "${FILE_PRINTED}" != "true" ]] ; then
+					# First instance of missing tag for current file
+					missingTags=( "${missingTags[@]}"
+						"$(printf "%s" "File:  ${i}")"
+						"$(printf "%s" "Error: ${j} tag not found")" )
+					FILE_PRINTED="true"
+				elif [[ -z "$(eval "printf "%s" "\$${j}_TAG"")" && "${FILE_PRINTED}" == "true" ]] ; then
+					# If more than one missing tag in current file, don't print
+					# out filename
+					missingTags=( "${missingTags[@]}"
+						"$(printf "%s" "       ${j} tag not found")" )
 				fi
 			done
+				# If missingTags array is not empty, there are missing
+				# tags in the current file so log output
+				if [[ -n "${missingTags[@]}" ]] ; then
+					# Add separator to log for each file
+					missingTags=( "${missingTags[@]}"
+						"------------------------------------------------------------------" )
+					# Print array into log file
+					printf "%s\n" "${missingTags[@]}" >> "${METADATA_ERRORS}"
+				fi
 		fi
 	}
 	export -f analyze_tags
@@ -1498,17 +1513,31 @@ function redo_tags {
 						   >> "${METADATA_ERRORS}"
 				fi
 
-				# If tags are not found, log output. Skip output
-				# of COVERART tag as this is a temporary addition to
-				# the tag array (for processing legacy artwork)
-				if [[ -z "$(eval "printf "%s" "\$${j}_TAG"")" && "${j}" != "COVERART" ]] ; then
-					printf "%s\n%s\n%s\n" \
-						   "File:  ${i}" \
-						   "Error: ${j} tag not found" \
-						   "------------------------------------------------------------------" \
-						   >> "${METADATA_ERRORS}"
+				# If tags are not found store missing information into an array
+				# to be logged. Skip output of COVERART tag as this is a temporary
+				# addition to the tag array (for processing legacy artwork)
+				if [[ -z "$(eval "printf "%s" "\$${j}_TAG"")" && "${FILE_PRINTED}" != "true" && "${j}" != "COVERART" ]] ; then
+					# First instance of missing tag for current file
+					missingTags=( "${missingTags[@]}"
+						"$(printf "%s" "File:  ${i}")"
+						"$(printf "%s" "Error: ${j} tag not found")" )
+					FILE_PRINTED="true"
+				elif [[ -z "$(eval "printf "%s" "\$${j}_TAG"")" && "${FILE_PRINTED}" == "true" && "${j}" != "COVERART" ]] ; then
+					# If more than one missing tag in current file, don't print
+					# out filename
+					missingTags=( "${missingTags[@]}"
+						"$(printf "%s" "       ${j} tag not found")" )
 				fi
 			done
+				# If missingTags array is not empty, there are missing
+				# tags in the current file so log output
+				if [[ -n "${missingTags[@]}" ]] ; then
+					# Add separator to log for each file
+					missingTags=( "${missingTags[@]}"
+						"------------------------------------------------------------------" )
+					# Print array into log file
+					printf "%s\n" "${missingTags[@]}" >> "${METADATA_ERRORS}"
+				fi
 		fi
 	}
 	export -f analyze_tags_dont_log_coverart
