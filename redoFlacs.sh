@@ -1364,6 +1364,10 @@ function redo_tags {
 	# to be lost if done when tags are being removed!)
 	trap '' SIGINT
 
+	# Set variable to null (exported for subshell access)
+	# Used when analyzing tags for logging missing tags
+	export FILE_PRINTED="sfdsaf"
+
 	################
 	# ANALYZE TAGS #
 	################
