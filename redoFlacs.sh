@@ -2,7 +2,7 @@
 
 #------------------------------------------------------------
 # Re-compress, Verify, Test, Re-tag, and Clean Up FLAC Files
-#                     Version 0.14.2
+#                     Version 0.15
 #                       sirjaren
 #------------------------------------------------------------
 
@@ -132,7 +132,7 @@ SPECTROGRAM_LOCATION="default"
 #  STATIC VARIABLES  #
 ######################
 # Version
-VERSION="0.14.2"
+VERSION="0.15"
 
 # Export REMOVE_ARTWORK to allow subshell access
 export REMOVE_ARTWORK
