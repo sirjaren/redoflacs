@@ -812,6 +812,11 @@ function replaygain {
 	# Run the above function with the configured threads (multithreaded)
 	find "${DIRECTORY}" -name "*.[Ff][Ll][Aa][Cc]" -print0 2> /dev/null | xargs -0 -n 1 -P "${CORES}" bash -c 'test_replaygain "${@}"' --
 
+	if [[ "${DISPLAY_PERMISSION_DENIED}"  == "true" ]] ; then
+		printf '\n'
+		display_permission_denied
+	fi
+
 	if [[ -f "${REPLAY_TEST_ERRORS}" ]] ; then
 		printf "\n%s${BOLD_RED}%s${NORMAL}%s\n" \
 		" " "*" " There were issues with some of the FLAC files,"
@@ -891,6 +896,11 @@ function replaygain {
 		fi
 	done
 
+	if [[ "${DISPLAY_PERMISSION_DENIED}"  == "true" ]] ; then
+		printf '\n'
+		display_permission_denied
+	fi
+
 	if [[ -f "${REPLAY_ADD_ERRORS}" ]] ; then
 		printf "\n%s${BOLD_RED}%s${NORMAL}%s\n" \
 		" " "*" " There were issues with some of the FLAC files,"
@@ -922,6 +932,12 @@ function compress_flacs {
 		printf "\n%s${BOLD_GREEN}%s${NORMAL}%s\n" \
 		" " "*" " Control-C received, removing temporary files and exiting script..."
 		find "${DIRECTORY}" -name "*.tmp,fl-ac+en\'c" -exec rm "{}" \; 2> /dev/null
+
+		if [[ "${DISPLAY_PERMISSION_DENIED}"  == "true" ]] ; then
+			printf '\n'
+			display_permission_denied
+		fi
+
 		if [[ -f "${VERIFY_ERRORS}" ]] ; then
 			printf "\n%s${BOLD_RED}%s${NORMAL}%s\n" \
 			" " "*" " Errors found in some FLAC files, please check:"
@@ -982,7 +998,12 @@ function compress_flacs {
 
 	# Run the above function with the configured threads (multithreaded)
 	find "${DIRECTORY}" -name "*.[Ff][Ll][Aa][Cc]" -print0 2> /dev/null | xargs -0 -n 1 -P "${CORES}" bash -c 'compress_f "${@}"' --
-	
+
+	if [[ "${DISPLAY_PERMISSION_DENIED}"  == "true" ]] ; then
+		printf '\n'
+		display_permission_denied
+	fi
+
 	if [[ -f "${VERIFY_ERRORS}" ]] ; then
 		printf "\n%s${BOLD_RED}%s${NORMAL}%s\n" \
 		" " "*" " Errors found in some FLAC files, please check:"
@@ -1003,6 +1024,12 @@ function test_flacs {
 	function test_abort {
 		printf "\n%s${BOLD_GREEN}%s${NORMAL}%s\n" \
 		" " "*" " Control-C received, exiting script..."
+
+		if [[ "${DISPLAY_PERMISSION_DENIED}"  == "true" ]] ; then
+			printf '\n'
+			display_permission_denied
+		fi
+
 		if [[ -f "${TEST_ERRORS}" ]] ; then
 			printf "\n%s${BOLD_RED}%s${NORMAL}%s\n" \
 			" " "*" " Errors found in some FLAC files, please check:"
@@ -1035,6 +1062,11 @@ function test_flacs {
 
 	# Run the above function with the configured threads (multithreaded)
 	find "${DIRECTORY}" -name "*.[Ff][Ll][Aa][Cc]" -print0 2> /dev/null | xargs -0 -n 1 -P "${CORES}" bash -c 'test_f "${@}"' --
+
+	if [[ "${DISPLAY_PERMISSION_DENIED}"  == "true" ]] ; then
+		printf '\n'
+		display_permission_denied
+	fi
 
 	if [[ -f "${TEST_ERRORS}" ]] ; then
 		printf "\n%s${BOLD_RED}%s${NORMAL}%s\n" \
@@ -1073,6 +1105,11 @@ function aucdtect {
 		# Don't remove WAV files in case user has WAV files there purposefully
 		# The script cannot determine between existing and script-created WAV files
 		WAV_FILES="$(find "${DIRECTORY}" -name "*.[Ww][Aa][Vv]" -print 2> /dev/null)"
+
+		if [[ "${DISPLAY_PERMISSION_DENIED}"  == "true" ]] ; then
+			printf '\n'
+			display_permission_denied
+		fi
 
 		if [[ -f "${AUCDTECT_ERRORS}" ]] ; then
 			printf "\n%s${BOLD_RED}%s${NORMAL}%s\n" \
@@ -1144,6 +1181,7 @@ function aucdtect {
 
 				# The actual auCDtect command with highest accuracy setting
 				# 2> hides the displayed progress to /dev/null so nothing is shown
+				export MALLOC_CHECK_=0
 				AUCDTECT_CHECK="$("${AUCDTECT_COMMAND}" -m0 "${i%.[Ff][Ll][Aa][Cc]}.wav" 2> /dev/null)"
 
 				# Reads the last line of the above command which tells what
@@ -1179,7 +1217,9 @@ function aucdtect {
 
 						# SoX command to create the spectrogram and place it in
 						# SPECTROGRAM_PICTURE
-						sox "${i}" -n spectrogram -c '' -t "${i}" -p1 -z90 -Z0 -q249 -wHann -x5000 -y1025 -o "${SPECTROGRAM_PICTURE}"
+						# Use the below version of the command to create hi-res spectrograms
+						#sox "${i}" -n spectrogram -c '' -t "${i}" -p1 -z90 -Z0 -q249 -wHann -x5000 -y1025 -o "${SPECTROGRAM_PICTURE}"
+						sox "${i}" -n spectrogram -c '' -t "${i}" -p1 -z90 -Z0 -q249 -wHann -x1800 -y513 -o "${SPECTROGRAM_PICTURE}"
 
 						# Print ISSUE and log error, and show where to find
 						# the created spectrogram of processed FLAC file
@@ -1214,6 +1254,11 @@ function aucdtect {
 	# Run the above function with the configured threads (multithreaded)
 	find "${DIRECTORY}" -name "*.[Ff][Ll][Aa][Cc]" -print0 2> /dev/null | xargs -0 -n 1 -P "${CORES}" bash -c 'aucdtect_f "${@}"' --
 
+	if [[ "${DISPLAY_PERMISSION_DENIED}"  == "true" ]] ; then
+		printf '\n'
+		display_permission_denied
+	fi
+
 	if [[ -f "${AUCDTECT_ERRORS}" ]] ; then
 		printf "\n%s${BOLD_RED}%s${NORMAL}%s\n" \
 		" " "*" " Some FLAC files may be lossy sourced, please check:"
@@ -1234,6 +1279,12 @@ function md5_check {
 	function md5_check_abort {
 		printf "\n%s${BOLD_GREEN}%s${NORMAL}%s\n" \
 		" " "*" " Control-C received, exiting script..."
+
+		if [[ "${DISPLAY_PERMISSION_DENIED}"  == "true" ]] ; then
+			printf '\n'
+			display_permission_denied
+		fi
+
 		if [[ -f "${MD5_ERRORS}" ]] ; then
 			printf "\n%s${BOLD_RED}%s${NORMAL}%s\n" \
 			" " "*" " The MD5 Signature is unset for some FLAC files or there were"
@@ -1279,6 +1330,11 @@ function md5_check {
 
 	# Run the above function with the configured threads (multithreaded)
 	find "${DIRECTORY}" -name "*.[Ff][Ll][Aa][Cc]" -print0 2> /dev/null | xargs -0 -n 1 -P "${CORES}" bash -c 'md5_c "${@}"' --
+
+	if [[ "${DISPLAY_PERMISSION_DENIED}"  == "true" ]] ; then
+		printf '\n'
+		display_permission_denied
+	fi
 	
 	if [[ -f "${MD5_ERRORS}" ]] ; then
 		printf "\n%s${BOLD_RED}%s${NORMAL}%s\n" \
@@ -1306,6 +1362,12 @@ function coverart_remove_conflict {
 			# exit and warn the user you can't specify whether you want to
 			# remove artwork, yet keep the COVERART tag in USER CONFIGURATION
 			if [[ "${REMOVE_ARTWORK}" == "true" ]] ; then
+
+				if [[ "${DISPLAY_PERMISSION_DENIED}"  == "true" ]] ; then
+					printf '\n'
+					display_permission_denied
+				fi
+	
 				# Display COVERART tag warning
 				coverart_warning
 
@@ -1628,6 +1690,12 @@ function redo_tags {
 		done < "${METADATA_ERRORS}"
 	fi
 
+	if [[ "${DISPLAY_PERMISSION_DENIED}"  == "true" ]] ; then
+		printf '\n'
+		display_permission_denied
+	fi
+	
+
 	if [[ -f "${METADATA_ERRORS}"  && "${COVERART_WARNING}" == "true" ]] ; then
 		# Display COVERART warning function and metadata issues
 		printf ''
@@ -1739,6 +1807,12 @@ function prune_flacs {
 	function prune_abort {
 		printf "\n%s${BOLD_GREEN}%s${NORMAL}%s\n" \
 		" " "*" " Control-C received, exiting script..."
+
+		if [[ "${DISPLAY_PERMISSION_DENIED}"  == "true" ]] ; then
+			printf '\n'
+			display_permission_denied
+		fi
+	
 		if [[ -f "${PRUNE_ERRORS}" ]] ; then
 			printf "\n%s${BOLD_RED}%s${NORMAL}%s\n" \
 			" " "*" " There were issues with some of the FLAC files,"
@@ -1791,6 +1865,11 @@ function prune_flacs {
 	
 	# Run the above function with the configured threads (multithreaded)
 	find "${DIRECTORY}" -name "*.[Ff][Ll][Aa][Cc]" -print0 2> /dev/null | xargs -0 -n 1 -P "${CORES}" bash -c 'prune_f "${@}"' --
+
+	if [[ "${DISPLAY_PERMISSION_DENIED}"  == "true" ]] ; then
+		printf '\n'
+		display_permission_denied
+	fi
 
 	if [[ -f "${PRUNE_ERRORS}" ]] ; then
 		printf "\n%s${BOLD_RED}%s${NORMAL}%s\n" \
@@ -2381,11 +2460,47 @@ if [[ "${NO_SPECTROGRAM}" == "true"  && "${CREATE_SPECTROGRAM}" == "true" ]] ; t
 	exit 1
 fi
 
-# Check if FLAC files exist
+# Function to display missing files/directories this script could
+# not access (AKA 'permission denied')
+function display_permission_denied {
+	printf "%s\n" "${FIND_PERMISSION_DENIED}" | while read i ; do
+		DENIED_LOCATION="${i#find: \`}"
+		DENIED_LOCATION="${DENIED_LOCATION%\': Permission denied}"
+		printf "%s${YELLOW}%s${NORMAL}%s\n" \
+		" " "*" " Permission denied: ${DENIED_LOCATION}"
+	done
+}
+
+# Display only permission denied errors
+FIND_PERMISSION_DENIED="$(find "${DIRECTORY}" -name "*.[Ff][Ll][Aa][Cc]" -print 2>&1 >/dev/null)"
+# Display only found FLACS
 FIND_FLACS="$(find "${DIRECTORY}" -name "*.[Ff][Ll][Aa][Cc]" -print 2> /dev/null)"
-if [[ -z "${FIND_FLACS}" ]] ; then
-	no_flacs
-	exit 1
+
+# Check if there are any files/directories with permission denied errors
+# and if so, display them to the user if there are no other FLACS to
+# be found and exit.  Otherwise, continue with script and display which
+# files/directories could not be accessed after script completion, as
+# well as log them
+if [[ -n "${FIND_PERMISSION_DENIED}" ]] ; then
+	if [[ -z "${FIND_FLACS}" ]] ; then
+		# No FLACS found
+		no_flacs
+		printf '\n'
+		display_permission_denied
+		exit 1
+	else
+		# Some FLACS were found, continue with script
+		# Below variable is to allow script to display which files/directories
+		# cannot be accessed when script completes
+		DISPLAY_PERMISSION_DENIED="true"
+	fi
+else
+	# No permission denied issues, but there weren't any FLACS
+	# to be processed
+	if [[ -z "${FIND_FLACS}" ]] ; then
+		no_flacs
+		exit 1
+	fi
 fi
 
 ###########################
@@ -2412,7 +2527,7 @@ elif [[ "${REALLYALL}" == "true" ]] ; then
 	REDO="true"
 	AUCDTECT="true"
 	# This is needed to let script know that we want auCDtect
-	# to create a spectrogram (ie "-A, --aucdtect-spectrogram)
+	# to create a spectrogram (ie "-A, --aucdtect-spectrogram")
 	CREATE_SPECTROGRAM="true"
 fi
 
