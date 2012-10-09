@@ -104,13 +104,6 @@ CORES=2
 # the user's HOME directory.
 ERROR_LOG="${HOME}"
 
-# Set where the auCDtect command is located.
-# By default, the script will look in $PATH
-# An example of changing where to find auCDtect
-# is below:
-# AUCDTECT_COMMAND="/${HOME}/auCDtect"
-AUCDTECT_COMMAND="$(command -v auCDtect)"
-
 # Set where the created spectrogram files should
 # be placed. By default, the spectrogram PNG files
 # will be placed in the same directory as the tested
@@ -139,9 +132,6 @@ export REMOVE_ARTWORK
 
 # Export COMPRESSION_LEVEL to allow subshell access
 export COMPRESSION_LEVEL
-
-# Export auCDtect command to allow subshell access
-export AUCDTECT_COMMAND
 
 # Export SPECTROGRAM_LOCATION to allow subshell access
 export SPECTROGRAM_LOCATION
@@ -1218,8 +1208,8 @@ function aucdtect {
 						# SoX command to create the spectrogram and place it in
 						# SPECTROGRAM_PICTURE
 						# Use the below version of the command to create hi-res spectrograms
-						#sox "${i}" -n spectrogram -c '' -t "${i}" -p1 -z90 -Z0 -q249 -wHann -x5000 -y1025 -o "${SPECTROGRAM_PICTURE}"
-						sox "${i}" -n spectrogram -c '' -t "${i}" -p1 -z90 -Z0 -q249 -wHann -x1800 -y513 -o "${SPECTROGRAM_PICTURE}"
+						#"${SOX_COMMAND}" "${i}" -n spectrogram -c '' -t "${i}" -p1 -z90 -Z0 -q249 -wHann -x5000 -y1025 -o "${SPECTROGRAM_PICTURE}"
+						"${SOX_COMMAND}" "${i}" -n spectrogram -c '' -t "${i}" -p1 -z90 -Z0 -q249 -wHann -x1800 -y513 -o "${SPECTROGRAM_PICTURE}"
 
 						# Print ISSUE and log error, and show where to find
 						# the created spectrogram of processed FLAC file
@@ -2541,11 +2531,17 @@ fi
 
 if [[ "${AUCDTECT}" == "true" ]] ; then
 	# Check if auCDtect is found/installed
-	if [[ -f "${AUCDTECT_COMMAND}" ]] ; then
+	export AUCDTECT_COMMAND="$(command -v auCDtect)"
+	if [[ -z "${AUCDTECT_COMMAND}" ]] ; then
+		# Check alternate spelling
+		export AUCDTECT_COMMAND="$(command -v aucdtect)"
+	fi
+
+	if [[ -n "${AUCDTECT_COMMAND}" ]] ; then
 		# If "-A, --aucdtect-spectrogram" was called
 		# make sure SoX is installed before starting
 		if [[ "${CREATE_SPECTROGRAM}" == "true" ]] ; then
-			SOX_COMMAND="$(command -v sox)"
+			export SOX_COMMAND="$(command -v sox)"
 			if [[ -z "${SOX_COMMAND}" ]] ; then
 				# SoX can't be found, exit
 				printf "%s${BOLD_RED}%s${NORMAL}%s\n" \
@@ -2555,15 +2551,15 @@ if [[ "${AUCDTECT}" == "true" ]] ; then
 				exit 1
 			fi
 		fi
+
 		# Run auCDtect function/command
 		aucdtect
 	else
+		# auCDtect can't be found, exit
 		printf "%s${BOLD_RED}%s${NORMAL}%s\n" \
-		" " "*" " It appears auCDtect is not installed or you have not"
+		" " "*" " It appears auCDtect is not installed. Please verify you"
 		printf "%s${BOLD_RED}%s${NORMAL}%s\n" \
-		" " "*" " configured this script to find it. Please verify you"
-		printf "%s${BOLD_RED}%s${NORMAL}%s\n" \
-		" " "*" " have this program installed."
+		" " "*" " have this program installed and can be found in \$PATH"
 		exit 1
 	fi
 fi
