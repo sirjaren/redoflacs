@@ -802,12 +802,11 @@ function replaygain {
 	# Run the above function with the configured threads (multithreaded)
 	find "${DIRECTORY}" -name "*.[Ff][Ll][Aa][Cc]" -print0 2> /dev/null | xargs -0 -n 1 -P "${CORES}" bash -c 'test_replaygain "${@}"' --
 
-	if [[ "${DISPLAY_PERMISSION_DENIED}"  == "true" ]] ; then
-		printf '\n'
-		display_permission_denied
-	fi
-
 	if [[ -f "${REPLAY_TEST_ERRORS}" ]] ; then
+		if [[ "${DISPLAY_PERMISSION_DENIED}"  == "true" ]] ; then
+			printf '\n'
+			display_permission_denied
+		fi
 		printf "\n%s${BOLD_RED}%s${NORMAL}%s\n" \
 		" " "*" " There were issues with some of the FLAC files,"
 		printf "%s${BOLD_RED}%s${NORMAL}%s\n" \
@@ -821,70 +820,75 @@ function replaygain {
 	# from making the script think some FLAC files have already had
 	# ReplayGain tags added to them.  Due to the nature of processing the
 	# album tags as a whole, this MUST be done without multithreading.
-
 	title_add_replaygain
 
-	find "${DIRECTORY}" -name "*.[Ff][Ll][Aa][Cc]" -print 2> /dev/null | while read i ; do
-		# Find where the FLAC file is in the DIRECTORY hierarchy
-		FLAC_LOCATION="$(printf "%s" "${i%/*}")"
+	function process_replaygain {
+		for i; do
+			# Find where the FLAC file is in the DIRECTORY hierarchy
+			FLAC_LOCATION="$(printf "%s" "${i%/*}")"
 
-		# Test if DIRECTORY is the current working directory (AKA: ./)
-		# as well as check if FLAC_LOCATION is equal to "./"
-		if [[ "${DIRECTORY}" == "." && "${FLAC_LOCATION}" = "." ]] ; then
-			# We want to be able to display a directory path, so we create
-			# the pathname to the FLAC files
-			FLAC_LOCATION="${PWD}"
-		fi
-
-		# Find the basename directory from FLAC_LOCATION (this is the supposed
-		# album name to be printed)
-		ALBUM_BASENAME="$(printf "%s" "${FLAC_LOCATION##*/}")"
-
-		# Check if FLAC files have existing ReplayGain tags
-		REPLAYGAIN_REFERENCE_LOUDNESS="$(metaflac --show-tag=REPLAYGAIN_REFERENCE_LOUDNESS "${i}")"
-		REPLAYGAIN_REFERENCE_LOUDNESS="${REPLAYGAIN_REFERENCE_LOUDNESS#*=}"
-
-		REPLAYGAIN_TRACK_GAIN="$(metaflac --show-tag=REPLAYGAIN_TRACK_GAIN "${i}")"
-		REPLAYGAIN_TRACK_GAIN="${REPLAYGAIN_TRACK_GAIN#*=}"
-
-		REPLAYGAIN_TRACK_PEAK="$(metaflac --show-tag=REPLAYGAIN_TRACK_PEAK "${i}")"
-		REPLAYGAIN_TRACK_PEAK="${REPLAYGAIN_TRACK_PEAK#*=}"
-
-		REPLAYGAIN_ALBUM_GAIN="$(metaflac --show-tag=REPLAYGAIN_ALBUM_GAIN "${i}")"
-		REPLAYGAIN_ALBUM_GAIN="${REPLAYGAIN_ALBUM_GAIN#*=}"
-
-		REPLAYGAIN_ALBUM_PEAK="$(metaflac --show-tag=REPLAYGAIN_ALBUM_PEAK "${i}")"
-		REPLAYGAIN_ALBUM_PEAK="${REPLAYGAIN_ALBUM_PEAK#*=}"
-
-		if [[ -n "${REPLAYGAIN_REFERENCE_LOUDNESS}" && -n "${REPLAYGAIN_TRACK_GAIN}" && \
-			  -n "${REPLAYGAIN_TRACK_PEAK}" && -n "${REPLAYGAIN_ALBUM_GAIN}" && \
-			  -n "${REPLAYGAIN_ALBUM_PEAK}" ]] ; then
-			# All ReplayGain tags accounted for, skip this file
-			continue
-		elif [[ "${REPLAYGAIN_ALBUM_FAILED}" == "${ALBUM_BASENAME} FAILED" ]] ; then
-			# This album (directory of FLACS) had at LEAST one FLAC fail, so skip
-			# files that are in this album (directory)
-			continue
-		else
-			# Add ReplayGain tags to the files in this directory (which SHOULD include
-			# the current working FLAC file [$i])
-			print_add_replaygain
-			ERROR="$((metaflac --add-replay-gain "${FLAC_LOCATION}"/*.[Ff][Ll][Aa][Cc]) 2>&1)"
-			if [[ -n "${ERROR}" ]] ; then
-				print_failed_replaygain
-				printf "%s\n%s\n%s\n" \
-					   "Directory: ${FLAC_LOCATION}" \
-					   "Error:     ${ERROR}" \
-					   "------------------------------------------------------------------" \
-					   >> "${REPLAY_ADD_ERRORS}"
-				# Set variable to let script know this album failed and not NOT
-				# continue checking the files in this album
-				REPLAYGAIN_ALBUM_FAILED="${ALBUM_BASENAME} FAILED"
-			else
-				print_ok_replaygain
+			# Test if DIRECTORY is the current working directory (AKA: ./)
+			# as well as check if FLAC_LOCATION is equal to "./"
+			if [[ "${DIRECTORY}" == "." && "${FLAC_LOCATION}" = "." ]] ; then
+				# We want to be able to display a directory path, so we create
+				# the pathname to the FLAC files
+				FLAC_LOCATION="${PWD}"
 			fi
-		fi
-	done
+
+			# Find the basename directory from FLAC_LOCATION (this is the supposed
+			# album name to be printed)
+			ALBUM_BASENAME="$(printf "%s" "${FLAC_LOCATION##*/}")"
+
+			# Check if FLAC files have existing ReplayGain tags
+			REPLAYGAIN_REFERENCE_LOUDNESS="$(metaflac --show-tag=REPLAYGAIN_REFERENCE_LOUDNESS "${i}")"
+			REPLAYGAIN_REFERENCE_LOUDNESS="${REPLAYGAIN_REFERENCE_LOUDNESS#*=}"
+
+			REPLAYGAIN_TRACK_GAIN="$(metaflac --show-tag=REPLAYGAIN_TRACK_GAIN "${i}")"
+			REPLAYGAIN_TRACK_GAIN="${REPLAYGAIN_TRACK_GAIN#*=}"
+
+			REPLAYGAIN_TRACK_PEAK="$(metaflac --show-tag=REPLAYGAIN_TRACK_PEAK "${i}")"
+			REPLAYGAIN_TRACK_PEAK="${REPLAYGAIN_TRACK_PEAK#*=}"
+
+			REPLAYGAIN_ALBUM_GAIN="$(metaflac --show-tag=REPLAYGAIN_ALBUM_GAIN "${i}")"
+			REPLAYGAIN_ALBUM_GAIN="${REPLAYGAIN_ALBUM_GAIN#*=}"
+
+			REPLAYGAIN_ALBUM_PEAK="$(metaflac --show-tag=REPLAYGAIN_ALBUM_PEAK "${i}")"
+			REPLAYGAIN_ALBUM_PEAK="${REPLAYGAIN_ALBUM_PEAK#*=}"
+
+			if [[ -n "${REPLAYGAIN_REFERENCE_LOUDNESS}" && -n "${REPLAYGAIN_TRACK_GAIN}" && \
+				  -n "${REPLAYGAIN_TRACK_PEAK}" && -n "${REPLAYGAIN_ALBUM_GAIN}" && \
+				  -n "${REPLAYGAIN_ALBUM_PEAK}" ]] ; then
+				# All ReplayGain tags accounted for, skip this file
+				continue
+			elif [[ "${REPLAYGAIN_ALBUM_FAILED}" == "${ALBUM_BASENAME} FAILED" ]] ; then
+				# This album (directory of FLACS) had at LEAST one FLAC fail, so skip
+				# files that are in this album (directory)
+				continue
+			else
+				# Add ReplayGain tags to the files in this directory (which SHOULD include
+				# the current working FLAC file [$i])
+				print_add_replaygain
+				ERROR="$((metaflac --add-replay-gain "${FLAC_LOCATION}"/*.[Ff][Ll][Aa][Cc]) 2>&1)"
+				if [[ -n "${ERROR}" ]] ; then
+					print_failed_replaygain
+					printf "%s\n%s\n%s\n" \
+						   "Directory: ${FLAC_LOCATION}" \
+						   "Error:     ${ERROR}" \
+						   "------------------------------------------------------------------" \
+						   >> "${REPLAY_ADD_ERRORS}"
+					# Set variable to let script know this album failed and not NOT
+					# continue checking the files in this album
+					REPLAYGAIN_ALBUM_FAILED="${ALBUM_BASENAME} FAILED"
+				else
+					print_ok_replaygain
+				fi
+			fi
+		done
+	}
+	export -f process_replaygain
+
+	# Run the above function (single-threaded)
+	find "${DIRECTORY}" -name "*.[Ff][Ll][Aa][Cc]" -print0 2> /dev/null | xargs -0 -n 1 bash -c 'process_replaygain "${@}"' --
 
 	if [[ "${DISPLAY_PERMISSION_DENIED}"  == "true" ]] ; then
 		printf '\n'
@@ -1094,7 +1098,7 @@ function aucdtect {
 
 		# Don't remove WAV files in case user has WAV files there purposefully
 		# The script cannot determine between existing and script-created WAV files
-		WAV_FILES="$(find "${DIRECTORY}" -name "*.[Ww][Aa][Vv]" -print 2> /dev/null)"
+		WAV_FILES="$(find "${DIRECTORY}" -name "*.[Ww][Aa][Vv]" -print0 2> /dev/null | xargs -0 -n 1)"
 
 		if [[ "${DISPLAY_PERMISSION_DENIED}"  == "true" ]] ; then
 			printf '\n'
@@ -2462,7 +2466,7 @@ function display_permission_denied {
 }
 
 # Display only permission denied errors
-FIND_PERMISSION_DENIED="$(find "${DIRECTORY}" -name "*.[Ff][Ll][Aa][Cc]" -print 2>&1 >/dev/null)"
+FIND_PERMISSION_DENIED="$(find "${DIRECTORY}" 2>&1 >/dev/null)"
 # Display only found FLACS
 FIND_FLACS="$(find "${DIRECTORY}" -name "*.[Ff][Ll][Aa][Cc]" -print 2> /dev/null)"
 
