@@ -1182,11 +1182,12 @@ function aucdtect {
 				# The actual auCDtect command with highest accuracy setting
 				# 2> hides the displayed progress to /dev/null so nothing is shown
 				export MALLOC_CHECK_=0
-				AUCDTECT_CHECK="$("${AUCDTECT_COMMAND}" -m0 "${i%.[Ff][Ll][Aa][Cc]}.wav" 2> /dev/null)"
+				mapfile -n0 -t AUCDTECT_CHECK < <("${AUCDTECT_COMMAND}" -m0 "${i%.[Ff][Ll][Aa][Cc]}.wav" 2> /dev/null)
 
-				# Reads the last line of the above command which tells what
-				# auCDtect came up with for the WAV file
-				ERROR="$(printf "%s" "${AUCDTECT_CHECK}" | tail -n1)"
+				# Print last "good" value in the AUCDTECT_CHECK array
+				# ARRAY [ <TOTAL ARRAY ITEMS> - <2 LAST VALUES> ] == <LAST "GOOD" VALUE>
+				# (AKA - the last line from auCDtect's output
+				ERROR="$(printf "%s" "${AUCDTECT_CHECK[$((${#AUCDTECT_CHECK[@]} - 2))]}")"
 
 				# There is an issue with the processed FLAC file
 				if [[ "${ERROR}" != "This track looks like CDDA with probability 100%" ]] ; then
@@ -2548,7 +2549,6 @@ fi
 # Check for the number of CORES to use in this script
 find_cores
 
-echo "CORES: $CORES"
 ###########################
 #  END PRE-SCRIPT CHECKS  #
 ###########################
