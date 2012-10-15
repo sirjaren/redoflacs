@@ -2322,6 +2322,7 @@ fi
 # Check if each command can be found in $PATH
 SLEEP_EXISTS="$(command -v sleep)"
 STTY_EXISTS="$(command -v stty)"
+STAT_EXISTS="$(command -v stat)"
 FIND_EXISTS="$(command -v find)"
 XARGS_EXISTS="$(command -v xargs)"
 METAFLAC_EXISTS="$(command -v metaflac)"
@@ -2335,6 +2336,10 @@ fi
 
 if [[ -z "${STTY_EXISTS}" ]] ; then
 	command_exists_array=( "${command_exists_array[@]}" "You can generally install \"stty\" with the \"coreutils\" package." )
+fi
+
+if [[ -z "${STAT_EXISTS}" ]] ; then
+	command_exists_array=( "${command_exists_array[@]}" "You can generally install \"stat\" with the \"coreutils\" package." )
 fi
 
 if [[ -z "${FIND_EXISTS}" ]] ; then
