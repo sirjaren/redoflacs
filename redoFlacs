@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 
 #------------------------------------------------------------
 # Re-compress, Verify, Test, Re-tag, and Clean Up FLAC Files
