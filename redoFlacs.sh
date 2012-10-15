@@ -94,11 +94,6 @@ REMOVE_ARTWORK="true"
 # compression.  The default is 8.
 COMPRESSION_LEVEL=8
 
-# Set the number of threads/cores to use
-# when running this script.  The default
-# number of threads/cores used is 2
-CORES=2
-
 # Set the where you want the error logs to
 # be placed. By default, they are placed in
 # the user's HOME directory.
@@ -117,6 +112,17 @@ ERROR_LOG="${HOME}"
 #
 # See "--help" or "-h" for more information.
 SPECTROGRAM_LOCATION="default"
+
+# Set the number of threads/cores to use
+# when running this script.  The default
+# number of threads/cores used is taken from the number
+# of cores found in /proc/cpuinfo.  If /proc/cpuinfo
+# does not exist, or /proc is not mounted, 2 cores/threads
+# will used.  Uncomment to override the above behavior and
+# set a specific number of threads/cores to use.
+
+# CORES=2
+
 ##########################
 #  END OF CONFIGURATION  #
 ##########################
@@ -2166,6 +2172,48 @@ function print_version {
 	printf "%s\n" "Version ${VERSION}"
 }
 
+######################################
+#  DETERMINE NUMBER OF CORES TO USE  #
+######################################
+function find_cores {
+	# Check if CORES was set under USER CONFIGURATION
+	if [[ -z "$CORES" ]] ; then
+		# User did NOT set CORES, check /proc/cpuinfo
+
+		# Check if /proc is mounted by comparing device numbers of
+		# /proc and / and see if they don't match (ie, /proc is mounted)
+		if [[ "$(stat -c %d%D /proc)" == "$(stat -c %d%D /)" ]] ; then
+			# /proc is not mounted
+			CORES=2
+		else
+			# /proc is mounted, check for cpuinfo
+			if [[ ! -f /proc/cpuinfo ]] ; then
+				# /proc/cpuinfo doesn't exist
+				CORES=2
+			else
+				# /proc/cpuinfo exists, find total number
+				# of cores to use
+
+				# Store contents of /proc/cpuinfo into
+				# CORES_ARRAY array
+				mapfile -n0 -t CORES_ARRAY < /proc/cpuinfo
+
+				# For each line, if matched string is found,
+				# add processor number to CORES variable
+				for i in "${CORES_ARRAY[@]}" ; do
+					if [[ "${i}" == processor$'\t':\ * ]] ; then
+						CORES="${i#processor$'\t': }"
+					fi
+				done
+
+				# Add +1 to CORES since the number of useable cores
+				# starts at 0
+				CORES="$(($CORES + 1))"
+			fi
+		fi
+	fi
+}
+
 #######################
 #  PRE-SCRIPT CHECKS  #
 #######################
@@ -2497,6 +2545,10 @@ else
 	fi
 fi
 
+# Check for the number of CORES to use in this script
+find_cores
+
+echo "CORES: $CORES"
 ###########################
 #  END PRE-SCRIPT CHECKS  #
 ###########################
