@@ -307,6 +307,7 @@ function print_add_replaygain {
 	MAX_FILENAME_LENGTH="$((${COLUMNS} - 43))"
 
 	FILENAME="${i##*/}"
+	# Plus '12' below to account for ' [Directory]'
 	FILENAME_LENGTH="${#FILENAME}"
 
 	if [[ "${FILENAME_LENGTH}" -gt "${MAX_FILENAME_LENGTH}" ]] ; then
@@ -376,11 +377,12 @@ function print_failed_replaygain {
 	COLUMNS="${COLUMNS/%;*}"
 
 	# This is the number of $COLUMNS minus the indent (7) minus length of the printed
-	# message, [ FAILED ] (10) minus 2 (leaves a gap and the gives room for the
+	# message, [ FAILED ] (10) minus ' [Directory]' (12) minus 2 (leaves a gap and the gives room for the
 	# ellipsis (…) and cursor)
-	MAX_FILENAME_LENGTH="$((${COLUMNS} - 19))"
+	MAX_FILENAME_LENGTH="$((${COLUMNS} - 31))"
 
 	FILENAME="${i##*/}"
+	# Plus '12' below to account for ' [Directory]'
 	FILENAME_LENGTH="${#FILENAME}"
 
 	if [[ "${FILENAME_LENGTH}" -gt "${MAX_FILENAME_LENGTH}" ]] ; then
@@ -450,11 +452,12 @@ function print_ok_replaygain {
 	COLUMNS="${COLUMNS/%;*}"
 
 	# This is the number of $COLUMNS minus the indent (7) minus length of the printed
-	# message, [ OK ] (6) minus 2 (leaves a gap and the gives room for the
+	# message, [ OK ] (6) minus ' [Directory]' (12) minus 2 (leaves a gap and the gives room for the
 	# ellipsis (…) and cursor)
-	MAX_FILENAME_LENGTH="$((${COLUMNS} - 15))"
+	MAX_FILENAME_LENGTH="$((${COLUMNS} - 27))"
 
 	FILENAME="${i##*/}"
+	# Plus '12' below to account for ' [Directory]'
 	FILENAME_LENGTH="${#FILENAME}"
 
 	if [[ "${FILENAME_LENGTH}" -gt "${MAX_FILENAME_LENGTH}" ]] ; then
