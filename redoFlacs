@@ -195,11 +195,9 @@ function title_test_replaygain {
 	" " "*" " Verifying FLAC Files can have ReplayGain Tags added :: " "[${CORES} Thread(s)]"
 }
 
-# This is NOT multithreaded (1 thread only)
-# This is intentional
 function title_add_replaygain {
 	printf "%s${BOLD_GREEN}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}\n" \
-	" " "*" " Applying ReplayGain values by album directory :: " "[1 Thread(s)]"
+	" " "*" " Applying ReplayGain values by album directory :: " "[${CORES} Thread(s)]"
 }
 
 function title_analyze_tags {
@@ -305,7 +303,7 @@ function print_add_replaygain {
 	# ellipsis (…) and cursor)
 	MAX_FILENAME_LENGTH="$((${COLUMNS} - 43))"
 
-	FILENAME="${FLAC_LOCATION##*/}"
+	FILENAME="${i##*/}"
 	FILENAME_LENGTH="${#FILENAME}"
 
 	if [[ "${FILENAME_LENGTH}" -gt "${MAX_FILENAME_LENGTH}" ]] ; then
@@ -379,7 +377,7 @@ function print_failed_replaygain {
 	# ellipsis (…) and cursor)
 	MAX_FILENAME_LENGTH="$((${COLUMNS} - 19))"
 
-	FILENAME="${FLAC_LOCATION##*/}"
+	FILENAME="${i##*/}"
 	FILENAME_LENGTH="${#FILENAME}"
 
 	if [[ "${FILENAME_LENGTH}" -gt "${MAX_FILENAME_LENGTH}" ]] ; then
@@ -453,7 +451,7 @@ function print_ok_replaygain {
 	# ellipsis (…) and cursor)
 	MAX_FILENAME_LENGTH="$((${COLUMNS} - 15))"
 
-	FILENAME="${FLAC_LOCATION##*/}"
+	FILENAME="${i##*/}"
 	FILENAME_LENGTH="${#FILENAME}"
 
 	if [[ "${FILENAME_LENGTH}" -gt "${MAX_FILENAME_LENGTH}" ]] ; then
@@ -690,6 +688,7 @@ function print_prune_flac {
 export -f print_compressing_flac
 export -f print_test_replaygain
 export -f print_add_replaygain
+export -f print_failed_replaygain
 export -f print_testing_flac
 export -f print_failed_flac
 export -f print_checking_md5
@@ -775,6 +774,10 @@ function countdown_metadata {
 # ReplayGain values (multi-disc albums have their own ReplayGain) as well
 # as make the tracks have their own ReplayGain values individually.
 function replaygain {
+	#####################
+	#  TEST REPLAYGAIN  #
+	#####################
+
 	title_test_replaygain
 
 	# Trap SIGINT (Control-C) to abort cleanly
@@ -822,79 +825,56 @@ function replaygain {
 		exit 1
 	fi
 
-	# The below stuff cannot be done in parallel to prevent race conditions
-	# from making the script think some FLAC files have already had
-	# ReplayGain tags added to them.  Due to the nature of processing the
-	# album tags as a whole, this MUST be done without multithreading.
+	########################
+	#  PROCESS REPLAYGAIN  #
+	########################
+
 	title_add_replaygain
+
+	# Make printing pretty if specified DIRECTORY is either:
+	# "." or "./"
+	if [[ "${DIRECTORY}" == "." || "${DIRECTORY}" == "./" ]] ; then
+		DIRECTORY="${PWD}"
+	fi
+
+	# Find all the directories in which to process the FLAC files. This will allow
+	# multithreading when applying the ReplayGain tags without fear of race
+	# conditions (exported for subshell access)
+	export REPLAYGAIN_DIRECTORIES="$(find "${DIRECTORY}" -name "*.[Ff][Ll][Aa][Cc]" -print 2> /dev/null | \
+		while read i ; do
+			if [[ "${PROCESSED_DIRECTORY}" == "${i%/*}" ]] ; then
+				continue
+			else
+				printf "%s\n" "${i%/*}"
+			fi
+			local PROCESSED_DIRECTORY="${i%/*}"
+		done
+	)"
 
 	function process_replaygain {
 		for i; do
-			# Find where the FLAC file is in the DIRECTORY hierarchy
-			FLAC_LOCATION="$(printf "%s" "${i%/*}")"
-
-			# Test if DIRECTORY is the current working directory (AKA: ./)
-			# as well as check if FLAC_LOCATION is equal to "./"
-			if [[ "${DIRECTORY}" == "." && "${FLAC_LOCATION}" = "." ]] ; then
-				# We want to be able to display a directory path, so we create
-				# the pathname to the FLAC files
-				FLAC_LOCATION="${PWD}"
-			fi
-
-			# Find the basename directory from FLAC_LOCATION (this is the supposed
-			# album name to be printed)
-			ALBUM_BASENAME="$(printf "%s" "${FLAC_LOCATION##*/}")"
-
-			# Check if FLAC files have existing ReplayGain tags
-			REPLAYGAIN_REFERENCE_LOUDNESS="$(metaflac --show-tag=REPLAYGAIN_REFERENCE_LOUDNESS "${i}")"
-			REPLAYGAIN_REFERENCE_LOUDNESS="${REPLAYGAIN_REFERENCE_LOUDNESS#*=}"
-
-			REPLAYGAIN_TRACK_GAIN="$(metaflac --show-tag=REPLAYGAIN_TRACK_GAIN "${i}")"
-			REPLAYGAIN_TRACK_GAIN="${REPLAYGAIN_TRACK_GAIN#*=}"
-
-			REPLAYGAIN_TRACK_PEAK="$(metaflac --show-tag=REPLAYGAIN_TRACK_PEAK "${i}")"
-			REPLAYGAIN_TRACK_PEAK="${REPLAYGAIN_TRACK_PEAK#*=}"
-
-			REPLAYGAIN_ALBUM_GAIN="$(metaflac --show-tag=REPLAYGAIN_ALBUM_GAIN "${i}")"
-			REPLAYGAIN_ALBUM_GAIN="${REPLAYGAIN_ALBUM_GAIN#*=}"
-
-			REPLAYGAIN_ALBUM_PEAK="$(metaflac --show-tag=REPLAYGAIN_ALBUM_PEAK "${i}")"
-			REPLAYGAIN_ALBUM_PEAK="${REPLAYGAIN_ALBUM_PEAK#*=}"
-
-			if [[ -n "${REPLAYGAIN_REFERENCE_LOUDNESS}" && -n "${REPLAYGAIN_TRACK_GAIN}" && \
-				  -n "${REPLAYGAIN_TRACK_PEAK}" && -n "${REPLAYGAIN_ALBUM_GAIN}" && \
-				  -n "${REPLAYGAIN_ALBUM_PEAK}" ]] ; then
-				# All ReplayGain tags accounted for, skip this file
-				continue
-			elif [[ "${REPLAYGAIN_ALBUM_FAILED}" == "${ALBUM_BASENAME} FAILED" ]] ; then
-				# This album (directory of FLACS) had at LEAST one FLAC fail, so skip
-				# files that are in this album (directory)
-				continue
+			print_add_replaygain
+			ERROR="$((metaflac --add-replay-gain "${i}"/*.[Ff][Ll][Aa][Cc]) 2>&1)"
+			if [[ -n "${ERROR}" ]] ; then
+				print_failed_replaygain
+				printf "%s\n%s\n%s\n" \
+					   "Directory: ${i}" \
+					   "Error:     ${ERROR}" \
+					   "------------------------------------------------------------------" \
+					   >> "${REPLAY_ADD_ERRORS}"
 			else
-				# Add ReplayGain tags to the files in this directory (which SHOULD include
-				# the current working FLAC file [$i])
-				print_add_replaygain
-				ERROR="$((metaflac --add-replay-gain "${FLAC_LOCATION}"/*.[Ff][Ll][Aa][Cc]) 2>&1)"
-				if [[ -n "${ERROR}" ]] ; then
-					print_failed_replaygain
-					printf "%s\n%s\n%s\n" \
-						   "Directory: ${FLAC_LOCATION}" \
-						   "Error:     ${ERROR}" \
-						   "------------------------------------------------------------------" \
-						   >> "${REPLAY_ADD_ERRORS}"
-					# Set variable to let script know this album failed and not NOT
-					# continue checking the files in this album
-					REPLAYGAIN_ALBUM_FAILED="${ALBUM_BASENAME} FAILED"
-				else
-					print_ok_replaygain
-				fi
+				print_ok_replaygain
 			fi
 		done
 	}
 	export -f process_replaygain
 
-	# Run the above function (single-threaded)
-	find "${DIRECTORY}" -name "*.[Ff][Ll][Aa][Cc]" -print0 2> /dev/null | xargs -0 -n 1 bash -c 'process_replaygain "${@}"' --
+	# Run the above function with the configured threads (multithreaded)
+	printf "%s\n" "${REPLAYGAIN_DIRECTORIES}" | \
+		while read i ; do
+			printf "%s\n" "\"${i}\""
+		done | \
+		xargs -n 1 -P "${CORES}" bash -c 'process_replaygain "${@}"' --
 
 	if [[ "${DISPLAY_PERMISSION_DENIED}"  == "true" ]] ; then
 		printf '\n'
