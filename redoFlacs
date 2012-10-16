@@ -120,8 +120,10 @@ SPECTROGRAM_LOCATION="default"
 # does not exist, or /proc is not mounted, 2 cores/threads
 # will used.  Uncomment to override the above behavior and
 # set a specific number of threads/cores to use.
-
-# CORES=2
+#
+# The special value, "proc" does the default
+# action if below is uncommented.
+# CORES="proc"
 
 ##########################
 #  END OF CONFIGURATION  #
@@ -2158,8 +2160,9 @@ function print_version {
 ######################################
 function find_cores {
 	# Check if CORES was set under USER CONFIGURATION
-	if [[ -z "$CORES" ]] ; then
-		# User did NOT set CORES, check /proc/cpuinfo
+	if [[ "${CORES}" == "proc" || -z "${CORES}" ]] ; then
+		# User did NOT set CORES, or was set to "proc",
+		# check /proc/cpuinfo
 
 		# Check if /proc is mounted by comparing device numbers of
 		# /proc and / and see if they don't match (ie, /proc is mounted)
@@ -2189,7 +2192,7 @@ function find_cores {
 
 				# Add +1 to CORES since the number of useable cores
 				# starts at 0
-				CORES="$(($CORES + 1))"
+				CORES="$((${CORES} + 1))"
 			fi
 		fi
 	fi
