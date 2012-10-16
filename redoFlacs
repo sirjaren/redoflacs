@@ -803,8 +803,7 @@ function replaygain {
 				# File is not a FLAC file, display failed
 				print_failed_flac
 			else
-				# File is a FLAC file, erase any ReplayGain tags, display ok
-				metaflac --remove-replay-gain "${i}"
+				# File is a FLAC file, display ok
 				print_ok_flac
 			fi
 		done
@@ -854,22 +853,98 @@ function replaygain {
 		done
 	)"
 
-	function process_replaygain {
-		for i; do
-			print_add_replaygain
-			ERROR="$((metaflac --add-replay-gain "${i}"/*.[Ff][Ll][Aa][Cc]) 2>&1)"
-			if [[ -n "${ERROR}" ]] ; then
-				print_failed_replaygain
-				printf "%s\n%s\n%s\n" \
-					   "Directory: ${i}" \
-					   "Error:     ${ERROR}" \
-					   "------------------------------------------------------------------" \
-					   >> "${REPLAY_ADD_ERRORS}"
-			else
-				print_ok_replaygain
-			fi
-		done
-	}
+	# Check if "-G, --replaygain-noforce" was called
+	if [[ "${REPLAYGAIN_NOFORCE}" == "true" ]] ; then
+		# Above option was called, skip FLAC files if all ReplayGain
+		# tracks can be accounted for
+		function process_replaygain {
+			# ${i} is the parent directory to the FLAC files
+			for i; do
+				# ${j} is a FLAC file -> under ${i}
+				for j in "${i}"/*.[Ff][Ll][Aa][Cc] ; do
+					# Grab all of the ReplayGain tags
+					REPLAYGAIN_REFERENCE_LOUDNESS="$(metaflac --show-tag=REPLAYGAIN_REFERENCE_LOUDNESS "${j}")"
+					REPLAYGAIN_REFERENCE_LOUDNESS="${REPLAYGAIN_REFERENCE_LOUDNESS#*=}"
+
+					REPLAYGAIN_TRACK_GAIN="$(metaflac --show-tag=REPLAYGAIN_TRACK_GAIN "${j}")"
+					REPLAYGAIN_TRACK_GAIN="${REPLAYGAIN_TRACK_GAIN#*=}"
+
+					REPLAYGAIN_TRACK_PEAK="$(metaflac --show-tag=REPLAYGAIN_TRACK_PEAK "${j}")"
+					REPLAYGAIN_TRACK_PEAK="${REPLAYGAIN_TRACK_PEAK#*=}"
+
+					REPLAYGAIN_ALBUM_GAIN="$(metaflac --show-tag=REPLAYGAIN_ALBUM_GAIN "${j}")"
+					REPLAYGAIN_ALBUM_GAIN="${REPLAYGAIN_ALBUM_GAIN#*=}"
+
+					REPLAYGAIN_ALBUM_PEAK="$(metaflac --show-tag=REPLAYGAIN_ALBUM_PEAK "${j}")"
+					REPLAYGAIN_ALBUM_PEAK="${REPLAYGAIN_ALBUM_PEAK#*=}"
+
+					# Test if any ReplayGain values are empty
+					if [[ -z "${REPLAYGAIN_REFERENCE_LOUDNESS}" || \
+						  -z "${REPLAYGAIN_TRACK_GAIN}" || \
+						  -z "${REPLAYGAIN_TRACK_PEAK}" || \
+						  -z "${REPLAYGAIN_ALBUM_GAIN}" || \
+						  -z "${REPLAYGAIN_ALBUM_PEAK}" \
+					   ]] ; then
+						# At _least_ one tag is missing from current file, so
+						# apply new ReplayGain values
+						print_add_replaygain
+
+						# No need to remove ReplayGain as metaflac already
+						# takes care of this when adding new values
+						ERROR="$((metaflac --add-replay-gain "${i}"/*.[Ff][Ll][Aa][Cc]) 2>&1)"
+						if [[ -n "${ERROR}" ]] ; then
+							print_failed_replaygain
+							printf "%s\n%s\n%s\n" \
+								   "Directory: ${i}" \
+								   "Error:     ${ERROR}" \
+								   "------------------------------------------------------------------" \
+								   >> "${REPLAY_ADD_ERRORS}"
+
+							# Placeholder variable tested for after this loop
+							# if the loop completes with 'break'
+							BROKE_OUT_LOOP="true"
+
+							# Break out of loop and on to next directory
+							break
+						else
+							print_ok_replaygain
+
+							# Placeholder variable tested for after this loop
+							# if the loop completes with 'break'
+							BROKE_OUT_LOOP="true"
+
+							# Break out of loop and on to next directory
+							break
+						fi
+					fi
+				done
+
+				# If processed directory did not have missing ReplayGain
+				# tags, print ok (skipped adding ReplayGain tags)
+				if [[ "${BROKE_OUT_LOOP}" != "true" ]] ; then
+					print_ok_replaygain
+				fi
+			done
+		}
+	else
+		# Above option was NOT called
+		function process_replaygain {
+			for i; do
+				print_add_replaygain
+				ERROR="$((metaflac --add-replay-gain "${i}"/*.[Ff][Ll][Aa][Cc]) 2>&1)"
+				if [[ -n "${ERROR}" ]] ; then
+					print_failed_replaygain
+					printf "%s\n%s\n%s\n" \
+						   "Directory: ${i}" \
+						   "Error:     ${ERROR}" \
+						   "------------------------------------------------------------------" \
+						   >> "${REPLAY_ADD_ERRORS}"
+				else
+					print_ok_replaygain
+				fi
+			done
+		}
+	fi
 	export -f process_replaygain
 
 	# Run the above function with the configured threads (multithreaded)
@@ -2257,6 +2332,9 @@ while [[ "${#}" -gt 1 ]] ; do
 		;;
 		--replaygain|-g)
 			REPLAYGAIN="true"
+			# Below used only once to test for
+			# command compatibility
+			REPLAYGAIN_FORCE="true"
 			shift
 		;;
 		--replaygain-noforce|-G)
@@ -2495,7 +2573,7 @@ if [[ "${COMPRESS_TEST}" == "true" && "${TEST}" == "true" ]] ; then
 fi
 
 # If "-g, --replaygain" and "-G, --replaygain-noforce" are both called, warn and exit
-if [[ "${REPLAYGAIN}" == "true" && "${REPLAYGAIN_NOFORCE}" == "true" ]] ; then
+if [[ "${REPLAYGAIN_FORCE}" == "true" && "${REPLAYGAIN_NOFORCE}" == "true" ]] ; then
 	printf "%s${BOLD_RED}%s${NORMAL}%s\n" \
 	" " "*" " Running both \"-g, --replaygain\" and \"-G, --replaygain-noforce\" conflict!"
 	printf "%s${BOLD_RED}%s${NORMAL}%s\n" \
