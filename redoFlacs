@@ -1135,6 +1135,11 @@ function test_flacs {
 			operation_summary
 
 			exit 1
+		else
+			TEST_COMPLETE="interrupt"
+			operation_summary
+
+			exit 1
 		fi
 	}
 
@@ -1562,10 +1567,6 @@ function redo_tags {
 	# to be lost if done when tags are being removed!)
 	trap '' SIGINT
 
-	# Set variable to null (exported for subshell access)
-	# Used when analyzing tags for logging missing tags
-	export FILE_PRINTED="sfdsaf"
-
 	################
 	# ANALYZE TAGS #
 	################
@@ -1645,6 +1646,9 @@ function redo_tags {
 					# Print array into log file
 					printf "%s\n" "${missingTags[@]}" >> "${METADATA_ERRORS}"
 				fi
+
+		# Done analyzing FLAC file tags
+		print_done_flac
 		fi
 	}
 	export -f analyze_tags
@@ -1740,6 +1744,9 @@ function redo_tags {
 					# Print array into log file
 					printf "%s\n" "${missingTags[@]}" >> "${METADATA_ERRORS}"
 				fi
+
+		# Done analyzing FLAC file tags
+		print_done_flac
 		fi
 	}
 	export -f analyze_tags_dont_log_coverart
@@ -1760,9 +1767,6 @@ function redo_tags {
 
 				# Analyze FLACs for missing tags
 				analyze_tags
-
-				# Done analyzing FLAC file tags
-				print_done_flac
 			done
 		}
 		export -f check_tags
@@ -1782,9 +1786,6 @@ function redo_tags {
 					# Analyze FLACs for missing tags
 					# (except for COVERART tag)
 					analyze_tags_dont_log_coverart
-
-					# Done analyzing FLAC file tags
-					print_done_flac
 				done
 			}
 			export -f check_tags
@@ -1800,9 +1801,6 @@ function redo_tags {
 
 					# Analyze FLACs for missing tags
 					analyze_tags
-
-					# Done analyzing FLAC file tags
-					print_done_flac
 				done
 			}
 			export -f check_tags
@@ -1971,6 +1969,10 @@ function prune_flacs {
 			PRUNE_COMPLETE="interrupt"
 			operation_summary
 
+			exit 1
+		else
+			PRUNE_COMPLETE="interrupt"
+			operation_summary
 			exit 1
 		fi
 	}
