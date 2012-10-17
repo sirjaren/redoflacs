@@ -973,11 +973,6 @@ function replaygain {
 		done | \
 		xargs -n 1 -P "${CORES}" bash -c 'process_replaygain "${@}"' --
 
-	if [[ "${DISPLAY_PERMISSION_DENIED}"  == "true" ]] ; then
-		printf '\n'
-		display_permission_denied
-	fi
-
 	if [[ -f "${REPLAY_ADD_ERRORS}" ]] ; then
 		printf "\n%s${BOLD_RED}%s${NORMAL}%s\n" \
 		" " "*" " There were issues with some of the FLAC files,"
@@ -1087,11 +1082,6 @@ function compress_flacs {
 	# Run the above function with the configured threads (multithreaded)
 	find "${DIRECTORY}" -name "*.[Ff][Ll][Aa][Cc]" -print0 2> /dev/null | xargs -0 -n 1 -P "${CORES}" bash -c 'compress_f "${@}"' --
 
-	if [[ "${DISPLAY_PERMISSION_DENIED}"  == "true" ]] ; then
-		printf '\n'
-		display_permission_denied
-	fi
-
 	if [[ -f "${VERIFY_ERRORS}" ]] ; then
 		printf "\n%s${BOLD_RED}%s${NORMAL}%s\n" \
 		" " "*" " Errors found in some FLAC files, please check:"
@@ -1166,11 +1156,6 @@ function test_flacs {
 
 	# Run the above function with the configured threads (multithreaded)
 	find "${DIRECTORY}" -name "*.[Ff][Ll][Aa][Cc]" -print0 2> /dev/null | xargs -0 -n 1 -P "${CORES}" bash -c 'test_f "${@}"' --
-
-	if [[ "${DISPLAY_PERMISSION_DENIED}"  == "true" ]] ; then
-		printf '\n'
-		display_permission_denied
-	fi
 
 	if [[ -f "${TEST_ERRORS}" ]] ; then
 		printf "\n%s${BOLD_RED}%s${NORMAL}%s\n" \
@@ -1373,11 +1358,6 @@ function aucdtect {
 	# Run the above function with the configured threads (multithreaded)
 	find "${DIRECTORY}" -name "*.[Ff][Ll][Aa][Cc]" -print0 2> /dev/null | xargs -0 -n 1 -P "${CORES}" bash -c 'aucdtect_f "${@}"' --
 
-	if [[ "${DISPLAY_PERMISSION_DENIED}"  == "true" ]] ; then
-		printf '\n'
-		display_permission_denied
-	fi
-
 	if [[ -f "${AUCDTECT_ERRORS}" ]] ; then
 		printf "\n%s${BOLD_RED}%s${NORMAL}%s\n" \
 		" " "*" " Some FLAC files may be lossy sourced, please check:"
@@ -1461,11 +1441,6 @@ function md5_check {
 	# Run the above function with the configured threads (multithreaded)
 	find "${DIRECTORY}" -name "*.[Ff][Ll][Aa][Cc]" -print0 2> /dev/null | xargs -0 -n 1 -P "${CORES}" bash -c 'md5_c "${@}"' --
 
-	if [[ "${DISPLAY_PERMISSION_DENIED}"  == "true" ]] ; then
-		printf '\n'
-		display_permission_denied
-	fi
-	
 	if [[ -f "${MD5_ERRORS}" ]] ; then
 		printf "\n%s${BOLD_RED}%s${NORMAL}%s\n" \
 		" " "*" " The MD5 Signature is unset for some FLAC files or there were"
@@ -1824,12 +1799,6 @@ function redo_tags {
 		done < "${METADATA_ERRORS}"
 	fi
 
-	if [[ "${DISPLAY_PERMISSION_DENIED}"  == "true" ]] ; then
-		printf '\n'
-		display_permission_denied
-	fi
-	
-
 	if [[ -f "${METADATA_ERRORS}"  && "${COVERART_WARNING}" == "true" ]] ; then
 		# Display COVERART warning function and metadata issues
 		printf ''
@@ -2018,11 +1987,6 @@ function prune_flacs {
 	
 	# Run the above function with the configured threads (multithreaded)
 	find "${DIRECTORY}" -name "*.[Ff][Ll][Aa][Cc]" -print0 2> /dev/null | xargs -0 -n 1 -P "${CORES}" bash -c 'prune_f "${@}"' --
-
-	if [[ "${DISPLAY_PERMISSION_DENIED}"  == "true" ]] ; then
-		printf '\n'
-		display_permission_denied
-	fi
 
 	if [[ -f "${PRUNE_ERRORS}" ]] ; then
 		printf "\n%s${BOLD_RED}%s${NORMAL}%s\n" \
@@ -2979,6 +2943,13 @@ fi
 if [[ "${COVERART_WARNING}" == "true" ]] ; then
 	printf ''
 	coverart_warning
+fi
+
+# If permission denied files/directories were found,
+# print them
+if [[ "${DISPLAY_PERMISSION_DENIED}"  == "true" ]] ; then
+	printf '\n'
+	display_permission_denied
 fi
 
 # Display summary of completed tasks
