@@ -2811,8 +2811,8 @@ function display_permission_denied {
 
 # Display only permission denied errors
 FIND_PERMISSION_DENIED="$(find "${DIRECTORY}" 2>&1 >/dev/null)"
-# Display only found FLACS
-FIND_FLACS="$(find "${DIRECTORY}" -name "*.[Ff][Ll][Aa][Cc]" -print 2> /dev/null)"
+# Check for at least 1 FLAC file
+read -r FIND_FLACS < <(find "${DIRECTORY}" -name "*.[Ff][Ll][Aa][Cc]" -print 2> /dev/null)
 
 # Check if there are any files/directories with permission denied errors
 # and if so, display them to the user if there are no other FLACS to
