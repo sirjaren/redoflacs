@@ -151,12 +151,13 @@ export EXPORT_TAG="$(printf "%s\n" "${tags[@]}")"
 
 # Colors on by default
 # Export to allow subshell access
+export BOLD_BLUE="\033[1;34m"
 export BOLD_GREEN="\033[1;32m"
 export BOLD_RED="\033[1;31m"
-export BOLD_BLUE="\033[1;34m"
 export CYAN="\033[0;36m"
-export NORMAL="\033[0m"
+export MAGENTA="\033[0;35m"
 export YELLOW="\033[0;33m"
+export NORMAL="\033[0m"
 
 # Log files with timestamp
 # Export to allow subshell access
@@ -717,7 +718,8 @@ export -f print_prune_flac
 function normal_abort {
 	printf "\n%s${BOLD_GREEN}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}\n" \
 	" " "*" " Control-C received, exiting script..."
-	exit 0
+	operation_summary
+	exit 1
 }
 
 
@@ -786,6 +788,16 @@ function replaygain {
 
 	title_test_replaygain
 
+	# General abort script to use BASH's trap command on SIGINT
+	function normal_abort {
+		printf "\n%s${BOLD_GREEN}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}\n" \
+		" " "*" " Control-C received, exiting script..."
+
+		REPLAYGAIN_COMPLETE="interrupt"
+		operation_summary
+		exit 1
+	}
+
 	# Trap SIGINT (Control-C) to abort cleanly
 	trap normal_abort SIGINT
 
@@ -827,6 +839,10 @@ function replaygain {
 		" " "*" " please check:"
 		printf "%s${BOLD_RED}%s${NORMAL}%s\n" \
 		" " "*" " \"${REPLAY_TEST_ERRORS}\" for details."
+
+		REPLAYGAIN_COMPLETE="false"
+		operation_summary
+
 		exit 1
 	fi
 
@@ -969,8 +985,15 @@ function replaygain {
 		" " "*" " please check:"
 		printf "%s${BOLD_RED}%s${NORMAL}%s\n" \
 		" " "*" " \"${REPLAY_ADD_ERRORS}\" for details."
+
+		REPLAYGAIN_COMPLETE="false"
+		operation_summary
+
 		exit 1
 	fi
+
+	# ReplayGain completed successfully
+	REPLAYGAIN_COMPLETE="true"
 }
 
 #############################
@@ -1005,6 +1028,10 @@ function compress_flacs {
 			printf "%s${BOLD_RED}%s${NORMAL}%s\n" \
 			" " "*" " \"${VERIFY_ERRORS}\" for errors"
 		fi
+
+		COMPRESS_COMPLETE="interrupt"
+		operation_summary
+
 		exit 1
 	}
 
@@ -1070,8 +1097,15 @@ function compress_flacs {
 		" " "*" " Errors found in some FLAC files, please check:"
 		printf "%s${BOLD_RED}%s${NORMAL}%s\n" \
 		" " "*" " \"${VERIFY_ERRORS}\" for errors"
+
+		COMPRESS_COMPLETE="false"
+		operation_summary
+
 		exit 1
 	fi
+
+	# Compress FLACS completed successfully
+	COMPRESS_COMPLETE="true"
 }
 
 ################
@@ -1096,6 +1130,10 @@ function test_flacs {
 			" " "*" " Errors found in some FLAC files, please check:"
 			printf "%s${BOLD_RED}%s${NORMAL}%s\n" \
 			" " "*" " \"${TEST_ERRORS}\" for errors"
+
+			TEST_COMPLETE="interrupt"
+			operation_summary
+
 			exit 1
 		fi
 	}
@@ -1134,8 +1172,15 @@ function test_flacs {
 		" " "*" " Errors found in some FLAC files, please check:"
 		printf "%s${BOLD_RED}%s${NORMAL}%s\n" \
 		" " "*" " \"${TEST_ERRORS}\" for errors"
+
+		TEST_COMPLETE="false"
+		operation_summary
+
 		exit 1
 	fi
+
+	# Test FLACS completed successfully
+	TEST_COMPLETE="true"
 }
 
 #######################################
@@ -1152,6 +1197,10 @@ function aucdtect {
 			" " "*" " \"${SPECTROGRAM_LOCATION}\" doesn't exist!"
 			printf "%s${BOLD_RED}%s${NORMAL}%s\n" \
 			" " "*" " Please choose a valid directory under USER CONFIGURATION!"
+
+			AUCDTECT_COMPLETE="false"
+			operation_summary
+
 			exit 1
 		fi
 	fi
@@ -1197,6 +1246,9 @@ function aucdtect {
 				" " "*" "    ${i}"
 			done
 		fi
+
+		AUCDTECT_COMPLETE="interrupt"
+		operation_summary
 
 		exit 1
 	}
@@ -1326,8 +1378,15 @@ function aucdtect {
 		" " "*" " Some FLAC files may be lossy sourced, please check:"
 		printf "%s${BOLD_RED}%s${NORMAL}%s\n" \
 		" " "*" " \"${AUCDTECT_ERRORS}\" for details"
+
+		AUCDTECT_COMPLETE="false"
+		operation_summary
+
 		exit 1
 	fi
+
+	# auCDtect completed successfully
+	AUCDTECT_COMPLETE="true"
 }
 
 #########################
@@ -1354,6 +1413,10 @@ function md5_check {
 			" " "*" " issues with some of the FLAC files, please check:"
 			printf "%s${BOLD_RED}%s${NORMAL}%s\n" \
 			" " "*" " \"${MD5_ERRORS}\" for details"
+
+			MD5CHECK_COMPLETE="interrupt"
+			operation_summary
+
 			exit 1
 		fi
 	}
@@ -1405,8 +1468,15 @@ function md5_check {
 		" " "*" " issues with some of the FLAC files, please check:"
 		printf "%s${BOLD_RED}%s${NORMAL}%s\n" \
 		" " "*" " \"${MD5_ERRORS}\" for details"
+
+		MD5CHECK_COMPLETE="false"
+		operation_summary
+
 		exit 1
 	fi  
+
+	# MD5 Check completed successfully
+	MD5CHECK_COMPLETE="true"
 }
 
 ###############
@@ -1445,6 +1515,10 @@ function coverart_remove_conflict {
 				" " "*" " the COVERART tag under the USER CONFIGURATION portion of this"
 				printf "%s${BOLD_RED}%s${NORMAL}%s\n" \
 				" " "*" " script."
+
+				REDO_COMPLETE="false"
+				operation_summary
+
 				exit 1
 			# COVERART was found, but artwork is to be removed,
 			# so warn user
@@ -1770,6 +1844,10 @@ function redo_tags {
 		" " "*" " \"${METADATA_ERRORS}\" for details."
 		printf "%s${BOLD_RED}%s${NORMAL}%s\n" \
 		" " "*" " Not Re-Tagging files."
+
+		REDO_COMPLETE="false"
+		operation_summary
+
 		exit 1
 	elif [[ -f "${METADATA_ERRORS}" ]] ; then
 		# Just display metadata issues
@@ -1781,6 +1859,10 @@ function redo_tags {
 		" " "*" " \"${METADATA_ERRORS}\" for details."
 		printf "%s${BOLD_RED}%s${NORMAL}%s\n" \
 		" " "*" " Not Re-Tagging files."
+
+		REDO_COMPLETE="false"
+		operation_summary
+
 		exit 1
 	fi
 
@@ -1856,6 +1938,9 @@ function redo_tags {
 	
 	# Run the above function with the configured threads (multithreaded)
 	find "${DIRECTORY}" -name "*.[Ff][Ll][Aa][Cc]" -print0 2> /dev/null | xargs -0 -n 1 -P "${CORES}" bash -c 'retag_flacs "${@}"' --
+
+	# Redo Tags completed successfully
+	REDO_COMPLETE="true"
 }
 
 #################
@@ -1882,6 +1967,10 @@ function prune_flacs {
 			" " "*" " please check:"
 			printf "%s${BOLD_RED}%s${NORMAL}%s\n" \
 			" " "*" " \"${PRUNE_ERRORS}\" for details."
+
+			PRUNE_COMPLETE="interrupt"
+			operation_summary
+
 			exit 1
 		fi
 	}
@@ -1941,6 +2030,9 @@ function prune_flacs {
 		printf "%s${BOLD_RED}%s${NORMAL}%s\n" \
 		" " "*" " \"${PRUNE_ERRORS}\" for details."
 	fi
+
+	# Prune FLACS completed successfully
+	PRUNE_COMPLETE="true"
 }
 
 #######################
@@ -2280,6 +2372,152 @@ function find_cores {
 	fi
 }
 
+##################################
+#  DISPLAY COMPLETED OPERATIONS  #
+##################################
+function operation_summary {
+	printf "\n%s\n" \
+	"       Summary Of Operations"
+	printf "%s${BOLD_BLUE}%s${NORMAL}\n" \
+	"   " "┌─────────────┬─────────────┐"
+
+	# Test for auCDtect execution
+	if [[ "${AUCDTECT}" == "true" && "${AUCDTECT_COMPLETE}" == "true" ]] ; then
+		# Complete
+		printf "%s${BOLD_BLUE}%s${NORMAL}%s${YELLOW}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}%s${BOLD_GREEN}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}\n" \
+		"   " "│" " " "auCDtect" "    " "│" "  " "Completed" "  " "│"
+	elif [[ "${AUCDTECT}" == "true" && "${AUCDTECT_COMPLETE}" == "false" ]] ; then
+		# Failed
+		printf "%s${BOLD_BLUE}%s${NORMAL}%s${YELLOW}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}%s${BOLD_RED}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}\n" \
+		"   " "│" " " "auCDtect" "    " "│" "   " "Failed" "    " "│"
+	elif [[ "${AUCDTECT}" == "true" && "${AUCDTECT_COMPLETE}" == "interrupt" ]] ; then
+		# Interrupted
+		printf "%s${BOLD_BLUE}%s${NORMAL}%s${YELLOW}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}%s${CYAN}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}\n" \
+		"   " "│" " " "auCDtect" "    " "│" " " "Interrupted" " " "│"
+	elif [[ "${AUCDTECT}" == "true" ]] ; then
+		# Did Not Run
+		printf "%s${BOLD_BLUE}%s${NORMAL}%s${YELLOW}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}%s${MAGENTA}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}\n" \
+		"   " "│" " " "auCDtect" "    " "│" " " "Did Not Run" " " "│"
+	fi
+
+	# Test for Compress FLACS execution
+	if [[ "${COMPRESS}" == "true" && "${COMPRESS_COMPLETE}" == "true" ]] ; then
+		# Complete
+		printf "%s${BOLD_BLUE}%s${NORMAL}%s${YELLOW}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}%s${BOLD_GREEN}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}\n" \
+		"   " "│" " " "Compress" "    " "│" "  " "Completed" "  " "│"
+	elif [[ "${COMPRESS}" == "true" && "${COMPRESS_COMPLETE}" == "false" ]] ; then
+		# Failed
+		printf "%s${BOLD_BLUE}%s${NORMAL}%s${YELLOW}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}%s${BOLD_RED}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}\n" \
+		"   " "│" " " "Compress" "    " "│" "   " "Failed" "    " "│"
+	elif [[ "${COMPRESS}" == "true" && "${COMPRESS_COMPLETE}" == "interrupt" ]] ; then
+		# Interrupted
+		printf "%s${BOLD_BLUE}%s${NORMAL}%s${YELLOW}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}%s${CYAN}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}\n" \
+		"   " "│" " " "Compress" "    " "│" " " "Interrupted" " " "│"
+	elif [[ "${COMPRESS}" == "true" ]] ; then
+		# Did Not Run
+		printf "%s${BOLD_BLUE}%s${NORMAL}%s${YELLOW}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}%s${MAGENTA}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}\n" \
+		"   " "│" " " "Compress" "    " "│" " " "Did Not Run" " " "│"
+	fi
+
+	# Test for Test FLACS execution
+	if [[ "${TEST}" == "true" && "${TEST_COMPLETE}" == "true" ]] ; then
+		# Complete
+		printf "%s${BOLD_BLUE}%s${NORMAL}%s${YELLOW}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}%s${BOLD_GREEN}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}\n" \
+		"   " "│" " " "Test" "        " "│" "  " "Completed" "  " "│"
+	elif [[ "${TEST}" == "true" && "${TEST_COMPLETE}" == "false" ]] ; then
+		# Failed
+		printf "%s${BOLD_BLUE}%s${NORMAL}%s${YELLOW}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}%s${BOLD_RED}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}\n" \
+		"   " "│" " " "Test" "        " "│" "   " "Failed" "    " "│"
+	elif [[ "${TEST}" == "true" && "${TEST_COMPLETE}" == "interrupt" ]] ; then
+		# Interrupted
+		printf "%s${BOLD_BLUE}%s${NORMAL}%s${YELLOW}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}%s${CYAN}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}\n" \
+		"   " "│" " " "Test" "        " "│" " " "Interrupted" " " "│"
+	elif [[ "${TEST}" == "true" ]] ; then
+		# Did Not Run
+		printf "%s${BOLD_BLUE}%s${NORMAL}%s${YELLOW}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}%s${MAGENTA}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}\n" \
+		"   " "│" " " "Test" "        " "│" " " "Did Not Run" " " "│"
+	fi
+
+	# Test for MD5 Check execution
+	if [[ "${MD5CHECK}" == "true" && "${MD5CHECK_COMPLETE}" == "true" ]] ; then
+		# Complete
+		printf "%s${BOLD_BLUE}%s${NORMAL}%s${YELLOW}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}%s${BOLD_GREEN}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}\n" \
+		"   " "│" " " "MD5 Check" "   " "│" "  " "Completed" "  " "│"
+	elif [[ "${MD5CHECK}" == "true" && "${MD5CHECK_COMPLETE}" == "false" ]] ; then
+		# Failed
+		printf "%s${BOLD_BLUE}%s${NORMAL}%s${YELLOW}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}%s${BOLD_RED}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}\n" \
+		"   " "│" " " "MD5 Check" "   " "│" "   " "Failed" "    " "│"
+	elif [[ "${MD5CHECK}" == "true" && "${MD5CHECK_COMPLETE}" == "interrupt" ]] ; then
+		# Interrupted
+		printf "%s${BOLD_BLUE}%s${NORMAL}%s${YELLOW}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}%s${CYAN}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}\n" \
+		"   " "│" " " "MD5 Check" "   " "│" " " "Interrupted" " " "│"
+	elif [[ "${MD5CHECK}" == "true" ]] ; then
+		# Did Not Run
+		printf "%s${BOLD_BLUE}%s${NORMAL}%s${YELLOW}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}%s${MAGENTA}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}\n" \
+		"   " "│" " " "MD5 Check" "   " "│" " " "Did Not Run" " " "│"
+	fi
+
+	# Test for ReplayGain execution
+	if [[ "${REPLAYGAIN}" == "true" && "${REPLAYGAIN_COMPLETE}" == "true" ]] ; then
+		# Complete
+		printf "%s${BOLD_BLUE}%s${NORMAL}%s${YELLOW}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}%s${BOLD_GREEN}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}\n" \
+		"   " "│" " " "ReplayGain" "  " "│" "  " "Completed" "  " "│"
+	elif [[ "${REPLAYGAIN}" == "true" && "${REPLAYGAIN_COMPLETE}" == "false" ]] ; then
+		# Failed
+		printf "%s${BOLD_BLUE}%s${NORMAL}%s${YELLOW}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}%s${BOLD_RED}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}\n" \
+		"   " "│" " " "ReplayGain" "  " "│" "   " "Failed" "    " "│"
+	elif [[ "${REPLAYGAIN}" == "true" && "${REPLAYGAIN_COMPLETE}" == "interrupt" ]] ; then
+		# Interrupted
+		printf "%s${BOLD_BLUE}%s${NORMAL}%s${YELLOW}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}%s${CYAN}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}\n" \
+		"   " "│" " " "ReplayGain" "  " "│" " " "Interrupted" " " "│"
+	elif [[ "${REPLAYGAIN}" == "true" ]] ; then
+		# Did Not Run
+		printf "%s${BOLD_BLUE}%s${NORMAL}%s${YELLOW}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}%s${MAGENTA}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}\n" \
+		"   " "│" " " "ReplayGain" "  " "│" " " "Did Not Run" " " "│"
+	fi
+
+	# Test for Redo Tags execution
+	if [[ "${REDO}" == "true" && "${REDO_COMPLETE}" == "true" ]] ; then
+		# Complete
+		printf "%s${BOLD_BLUE}%s${NORMAL}%s${YELLOW}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}%s${BOLD_GREEN}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}\n" \
+		"   " "│" " " "Redo Tags" "   " "│" "  " "Completed" "  " "│"
+	elif [[ "${REDO}" == "true" && "${REDO_COMPLETE}" == "false" ]] ; then
+		# Failed
+		printf "%s${BOLD_BLUE}%s${NORMAL}%s${YELLOW}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}%s${BOLD_RED}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}\n" \
+		"   " "│" " " "Redo Tags" "   " "│" "   " "Failed" "    " "│"
+	elif [[ "${REDO}" == "true" && "${REDO_COMPLETE}" == "interrupt" ]] ; then
+		# Interrupted
+		printf "%s${BOLD_BLUE}%s${NORMAL}%s${YELLOW}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}%s${CYAN}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}\n" \
+		"   " "│" " " "Redo Tags" "   " "│" " " "Interrupted" " " "│"
+	elif [[ "${REDO}" == "true" ]] ; then
+		# Did Not Run
+		printf "%s${BOLD_BLUE}%s${NORMAL}%s${YELLOW}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}%s${MAGENTA}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}\n" \
+		"   " "│" " " "Redo Tags" "   " "│" " " "Did Not Run" " " "│"
+	fi
+
+	# Test for Prune FLACS execution
+	if [[ "${PRUNE}" == "true" && "${PRUNE_COMPLETE}" == "true" ]] ; then
+		# Complete
+		printf "%s${BOLD_BLUE}%s${NORMAL}%s${YELLOW}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}%s${BOLD_GREEN}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}\n" \
+		"   " "│" " " "Prune" "       " "│" "  " "Completed" "  " "│"
+	elif [[ "${PRUNE}" == "true" && "${PRUNE_COMPLETE}" == "false" ]] ; then
+		# Failed
+		printf "%s${BOLD_BLUE}%s${NORMAL}%s${YELLOW}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}%s${BOLD_RED}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}\n" \
+		"   " "│" " " "Prune" "       " "│" "   " "Failed" "    " "│"
+	elif [[ "${PRUNE}" == "true" && "${PRUNE_COMPLETE}" == "interrupt" ]] ; then
+		# Interrupted
+		printf "%s${BOLD_BLUE}%s${NORMAL}%s${YELLOW}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}%s${CYAN}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}\n" \
+		"   " "│" " " "Prune" "       " "│" " " "Interrupted" " " "│"
+	elif [[ "${PRUNE}" == "true" ]] ; then
+		# Did Not Run
+		printf "%s${BOLD_BLUE}%s${NORMAL}%s${YELLOW}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}%s${MAGENTA}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}\n" \
+		"   " "│" " " "Prune" "       " "│" " " "Did Not Run" " " "│"
+	fi
+
+	printf "%s${BOLD_BLUE}%s${NORMAL}\n" \
+	"   " "└─────────────┴─────────────┘"
+}
+
 #######################
 #  PRE-SCRIPT CHECKS  #
 #######################
@@ -2382,12 +2620,13 @@ done
 # This must come before the other options in
 # order for it to take effect
 if [[ "${NO_COLOR}" == "true" ]] ; then
+	BOLD_BLUE=""
 	BOLD_GREEN=""
 	BOLD_RED=""
-	BOLD_BLUE=""
 	CYAN=""
-	NORMAL=""
+	MAGENTA=""
 	YELLOW=""
+	NORMAL=""
 fi
 
 # Check to make sure script has all the dependencies
@@ -2739,6 +2978,9 @@ if [[ "${COVERART_WARNING}" == "true" ]] ; then
 	printf ''
 	coverart_warning
 fi
+
+# Display summary of completed tasks
+operation_summary
 
 exit 0
 ################
