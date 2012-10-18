@@ -1285,7 +1285,7 @@ function aucdtect {
 				# The actual auCDtect command with highest accuracy setting
 				# 2> hides the displayed progress to /dev/null so nothing is shown
 				export MALLOC_CHECK_=0
-				AUCDTECT_CHECK="$("${AUCDTECT_COMMAND}" -m40 "${i%.[Ff][Ll][Aa][Cc]}.wav" 2> /dev/null)"
+				AUCDTECT_CHECK="$("${AUCDTECT_COMMAND}" -m0 "${i%.[Ff][Ll][Aa][Cc]}.wav" 2> /dev/null)"
 				mapfile -n0 AUCDTECT_CHECK < <(printf "%s" "${AUCDTECT_CHECK}")
 
 				# Print last "good" value in the AUCDTECT_CHECK array
