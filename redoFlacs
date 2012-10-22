@@ -2,7 +2,7 @@
 
 #------------------------------------------------------------
 # Re-compress, Verify, Test, Re-tag, and Clean Up FLAC Files
-#                     Version 0.16.1
+#                     Version 0.16.2
 #                       sirjaren
 #------------------------------------------------------------
 
@@ -134,7 +134,7 @@ SPECTROGRAM_LOCATION="default"
 #  STATIC VARIABLES  #
 ######################
 # Version
-VERSION="0.16.1"
+VERSION="0.16.2"
 
 # Export REMOVE_ARTWORK to allow subshell access
 export REMOVE_ARTWORK
@@ -1541,7 +1541,7 @@ coverart_warning () {
 redo_tags () {
 	# Keep SIGINT from exiting the script (Can cause all tags
 	# to be lost if done when tags are being removed!)
-	#trap '' SIGINT
+	trap '' SIGINT
 
 	################
 	# ANALYZE TAGS #
