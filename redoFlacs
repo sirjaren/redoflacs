@@ -184,65 +184,65 @@ PRUNE=""
 #  INFORMATION PRINTED TO STDOUT  # 
 ###################################
 # Displaying currently running tasks
-function title_compress_flac {
+title_compress_flac () {
 	printf "%s${BOLD_GREEN}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}\n" \
 	" " "*" " Compressing FLAC files with level ${COMPRESSION_LEVEL} compression and verifying output :: " "[${CORES} Thread(s)]"
 }
 
-function title_compress_notest_flac {
+title_compress_notest_flac () {
 	printf "%s${BOLD_GREEN}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}\n" \
 	" " "*" " Compressing FLAC files with level ${COMPRESSION_LEVEL} compression :: " "[${CORES} Thread(s)]"
 }
 
-function title_test_replaygain {
+title_test_replaygain () {
 	printf "%s${BOLD_GREEN}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}\n" \
 	" " "*" " Verifying FLAC Files can have ReplayGain Tags added :: " "[${CORES} Thread(s)]"
 }
 
-function title_add_replaygain {
+title_add_replaygain () {
 	printf "%s${BOLD_GREEN}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}\n" \
 	" " "*" " Applying ReplayGain values by album directory :: " "[${CORES} Thread(s)]"
 }
 
-function title_analyze_tags {
+title_analyze_tags () {
 	printf "%s${BOLD_GREEN}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}\n" \
 	" " "*" " Analyzing FLAC Tags :: " "[${CORES} Thread(s)]"
 }
 
-function title_setting_tags {
+title_setting_tags () {
 	printf "%s${BOLD_GREEN}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}\n" \
 	" " "*" " Setting new FLAC Tags :: " "[${CORES} Thread(s)]"
 }
 
-function title_testing_flac {
+title_testing_flac () {
 	printf "%s${BOLD_GREEN}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}\n" \
 	" " "*" " Testing the integrity of each FLAC file :: " "[${CORES} Thread(s)]"
 }
 
-function title_aucdtect_flac {
+title_aucdtect_flac () {
 	printf "%s${BOLD_GREEN}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}\n" \
 	" " "*" " Validating FLAC is not lossy sourced :: " "[${CORES} Thread(s)]"
 }
 
-function title_md5check_flac {
+title_md5check_flac () {
 	printf "%s${BOLD_GREEN}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}\n" \
 	" " "*" " Verifying the MD5 Signature in each FLAC file :: " "[${CORES} Thread(s)]"
 }
 
-function title_prune_flac {
+title_prune_flac () {
 	printf "%s${BOLD_GREEN}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}\n" \
 	" " "*" " Removing the SEEKTABLE and PADDING block from each FLAC file :: " "[${CORES} Thread(s)]"
 }
 
 # Error messages
 # Don't display threads as script will quit after diplaying
-function no_flacs {
+no_flacs () {
 	printf "%s${BOLD_RED}%s${NORMAL}%s\n" \
 	" " "*" " There are not any FLAC files to process!"
 }
 
 # Information relating to currently running tasks
-function print_compressing_flac {
+print_compressing_flac () {
 	# Grab the first line of 'stty -a' output
 	# Redirecting '/dev/stderr' to 'stty' allows valid arguments
 	read -r COLUMNS < <(stty -a < /dev/stderr)
@@ -267,7 +267,7 @@ function print_compressing_flac {
 	printf "\r${NORMAL}%$((${COLUMNS} - 20))s${BOLD_BLUE}%s${NORMAL}%s${YELLOW}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}\r%s${NORMAL}${YELLOW}%s${NORMAL}%s" \
 	"" "[" " " "Compressing FLAC" " " "]" "     " "*" " ${FILENAME}"
 }
-function print_test_replaygain {
+print_test_replaygain () {
 	# Grab the first line of 'stty -a' output
 	# Redirecting '/dev/stderr' to 'stty' allows valid arguments
 	read -r COLUMNS < <(stty -a < /dev/stderr)
@@ -292,7 +292,7 @@ function print_test_replaygain {
 	printf "\r${NORMAL}%$((${COLUMNS} - 22))s${BOLD_BLUE}%s${NORMAL}%s${YELLOW}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}\r%s${NORMAL}${YELLOW}%s${NORMAL}%s" \
 	"" "[" " " "Testing ReplayGain" " " "]" "     " "*" " ${FILENAME}"
 }
-function print_add_replaygain {
+print_add_replaygain () {
 	# Grab the first line of 'stty -a' output
 	# Redirecting '/dev/stderr' to 'stty' allows valid arguments
 	read -r COLUMNS < <(stty -a < /dev/stderr)
@@ -318,7 +318,7 @@ function print_add_replaygain {
 	printf "\r${NORMAL}%$((${COLUMNS} - 21))s${BOLD_BLUE}%s${NORMAL}%s${YELLOW}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}\r%s${NORMAL}${YELLOW}%s${NORMAL}%s${CYAN}%s${NORMAL}" \
 	"" "[" " " "Adding ReplayGain" " " "]" "     " "*" " ${FILENAME} " "[Directory]"
 }
-function print_testing_flac {
+print_testing_flac () {
 	# Grab the first line of 'stty -a' output
 	# Redirecting '/dev/stderr' to 'stty' allows valid arguments
 	read -r COLUMNS < <(stty -a < /dev/stderr)
@@ -343,7 +343,7 @@ function print_testing_flac {
 	printf "\r${NORMAL}%$((${COLUMNS} - 16))s${BOLD_BLUE}%s${NORMAL}%s${YELLOW}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}\r%s${NORMAL}${YELLOW}%s${NORMAL}%s" \
 	"" "[" " " "Testing FLAC" " " "]" "     " "*" " ${FILENAME}"
 }
-function print_failed_flac {
+print_failed_flac () {
 	# Grab the first line of 'stty -a' output
 	# Redirecting '/dev/stderr' to 'stty' allows valid arguments
 	read -r COLUMNS < <(stty -a < /dev/stderr)
@@ -367,7 +367,7 @@ function print_failed_flac {
 	printf "\r${NORMAL}%$((${COLUMNS} - 10))s${BOLD_BLUE}%s${NORMAL}%s${BOLD_RED}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}\r%s${YELLOW}%s${NORMAL}%s\n" \
 	"" "[" " " "FAILED" " " "]" "     " "*" " ${FILENAME}"
 }
-function print_failed_replaygain {
+print_failed_replaygain () {
 	# Grab the first line of 'stty -a' output
 	# Redirecting '/dev/stderr' to 'stty' allows valid arguments
 	read -r COLUMNS < <(stty -a < /dev/stderr)
@@ -393,7 +393,7 @@ function print_failed_replaygain {
 	printf "\r${NORMAL}%$((${COLUMNS} - 10))s${BOLD_BLUE}%s${NORMAL}%s${BOLD_RED}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}\r%s${NORMAL}${YELLOW}%s${NORMAL}%s${CYAN}%s${NORMAL}\n" \
 	"" "[" " " "FAILED" " " "]" "     " "*" " ${FILENAME} " "[Directory]"
 }
-function print_checking_md5 {
+print_checking_md5 () {
 	# Grab the first line of 'stty -a' output
 	# Redirecting '/dev/stderr' to 'stty' allows valid arguments
 	read -r COLUMNS < <(stty -a < /dev/stderr)
@@ -418,7 +418,7 @@ function print_checking_md5 {
 	printf "\r${NORMAL}%$((${COLUMNS} - 16))s${BOLD_BLUE}%s${NORMAL}%s${YELLOW}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}\r%s${NORMAL}${YELLOW}%s${NORMAL}%s" \
 	"" "[" " " "Checking MD5" " " "]" "     " "*" " ${FILENAME}"
 }
-function print_ok_flac {
+print_ok_flac () {
 	# Grab the first line of 'stty -a' output
 	# Redirecting '/dev/stderr' to 'stty' allows valid arguments
 	read -r COLUMNS < <(stty -a < /dev/stderr)
@@ -442,7 +442,7 @@ function print_ok_flac {
 	printf "\r${NORMAL}%$((${COLUMNS} - 6))s${BOLD_BLUE}%s${NORMAL}%s${BOLD_GREEN}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}\r%s${YELLOW}%s${NORMAL}%s\n" \
 	"" "[" " " "OK" " " "]" "     " "*" " ${FILENAME}"
 }
-function print_ok_replaygain {
+print_ok_replaygain () {
 	# Grab the first line of 'stty -a' output
 	# Redirecting '/dev/stderr' to 'stty' allows valid arguments
 	read -r COLUMNS < <(stty -a < /dev/stderr)
@@ -468,7 +468,7 @@ function print_ok_replaygain {
 	printf "\r${NORMAL}%$((${COLUMNS} - 6))s${BOLD_BLUE}%s${NORMAL}%s${BOLD_GREEN}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}\r%s${NORMAL}${YELLOW}%s${NORMAL}%s${CYAN}%s${NORMAL}\n" \
 	"" "[" " " "OK" " " "]" "     " "*" " ${FILENAME} " "[Directory]"
 }
-function print_aucdtect_flac {
+print_aucdtect_flac () {
 	# Grab the first line of 'stty -a' output
 	# Redirecting '/dev/stderr' to 'stty' allows valid arguments
 	read -r COLUMNS < <(stty -a < /dev/stderr)
@@ -493,7 +493,7 @@ function print_aucdtect_flac {
 	printf "\r${NORMAL}%$((${COLUMNS} - 19))s${BOLD_BLUE}%s${NORMAL}%s${YELLOW}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}\r%s${NORMAL}${YELLOW}%s${NORMAL}%s" \
 	"" "[" " " "Validating FLAC" " " "]" "     " "*" " ${FILENAME}"
 }
-function print_aucdtect_issue {
+print_aucdtect_issue () {
 	# Grab the first line of 'stty -a' output
 	# Redirecting '/dev/stderr' to 'stty' allows valid arguments
 	read -r COLUMNS < <(stty -a < /dev/stderr)
@@ -517,7 +517,7 @@ function print_aucdtect_issue {
 	printf "\r${NORMAL}%$((${COLUMNS} - 9))s${BOLD_BLUE}%s${NORMAL}%s${YELLOW}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}\r%s${YELLOW}%s${NORMAL}%s\n" \
 	"" "[" " " "ISSUE" " " "]" "     " "*" " ${FILENAME}"
 }
-function print_aucdtect_spectrogram {
+print_aucdtect_spectrogram () {
 	# Grab the first line of 'stty -a' output
 	# Redirecting '/dev/stderr' to 'stty' allows valid arguments
 	read -r COLUMNS < <(stty -a < /dev/stderr)
@@ -542,7 +542,7 @@ function print_aucdtect_spectrogram {
 	printf "\r${NORMAL}%$((${COLUMNS} - 24))s${BOLD_BLUE}%s${NORMAL}%s${YELLOW}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}\r%s${NORMAL}${YELLOW}%s${NORMAL}%s" \
 	"" "[" " " "Creating Spectrogram" " " "]" "     " "*" " ${FILENAME}"
 }
-function print_aucdtect_skip {
+print_aucdtect_skip () {
 	# Grab the first line of 'stty -a' output
 	# Redirecting '/dev/stderr' to 'stty' allows valid arguments
 	read -r COLUMNS < <(stty -a < /dev/stderr)
@@ -566,7 +566,7 @@ function print_aucdtect_skip {
 	printf "\r${NORMAL}%$((${COLUMNS} - 11))s${BOLD_BLUE}%s${NORMAL}%s${YELLOW}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}\r%s${YELLOW}%s${NORMAL}%s\n" \
 	"" "[" " " "SKIPPED" " " "]" "     " "*" " ${FILENAME}"
 }
-function print_done_flac {
+print_done_flac () {
 	# Grab the first line of 'stty -a' output
 	# Redirecting '/dev/stderr' to 'stty' allows valid arguments
 	read -r COLUMNS < <(stty -a < /dev/stderr)
@@ -590,7 +590,7 @@ function print_done_flac {
 	printf "\r${NORMAL}%$((${COLUMNS} - 8))s${BOLD_BLUE}%s${NORMAL}%s${BOLD_GREEN}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}\r%s${YELLOW}%s${NORMAL}%s\n" \
 	"" "[" " " "DONE" " " "]" "     " "*" " ${FILENAME}"
 }
-function print_level_same_compression {
+print_level_same_compression () {
 	# Grab the first line of 'stty -a' output
 	# Redirecting '/dev/stderr' to 'stty' allows valid arguments
 	read -r COLUMNS < <(stty -a < /dev/stderr)
@@ -615,7 +615,7 @@ function print_level_same_compression {
 	printf "\r${NORMAL}%$((${COLUMNS} - 22))s${BOLD_BLUE}%s${NORMAL}%s${YELLOW}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}\r%s${YELLOW}%s${NORMAL}%s\n" \
 	"" "[" " " "Already At Level ${COMPRESSION_LEVEL}" " " "]" "     " "*" " ${FILENAME}"
 }
-function print_analyzing_tags {
+print_analyzing_tags () {
 	# Grab the first line of 'stty -a' output
 	# Redirecting '/dev/stderr' to 'stty' allows valid arguments
 	read -r COLUMNS < <(stty -a < /dev/stderr)
@@ -640,7 +640,7 @@ function print_analyzing_tags {
 	printf "\r${NORMAL}%$((${COLUMNS} - 18))s${BOLD_BLUE}%s${NORMAL}%s${YELLOW}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}\r%s${NORMAL}${YELLOW}%s${NORMAL}%s" \
 	"" "[" " " "Analyzing Tags" " " "]" "     " "*" " ${FILENAME}"
 }
-function print_setting_tags {
+print_setting_tags () {
 	# Grab the first line of 'stty -a' output
 	# Redirecting '/dev/stderr' to 'stty' allows valid arguments
 	read -r COLUMNS < <(stty -a < /dev/stderr)
@@ -665,7 +665,7 @@ function print_setting_tags {
 	printf "\r${NORMAL}%$((${COLUMNS} - 16))s${BOLD_BLUE}%s${NORMAL}%s${YELLOW}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}\r%s${NORMAL}${YELLOW}%s${NORMAL}%s" \
 	"" "[" " " "Setting Tags" " " "]" "     " "*" " ${FILENAME}"
 }
-function print_prune_flac {
+print_prune_flac () {
 	# Grab the first line of 'stty -a' output
 	# Redirecting '/dev/stderr' to 'stty' allows valid arguments
 	read -r COLUMNS < <(stty -a < /dev/stderr)
@@ -715,7 +715,7 @@ export -f print_prune_flac
 #  FUNCTIONS TO DO VARIOUS COMMANDS  #
 ######################################
 # General abort script to use BASH's trap command on SIGINT
-function normal_abort {
+normal_abort () {
 	printf "\n%s${BOLD_GREEN}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}\n" \
 	" " "*" " Control-C received, exiting script..."
 	operation_summary
@@ -725,9 +725,9 @@ function normal_abort {
 
 # Create a countdown function for the metadata
 # to allow user to quit script safely
-function countdown_metadata {
+countdown_metadata () {
 	# Creates the listing of tags to be kept
-	function tags_countdown {
+	tags_countdown () {
 		# Recreate the tags array so it can be parsed easily
 		eval "tags=(${EXPORT_TAG[*]})"
 		for i in "${tags[@]}" ; do
@@ -736,7 +736,7 @@ function countdown_metadata {
 	}
 
 	# Creates the 10 second countdown
-	function countdown_10 {
+	countdown_10 () {
 		COUNT=10
 		while [[ ${COUNT} -gt 1 ]] ; do
 			printf "${BOLD_RED}%s${NORMAL}%s" "$COUNT" " "
@@ -781,7 +781,7 @@ function countdown_metadata {
 # Add ReplayGain to files and make sure each album disc uses the same
 # ReplayGain values (multi-disc albums have their own ReplayGain) as well
 # as make the tracks have their own ReplayGain values individually.
-function replaygain {
+replaygain () {
 	#####################
 	#  TEST REPLAYGAIN  #
 	#####################
@@ -789,7 +789,7 @@ function replaygain {
 	title_test_replaygain
 
 	# General abort script to use BASH's trap command on SIGINT
-	function normal_abort {
+	normal_abort () {
 		printf "\n%s${BOLD_GREEN}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}\n" \
 		" " "*" " Control-C received, exiting script..."
 
@@ -801,7 +801,7 @@ function replaygain {
 	# Trap SIGINT (Control-C) to abort cleanly
 	trap normal_abort SIGINT
 
-	function test_replaygain {
+	test_replaygain () {
 		for i ; do
 			print_test_replaygain
 
@@ -876,7 +876,7 @@ function replaygain {
 	if [[ "${REPLAYGAIN_NOFORCE}" == "true" ]] ; then
 		# Above option was called, skip FLAC files if all ReplayGain
 		# tracks can be accounted for
-		function process_replaygain {
+		process_replaygain () {
 			# ${i} is the parent directory to the FLAC files
 			for i; do
 				# ${j} is a FLAC file -> under ${i}
@@ -947,7 +947,7 @@ function replaygain {
 		}
 	else
 		# Above option was NOT called
-		function process_replaygain {
+		process_replaygain () {
 			for i; do
 				print_add_replaygain
 				ERROR="$((metaflac --add-replay-gain "${i}"/*.[Ff][Ll][Aa][Cc]) 2>&1)"
@@ -995,7 +995,7 @@ function replaygain {
 #  COMPRESS & VERIFY FLACS  #
 #############################
 # Compress FLAC files and verify output
-function compress_flacs {
+compress_flacs () {
 
 	# If '-C, --compress-notest' was called, print the
 	# correct title
@@ -1007,7 +1007,7 @@ function compress_flacs {
 
 	# Abort script and remove temporarily encoded FLAC files (if any)
 	# and check for any errors thus far
-	function compress_abort {
+	compress_abort () {
 		printf "\n%s${BOLD_GREEN}%s${NORMAL}%s\n" \
 		" " "*" " Control-C received, removing temporary files and exiting script..."
 		find "${DIRECTORY}" -name "*.tmp,fl-ac+en\'c" -exec rm "{}" \; 2> /dev/null
@@ -1033,7 +1033,7 @@ function compress_flacs {
 	# Trap SIGINT (Control-C) to abort cleanly
 	trap compress_abort SIGINT
 
-	function compress_f {
+	compress_f () {
 		for i ; do
 			# Trap errors into a variable as the output doesn't help
 			# for there is a better way to test below using the
@@ -1102,11 +1102,11 @@ function compress_flacs {
 #  TEST FLACS  #
 ################
 # Test FLAC files
-function test_flacs {
+test_flacs () {
 	title_testing_flac
 
 	# Abort script and check for any errors thus far
-	function test_abort {
+	test_abort () {
 		printf "\n%s${BOLD_GREEN}%s${NORMAL}%s\n" \
 		" " "*" " Control-C received, exiting script..."
 
@@ -1136,7 +1136,7 @@ function test_flacs {
 	# Trap SIGINT (Control-C) to abort cleanly
 	trap test_abort SIGINT
 
-	function test_f {
+	test_f () {
 		for i ; do
 			print_testing_flac
 			ERROR="$((flac -ts "${i}") 2>&1)"
@@ -1177,7 +1177,7 @@ function test_flacs {
 #  CHECK FLAC VALIDITY WITH AUCDTECT  #
 #######################################
 # Use auCDtect to check FLAC validity
-function aucdtect {
+aucdtect () {
 	# Check if SPECTROGRAM_LOCATION is user-defined
 	if [[ "${SPECTROGRAM_LOCATION}" != "default" ]] ; then
 		# Put spectrograms in user-defined location
@@ -1198,7 +1198,7 @@ function aucdtect {
 	title_aucdtect_flac
 
 	# Abort script and check for any errors thus far
-	function aucdtect_abort {
+	aucdtect_abort () {
 		printf "\n%s${BOLD_GREEN}%s${NORMAL}%s\n" \
 		" " "*" " Control-C received, exiting script..."
 
@@ -1246,7 +1246,7 @@ function aucdtect {
 	# Trap SIGINT (Control-C) to abort cleanly
 	trap aucdtect_abort SIGINT
 
-	function aucdtect_f {
+	aucdtect_f () {
 		for i ; do
 			print_aucdtect_flac
 
@@ -1379,11 +1379,11 @@ function aucdtect {
 #  CHECK MD5 SIGNATURE  #
 #########################
 # Check for unset MD5 Signatures in FLAC files
-function md5_check {
+md5_check () {
 	title_md5check_flac
 
 	# Abort script and check for any errors thus far
-	function md5_check_abort {
+	md5_check_abort () {
 		printf "\n%s${BOLD_GREEN}%s${NORMAL}%s\n" \
 		" " "*" " Control-C received, exiting script..."
 
@@ -1410,7 +1410,7 @@ function md5_check {
 	# Trap SIGINT (Control-C) to abort cleanly
 	trap md5_check_abort SIGINT
 
-	function md5_c {
+	md5_c () {
 		for i ; do
 			print_checking_md5
 
@@ -1465,7 +1465,7 @@ function md5_check {
 ###############
 # If COVERART tag is kept and REMOVE_ARTWORK is set to 'true'
 # display conflict and exit
-function coverart_remove_conflict {
+coverart_remove_conflict () {
 	# Check if COVERART exists in the tag array.  Notify user
 	# of its deprecation and advise against using it, preferring
 	# METADATA_BLOCK_PICTURE
@@ -1523,7 +1523,7 @@ function coverart_remove_conflict {
 }
 
 # Display why COVERART tag should not be used
-function coverart_warning {
+coverart_warning () {
 	printf "\n%s${YELLOW}%s${NORMAL}%s\n" \
 	" " "*" " The COVERART tag is deprecated and should not be"
 	printf "%s${YELLOW}%s${NORMAL}%s\n" \
@@ -1538,7 +1538,7 @@ function coverart_warning {
 
 # Check for missing tags and retag FLAC files if all files
 # are not missing tags
-function redo_tags {
+redo_tags () {
 	# Keep SIGINT from exiting the script (Can cause all tags
 	# to be lost if done when tags are being removed!)
 	trap '' SIGINT
@@ -1547,7 +1547,7 @@ function redo_tags {
 	# ANALYZE TAGS #
 	################
 
-	function analyze_tags {
+	analyze_tags () {
 		# Check if file is a FLAC file (variable hides output)
 		CHECK_FLAC="$(metaflac --show-md5sum "${i}" 2>&1)"
 
@@ -1629,7 +1629,7 @@ function redo_tags {
 	}
 	export -f analyze_tags
 
-	function analyze_tags_dont_log_coverart {
+	analyze_tags_dont_log_coverart () {
 		# Check if file is a FLAC file (variable hides output)
 		CHECK_FLAC="$(metaflac --show-md5sum "${i}" 2>&1)"
 
@@ -1736,7 +1736,7 @@ function redo_tags {
 		# COVERART is already in the tag array. Implies album
 		# artwork is to be kept, so log if COVERART tag is missing
 		# Function check_tags to allow multithreading
-		function check_tags {
+		check_tags () {
 			for i ; do
 				# Print script operation title
 				print_analyzing_tags
@@ -1754,7 +1754,7 @@ function redo_tags {
 
 			# Analyze tags but don't log COVERART is missing tag
 			# Function check_tags to allow multithreading
-			function check_tags {
+			check_tags () {
 				for i ; do
 					# Print script operation title
 					print_analyzing_tags
@@ -1770,7 +1770,7 @@ function redo_tags {
 
 			# Album artwork is NOT kept, so process tag fields, omitting COVERART
 			# Function check_tags to allow multithreading
-			function check_tags {
+			check_tags () {
 				for i ; do
 					# Print script operation title
 					print_analyzing_tags
@@ -1846,7 +1846,7 @@ function redo_tags {
 	title_setting_tags
 
 	# Set the FLAC metadata to each FLAC file
-	function remove_set_tags {
+	remove_set_tags () {
 		# Iterate through the tag array and set a variable for each tag
 		for j in "${tags[@]}" ; do
 			# Check if ALBUMARTIST is in tag array and apply operations on
@@ -1893,7 +1893,7 @@ function redo_tags {
 	export -f remove_set_tags
 
 	# Function retag_flacs to allow multithreading
-	function retag_flacs {
+	retag_flacs () {
 		# Recreate the tags array so it can be used by the child process
 		eval "tags=(${EXPORT_TAG[*]})"
 		for i ; do
@@ -1915,11 +1915,11 @@ function redo_tags {
 #  PRUNE FLACS  #
 #################
 # Clear excess FLAC metadata from each FLAC file
-function prune_flacs {
+prune_flacs () {
 	title_prune_flac
 
 	# Abort script and check for any errors thus far
-	function prune_abort {
+	prune_abort () {
 		printf "\n%s${BOLD_GREEN}%s${NORMAL}%s\n" \
 		" " "*" " Control-C received, exiting script..."
 
@@ -1950,7 +1950,7 @@ function prune_flacs {
 	# Trap SIGINT (Control-C) to abort cleanly	
 	trap prune_abort SIGINT
 
-	function prune_f {
+	prune_f () {
 		# Don't remove artwork if user wants it kept.  We don't have to check
 		# for the legacy COVERART tag as we are NOT removing any VORBIS_COMMENTs.
 		if [[ "${REMOVE_ARTWORK}" == "true" ]] ; then
@@ -2006,7 +2006,7 @@ function prune_flacs {
 #  DISPLAY LONG HELP  #
 #######################
 # Display a lot of help
-function long_help {
+long_help () {
 # Keep the ${LONG_HELP} variable from garbling
 # the text spacing
 OLDIFS="${IFS}"
@@ -2267,7 +2267,7 @@ printf "%s\n" "${LONG_HELP}"
 #  DISPLAY SHORT HELP  #
 ########################
 # Display short help
-function short_help {
+short_help () {
 	printf "%s\n" "  Usage: ${0} [OPTION] [OPTION]... [PATH_TO_FLAC(s)]"
 	printf "%s\n" "  Options:"
 	printf "%s\n" "    -c, --compress"
@@ -2292,14 +2292,14 @@ function short_help {
 #  DISPLAY SCRIPT VERSION  #
 ############################
 # Display script version
-function print_version {
+print_version () {
 	printf "%s\n" "Version ${VERSION}"
 }
 
 ######################################
 #  DETERMINE NUMBER OF CORES TO USE  #
 ######################################
-function find_cores {
+find_cores () {
 	# Check if CORES was set under USER CONFIGURATION
 	if [[ "${CORES}" == "proc" || -z "${CORES}" ]] ; then
 		# User did NOT set CORES, or was set to "proc",
@@ -2342,7 +2342,7 @@ function find_cores {
 ##################################
 #  DISPLAY COMPLETED OPERATIONS  #
 ##################################
-function operation_summary {
+operation_summary () {
 	# Grab the total number of FLAC files
 	mapfile -n0 TOTAL_FLACS < <(find "${DIRECTORY}" -name "*.[Ff][Ll][Aa][Cc]" -print 2> /dev/null)
 
@@ -2687,7 +2687,7 @@ if [[ -z "${FLAC_EXISTS}" ]] ; then
 fi
 
 # Display (in bold red) message that system is missing vital programs
-function display_missing_commands_header {
+display_missing_commands_header () {
 	printf "%s${BOLD_RED}%s${NORMAL}%s\n" \
 	" " "*" " You seem to be missing one or more necessary programs"
 	printf "%s${BOLD_RED}%s${NORMAL}%s\n" \
@@ -2850,7 +2850,7 @@ fi
 
 # Function to display missing files/directories this script could
 # not access (AKA 'permission denied')
-function display_permission_denied {
+display_permission_denied () {
 	printf "%s\n" "${FIND_PERMISSION_DENIED}" | while read i ; do
 		DENIED_LOCATION="${i#find: \`}"
 		DENIED_LOCATION="${DENIED_LOCATION%\': Permission denied}"
