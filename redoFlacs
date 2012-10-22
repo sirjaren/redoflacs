@@ -729,7 +729,7 @@ countdown_metadata () {
 	# Creates the listing of tags to be kept
 	tags_countdown () {
 		# Recreate the tags array so it can be parsed easily
-		eval "tags=(${EXPORT_TAG[*]})"
+		eval "tags=(${EXPORT_TAG[@]})"
 		for i in "${tags[@]}" ; do
 			printf "%s\n" "     ${i}"
 		done
@@ -1541,7 +1541,7 @@ coverart_warning () {
 redo_tags () {
 	# Keep SIGINT from exiting the script (Can cause all tags
 	# to be lost if done when tags are being removed!)
-	trap '' SIGINT
+	#trap '' SIGINT
 
 	################
 	# ANALYZE TAGS #
@@ -1562,7 +1562,7 @@ redo_tags () {
 			print_failed_flac
 		else
 			# Recreate the tags array so it can be used by the child process
-			eval "tags=(${EXPORT_TAG[*]})"
+			eval "tags=(${EXPORT_TAG[@]})"
 
 			# Iterate through each tag field and check if tag is missing
 			for j in "${tags[@]}" ; do
@@ -1600,13 +1600,13 @@ redo_tags () {
 
 				# If tags are not found store missing information into an array
 				# to be logged
-				if [[ -z "$(eval "printf "%s" "\$${j}_TAG"")" && "${FILE_PRINTED}" != "true" ]] ; then
+				if [[ -z "$(eval "printf "%s" \"\$${j}_TAG\"")" && "${FILE_PRINTED}" != "true" ]] ; then
 					# First instance of missing tag for current file
 					missingTags=( "${missingTags[@]}"
 						"$(printf "%s" "File:  ${i}")"
 						"$(printf "%s" "Error: ${j} tag not found")" )
 					FILE_PRINTED="true"
-				elif [[ -z "$(eval "printf "%s" "\$${j}_TAG"")" && "${FILE_PRINTED}" == "true" ]] ; then
+				elif [[ -z "$(eval "printf "%s" \"\$${j}_TAG\"")" && "${FILE_PRINTED}" == "true" ]] ; then
 					# If more than one missing tag in current file, don't print
 					# out filename
 					missingTags=( "${missingTags[@]}"
@@ -1644,7 +1644,7 @@ redo_tags () {
 			print_failed_flac
 		else
 			# Recreate the tags array so it can be used by the child process
-			eval "tags=(${EXPORT_TAG[*]})"
+			eval "tags=(${EXPORT_TAG[@]})"
 
 			# Album artwork is to be kept so preserve COVERART
 			tags=( "${tags[@]}" COVERART )
@@ -1698,13 +1698,13 @@ redo_tags () {
 				# If tags are not found store missing information into an array
 				# to be logged. Skip output of COVERART tag as this is a temporary
 				# addition to the tag array (for processing legacy artwork)
-				if [[ -z "$(eval "printf "%s" "\$${j}_TAG"")" && "${FILE_PRINTED}" != "true" && "${j}" != "COVERART" ]] ; then
+				if [[ -z "$(eval "printf "%s" \"\$${j}_TAG\"")" && "${FILE_PRINTED}" != "true" && "${j}" != "COVERART" ]] ; then
 					# First instance of missing tag for current file
 					missingTags=( "${missingTags[@]}"
 						"$(printf "%s" "File:  ${i}")"
 						"$(printf "%s" "Error: ${j} tag not found")" )
 					FILE_PRINTED="true"
-				elif [[ -z "$(eval "printf "%s" "\$${j}_TAG"")" && "${FILE_PRINTED}" == "true" && "${j}" != "COVERART" ]] ; then
+				elif [[ -z "$(eval "printf "%s" \"\$${j}_TAG\"")" && "${FILE_PRINTED}" == "true" && "${j}" != "COVERART" ]] ; then
 					# If more than one missing tag in current file, don't print
 					# out filename
 					missingTags=( "${missingTags[@]}"
@@ -1841,7 +1841,7 @@ redo_tags () {
 	# Recreate the tags array as it may have added the
 	# COVERART tag.  This way, we ensure that the COVERART
 	# tag is, in fact, temporary.
-	eval "tags=(${EXPORT_TAG[*]})"
+	eval "tags=(${EXPORT_TAG[@]})"
 
 	title_setting_tags
 
@@ -1887,7 +1887,7 @@ redo_tags () {
 
 		# Iterate through the tag array and add the saved tags back
 		for j in "${tags[@]}" ; do
-			metaflac --set-tag="${j}"="$(eval "printf "%s" \$${j}_SET")" "${i}"
+			metaflac --set-tag="${j}"="$(eval "printf "%s" \"\$${j}_SET\"")" "${i}"
 		done
 	}
 	export -f remove_set_tags
@@ -1895,7 +1895,7 @@ redo_tags () {
 	# Function retag_flacs to allow multithreading
 	retag_flacs () {
 		# Recreate the tags array so it can be used by the child process
-		eval "tags=(${EXPORT_TAG[*]})"
+		eval "tags=(${EXPORT_TAG[@]})"
 		for i ; do
 			print_setting_tags
 			remove_set_tags
