@@ -147,7 +147,7 @@ export SPECTROGRAM_LOCATION
 
 # Export the tag array using some trickery (BASH doesn't
 # support exporting arrays natively)
-export EXPORT_TAG="$(printf "%s\n" "${tags[@]}")"
+export EXPORT_TAG="$(printf "%s\n" "${tags[@]^^}")"
 
 # Colors on by default
 # Export to allow subshell access
@@ -1039,7 +1039,7 @@ compress_flacs () {
 			# for there is a better way to test below using the
 			# ERROR variable
 			COMPRESSION="$((metaflac --show-tag=COMPRESSION "${i}") 2>&1)"
-			COMPRESSION="${COMPRESSION/#[Cc][Oo][Mm][Pp][Rr][Ee][Ss][Ss][Ii][Oo][Nn]=}"
+			COMPRESSION="${COMPRESSION/#*=}"
 			if [[ "${COMPRESSION}" != "${COMPRESSION_LEVEL}" ]] ; then
 				print_compressing_flac
 				# This must come after the above command for proper formatting
@@ -1539,9 +1539,72 @@ coverart_warning () {
 # Check for missing tags and retag FLAC files if all files
 # are not missing tags
 redo_tags () {
-	# Keep SIGINT from exiting the script (Can cause all tags
-	# to be lost if done when tags are being removed!)
-	trap '' SIGINT
+	# Abort script and check for any errors thus far
+	redo_tags_abort () {
+		printf "\n%s${BOLD_GREEN}%s${NORMAL}%s\n" \
+		" " "*" " Control-C received, exiting script..."
+
+		if [[ "${DISPLAY_PERMISSION_DENIED}"  == "true" ]] ; then
+			printf '\n'
+			display_permission_denied
+		fi
+
+		# Test for DEPRECATED tag, COVERART in METADATA_ERROR log.  If it
+		# exists, set COVERART_WARNING variable to make script output
+		# warning upon completion
+		if [[ -f "${METADATA_ERRORS}" ]] ; then
+			while read i ; do
+				# Indentation is culled from reading in "${i}"
+				# To change this, set IFS to '\n'
+				if [[ "${i}" == "the new format: METADATA_BLOCK_PICTURE." ]] ; then
+					COVERART_WARNING="true"
+					break
+				fi
+			done < "${METADATA_ERRORS}"
+		fi
+
+		if [[ -f "${METADATA_ERRORS}"  && "${COVERART_WARNING}" == "true" ]] ; then
+			# Display COVERART warning function and metadata issues
+			printf ''
+			coverart_warning
+			printf "\n%s${BOLD_RED}%s${NORMAL}%s\n" \
+			" " "*" " Some FLAC files have missing tags or there were"
+			printf "%s${BOLD_RED}%s${NORMAL}%s\n" \
+			" " "*" " issues with some of the FLAC files, please check:"
+			printf "%s${BOLD_RED}%s${NORMAL}%s\n" \
+			" " "*" " \"${METADATA_ERRORS}\" for details."
+			printf "%s${BOLD_RED}%s${NORMAL}%s\n" \
+			" " "*" " Not Re-Tagging files."
+
+			REDO_COMPLETE="interrupt"
+			operation_summary
+
+			exit 1
+		elif [[ -f "${METADATA_ERRORS}" ]] ; then
+			# Just display metadata issues
+			printf "\n%s${BOLD_RED}%s${NORMAL}%s\n" \
+			" " "*" " Some FLAC files have missing tags or there were"
+			printf "%s${BOLD_RED}%s${NORMAL}%s\n" \
+			" " "*" " issues with some of the FLAC files, please check:"
+			printf "%s${BOLD_RED}%s${NORMAL}%s\n" \
+			" " "*" " \"${METADATA_ERRORS}\" for details."
+			printf "%s${BOLD_RED}%s${NORMAL}%s\n" \
+			" " "*" " Not Re-Tagging files."
+
+			REDO_COMPLETE="interrupt"
+			operation_summary
+
+			exit 1
+		fi
+
+		REDO_COMPLETE="interrupt"
+		operation_summary
+
+		exit 1
+	}
+
+	# Trap SIGINT (Control-C) to abort cleanly
+	trap redo_tags_abort SIGINT
 
 	################
 	# ANALYZE TAGS #
@@ -1568,47 +1631,38 @@ redo_tags () {
 			for j in "${tags[@]}" ; do
 				# Check if ALBUMARTIST is in tag array and apply operations on
 				# the tag field if it exists
-				if [[ "${j}" == [Aa][Ll][Bb][Uu][Mm][Aa][Rr][Tt][Ii][Ss][Tt] ]] ; then
+				if [[ "${j}" == "ALBUMARTIST" ]] ; then
 					# ALBUMARTIST exists in tag array so allow script to check the
 					# various naming conventions within the FLAC files (ie,
-					# 'album artist' or 'album_artist')
+					# 'ALBUM ARTIST' or 'ALBUM_ARTIST')
 
-					# "ALBUMARTIST"
+					# "ALBUMARTIST" or "ALBUM ARTIST" or "ALBUM_ARTIST", case-insensitive
 					if [[ -n "$(metaflac --show-tag=ALBUMARTIST "${i}")" ]] ; then
-						# Set a temporary variable to be easily parsed by `eval`
 						local TEMP_TAG="$(metaflac --show-tag=ALBUMARTIST "${i}")"
-						local TEMP_TAG="${TEMP_TAG/#*=}"
-					# "album artist"
-					elif [[ -n "$(metaflac --show-tag="album artist" "${i}")" ]] ; then
-						# Set a temporary variable to be easily parsed by `eval`
-						local TEMP_TAG="$(metaflac --show-tag="album artist" "${i}")"
-						local TEMP_TAG="${TEMP_TAG/#*=}"
-					# "album_artist"
-					elif [[ -n "$(metaflac --show-tag="album_artist" "${i}")" ]] ; then
-						# Set a temporary variable to be easily parsed by `eval`
-						local TEMP_TAG="$(metaflac --show-tag="album_artist" "${i}")"
-						local TEMP_TAG="${TEMP_TAG/#*=}"
+					elif [[ -n "$(metaflac --show-tag="ALBUM ARTIST" "${i}")" ]] ; then
+						local TEMP_TAG="$(metaflac --show-tag="ALBUM ARTIST" "${i}")"
+					elif [[ -n "$(metaflac --show-tag="ALBUM_ARTIST" "${i}")" ]] ; then
+						local TEMP_TAG="$(metaflac --show-tag="ALBUM_ARTIST" "${i}")"
 					fi
 				else
-					# Set a temporary variable to be easily parsed by `eval`
+					# Grab current tag "${j}" from FLAC file
 					local TEMP_TAG="$(metaflac --show-tag="${j}" "${i}")"
-					local TEMP_TAG="${TEMP_TAG/#*=}"
 				fi
 
-				# Evaluate TEMP_TAG into the dynamic tag
-				eval "${j}"_TAG='"${TEMP_TAG}"'
+				# Tag field (ie 10 Years, 2001, etc)
+				local TAG_VALUE="${TEMP_TAG/#*=}"
 
 				# If tags are not found store missing information into an array
 				# to be logged
-				if [[ -z "$(eval "printf "%s" \"\$${j}_TAG\"")" && "${FILE_PRINTED}" != "true" ]] ; then
+				if [[ -z "${TAG_VALUE}" && "${FILE_PRINTED}" != "true" ]] ; then
 					# First instance of missing tag for current file
 					missingTags=( "${missingTags[@]}"
 						"$(printf "%s" "File:  ${i}")"
 						"$(printf "%s" "Error: ${j} tag not found")" )
 					FILE_PRINTED="true"
-				elif [[ -z "$(eval "printf "%s" \"\$${j}_TAG\"")" && "${FILE_PRINTED}" == "true" ]] ; then
-					# If more than one missing tag in current file, don't print
-					# out filename
+				elif [[ -z "${TAG_VALUE}" && "${FILE_PRINTED}" == "true" ]] ; then
+					# If more than one missing tag in current file,
+					# don't print out filename
 					missingTags=( "${missingTags[@]}"
 						"$(printf "%s" "       ${j} tag not found")" )
 				fi
@@ -1654,39 +1708,30 @@ redo_tags () {
 			for j in "${tags[@]}" ; do
 				# Check if ALBUMARTIST is in tag array and apply operations on
 				# the tag field if it exists
-				if [[ "${j}" == [Aa][Ll][Bb][Uu][Mm][Aa][Rr][Tt][Ii][Ss][Tt] ]] ; then
+				if [[ "${j}" == "ALBUMARTIST" ]] ; then
 					# ALBUMARTIST exists in tag array so allow script to check the
 					# various naming conventions within the FLAC files (ie,
-					# 'album artist' or 'album_artist')
+					# 'ALBUM ARTIST' or 'ALBUM_ARTIST')
 
-					# "ALBUMARTIST"
+					# "ALBUMARTIST" or "ALBUM ARTIST" or "ALBUM_ARTIST", case-insensitive
 					if [[ -n "$(metaflac --show-tag=ALBUMARTIST "${i}")" ]] ; then
-						# Set a temporary variable to be easily parsed by `eval`
 						local TEMP_TAG="$(metaflac --show-tag=ALBUMARTIST "${i}")"
-						local TEMP_TAG="${TEMP_TAG/#*=}"
-					# "album artist"
-					elif [[ -n "$(metaflac --show-tag="album artist" "${i}")" ]] ; then
-						# Set a temporary variable to be easily parsed by `eval`
-						local TEMP_TAG="$(metaflac --show-tag="album artist" "${i}")"
-						local TEMP_TAG="${TEMP_TAG/#*=}"
-					# "album_artist"
-					elif [[ -n "$(metaflac --show-tag="album_artist" "${i}")" ]] ; then
-						# Set a temporary variable to be easily parsed by `eval`
-						local TEMP_TAG="$(metaflac --show-tag="album_artist" "${i}")"
-						local TEMP_TAG="${TEMP_TAG/#*=}"
+					elif [[ -n "$(metaflac --show-tag="ALBUM ARTIST" "${i}")" ]] ; then
+						local TEMP_TAG="$(metaflac --show-tag="ALBUM ARTIST" "${i}")"
+					elif [[ -n "$(metaflac --show-tag="ALBUM_ARTIST" "${i}")" ]] ; then
+						local TEMP_TAG="$(metaflac --show-tag="ALBUM_ARTIST" "${i}")"
 					fi
 				else
-					# Set a temporary variable to be easily parsed by `eval`
+					# Grab current tag "${j}" from FLAC file
 					local TEMP_TAG="$(metaflac --show-tag="${j}" "${i}")"
-					local TEMP_TAG="${TEMP_TAG/#*=}"
 				fi
 
-				# Evaluate TEMP_TAG into the dynamic tag
-				eval "${j}"_TAG='"${TEMP_TAG}"'
+				# Tag field (ie 10 Years, 2001, etc)
+				local TAG_VALUE="${TEMP_TAG/#*=}"
 
-				# If COVERART_TAG is not null, then log file that has
+				# If COVERART tag is not null, then log file that has
 				# the COVERART tag embedded within it about deprecation
-				if [[ -n "${COVERART_TAG}" ]] ; then
+				if [[ "${j}" == "COVERART" && -n "${TAG_VALUE}" ]] ; then
 					printf "%s\n%s\n%s\n%s\n" \
 						   "File:  ${i}" \
 						   "Error: \"${j}\" tag is DEPRECATED in above file. Consider migrating to" \
@@ -1698,13 +1743,13 @@ redo_tags () {
 				# If tags are not found store missing information into an array
 				# to be logged. Skip output of COVERART tag as this is a temporary
 				# addition to the tag array (for processing legacy artwork)
-				if [[ -z "$(eval "printf "%s" \"\$${j}_TAG\"")" && "${FILE_PRINTED}" != "true" && "${j}" != "COVERART" ]] ; then
+				if [[ -z "${TAG_VALUE}" && "${FILE_PRINTED}" != "true" && "${j}" != "COVERART" ]] ; then
 					# First instance of missing tag for current file
 					missingTags=( "${missingTags[@]}"
 						"$(printf "%s" "File:  ${i}")"
 						"$(printf "%s" "Error: ${j} tag not found")" )
 					FILE_PRINTED="true"
-				elif [[ -z "$(eval "printf "%s" \"\$${j}_TAG\"")" && "${FILE_PRINTED}" == "true" && "${j}" != "COVERART" ]] ; then
+				elif [[ -z "${TAG_VALUE}" && "${FILE_PRINTED}" == "true" && "${j}" != "COVERART" ]] ; then
 					# If more than one missing tag in current file, don't print
 					# out filename
 					missingTags=( "${missingTags[@]}"
@@ -1847,48 +1892,50 @@ redo_tags () {
 
 	# Set the FLAC metadata to each FLAC file
 	remove_set_tags () {
+		# Set up 'albumTags' associative array
+		declare -A albumTags
+
 		# Iterate through the tag array and set a variable for each tag
 		for j in "${tags[@]}" ; do
 			# Check if ALBUMARTIST is in tag array and apply operations on
 			# the tag field if it exists
-			if [[ "${j}" == [Aa][Ll][Bb][Uu][Mm][Aa][Rr][Tt][Ii][Ss][Tt] ]] ; then
+			if [[ "${j}" == "ALBUMARTIST" ]] ; then
 				# ALBUMARTIST exists in tag array so allow script to check the
 				# various naming conventions within the FLAC files (ie,
-				# 'album artist' or 'album_artist')
+				# 'ALBUM ARTIST' or 'ALBUM_ARTIST')
 
 				# "ALBUMARTIST"
 				if [[ -n "$(metaflac --show-tag=ALBUMARTIST "${i}")" ]] ; then
-					# Set a temporary variable to be easily parsed by `eval`
 					local TEMP_TAG="$(metaflac --show-tag=ALBUMARTIST "${i}")"
-					local TEMP_TAG="${TEMP_TAG/#*=}"
-				# "album artist"
-				elif [[ -n "$(metaflac --show-tag="album artist" "${i}")" ]] ; then
-					# Set a temporary variable to be easily parsed by `eval`
-					local TEMP_TAG="$(metaflac --show-tag="album artist" "${i}")"
-					local TEMP_TAG="${TEMP_TAG/#*=}"
-				# "album_artist"
-				elif [[ -n "$(metaflac --show-tag="album_artist" "${i}")" ]] ; then
-					# Set a temporary variable to be easily parsed by `eval`
-					local TEMP_TAG="$(metaflac --show-tag="album_artist" "${i}")"
-					local TEMP_TAG="${TEMP_TAG/#*=}"
+				elif [[ -n "$(metaflac --show-tag="ALBUM ARTIST" "${i}")" ]] ; then
+					local TEMP_TAG="$(metaflac --show-tag="ALBUM ARTIST" "${i}")"
+				elif [[ -n "$(metaflac --show-tag="ALBUM_ARTIST" "${i}")" ]] ; then
+					local TEMP_TAG="$(metaflac --show-tag="ALBUM_ARTIST" "${i}")"
 				fi
 			else
-				# Set a temporary variable to be easily parsed by `eval`
+				# Grab current tag "${j}" from FLAC file
 				local TEMP_TAG="$(metaflac --show-tag="${j}" "${i}")"
-				local TEMP_TAG="${TEMP_TAG/#*=}"
 			fi
 
-			# Evaluate TEMP_TAG into the dynamic tag
-			eval "${j}"_SET='"${TEMP_TAG}"'
+			# Tag key (ie ARTIST, DATE, etc)
+			local TAG_KEY="${TEMP_TAG//=*}"
+			# Make uppercase
+			local TAG_KEY="${TAG_KEY^^}"
+
+			# Tag field (ie 10 Years, 2001, etc)
+			local TAG_VALUE="${TEMP_TAG/#*=}"
+
+			# Put new tag values into associative array
+			albumTags["${TAG_KEY}"]="${TAG_VALUE}"
 		done
 	
-		# Remove all the tags
-		metaflac --remove --block-type=VORBIS_COMMENT "${i}"
-
-		# Iterate through the tag array and add the saved tags back
-		for j in "${tags[@]}" ; do
-			metaflac --set-tag="${j}"="$(eval "printf "%s" \"\$${j}_SET\"")" "${i}"
-		done
+		# Iterate through the tag array and add the saved tags back.
+		# Use process substitution to allow this to finish if user
+		# invokes SIGINT
+		metaflac --remove-all-tags --import-tags-from=- "${i}" \
+			< <(for j in "${tags[@]}" ; do
+				printf "%s\n" "${j}=${albumTags["${j}"]}"
+			done)
 	}
 	export -f remove_set_tags
 
