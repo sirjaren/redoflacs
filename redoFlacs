@@ -2756,6 +2756,18 @@ if [[ -n "${command_exists_array[@]}" ]] ; then
 	exit 1
 fi
 
+# Make sure we are running BASH 4 or greater
+read -r BASH_VERSION < <(bash --version)
+BASH_VERSION="${BASH_VERSION#*version }"
+BASH_VERSION="${BASH_VERSION%%.*}"
+if [[ "${BASH_VERSION}" -lt 4 ]] ; then
+	printf "%s${BOLD_RED}%s${NORMAL}%s\n" \
+	" " "*" " You must be running BASH version 4 or greater to use"
+	printf "%s${BOLD_RED}%s${NORMAL}%s\n" \
+	" " "*" " this program!"
+	exit 1
+fi
+
 # Set the last argument as the directory
 DIRECTORY="${1}"
 
