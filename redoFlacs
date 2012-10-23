@@ -149,6 +149,10 @@ export SPECTROGRAM_LOCATION
 # support exporting arrays natively)
 export EXPORT_TAG="$(printf "%s\n" "${tags[@]^^}")"
 
+# Various file extensions exported
+export FLAC_EXTENSION=".[Ff][Ll][Aa][Cc]"
+export WAV_EXTENSION=".[Ww][Aa][Vv]"
+
 # Colors on by default
 # Export to allow subshell access
 export BOLD_BLUE="\033[1;34m"
@@ -826,7 +830,7 @@ replaygain () {
 	export -f test_replaygain
 
 	# Run the above function with the configured threads (multithreaded)
-	find "${DIRECTORY}" -name "*.[Ff][Ll][Aa][Cc]" -print0 2> /dev/null | xargs -0 -n 1 -P "${CORES}" bash -c 'test_replaygain "${@}"' --
+	find "${DIRECTORY}" -name "*${FLAC_EXTENSION}" -print0 2> /dev/null | xargs -0 -n 1 -P "${CORES}" bash -c 'test_replaygain "${@}"' --
 
 	if [[ -f "${REPLAY_TEST_ERRORS}" ]] ; then
 		if [[ "${DISPLAY_PERMISSION_DENIED}"  == "true" ]] ; then
@@ -861,7 +865,7 @@ replaygain () {
 	# Find all the directories in which to process the FLAC files. This will allow
 	# multithreading when applying the ReplayGain tags without fear of race
 	# conditions (exported for subshell access)
-	export REPLAYGAIN_DIRECTORIES="$(find "${DIRECTORY}" -name "*.[Ff][Ll][Aa][Cc]" -print 2> /dev/null | \
+	export REPLAYGAIN_DIRECTORIES="$(find "${DIRECTORY}" -name "*${FLAC_EXTENSION}" -print 2> /dev/null | \
 		while read i ; do
 			if [[ "${PROCESSED_DIRECTORY}" == "${i%/*}" ]] ; then
 				continue
@@ -880,7 +884,7 @@ replaygain () {
 			# ${i} is the parent directory to the FLAC files
 			for i; do
 				# ${j} is a FLAC file -> under ${i}
-				for j in "${i}"/*.[Ff][Ll][Aa][Cc] ; do
+				for j in "${i}"/*${FLAC_EXTENSION} ; do
 					# Grab all of the ReplayGain tags
 					REPLAYGAIN_REFERENCE_LOUDNESS="$(metaflac --show-tag=REPLAYGAIN_REFERENCE_LOUDNESS "${j}")"
 					REPLAYGAIN_REFERENCE_LOUDNESS="${REPLAYGAIN_REFERENCE_LOUDNESS#*=}"
@@ -910,7 +914,7 @@ replaygain () {
 
 						# No need to remove ReplayGain as metaflac already
 						# takes care of this when adding new values
-						ERROR="$((metaflac --add-replay-gain "${i}"/*.[Ff][Ll][Aa][Cc]) 2>&1)"
+						ERROR="$((metaflac --add-replay-gain "${i}"/*${FLAC_EXTENSION}) 2>&1)"
 						if [[ -n "${ERROR}" ]] ; then
 							print_failed_replaygain
 							printf "%s\n%s\n%s\n" \
@@ -950,7 +954,7 @@ replaygain () {
 		process_replaygain () {
 			for i; do
 				print_add_replaygain
-				ERROR="$((metaflac --add-replay-gain "${i}"/*.[Ff][Ll][Aa][Cc]) 2>&1)"
+				ERROR="$((metaflac --add-replay-gain "${i}"/*${FLAC_EXTENSION}) 2>&1)"
 				if [[ -n "${ERROR}" ]] ; then
 					print_failed_replaygain
 					printf "%s\n%s\n%s\n" \
@@ -1080,7 +1084,7 @@ compress_flacs () {
 	export -f compress_f
 
 	# Run the above function with the configured threads (multithreaded)
-	find "${DIRECTORY}" -name "*.[Ff][Ll][Aa][Cc]" -print0 2> /dev/null | xargs -0 -n 1 -P "${CORES}" bash -c 'compress_f "${@}"' --
+	find "${DIRECTORY}" -name "*${FLAC_EXTENSION}" -print0 2> /dev/null | xargs -0 -n 1 -P "${CORES}" bash -c 'compress_f "${@}"' --
 
 	if [[ -f "${VERIFY_ERRORS}" ]] ; then
 		printf "\n%s${BOLD_RED}%s${NORMAL}%s\n" \
@@ -1155,7 +1159,7 @@ test_flacs () {
 	export -f test_f
 
 	# Run the above function with the configured threads (multithreaded)
-	find "${DIRECTORY}" -name "*.[Ff][Ll][Aa][Cc]" -print0 2> /dev/null | xargs -0 -n 1 -P "${CORES}" bash -c 'test_f "${@}"' --
+	find "${DIRECTORY}" -name "*${FLAC_EXTENSION}" -print0 2> /dev/null | xargs -0 -n 1 -P "${CORES}" bash -c 'test_f "${@}"' --
 
 	if [[ -f "${TEST_ERRORS}" ]] ; then
 		printf "\n%s${BOLD_RED}%s${NORMAL}%s\n" \
@@ -1204,7 +1208,7 @@ aucdtect () {
 
 		# Don't remove WAV files in case user has WAV files there purposefully
 		# The script cannot determine between existing and script-created WAV files
-		WAV_FILES="$(find "${DIRECTORY}" -name "*.[Ww][Aa][Vv]" -print0 2> /dev/null | xargs -0 -n 1)"
+		WAV_FILES="$(find "${DIRECTORY}" -name "*${WAV_EXTENSION}" -print0 2> /dev/null | xargs -0 -n 1)"
 
 		if [[ "${DISPLAY_PERMISSION_DENIED}"  == "true" ]] ; then
 			printf '\n'
@@ -1285,7 +1289,7 @@ aucdtect () {
 				# The actual auCDtect command with highest accuracy setting
 				# 2> hides the displayed progress to /dev/null so nothing is shown
 				export MALLOC_CHECK_=0
-				AUCDTECT_CHECK="$("${AUCDTECT_COMMAND}" -m0 "${i%.[Ff][Ll][Aa][Cc]}.wav" 2> /dev/null)"
+				AUCDTECT_CHECK="$("${AUCDTECT_COMMAND}" -m0 "${i%${FLAC_EXTENSION}}.wav" 2> /dev/null)"
 				mapfile -n0 AUCDTECT_CHECK < <(printf "%s" "${AUCDTECT_CHECK}")
 
 				# Print last "good" value in the AUCDTECT_CHECK array
@@ -1302,18 +1306,18 @@ aucdtect () {
 						if [[ "${SPECTROGRAM_LOCATION}" == "default" ]] ; then
 							# Place images in same directory as the FLAC files
 							# Make sure we don't clobber any picture files
-							if [[ -f "${i%.[Ff][Ll][Aa][Cc]}.png" ]] ; then
+							if [[ -f "${i%${FLAC_EXTENSION}}.png" ]] ; then
 								# File exists so prepend "spectrogram" before ".png"
-								SPECTROGRAM_PICTURE="$(printf "%s" "${i%.[Ff][Ll][Aa][Cc]}.spectrogram.png")"
+								SPECTROGRAM_PICTURE="$(printf "%s" "${i%${FLAC_EXTENSION}}.spectrogram.png")"
 							else
 								# File doesn't exist, so create the spectrogram with the basename of "$i"
 								# with ".png" as the extension
-								SPECTROGRAM_PICTURE="$(printf "%s" "${i%.[Ff][Ll][Aa][Cc]}.png")"
+								SPECTROGRAM_PICTURE="$(printf "%s" "${i%${FLAC_EXTENSION}}.png")"
 							fi
 						else
 							# Place images in user-defined location
 							FLAC_FILE="$(printf "%s" "${i##*/}")"
-							SPECTROGRAM_PICTURE="${SPECTROGRAM_LOCATION}/$(print "%s" "${FLAC_FILE%.[Ff][Ll][Aa][Cc]}.png")"
+							SPECTROGRAM_PICTURE="${SPECTROGRAM_LOCATION}/$(print "%s" "${FLAC_FILE%${FLAC_EXTENSION}}.png")"
 						fi
 
 						# Let's create the spectrogram for the failed FLAC file
@@ -1350,14 +1354,14 @@ aucdtect () {
 				fi
 
 				# Remove temporary WAV file
-				rm "${i%.[Ff][Ll][Aa][Cc]}.wav"
+				rm "${i%${FLAC_EXTENSION}}.wav"
 			fi
 		done
 	}
 	export -f aucdtect_f
 
 	# Run the above function with the configured threads (multithreaded)
-	find "${DIRECTORY}" -name "*.[Ff][Ll][Aa][Cc]" -print0 2> /dev/null | xargs -0 -n 1 -P "${CORES}" bash -c 'aucdtect_f "${@}"' --
+	find "${DIRECTORY}" -name "*${FLAC_EXTENSION}" -print0 2> /dev/null | xargs -0 -n 1 -P "${CORES}" bash -c 'aucdtect_f "${@}"' --
 
 	if [[ -f "${AUCDTECT_ERRORS}" ]] ; then
 		printf "\n%s${BOLD_RED}%s${NORMAL}%s\n" \
@@ -1440,7 +1444,7 @@ md5_check () {
 	export -f md5_c
 
 	# Run the above function with the configured threads (multithreaded)
-	find "${DIRECTORY}" -name "*.[Ff][Ll][Aa][Cc]" -print0 2> /dev/null | xargs -0 -n 1 -P "${CORES}" bash -c 'md5_c "${@}"' --
+	find "${DIRECTORY}" -name "*${FLAC_EXTENSION}" -print0 2> /dev/null | xargs -0 -n 1 -P "${CORES}" bash -c 'md5_c "${@}"' --
 
 	if [[ -f "${MD5_ERRORS}" ]] ; then
 		printf "\n%s${BOLD_RED}%s${NORMAL}%s\n" \
@@ -1829,7 +1833,7 @@ redo_tags () {
 	fi
 
 	# Run the "check_tags" function with the configured threads (multithreaded)
-	find "${DIRECTORY}" -name "*.[Ff][Ll][Aa][Cc]" -print0 2> /dev/null | xargs -0 -n 1 -P "${CORES}" bash -c 'check_tags "${@}"' --
+	find "${DIRECTORY}" -name "*${FLAC_EXTENSION}" -print0 2> /dev/null | xargs -0 -n 1 -P "${CORES}" bash -c 'check_tags "${@}"' --
 
 	# Test for DEPRECATED tag, COVERART in METADATA_ERROR log.  If it
 	# exists, set COVERART_WARNING variable to make script output
@@ -1952,7 +1956,7 @@ redo_tags () {
 	export -f retag_flacs
 	
 	# Run the above function with the configured threads (multithreaded)
-	find "${DIRECTORY}" -name "*.[Ff][Ll][Aa][Cc]" -print0 2> /dev/null | xargs -0 -n 1 -P "${CORES}" bash -c 'retag_flacs "${@}"' --
+	find "${DIRECTORY}" -name "*${FLAC_EXTENSION}" -print0 2> /dev/null | xargs -0 -n 1 -P "${CORES}" bash -c 'retag_flacs "${@}"' --
 
 	# Redo Tags completed successfully
 	REDO_COMPLETE="true"
@@ -2034,7 +2038,7 @@ prune_flacs () {
 	export -f prune_f
 	
 	# Run the above function with the configured threads (multithreaded)
-	find "${DIRECTORY}" -name "*.[Ff][Ll][Aa][Cc]" -print0 2> /dev/null | xargs -0 -n 1 -P "${CORES}" bash -c 'prune_f "${@}"' --
+	find "${DIRECTORY}" -name "*${FLAC_EXTENSION}" -print0 2> /dev/null | xargs -0 -n 1 -P "${CORES}" bash -c 'prune_f "${@}"' --
 
 	if [[ -f "${PRUNE_ERRORS}" ]] ; then
 		printf "\n%s${BOLD_RED}%s${NORMAL}%s\n" \
@@ -2054,11 +2058,6 @@ prune_flacs () {
 #######################
 # Display a lot of help
 long_help () {
-# Keep the ${LONG_HELP} variable from garbling
-# the text spacing
-OLDIFS="${IFS}"
-IFS='\n'
-
 LONG_HELP="  Usage: ${0} [OPTION] [OPTION]... [PATH_TO_FLAC(s)]
   Options:
     -c, --compress
@@ -2303,9 +2302,6 @@ LONG_HELP="  Usage: ${0} [OPTION] [OPTION]... [PATH_TO_FLAC(s)]
     # Compress FLAC files and redo the FLAC tags
     ${0} -c -r /some/path/to/files"
 
-# Restore IFS
-IFS="${OLDIFS}"
-
 # Print out help (will be piped to ${PAGER} elsewhere)
 printf "%s\n" "${LONG_HELP}"
 }
@@ -2391,7 +2387,7 @@ find_cores () {
 ##################################
 operation_summary () {
 	# Grab the total number of FLAC files
-	mapfile -n0 TOTAL_FLACS < <(find "${DIRECTORY}" -name "*.[Ff][Ll][Aa][Cc]" -print 2> /dev/null)
+	mapfile -n0 TOTAL_FLACS < <(find "${DIRECTORY}" -name "*${FLAC_EXTENSION}" -print 2> /dev/null)
 
 	# Change above array to variable
 	DIGITS="${#TOTAL_FLACS[@]}"
@@ -2578,12 +2574,23 @@ operation_summary () {
 	"   " "│" " Total Flacs : ${TOTAL_FLACS} " "│"
 	printf "%s${BOLD_BLUE}%s${NORMAL}\n" \
 	"   " "└───────────────────────────┘"
-
 }
 
 #######################
 #  PRE-SCRIPT CHECKS  #
 #######################
+# Make sure we are running BASH 4 or greater
+read -r BASH_VERSION < <(bash --version)
+BASH_VERSION="${BASH_VERSION#*version }"
+BASH_VERSION="${BASH_VERSION%%.*}"
+if [[ "${BASH_VERSION}" -lt 4 ]] ; then
+	printf "%s${BOLD_RED}%s${NORMAL}%s\n" \
+	" " "*" " You must be running BASH version 4 or greater to use"
+	printf "%s${BOLD_RED}%s${NORMAL}%s\n" \
+	" " "*" " this program!"
+	exit 1
+fi
+
 # Add case where only one argument is specified
 if [[ "${#}" -eq 1 ]] ; then
 	case "${1}" in
@@ -2756,18 +2763,6 @@ if [[ -n "${command_exists_array[@]}" ]] ; then
 	exit 1
 fi
 
-# Make sure we are running BASH 4 or greater
-read -r BASH_VERSION < <(bash --version)
-BASH_VERSION="${BASH_VERSION#*version }"
-BASH_VERSION="${BASH_VERSION%%.*}"
-if [[ "${BASH_VERSION}" -lt 4 ]] ; then
-	printf "%s${BOLD_RED}%s${NORMAL}%s\n" \
-	" " "*" " You must be running BASH version 4 or greater to use"
-	printf "%s${BOLD_RED}%s${NORMAL}%s\n" \
-	" " "*" " this program!"
-	exit 1
-fi
-
 # Set the last argument as the directory
 DIRECTORY="${1}"
 
@@ -2922,7 +2917,7 @@ display_permission_denied () {
 FIND_PERMISSION_DENIED="$(find "${DIRECTORY}" 2>&1 >/dev/null)"
 
 # Check for at least 1 FLAC file
-read -r FIND_FLACS < <(find "${DIRECTORY}" -name "*.[Ff][Ll][Aa][Cc]" -print 2> /dev/null)
+read -r FIND_FLACS < <(find "${DIRECTORY}" -name "*${FLAC_EXTENSION}" -print 2> /dev/null)
 
 # Check if there are any files/directories with permission denied errors
 # and if so, display them to the user if there are no other FLACS to
