@@ -148,7 +148,7 @@ export SPECTROGRAM_LOCATION
 # Export the tag array using some trickery (BASH doesn't
 # support exporting arrays natively).  Also make the tag
 # fields uppercase
-export EXPORT_TAG="$(printf "%s\n" "${tags[@]^^}")"
+export EXPORT_TAG="${tags[@]^^}"
 
 # Various file extensions exported
 export FLAC_EXTENSION=".[Ff][Ll][Aa][Cc]"
@@ -734,7 +734,7 @@ countdown_metadata () {
 	# Creates the listing of tags to be kept
 	tags_countdown () {
 		# Recreate the tags array so it can be parsed easily
-		eval "tags=(${EXPORT_TAG[@]})"
+		eval "tags=(${EXPORT_TAG})"
 		for i in "${tags[@]}" ; do
 			printf "%s\n" "     ${i}"
 		done
@@ -1630,7 +1630,7 @@ redo_tags () {
 			print_failed_flac
 		else
 			# Recreate the tags array so it can be used by the child process
-			eval "tags=(${EXPORT_TAG[@]})"
+			eval "tags=(${EXPORT_TAG})"
 
 			# Iterate through each tag field and check if tag is missing
 			for j in "${tags[@]}" ; do
@@ -1700,7 +1700,7 @@ redo_tags () {
 			print_failed_flac
 		else
 			# Recreate the tags array so it can be used by the child process
-			eval "tags=(${EXPORT_TAG[@]})"
+			eval "tags=(${EXPORT_TAG})"
 
 			# Album artwork is to be kept so preserve COVERART
 			tags+=( COVERART )
@@ -1885,7 +1885,7 @@ redo_tags () {
 	# Recreate the tags array as it may have added the
 	# COVERART tag.  This way, we ensure that the COVERART
 	# tag is, in fact, temporary.
-	eval "tags=(${EXPORT_TAG[@]})"
+	eval "tags=(${EXPORT_TAG})"
 
 	title_setting_tags
 
@@ -1941,7 +1941,7 @@ redo_tags () {
 	# Function retag_flacs to allow multithreading
 	retag_flacs () {
 		# Recreate the tags array so it can be used by the child process
-		eval "tags=(${EXPORT_TAG[@]})"
+		eval "tags=(${EXPORT_TAG})"
 		for i ; do
 			print_setting_tags
 			remove_set_tags
@@ -2586,6 +2586,15 @@ if [[ "${BASH_VERSION}" -lt 4 ]] ; then
 	exit 1
 fi
 
+	###################################
+	#  PROCESS POSITIONAL PARAMETERS  #
+	###################################
+# If no arguments are made to the script show usage
+if [[ "${#}" -eq 0 ]] ; then
+	short_help
+	exit 1
+fi
+
 # Add case where only one argument is specified
 if [[ "${#}" -eq 1 ]] ; then
 	case "${1}" in
@@ -2606,81 +2615,212 @@ if [[ "${#}" -eq 1 ]] ; then
 		;;
 		*)
 			short_help
-			exit 0
+			exit 1
 		;;
 	esac
 fi
 
-# Handle various command switches
-while [[ "${#}" -gt 1 ]] ; do
-	case "${1}" in
-		--all|-l)
+# Separate the long and short style arguments into their
+# own arrays
+for i in "${@}" ; do
+	if [[ "${i}" == --* ]] ; then
+		long_style_arguments+=( "${i}" )
+	elif [[ "${i}" == -* ]] ; then
+		short_style_arguments+=( "${i}" )
+	fi
+done
+
+# If there were any long style arguments called, convert them
+# to short style in order for getopts to be able to process
+# them correctly (ignoring "--help" and "--version" since
+# this is taken care of above).  Add invalid arguments to it's
+# own array
+if [[ -n "${long_style_arguments[@]}" ]] ; then
+	for i in "${long_style_arguments[@]}" ; do
+		case "${i}" in
+			--compress)
+				converted_arguments+=( -c )
+			;;
+			--compress-notest)
+				converted_arguments+=( -C )
+			;;
+			--test)
+				converted_arguments+=( -t )
+			;;
+			--md5check)
+				converted_arguments+=( -m )
+			;;
+			--aucdtect)
+				converted_arguments+=( -a )
+			;;
+			--aucdtect-spectrogram)
+				converted_arguments+=( -A )
+			;;
+			--prune)
+				converted_arguments+=( -p )
+			;;
+			--replaygain)
+				converted_arguments+=( -g )
+			;;
+			--replaygain-noforce)
+				converted_arguments+=( -G )
+			;;
+			--redo)
+				converted_arguments+=( -r )
+			;;
+			--all)
+				converted_arguments+=( -l )
+			;;
+			--reallyall)
+				converted_arguments+=( -L )
+			;;
+			--no-color)
+				converted_arguments+=( -n )
+			;;
+			*)
+				# Set invalid argument into array
+				INVALID_ARGUMENTS+=( "${i}" )
+			;;
+		esac
+	done
+fi
+
+# Go through all short style arguments adding the valid
+# arguments to the "converted_arguments" array and adding
+# invalid arguments to it's own array
+while getopts ":LlcCtgGaAmprn" ARGUMENTS "${short_style_arguments[@]}" ; do
+	case "${ARGUMENTS}" in
+		l)
+			converted_arguments+=( -l )
+		;;
+		L)
+			converted_arguments+=( -L )
+		;;
+		c)
+			converted_arguments+=( -c )
+		;;
+		C)
+			converted_arguments+=( -C )
+		;;
+		t)
+			converted_arguments+=( -t )
+		;;
+		g)
+			converted_arguments+=( -g )
+		;;
+		G)
+			converted_arguments+=( -G )
+		;;
+		a)
+			converted_arguments+=( -a )
+		;;
+		A)
+			converted_arguments+=( -A )
+		;;
+		m)
+			converted_arguments+=( -m )
+		;;
+		p)
+			converted_arguments+=( -p )
+		;;
+		r)
+			converted_arguments+=( -r )
+		;;
+		n)
+			converted_arguments+=( -n )
+		;;
+		?)
+			# Set invalid argument from getopts into
+			# array using ${OPTARG}
+			INVALID_ARGUMENTS+=( "-${OPTARG}" )
+		;;
+	esac
+done
+
+# If there were invalid arguments called, display them and
+# exit script
+if [[ -n "${INVALID_ARGUMENTS}" ]] ; then
+	short_help
+	printf "\n%s${BOLD_RED}%s${NORMAL}%s" \
+	" " "*" " Invalid options:"
+
+	for i in "${INVALID_ARGUMENTS[@]}" ; do
+		printf "%s" " ${i}"
+	done
+	printf '\n'
+	exit 1
+fi
+
+# Run through all the converted arguments and set up the correct
+# values based on what the user called, thereby allowing the
+# script to process said values and execute the corresponding
+# functions
+for i in "${converted_arguments[@]}" ; do
+	case "${i}" in
+		-l)
 			ALL="true"
-			shift
 		;;
-		--reallyall|-L)
+		-L)
 			REALLYALL="true"
-			shift
 		;;
-		--compress|-c)
+		-c)
 			COMPRESS="true"
 			COMPRESS_TEST="true"
-			shift
 		;;
-		--compress-notest|-C)
+		-C)
 			COMPRESS="true"
 			export SKIP_TEST="true"
-			shift
 		;;
-		--test|-t)
+		-t)
 			TEST="true"
-			shift
 		;;
-		--replaygain|-g)
+		-g)
 			REPLAYGAIN="true"
 			# Below used only once to test for
 			# command compatibility
 			REPLAYGAIN_FORCE="true"
-			shift
 		;;
-		--replaygain-noforce|-G)
+		-G)
 			REPLAYGAIN="true"
 			REPLAYGAIN_NOFORCE="true"
-			shift
 		;;
-		--aucdtect|-a)
+		-a)
 			AUCDTECT="true"
 			# Not used in subshell(s)
 			NO_SPECTROGRAM="true"
-			shift
 		;;
-		--aucdtect-spectrogram|-A)
+		-A)
 			AUCDTECT="true"
 			export CREATE_SPECTROGRAM="true"
-			shift
 		;;
-		--md5check|-m)
+		-m)
 			MD5CHECK="true"
-			shift
 		;;
-		--prune|-p)
+		-p)
 			PRUNE="true"
-			shift
 		;;
-		--redo|-r)
+		-r)
 			REDO="true"
-			shift
 		;;
-		--no-color|-n)
+		-n)
 			NO_COLOR="true"
-			shift
 		;;
 		*)
-			short_help
-			exit 0
+			# Should not ever happen!
+			printf "%s${BOLD_RED}%s${NORMAL}%s\n%s\n" \
+			" " "*" " This is a BUG! Please report to:" \
+			"   https://github.com/sirjaren/redoflacs/issues/new"
+			exit 1
 		;;
 	esac
 done
+
+# Set the last argument as the directory
+CALLED_ARGUMENTS=( "${@}" )
+DIRECTORY="${CALLED_ARGUMENTS[-1]}"
+	###############################
+	#  END POSITIONAL PARAMETERS  #
+	###############################
 
 # This must come before the other options in
 # order for it to take effect
@@ -2692,6 +2832,14 @@ if [[ "${NO_COLOR}" == "true" ]] ; then
 	MAGENTA=""
 	YELLOW=""
 	NORMAL=""
+fi
+
+# Check whether DIRECTORY exists
+if [[ ! -d "${DIRECTORY}" ]] ; then
+	printf "%s\n" "  Usage: ${0} [OPTION] [PATH_TO_FLAC(s)]..."
+	printf "%s${BOLD_RED}%s${NORMAL}%s\n" \
+	" " "*" " Please specify a directory!"
+	exit 1
 fi
 
 # Check to make sure script has all the dependencies
@@ -2756,23 +2904,6 @@ if [[ -n "${command_exists_array[@]}" ]] ; then
 		" " "*" " ${i}"
 	done
 	exit 1
-fi
-
-# Set the last argument as the directory
-DIRECTORY="${1}"
-
-# Check whether DIRECTORY is not null and whether the directory exists
-if [[ -n "${DIRECTORY}" && ! -d "${DIRECTORY}" ]] ; then
-	printf "%s\n" "  Usage: ${0} [OPTION] [PATH_TO_FLAC(s)]..."
-	printf "\n%s${BOLD_RED}%s${NORMAL}%s\n" \
-	" " "*" " Please specify a directory!"
-	exit 1
-fi
-
-# If no arguments are made to the script show usage
-if [[ "${#}" -eq 0 ]] ; then
-	short_help
-	exit 0
 fi
 
 # If "-l, --all" and "-L, --reallyall" are both called, warn and exit
