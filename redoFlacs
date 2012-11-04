@@ -2762,6 +2762,9 @@ operation_summary () {
 	"   " "│" "               interruption from user.            " "│"
 	printf "%s${BOLD_BLUE}%s${NORMAL}\n" \
 	"   " "└──────────────────────────────────────────────────┘"
+
+	# Restore "^C"
+	stty ctlecho 2> /dev/null
 }
 
 #######################
@@ -3277,6 +3280,9 @@ find_cores
 ##################
 #  BEGIN SCRIPT  #
 ##################
+# Prevent Control-C from displaying "^C"
+stty -ctlecho 2> /dev/null
+
 # Create a temporary FIFO pipe
 mkfifo /tmp/redoflacs.fifo.$$
 export TMP_FIFO="/tmp/redoflacs.fifo.$$"
