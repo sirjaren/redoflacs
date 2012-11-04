@@ -166,14 +166,14 @@ export NORMAL="\033[0m"
 
 # Log files with timestamp
 # Export to allow subshell access
-export VERIFY_ERRORS="${ERROR_LOG}/FLAC_Verify_Errors $(date "+[%Y-%m-%d %R]")"
-export TEST_ERRORS="${ERROR_LOG}/FLAC_Test_Errors $(date "+[%Y-%m-%d %R]")"
-export MD5_ERRORS="${ERROR_LOG}/MD5_Signature_Errors $(date "+[%Y-%m-%d %R]")"
-export METADATA_ERRORS="${ERROR_LOG}/FLAC_Metadata_Errors $(date "+[%Y-%m-%d %R]")"
-export REPLAY_TEST_ERRORS="${ERROR_LOG}/ReplayGain_Test_Errors $(date "+[%Y-%m-%d %R]")"
-export REPLAY_ADD_ERRORS="${ERROR_LOG}/ReplayGain_Add_Errors $(date "+[%Y-%m-%d %R]")"
-export AUCDTECT_ERRORS="${ERROR_LOG}/auCDtect_Errors $(date "+[%Y-%m-%d %R]")"
-export PRUNE_ERRORS="${ERROR_LOG}/FLAC_Prune_Errors $(date "+[%Y-%m-%d %R]")"
+export VERIFY_ERRORS="${ERROR_LOG}/FLAC_Verify_Errors_$(date "+%Y%m%d-%H.%M.%S").log"
+export TEST_ERRORS="${ERROR_LOG}/FLAC_Test_Errors_$(date "+%Y%m%d-%H.%M.%S").log"
+export MD5_ERRORS="${ERROR_LOG}/MD5_Signature_Errors_$(date "+%Y%m%d-%H.%M.%S").log"
+export METADATA_ERRORS="${ERROR_LOG}/FLAC_Metadata_Errors_$(date "+%Y%m%d-%H.%M.%S").log"
+export REPLAY_TEST_ERRORS="${ERROR_LOG}/ReplayGain_Test_Errors_$(date "+%Y%m%d-%H.%M.%S").log"
+export REPLAY_ADD_ERRORS="${ERROR_LOG}/ReplayGain_Add_Errors_$(date "+%Y%m%d-%H.%M.%S").log"
+export AUCDTECT_ERRORS="${ERROR_LOG}/auCDtect_Errors_$(date "+%Y%m%d-%H.%M.%S").log"
+export PRUNE_ERRORS="${ERROR_LOG}/FLAC_Prune_Errors_$(date "+%Y%m%d-%H.%M.%S").log"
 
 # Set arguments to null
 # If enabled they will be changed to true
@@ -190,54 +190,62 @@ PRUNE=""
 ###################################
 # Displaying currently running tasks
 title_compress_flac () {
-	printf "%s${BOLD_GREEN}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}\n" \
-	" " "*" " Compressing FLAC files with level ${COMPRESSION_LEVEL} compression and verifying output :: " "[${CORES} Thread(s)]"
+	printf "%s${BOLD_GREEN}%s${NORMAL}%s${CYAN}%s${NORMAL}\n" \
+	" " "*" " Compressing FLAC files with level ${COMPRESSION_LEVEL} compression and verifying output :: " "${CORES} Threads"
 }
 
 title_compress_notest_flac () {
-	printf "%s${BOLD_GREEN}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}\n" \
-	" " "*" " Compressing FLAC files with level ${COMPRESSION_LEVEL} compression :: " "[${CORES} Thread(s)]"
+	printf "%s${BOLD_GREEN}%s${NORMAL}%s${CYAN}%s${NORMAL}\n" \
+	" " "*" " Compressing FLAC files with level ${COMPRESSION_LEVEL} compression :: " "${CORES} Threads"
 }
 
 title_test_replaygain () {
-	printf "%s${BOLD_GREEN}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}\n" \
-	" " "*" " Verifying FLAC Files can have ReplayGain Tags added :: " "[${CORES} Thread(s)]"
+	printf "%s${BOLD_GREEN}%s${NORMAL}%s${CYAN}%s${NORMAL}\n" \
+	" " "*" " Verifying FLAC Files can have ReplayGain Tags added :: " "${CORES} Threads"
 }
 
 title_add_replaygain () {
-	printf "%s${BOLD_GREEN}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}\n" \
-	" " "*" " Applying ReplayGain values by album directory :: " "[${CORES} Thread(s)]"
+	printf "%s${BOLD_GREEN}%s${NORMAL}%s${CYAN}%s${NORMAL}\n" \
+	" " "*" " Applying ReplayGain values by album directory :: " "${CORES} Threads"
 }
 
 title_analyze_tags () {
-	printf "%s${BOLD_GREEN}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}\n" \
-	" " "*" " Analyzing FLAC Tags :: " "[${CORES} Thread(s)]"
+	printf "%s${BOLD_GREEN}%s${NORMAL}%s${CYAN}%s${NORMAL}\n" \
+	" " "*" " Analyzing FLAC Tags :: " "${CORES} Threads"
 }
 
 title_setting_tags () {
-	printf "%s${BOLD_GREEN}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}\n" \
-	" " "*" " Setting new FLAC Tags :: " "[${CORES} Thread(s)]"
+	printf "%s${BOLD_GREEN}%s${NORMAL}%s${CYAN}%s${NORMAL}\n" \
+	" " "*" " Setting new FLAC Tags :: " "${CORES} Threads"
 }
 
 title_testing_flac () {
-	printf "%s${BOLD_GREEN}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}\n" \
-	" " "*" " Testing the integrity of each FLAC file :: " "[${CORES} Thread(s)]"
+	printf "%s${BOLD_GREEN}%s${NORMAL}%s${CYAN}%s${NORMAL}\n" \
+	" " "*" " Testing the integrity of each FLAC file :: " "${CORES} Threads"
 }
 
 title_aucdtect_flac () {
-	printf "%s${BOLD_GREEN}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}\n" \
-	" " "*" " Validating FLAC is not lossy sourced :: " "[${CORES} Thread(s)]"
+	printf "%s${BOLD_GREEN}%s${NORMAL}%s${CYAN}%s${NORMAL}\n" \
+	" " "*" " Validating FLAC is not lossy sourced :: " "${CORES} Threads"
 }
 
 title_md5check_flac () {
-	printf "%s${BOLD_GREEN}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}\n" \
-	" " "*" " Verifying the MD5 Signature in each FLAC file :: " "[${CORES} Thread(s)]"
+	printf "%s${BOLD_GREEN}%s${NORMAL}%s${CYAN}%s${NORMAL}\n" \
+	" " "*" " Verifying the MD5 Signature in each FLAC file :: " "${CORES} Threads"
 }
 
-title_prune_flac () {
-	printf "%s${BOLD_GREEN}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}\n" \
-	" " "*" " Removing the SEEKTABLE and PADDING block from each FLAC file :: " "[${CORES} Thread(s)]"
-}
+# Change printed title based on whether embedded artwork is to be removed
+if [[ "${REMOVE_ARTWORK}" == "false" ]] ; then
+	title_prune_flac () {
+		printf "%s${BOLD_GREEN}%s${NORMAL}%s${CYAN}%s${NORMAL}\n" \
+		" " "*" " Removing all METADATA blocks except STREAMINFO, VORBIS_COMMENT and PICTURE :: " "${CORES} Threads"
+	}
+else
+	title_prune_flac () {
+		printf "%s${BOLD_GREEN}%s${NORMAL}%s${CYAN}%s${NORMAL}\n" \
+		" " "*" " Removing all METADATA blocks except STREAMINFO and VORBIS_COMMENT :: " "${CORES} Threads"
+	}
+fi
 
 # Error messages
 # Don't display threads as script will quit after diplaying
@@ -724,6 +732,10 @@ normal_abort () {
 	printf "\n%s${BOLD_GREEN}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}\n" \
 	" " "*" " Control-C received, exiting script..."
 	operation_summary
+
+	# Remove temporary FIFO
+	rm -f "${TMP_FIFO}"
+
 	exit 1
 }
 
@@ -800,6 +812,10 @@ replaygain () {
 
 		REPLAYGAIN_COMPLETE="interrupt"
 		operation_summary
+
+		# Remove temporary FIFO
+		rm -f "${TMP_FIFO}"
+
 		exit 1
 	}
 
@@ -808,6 +824,9 @@ replaygain () {
 
 	test_replaygain () {
 		for i ; do
+			# Add counter to FIFO (used for number of flacs processed/percentage)
+			printf "%s\n" '.' > "${TMP_FIFO}" &
+
 			print_test_replaygain
 
 			# Check if file is a FLAC file (variable hides output)
@@ -830,6 +849,9 @@ replaygain () {
 	}
 	export -f test_replaygain
 
+	# Flush FIFO pipe
+	dd if="${TMP_FIFO}" iflag=nonblock of=/dev/null >/dev/null 2>&1
+
 	# Run the above function with the configured threads (multithreaded)
 	find "${DIRECTORY}" -name "*${FLAC_EXTENSION}" -print0 2> /dev/null | xargs -0 -n 1 -P "${CORES}" bash -c 'test_replaygain "${@}"' --
 
@@ -847,6 +869,9 @@ replaygain () {
 
 		REPLAYGAIN_COMPLETE="false"
 		operation_summary
+
+		# Remove temporary FIFO
+		rm -f "${TMP_FIFO}"
 
 		exit 1
 	fi
@@ -884,6 +909,9 @@ replaygain () {
 		process_replaygain () {
 			# ${i} is the parent directory to the FLAC files
 			for i; do
+				# Add counter to FIFO (used for number of flacs processed/percentage)
+				printf "%s\n" '.' > "${TMP_FIFO}" &
+
 				# ${j} is a FLAC file -> under ${i}
 				for j in "${i}"/*${FLAC_EXTENSION} ; do
 					# Grab all of the ReplayGain tags
@@ -954,6 +982,9 @@ replaygain () {
 		# Above option was NOT called
 		process_replaygain () {
 			for i; do
+				# Add counter to FIFO (used for number of flacs processed/percentage)
+				printf "%s\n" '.' > "${TMP_FIFO}" &
+
 				print_add_replaygain
 				ERROR="$((metaflac --add-replay-gain "${i}"/*${FLAC_EXTENSION}) 2>&1)"
 				if [[ -n "${ERROR}" ]] ; then
@@ -970,6 +1001,9 @@ replaygain () {
 		}
 	fi
 	export -f process_replaygain
+
+	# Flush FIFO pipe
+	dd if="${TMP_FIFO}" iflag=nonblock of=/dev/null >/dev/null 2>&1
 
 	# Run the above function with the configured threads (multithreaded)
 	printf "%s\n" "${REPLAYGAIN_DIRECTORIES}" | \
@@ -988,6 +1022,9 @@ replaygain () {
 
 		REPLAYGAIN_COMPLETE="false"
 		operation_summary
+
+		# Remove temporary FIFO
+		rm -f "${TMP_FIFO}"
 
 		exit 1
 	fi
@@ -1032,6 +1069,9 @@ compress_flacs () {
 		COMPRESS_COMPLETE="interrupt"
 		operation_summary
 
+		# Remove temporary FIFO
+		rm -f "${TMP_FIFO}"
+
 		exit 1
 	}
 
@@ -1040,6 +1080,9 @@ compress_flacs () {
 
 	compress_f () {
 		for i ; do
+			# Add counter to FIFO (used for number of flacs processed/percentage)
+			printf "%s\n" '.' > "${TMP_FIFO}" &
+
 			# Trap errors into a variable as the output doesn't help
 			# for there is a better way to test below using the
 			# ERROR variable
@@ -1084,6 +1127,9 @@ compress_flacs () {
 	}
 	export -f compress_f
 
+	# Flush FIFO pipe
+	dd if="${TMP_FIFO}" iflag=nonblock of=/dev/null >/dev/null 2>&1
+
 	# Run the above function with the configured threads (multithreaded)
 	find "${DIRECTORY}" -name "*${FLAC_EXTENSION}" -print0 2> /dev/null | xargs -0 -n 1 -P "${CORES}" bash -c 'compress_f "${@}"' --
 
@@ -1095,6 +1141,9 @@ compress_flacs () {
 
 		COMPRESS_COMPLETE="false"
 		operation_summary
+
+		# Remove temporary FIFO
+		rm -f "${TMP_FIFO}"
 
 		exit 1
 	fi
@@ -1129,10 +1178,16 @@ test_flacs () {
 			TEST_COMPLETE="interrupt"
 			operation_summary
 
+			# Remove temporary FIFO
+			rm -f "${TMP_FIFO}"
+
 			exit 1
 		else
 			TEST_COMPLETE="interrupt"
 			operation_summary
+
+			# Remove temporary FIFO
+			rm -f "${TMP_FIFO}"
 
 			exit 1
 		fi
@@ -1143,6 +1198,9 @@ test_flacs () {
 
 	test_f () {
 		for i ; do
+			# Add counter to FIFO (used for number of flacs processed/percentage)
+			printf "%s\n" '.' > "${TMP_FIFO}" &
+
 			print_testing_flac
 			ERROR="$((flac -ts "${i}") 2>&1)"
 			if [[ -n "${ERROR}" ]] ; then
@@ -1159,6 +1217,9 @@ test_flacs () {
 	}
 	export -f test_f
 
+	# Flush FIFO pipe
+	dd if="${TMP_FIFO}" iflag=nonblock of=/dev/null >/dev/null 2>&1
+
 	# Run the above function with the configured threads (multithreaded)
 	find "${DIRECTORY}" -name "*${FLAC_EXTENSION}" -print0 2> /dev/null | xargs -0 -n 1 -P "${CORES}" bash -c 'test_f "${@}"' --
 
@@ -1170,6 +1231,9 @@ test_flacs () {
 
 		TEST_COMPLETE="false"
 		operation_summary
+
+		# Remove temporary FIFO
+		rm -f "${TMP_FIFO}"
 
 		exit 1
 	fi
@@ -1195,6 +1259,9 @@ aucdtect () {
 
 			AUCDTECT_COMPLETE="false"
 			operation_summary
+
+			# Remove temporary FIFO
+			rm -f "${TMP_FIFO}"
 
 			exit 1
 		fi
@@ -1245,6 +1312,9 @@ aucdtect () {
 		AUCDTECT_COMPLETE="interrupt"
 		operation_summary
 
+		# Remove temporary FIFO
+		rm -f "${TMP_FIFO}"
+
 		exit 1
 	}
 	
@@ -1253,6 +1323,9 @@ aucdtect () {
 
 	aucdtect_f () {
 		for i ; do
+			# Add counter to FIFO (used for number of flacs processed/percentage)
+			printf "%s\n" '.' > "${TMP_FIFO}" &
+
 			print_aucdtect_flac
 
 			# Check if file is a FLAC file (variable hides output)
@@ -1361,6 +1434,9 @@ aucdtect () {
 	}
 	export -f aucdtect_f
 
+	# Flush FIFO pipe
+	dd if="${TMP_FIFO}" iflag=nonblock of=/dev/null >/dev/null 2>&1
+
 	# Run the above function with the configured threads (multithreaded)
 	find "${DIRECTORY}" -name "*${FLAC_EXTENSION}" -print0 2> /dev/null | xargs -0 -n 1 -P "${CORES}" bash -c 'aucdtect_f "${@}"' --
 
@@ -1372,6 +1448,9 @@ aucdtect () {
 
 		AUCDTECT_COMPLETE="false"
 		operation_summary
+
+		# Remove temporary FIFO
+		rm -f "${TMP_FIFO}"
 
 		exit 1
 	fi
@@ -1404,12 +1483,15 @@ md5_check () {
 			" " "*" " issues with some of the FLAC files, please check:"
 			printf "%s${BOLD_RED}%s${NORMAL}%s\n" \
 			" " "*" " \"${MD5_ERRORS}\" for details"
-
-			MD5CHECK_COMPLETE="interrupt"
-			operation_summary
-
-			exit 1
 		fi
+
+		MD5CHECK_COMPLETE="interrupt"
+		operation_summary
+
+		# Remove temporary FIFO
+		rm -f "${TMP_FIFO}"
+
+		exit 1
 	}
 
 	# Trap SIGINT (Control-C) to abort cleanly
@@ -1417,6 +1499,9 @@ md5_check () {
 
 	md5_c () {
 		for i ; do
+			# Add counter to FIFO (used for number of flacs processed/percentage)
+			printf "%s\n" '.' > "${TMP_FIFO}" &
+
 			print_checking_md5
 
 			# Check if file is a FLAC file (variable hides output)
@@ -1444,6 +1529,9 @@ md5_check () {
 	}
 	export -f md5_c
 
+	# Flush FIFO pipe
+	dd if="${TMP_FIFO}" iflag=nonblock of=/dev/null >/dev/null 2>&1
+
 	# Run the above function with the configured threads (multithreaded)
 	find "${DIRECTORY}" -name "*${FLAC_EXTENSION}" -print0 2> /dev/null | xargs -0 -n 1 -P "${CORES}" bash -c 'md5_c "${@}"' --
 
@@ -1457,6 +1545,9 @@ md5_check () {
 
 		MD5CHECK_COMPLETE="false"
 		operation_summary
+
+		# Remove temporary FIFO
+		rm -f "${TMP_FIFO}"
 
 		exit 1
 	fi  
@@ -1504,6 +1595,9 @@ coverart_remove_conflict () {
 
 				REDO_COMPLETE="false"
 				operation_summary
+
+				# Remove temporary FIFO
+				rm -f "${TMP_FIFO}"
 
 				exit 1
 			# COVERART was found, but artwork is to be removed,
@@ -1584,6 +1678,9 @@ redo_tags () {
 			REDO_COMPLETE="interrupt"
 			operation_summary
 
+			# Remove temporary FIFO
+			rm -f "${TMP_FIFO}"
+
 			exit 1
 		elif [[ -f "${METADATA_ERRORS}" ]] ; then
 			# Just display metadata issues
@@ -1599,11 +1696,17 @@ redo_tags () {
 			REDO_COMPLETE="interrupt"
 			operation_summary
 
+			# Remove temporary FIFO
+			rm -f "${TMP_FIFO}"
+
 			exit 1
 		fi
 
 		REDO_COMPLETE="interrupt"
 		operation_summary
+
+		# Remove temporary FIFO
+		rm -f "${TMP_FIFO}"
 
 		exit 1
 	}
@@ -1782,6 +1885,9 @@ redo_tags () {
 		# Function check_tags to allow multithreading
 		check_tags () {
 			for i ; do
+				# Add counter to FIFO (used for number of flacs processed/percentage)
+				printf "%s\n" '.' > "${TMP_FIFO}" &
+
 				# Print script operation title
 				print_analyzing_tags
 
@@ -1800,6 +1906,9 @@ redo_tags () {
 			# Function check_tags to allow multithreading
 			check_tags () {
 				for i ; do
+					# Add counter to FIFO (used for number of flacs processed/percentage)
+					printf "%s\n" '.' > "${TMP_FIFO}" &
+
 					# Print script operation title
 					print_analyzing_tags
 
@@ -1816,6 +1925,9 @@ redo_tags () {
 			# Function check_tags to allow multithreading
 			check_tags () {
 				for i ; do
+					# Add counter to FIFO (used for number of flacs processed/percentage)
+					printf "%s\n" '.' > "${TMP_FIFO}" &
+
 					# Print script operation title
 					print_analyzing_tags
 
@@ -1826,6 +1938,9 @@ redo_tags () {
 			export -f check_tags
 		fi
 	fi
+
+	# Flush FIFO pipe
+	dd if="${TMP_FIFO}" iflag=nonblock of=/dev/null >/dev/null 2>&1
 
 	# Run the "check_tags" function with the configured threads (multithreaded)
 	find "${DIRECTORY}" -name "*${FLAC_EXTENSION}" -print0 2> /dev/null | xargs -0 -n 1 -P "${CORES}" bash -c 'check_tags "${@}"' --
@@ -1860,6 +1975,9 @@ redo_tags () {
 		REDO_COMPLETE="false"
 		operation_summary
 
+		# Remove temporary FIFO
+		rm -f "${TMP_FIFO}"
+
 		exit 1
 	elif [[ -f "${METADATA_ERRORS}" ]] ; then
 		# Just display metadata issues
@@ -1874,6 +1992,9 @@ redo_tags () {
 
 		REDO_COMPLETE="false"
 		operation_summary
+
+		# Remove temporary FIFO
+		rm -f "${TMP_FIFO}"
 
 		exit 1
 	fi
@@ -1943,6 +2064,9 @@ redo_tags () {
 		# Recreate the tags array so it can be used by the child process
 		eval "tags=(${EXPORT_TAG})"
 		for i ; do
+			# Add counter to FIFO (used for number of flacs processed/percentage)
+			printf "%s\n" '.' > "${TMP_FIFO}" &
+
 			print_setting_tags
 			remove_set_tags
 			print_ok_flac
@@ -1950,6 +2074,9 @@ redo_tags () {
 	}
 	export -f retag_flacs
 	
+	# Flush FIFO pipe
+	dd if="${TMP_FIFO}" iflag=nonblock of=/dev/null >/dev/null 2>&1
+
 	# Run the above function with the configured threads (multithreaded)
 	find "${DIRECTORY}" -name "*${FLAC_EXTENSION}" -print0 2> /dev/null | xargs -0 -n 1 -P "${CORES}" bash -c 'retag_flacs "${@}"' --
 
@@ -1985,10 +2112,17 @@ prune_flacs () {
 			PRUNE_COMPLETE="interrupt"
 			operation_summary
 
+			# Remove temporary FIFO
+			rm -f "${TMP_FIFO}"
+
 			exit 1
 		else
 			PRUNE_COMPLETE="interrupt"
 			operation_summary
+
+			# Remove temporary FIFO
+			rm -f "${TMP_FIFO}"
+
 			exit 1
 		fi
 	}
@@ -1997,6 +2131,9 @@ prune_flacs () {
 	trap prune_abort SIGINT
 
 	prune_f () {
+		# Add counter to FIFO (used for number of flacs processed/percentage)
+		printf "%s\n" '.' > "${TMP_FIFO}" &
+
 		# Don't remove artwork if user wants it kept.  We don't have to check
 		# for the legacy COVERART tag as we are NOT removing any VORBIS_COMMENTs.
 		if [[ "${REMOVE_ARTWORK}" == "true" ]] ; then
@@ -2032,6 +2169,9 @@ prune_flacs () {
 	}
 	export -f prune_f
 	
+	# Flush FIFO pipe
+	dd if="${TMP_FIFO}" iflag=nonblock of=/dev/null >/dev/null 2>&1
+
 	# Run the above function with the configured threads (multithreaded)
 	find "${DIRECTORY}" -name "*${FLAC_EXTENSION}" -print0 2> /dev/null | xargs -0 -n 1 -P "${CORES}" bash -c 'prune_f "${@}"' --
 
@@ -2053,8 +2193,8 @@ prune_flacs () {
 #######################
 # Display a lot of help
 long_help () {
-LONG_HELP="  Usage: ${0} [OPTION] [OPTION]... [PATH_TO_FLAC(s)]
-  Options:
+LONG_HELP="   Usage: ${0} [OPTION] [OPTION]... [PATH_TO_FLAC(s)]
+   Options:
     -c, --compress
            Compress the FLAC files with the user-specified level of compression
            defined under USER CONFIGURATION (as the variable COMPRESSION_LEVEL)
@@ -2306,24 +2446,24 @@ printf "%s\n" "${LONG_HELP}"
 ########################
 # Display short help
 short_help () {
-	printf "%s\n" "  Usage: ${0} [OPTION] [OPTION]... [PATH_TO_FLAC(s)]"
-	printf "%s\n" "  Options:"
-	printf "%s\n" "    -c, --compress"
-	printf "%s\n" "    -C, --compress-notest"
-	printf "%s\n" "    -t, --test"
-	printf "%s\n" "    -m, --md5check"
-	printf "%s\n" "    -a, --aucdtect"
-	printf "%s\n" "    -A, --aucdtect-spectrogram"
-	printf "%s\n" "    -p, --prune"
-	printf "%s\n" "    -g, --replaygain"
-	printf "%s\n" "    -G, --replaygain-noforce"
-	printf "%s\n" "    -r, --redo"
-	printf "%s\n" "    -l, --all"
-	printf "%s\n" "    -L, --reallyall"
-	printf "%s\n" "    -n, --no-color"
-	printf "%s\n" "    -v, --version"
-	printf "%s\n" "    -h, --help"
-	printf "%s\n" "  This is the short help; for details use '${0} --help' or '${0} -h'"
+	printf "%s\n" "   Usage: ${0} [OPTION] [OPTION]... [PATH_TO_FLAC(s)]"
+	printf "%s\n" "   Options:"
+	printf "%s\n" "     -c, --compress"
+	printf "%s\n" "     -C, --compress-notest"
+	printf "%s\n" "     -t, --test"
+	printf "%s\n" "     -m, --md5check"
+	printf "%s\n" "     -a, --aucdtect"
+	printf "%s\n" "     -A, --aucdtect-spectrogram"
+	printf "%s\n" "     -p, --prune"
+	printf "%s\n" "     -g, --replaygain"
+	printf "%s\n" "     -G, --replaygain-noforce"
+	printf "%s\n" "     -r, --redo"
+	printf "%s\n" "     -l, --all"
+	printf "%s\n" "     -L, --reallyall"
+	printf "%s\n" "     -n, --no-color"
+	printf "%s\n" "     -v, --version"
+	printf "%s\n" "     -h, --help"
+	printf "%s\n" "   This is the short help; for details use '${0} --help' or '${0} -h'"
 }
 
 ############################
@@ -2383,9 +2523,16 @@ find_cores () {
 operation_summary () {
 	# Grab the total number of FLAC files
 	mapfile -n0 TOTAL_FLACS < <(find "${DIRECTORY}" -name "*${FLAC_EXTENSION}" -print 2> /dev/null)
-
 	# Change above array to variable
-	DIGITS="${#TOTAL_FLACS[@]}"
+	TOTAL_FLACS_DIGITS="${#TOTAL_FLACS[@]}"
+
+	# Grab the number of processed FLAC files
+	mapfile -n0 PROCESSED_FLACS_ARR < "${TMP_FIFO}"
+	# Change the above array to variable
+	PROCESSED_FLACS_DIGITS="${#PROCESSED_FLACS_ARR[@]}"
+
+	# Find the percentage of Processed Flacs / Total Flacs
+	PERCENTAGE_DIGITS="$(( ${PROCESSED_FLACS_DIGITS} * 100 / ${TOTAL_FLACS_DIGITS} ))"
 
 	printf "%s${BOLD_BLUE}%s${NORMAL}\n" \
 	"   " "┌───────────────────────────┐"
@@ -2527,21 +2674,27 @@ operation_summary () {
 		"   " "│" " " "Prune Flacs" " " "│" " " "Did Not Run" " " "│"
 	fi
 
-	case "${#DIGITS}" in
+	# Set up spacing for Total Flacs
+	case "${#TOTAL_FLACS_DIGITS}" in
 		1)
-			TOTAL_FLACS="     ${#TOTAL_FLACS[@]}     "
+			#TOTAL_FLACS="     ${#TOTAL_FLACS[@]}     "
+			TOTAL_FLACS="${#TOTAL_FLACS[@]}    "
 		;;
 		2)
-			TOTAL_FLACS="    ${#TOTAL_FLACS[@]}     "
+			#TOTAL_FLACS="    ${#TOTAL_FLACS[@]}     "
+			TOTAL_FLACS="${#TOTAL_FLACS[@]}   "
 		;;
 		3)
-			TOTAL_FLACS="    ${#TOTAL_FLACS[@]}    "
+			#TOTAL_FLACS="    ${#TOTAL_FLACS[@]}    "
+			TOTAL_FLACS="${#TOTAL_FLACS[@]}  "
 		;;
 		4)
-			TOTAL_FLACS="   ${#TOTAL_FLACS[@]}    "
+			#TOTAL_FLACS="   ${#TOTAL_FLACS[@]}    "
+			TOTAL_FLACS="${#TOTAL_FLACS[@]} "
 		;;
 		5)
-			TOTAL_FLACS="   ${#TOTAL_FLACS[@]}   "
+			#TOTAL_FLACS="   ${#TOTAL_FLACS[@]}   "
+			TOTAL_FLACS="${#TOTAL_FLACS[@]}"
 		;;
 		6)
 			TOTAL_FLACS="  ${#TOTAL_FLACS[@]}   "
@@ -2563,10 +2716,67 @@ operation_summary () {
 		;;
 	esac
 
+	# Set up spacing for Processed Flacs
+	case "${#PROCESSED_FLACS_DIGITS}" in
+		1)
+			#PROCESSED_FLACS="     ${#PROCESSED_FLACS_ARR[@]}     "
+			PROCESSED_FLACS="    ${#PROCESSED_FLACS_ARR[@]}"
+		;;
+		2)
+			#PROCESSED_FLACS="    ${#PROCESSED_FLACS_ARR[@]}     "
+			PROCESSED_FLACS="   ${#PROCESSED_FLACS_ARR[@]}"
+		;;
+		3)
+			#PROCESSED_FLACS="    ${#PROCESSED_FLACS_ARR[@]}    "
+			PROCESSED_FLACS="  ${#PROCESSED_FLACS_ARR[@]}"
+		;;
+		4)
+			#PROCESSED_FLACS="   ${#PROCESSED_FLACS_ARR[@]}    "
+			PROCESSED_FLACS=" ${#PROCESSED_FLACS_ARR[@]}"
+		;;
+		5)
+			#PROCESSED_FLACS="   ${#PROCESSED_FLACS_ARR[@]}   "
+			PROCESSED_FLACS="${#PROCESSED_FLACS_ARR[@]}"
+		;;
+		6)
+			PROCESSED_FLACS="  ${#PROCESSED_FLACS_ARR[@]}   "
+		;;
+		7)
+			PROCESSED_FLACS="  ${#PROCESSED_FLACS_ARR[@]}  "
+		;;
+		8)
+			PROCESSED_FLACS=" ${#PROCESSED_FLACS_ARR[@]}  "
+		;;
+		9)
+			PROCESSED_FLACS=" ${#PROCESSED_FLACS_ARR[@]} "
+		;;
+		10)
+			PROCESSED_FLACS="${#PROCESSED_FLACS_ARR[@]} "
+		;;
+		11)
+			PROCESSED_FLACS="${#PROCESSED_FLACS_ARR[@]}"
+		;;
+	esac
+
+	# Set up spacing for Percentage
+	case "${#PERCENTAGE_DIGITS}%" in
+		1%)
+			PERCENTAGE="    ${PERCENTAGE_DIGITS}%     "
+		;;
+		2%)
+			PERCENTAGE="    ${PERCENTAGE_DIGITS}%    "
+		;;
+		3%)
+			PERCENTAGE="   ${PERCENTAGE_DIGITS}%    "
+		;;
+	esac
+
 	printf "%s${BOLD_BLUE}%s${NORMAL}\n" \
 	"   " "├─────────────┴─────────────┤"
-	printf "%s${BOLD_BLUE}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}\n" \
-	"   " "│" " Total Flacs : ${TOTAL_FLACS} " "│"
+	printf "%s${BOLD_BLUE}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}%s\n" \
+	"   " "│" "   Processed : ${PROCESSED_FLACS}/${TOTAL_FLACS} " "│"
+	printf "%s${BOLD_BLUE}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}%s\n" \
+	"   " "│" "  Percentage : ${PERCENTAGE} " "│"
 	printf "%s${BOLD_BLUE}%s${NORMAL}\n" \
 	"   " "└───────────────────────────┘"
 }
@@ -2685,57 +2895,59 @@ if [[ -n "${long_style_arguments[@]}" ]] ; then
 	done
 fi
 
-# Go through all short style arguments adding the valid
-# arguments to the "converted_arguments" array and adding
-# invalid arguments to it's own array
-while getopts ":LlcCtgGaAmprn" ARGUMENTS "${short_style_arguments[@]}" ; do
-	case "${ARGUMENTS}" in
-		l)
-			converted_arguments+=( -l )
-		;;
-		L)
-			converted_arguments+=( -L )
-		;;
-		c)
-			converted_arguments+=( -c )
-		;;
-		C)
-			converted_arguments+=( -C )
-		;;
-		t)
-			converted_arguments+=( -t )
-		;;
-		g)
-			converted_arguments+=( -g )
-		;;
-		G)
-			converted_arguments+=( -G )
-		;;
-		a)
-			converted_arguments+=( -a )
-		;;
-		A)
-			converted_arguments+=( -A )
-		;;
-		m)
-			converted_arguments+=( -m )
-		;;
-		p)
-			converted_arguments+=( -p )
-		;;
-		r)
-			converted_arguments+=( -r )
-		;;
-		n)
-			converted_arguments+=( -n )
-		;;
-		?)
-			# Set invalid argument from getopts into
-			# array using ${OPTARG}
-			INVALID_ARGUMENTS+=( "-${OPTARG}" )
-		;;
-	esac
-done
+# If there were any short style arguments called, go through
+# them, adding the valid arguments to the "converted_arguments"
+# array and adding invalid arguments to it's own array
+if [[ -n "${short_style_arguments[@]}" ]] ; then
+	while getopts ":LlcCtgGaAmprn" ARGUMENTS "${short_style_arguments[@]}" ; do
+		case "${ARGUMENTS}" in
+			l)
+				converted_arguments+=( -l )
+			;;
+			L)
+				converted_arguments+=( -L )
+			;;
+			c)
+				converted_arguments+=( -c )
+			;;
+			C)
+				converted_arguments+=( -C )
+			;;
+			t)
+				converted_arguments+=( -t )
+			;;
+			g)
+				converted_arguments+=( -g )
+			;;
+			G)
+				converted_arguments+=( -G )
+			;;
+			a)
+				converted_arguments+=( -a )
+			;;
+			A)
+				converted_arguments+=( -A )
+			;;
+			m)
+				converted_arguments+=( -m )
+			;;
+			p)
+				converted_arguments+=( -p )
+			;;
+			r)
+				converted_arguments+=( -r )
+			;;
+			n)
+				converted_arguments+=( -n )
+			;;
+			?)
+				# Set invalid argument from getopts into
+				# array using ${OPTARG}
+				INVALID_ARGUMENTS+=( "-${OPTARG}" )
+			;;
+		esac
+	done
+fi
 
 # If there were invalid arguments called, display them and
 # exit script
@@ -3082,6 +3294,10 @@ find_cores
 ##################
 #  BEGIN SCRIPT  #
 ##################
+# Create a temporary FIFO pipe
+mkfifo /tmp/redoflacs.fifo.$$
+export TMP_FIFO="/tmp/redoflacs.fifo.$$"
+
 # If "-l, --all" or "-L, --reallyall" was called,
 # enable the various arguments to allow script to
 # run them
@@ -3185,6 +3401,9 @@ fi
 
 # Display summary of completed tasks
 operation_summary
+
+# Remove temporary FIFO
+rm -f "${TMP_FIFO}"
 
 exit 0
 ################
