@@ -2942,14 +2942,23 @@ if [[ "${#}" -eq 2 ]] ; then
 fi
 
 # Separate the long and short style arguments into their
-# own arrays
+# own arrays as well as capture the last non-arguements, to
+# prevent multiple directories being called
 for i in "${@}" ; do
 	if [[ "${i}" == --* ]] ; then
 		long_style_arguments+=( "${i}" )
 	elif [[ "${i}" == -* ]] ; then
 		short_style_arguments+=( "${i}" )
+	else
+		non_arguments+=( "${i}" )
 	fi
 done
+
+# If there are 0 (zero) directories or more than 1, exit script
+if [[ "${#non_arguments[@]}" -eq 0 || "${#non_arguments[@]}" -gt 1 ]] ; then
+	short_help
+	exit 1
+fi
 
 # If there were any long style arguments called, convert them
 # to short style in order for getopts to be able to process
