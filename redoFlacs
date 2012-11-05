@@ -743,6 +743,22 @@ normal_abort () {
 # Create a countdown function for the metadata
 # to allow user to quit script safely
 countdown_metadata () {
+	# Countdown abort
+	countdown_abort () {
+		printf "\n%s${BOLD_GREEN}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}\n" \
+		" " "*" " Control-C received, exiting script..."
+
+		# Set value below to prevent hanging FIFO when
+		# creating the Summary Of Operations table
+		REDO_TAGS_ABORT="true"
+		operation_summary
+
+		# Remove temporary FIFO
+		rm -f "${TMP_FIFO}"
+
+		exit 1
+	}
+
 	# Creates the listing of tags to be kept
 	tags_countdown () {
 		# Recreate the tags array so it can be parsed easily
@@ -768,7 +784,7 @@ countdown_metadata () {
 	}
 
 	# Trap SIGINT (Control-C) to abort cleanly
-	trap normal_abort SIGINT
+	trap countdown_abort SIGINT
 
 	printf "%s${YELLOW}%s${NORMAL}%s\n" \
 	" " "*" " CAUTION! These are the tag fields that will be kept"
@@ -2526,13 +2542,19 @@ operation_summary () {
 	# Change above array to variable
 	TOTAL_FLACS_DIGITS="${#TOTAL_FLACS[@]}"
 
-	# Grab the number of processed FLAC files
-	mapfile -n0 PROCESSED_FLACS_ARR < "${TMP_FIFO}"
-	# Change the above array to variable
-	PROCESSED_FLACS_DIGITS="${#PROCESSED_FLACS_ARR[@]}"
+	# If user called Control-C during the Redo Tags warning/countdown,
+	# skip obtaining the number of processed FLAC files as this will
+	# always be 0 (zero).  This ensures the FIFO will NOT block the
+	# rest of the script as it's empty
+	if [[ "${REDO_TAGS_ABORT}" != "true" ]] ; then
+		# Grab the number of processed FLAC files
+		mapfile -n0 PROCESSED_FLACS_ARR < "${TMP_FIFO}"
+		# Change the above array to variable
+		PROCESSED_FLACS_DIGITS="${#PROCESSED_FLACS_ARR[@]}"
 
-	# Find the percentage of Processed Flacs / Total Flacs
-	PERCENTAGE_DIGITS="$(( ${PROCESSED_FLACS_DIGITS} * 100 / ${TOTAL_FLACS_DIGITS} ))"
+		# Find the percentage of Processed Flacs / Total Flacs
+		PERCENTAGE_DIGITS="$(( ${PROCESSED_FLACS_DIGITS} * 100 / ${TOTAL_FLACS_DIGITS} ))"
+	fi
 
 	# Set up spacing for Processed Flacs
 	case "${#PROCESSED_FLACS_DIGITS}" in
@@ -2682,10 +2704,6 @@ operation_summary () {
 
 				*)
 					# Should not ever happen!
-					printf "%s${BOLD_RED}%s${NORMAL}%s\n%s\n" \
-					" " "*" " This is a BUG! Please report to:" \
-					"   https://github.com/sirjaren/redoflacs/issues/new"
-					exit 1
 				;;
 			esac
 	}
