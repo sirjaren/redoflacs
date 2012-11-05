@@ -2592,6 +2592,105 @@ operation_summary () {
 		;;
 	esac
 
+	# Build the operation line in the Summary Of Operations
+	summary_line () {
+		# Set up spacing for Operation
+		case "${OPERATION}" in
+			"auCDtect")
+				OPERATION_SPACING="    "
+			;;
+			"Compress")
+				OPERATION_SPACING="    "
+			;;
+			"Test Flacs")
+				OPERATION_SPACING="  "
+			;;
+			"MD5 Check")
+				OPERATION_SPACING="   "
+			;;
+			"ReplayGain")
+				OPERATION_SPACING="  "
+			;;
+			"Redo Tags")
+				OPERATION_SPACING="   "
+			;;
+			"Prune Flacs")
+				OPERATION_SPACING=" "
+			;;
+		esac
+
+		case "${OPERATION_SUMMARY}" in
+				"complete")
+					# Example of printed string below:
+					# '   │ MD5 Check   │  Completed  │   104 / 104   │ 100% │'
+
+					# Set up the printed string with colors
+					printf "%s${BOLD_BLUE}%s${NORMAL}%s${YELLOW}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}%s${BOLD_GREEN}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}%s${BOLD_GREEN}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}%s${BOLD_GREEN}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}%s${BOLD_GREEN}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}\n" \
+					\
+					"   " "│" " " "${OPERATION}" "${OPERATION_SPACING}" "│" \
+					"  " "Completed" "  " "│" \
+					"${TOTAL_FLAC_SPACING}" "${TOTAL_FLACS_DIGITS}" \
+					" " "/" " " \
+					"${TOTAL_FLACS_DIGITS}" "${TOTAL_FLAC_SPACING}" \
+					"│" " " "100%" " " "│"
+				;;
+
+				"failed")
+					# Example of printed string below:
+					# '   │ MD5 Check   │   Failed    │   104 / 104   │ 100% │'
+
+					# Set up the printed string with colors
+					printf "%s${BOLD_BLUE}%s${NORMAL}%s${YELLOW}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}%s${BOLD_RED}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}%s${BOLD_RED}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}%s${BOLD_GREEN}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}%s${BOLD_GREEN}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}\n" \
+					\
+					"   " "│" " " "${OPERATION}" "${OPERATION_SPACING}" "│" \
+					"   " "Failed" "    " "│" \
+					"${TOTAL_FLAC_SPACING}" "${TOTAL_FLACS_DIGITS}" \
+					" " "/" " " \
+					"${TOTAL_FLACS_DIGITS}" "${TOTAL_FLAC_SPACING}" \
+					"│" " " "100%" " " "│"
+				;;
+
+				"interrupted")
+					# Example of printed string below:
+					# '   │ MD5 Check   │ Interrupted │    24 / 104   │  23% │'
+
+					# Set up the printed string with colors
+					printf "%s${BOLD_BLUE}%s${NORMAL}%s${YELLOW}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}%s${CYAN}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}%s${YELLOW}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}%s${BOLD_GREEN}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}%s${YELLOW}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}\n" \
+					\
+					"   " "│" " " "${OPERATION}" "${OPERATION_SPACING}" "│" \
+					" " "Interrupted" " " "│" \
+					"${PROCESSED_FLAC_SPACING}" "${PROCESSED_FLACS_DIGITS}" \
+					" " "/" " " \
+					"${TOTAL_FLACS_DIGITS}" "${TOTAL_FLAC_SPACING}" \
+					"│" "${PERCENTAGE_SPACING}" "${PERCENTAGE_DIGITS}%" " " "│"
+				;;
+
+				"did not run")
+					# Example of printed string below:
+					# '   │ MD5 Check   │ Did Not Run │     0 / 104   │   0% │'
+
+					# Set up the printed string with colors
+					printf "%s${BOLD_BLUE}%s${NORMAL}%s${YELLOW}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}%s${MAGENTA}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}%s${BOLD_RED}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}%s${BOLD_GREEN}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}%s${BOLD_RED}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}\n" \
+					\
+					"   " "│" " " "${OPERATION}" "${OPERATION_SPACING}" "│" \
+					" " "Did Not Run" " " "│" \
+					"     " "0" \
+					" " "/" " " \
+					"${TOTAL_FLACS_DIGITS}" "${TOTAL_FLAC_SPACING}" \
+					"│" "   " "0%" " " "│"
+				;;
+
+				*)
+					# Should not ever happen!
+					printf "%s${BOLD_RED}%s${NORMAL}%s\n%s\n" \
+					" " "*" " This is a BUG! Please report to:" \
+					"   https://github.com/sirjaren/redoflacs/issues/new"
+					exit 1
+				;;
+			esac
+	}
+
+	# Begin printing the table
 	printf "%s${BOLD_BLUE}%s${NORMAL}\n" \
 	"   " "┌───────────────────────────┬──────────────────────┐"
 	printf "%s${BOLD_BLUE}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}\n" \
@@ -2599,139 +2698,140 @@ operation_summary () {
 	printf "%s${BOLD_BLUE}%s${NORMAL}\n" \
 	"   " "├─────────────┬─────────────┼───────────────┬──────┤"
 
-	# Test for auCDtect execution
+	# auCDtect operations
 	if [[ "${AUCDTECT}" == "true" && "${AUCDTECT_COMPLETE}" == "true" ]] ; then
-		# Complete
-		printf "%s${BOLD_BLUE}%s${NORMAL}%s${YELLOW}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}%s${BOLD_GREEN}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}%s${BOLD_GREEN}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}%s${BOLD_GREEN}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}%s${BOLD_GREEN}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}\n" \
-		"   " "│" "  " "auCDtect" "   " "│" "  " "Completed" "  " "│" "${TOTAL_FLAC_SPACING}" "${TOTAL_FLACS_DIGITS}" " " "/" " " "${TOTAL_FLACS_DIGITS}" "${TOTAL_FLAC_SPACING}" "│" " " "100%" " " "│"
+		OPERATION="auCDtect"
+		OPERATION_SUMMARY="complete"
+		summary_line
 	elif [[ "${AUCDTECT}" == "true" && "${AUCDTECT_COMPLETE}" == "false" ]] ; then
-		# Failed
-		printf "%s${BOLD_BLUE}%s${NORMAL}%s${YELLOW}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}%s${BOLD_RED}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}%s${BOLD_RED}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}%s${BOLD_GREEN}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}%s${BOLD_GREEN}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}\n" \
-		"   " "│" "  " "auCDtect" "   " "│" "   " "Failed" "    " "│" "${TOTAL_FLAC_SPACING}" "${TOTAL_FLACS_DIGITS}" " " "/" " " "${TOTAL_FLACS_DIGITS}" "${TOTAL_FLAC_SPACING}" "│" " " "100%" " " "│"
+		OPERATION="auCDtect"
+		OPERATION_SUMMARY="failed"
+		summary_line
 	elif [[ "${AUCDTECT}" == "true" && "${AUCDTECT_COMPLETE}" == "interrupt" ]] ; then
-		# Interrupted
-		printf "%s${BOLD_BLUE}%s${NORMAL}%s${YELLOW}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}%s${CYAN}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}%s${YELLOW}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}%s${BOLD_GREEN}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}%s${YELLOW}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}\n" \
-		"   " "│" "  " "auCDtect" "   " "│" " " "Interrupted" " " "│" "${PROCESSED_FLAC_SPACING}" "${PROCESSED_FLACS_DIGITS}" " " "/" " " "${TOTAL_FLACS_DIGITS}" "${TOTAL_FLAC_SPACING}" "│" "${PERCENTAGE_SPACING}" "${PERCENTAGE_DIGITS}%" " " "│"
+		OPERATION="auCDtect"
+		OPERATION_SUMMARY="interrupted"
+		summary_line
 	elif [[ "${AUCDTECT}" == "true" ]] ; then
-		# Did Not Run
-		printf "%s${BOLD_BLUE}%s${NORMAL}%s${YELLOW}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}%s${MAGENTA}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}%s${BOLD_RED}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}%s${BOLD_GREEN}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}%s${BOLD_RED}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}\n" \
-		"   " "│" "  " "auCDtect" "   " "│" " " "Did Not Run" " " "│" "     " "0" " " "/" " " "${TOTAL_FLACS_DIGITS}" "${TOTAL_FLAC_SPACING}" "│" "   " "0%" " " "│"
+		OPERATION="auCDtect"
+		OPERATION_SUMMARY="did not run"
+		summary_line
 	fi
 
-	# Test for Compress FLACS execution
+	# Compress Flacs operations
 	if [[ "${COMPRESS}" == "true" && "${COMPRESS_COMPLETE}" == "true" ]] ; then
-		# Complete
-		printf "%s${BOLD_BLUE}%s${NORMAL}%s${YELLOW}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}%s${BOLD_GREEN}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}%s${BOLD_GREEN}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}%s${BOLD_GREEN}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}%s${BOLD_GREEN}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}\n" \
-		"   " "│" "  " "Compress" "   " "│" "  " "Completed" "  " "│" "${TOTAL_FLAC_SPACING}" "${TOTAL_FLACS_DIGITS}" " " "/" " " "${TOTAL_FLACS_DIGITS}" "${TOTAL_FLAC_SPACING}" "│" " " "100%" " " "│"
+		OPERATION="Compress"
+		OPERATION_SUMMARY="complete"
+		summary_line
 	elif [[ "${COMPRESS}" == "true" && "${COMPRESS_COMPLETE}" == "false" ]] ; then
-		# Failed
-		printf "%s${BOLD_BLUE}%s${NORMAL}%s${YELLOW}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}%s${BOLD_RED}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}%s${BOLD_RED}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}%s${BOLD_GREEN}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}%s${BOLD_GREEN}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}\n" \
-		"   " "│" "  " "Compress" "   " "│" "   " "Failed" "    " "│" "${TOTAL_FLAC_SPACING}" "${TOTAL_FLACS_DIGITS}" " " "/" " " "${TOTAL_FLACS_DIGITS}" "${TOTAL_FLAC_SPACING}" "│" " " "100%" " " "│"
+		OPERATION="Compress"
+		OPERATION_SUMMARY="failed"
+		summary_line
 	elif [[ "${COMPRESS}" == "true" && "${COMPRESS_COMPLETE}" == "interrupt" ]] ; then
-		# Interrupted
-		printf "%s${BOLD_BLUE}%s${NORMAL}%s${YELLOW}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}%s${CYAN}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}%s${YELLOW}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}%s${BOLD_GREEN}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}%s${YELLOW}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}\n" \
-		"   " "│" "  " "Compress" "   " "│" " " "Interrupted" " " "│" "${PROCESSED_FLAC_SPACING}" "${PROCESSED_FLACS_DIGITS}" " " "/" " " "${TOTAL_FLACS_DIGITS}" "${TOTAL_FLAC_SPACING}" "│" "${PERCENTAGE_SPACING}" "${PERCENTAGE_DIGITS}%" " " "│"
+		OPERATION="Compress"
+		OPERATION_SUMMARY="interrupted"
+		summary_line
 	elif [[ "${COMPRESS}" == "true" ]] ; then
-		# Did Not Run
-		printf "%s${BOLD_BLUE}%s${NORMAL}%s${YELLOW}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}%s${MAGENTA}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}%s${BOLD_RED}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}%s${BOLD_GREEN}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}%s${BOLD_RED}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}\n" \
-		"   " "│" "  " "Compress" "   " "│" " " "Did Not Run" " " "│" "     " "0" " " "/" " " "${TOTAL_FLACS_DIGITS}" "${TOTAL_FLAC_SPACING}" "│" "   " "0%" " " "│"
+		OPERATION="Compress"
+		OPERATION_SUMMARY="did not run"
+		summary_line
 	fi
 
-	# Test for Test FLACS execution
+	# Test Flacs operations
 	if [[ "${TEST}" == "true" && "${TEST_COMPLETE}" == "true" ]] ; then
-		# Complete
-		printf "%s${BOLD_BLUE}%s${NORMAL}%s${YELLOW}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}%s${BOLD_GREEN}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}%s${BOLD_GREEN}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}%s${BOLD_GREEN}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}%s${BOLD_GREEN}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}\n" \
-		"   " "│" " " "Test Flacs" "  " "│" "  " "Completed" "  " "│" "${TOTAL_FLAC_SPACING}" "${TOTAL_FLACS_DIGITS}" " " "/" " " "${TOTAL_FLACS_DIGITS}" "${TOTAL_FLAC_SPACING}" "│" " " "100%" " " "│"
+		OPERATION="Test Flacs"
+		OPERATION_SUMMARY="complete"
+		summary_line
 	elif [[ "${TEST}" == "true" && "${TEST_COMPLETE}" == "false" ]] ; then
-		# Failed
-		printf "%s${BOLD_BLUE}%s${NORMAL}%s${YELLOW}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}%s${BOLD_RED}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}%s${BOLD_RED}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}%s${BOLD_GREEN}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}%s${BOLD_GREEN}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}\n" \
-		"   " "│" " " "Test Flacs" "  " "│" "   " "Failed" "    " "│" "${TOTAL_FLAC_SPACING}" "${TOTAL_FLACS_DIGITS}" " " "/" " " "${TOTAL_FLACS_DIGITS}" "${TOTAL_FLAC_SPACING}" "│" " " "100%" " " "│"
+		OPERATION="Test Flacs"
+		OPERATION_SUMMARY="failed"
+		summary_line
 	elif [[ "${TEST}" == "true" && "${TEST_COMPLETE}" == "interrupt" ]] ; then
-		# Interrupted
-		printf "%s${BOLD_BLUE}%s${NORMAL}%s${YELLOW}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}%s${CYAN}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}%s${YELLOW}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}%s${BOLD_GREEN}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}%s${YELLOW}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}\n" \
-		"   " "│" " " "Test Flacs" "  " "│" " " "Interrupted" " " "│" "${PROCESSED_FLAC_SPACING}" "${PROCESSED_FLACS_DIGITS}" " " "/" " " "${TOTAL_FLACS_DIGITS}" "${TOTAL_FLAC_SPACING}" "│" "${PERCENTAGE_SPACING}" "${PERCENTAGE_DIGITS}%" " " "│"
+		OPERATION="Test Flacs"
+		OPERATION_SUMMARY="interrupted"
+		summary_line
 	elif [[ "${TEST}" == "true" ]] ; then
-		# Did Not Run
-		printf "%s${BOLD_BLUE}%s${NORMAL}%s${YELLOW}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}%s${MAGENTA}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}%s${BOLD_RED}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}%s${BOLD_GREEN}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}%s${BOLD_RED}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}\n" \
-		"   " "│" " " "Test Flacs" "  " "│" " " "Did Not Run" " " "│" "     " "0" " " "/" " " "${TOTAL_FLACS_DIGITS}" "${TOTAL_FLAC_SPACING}" "│" "   " "0%" " " "│"
+		OPERATION="Test Flacs"
+		OPERATION_SUMMARY="did not run"
+		summary_line
 	fi
 
-	# Test for MD5 Check execution
+	# MD5 Check operations
 	if [[ "${MD5CHECK}" == "true" && "${MD5CHECK_COMPLETE}" == "true" ]] ; then
-		# Complete
-		printf "%s${BOLD_BLUE}%s${NORMAL}%s${YELLOW}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}%s${BOLD_GREEN}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}%s${BOLD_GREEN}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}%s${BOLD_GREEN}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}%s${BOLD_GREEN}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}\n" \
-		"   " "│" "  " "MD5 Check" "  " "│" "  " "Completed" "  " "│" "${TOTAL_FLAC_SPACING}" "${TOTAL_FLACS_DIGITS}" " " "/" " " "${TOTAL_FLACS_DIGITS}" "${TOTAL_FLAC_SPACING}" "│" " " "100%" " " "│"
+		OPERATION="MD5 Check"
+		OPERATION_SUMMARY="complete"
+		summary_line
 	elif [[ "${MD5CHECK}" == "true" && "${MD5CHECK_COMPLETE}" == "false" ]] ; then
-		# Failed
-		printf "%s${BOLD_BLUE}%s${NORMAL}%s${YELLOW}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}%s${BOLD_RED}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}%s${BOLD_RED}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}%s${BOLD_GREEN}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}%s${BOLD_GREEN}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}\n" \
-		"   " "│" "  " "MD5 Check" "  " "│" "   " "Failed" "    " "│" "${TOTAL_FLAC_SPACING}" "${TOTAL_FLACS_DIGITS}" " " "/" " " "${TOTAL_FLACS_DIGITS}" "${TOTAL_FLAC_SPACING}" "│" " " "100%" " " "│"
+		OPERATION="MD5 Check"
+		OPERATION_SUMMARY="failed"
+		summary_line
 	elif [[ "${MD5CHECK}" == "true" && "${MD5CHECK_COMPLETE}" == "interrupt" ]] ; then
-		# Interrupted
-		printf "%s${BOLD_BLUE}%s${NORMAL}%s${YELLOW}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}%s${CYAN}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}%s${YELLOW}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}%s${BOLD_GREEN}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}%s${YELLOW}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}\n" \
-		"   " "│" "  " "MD5 Check" "  " "│" " " "Interrupted" " " "│" "${PROCESSED_FLAC_SPACING}" "${PROCESSED_FLACS_DIGITS}" " " "/" " " "${TOTAL_FLACS_DIGITS}" "${TOTAL_FLAC_SPACING}" "│" "${PERCENTAGE_SPACING}" "${PERCENTAGE_DIGITS}%" " " "│"
+		OPERATION="MD5 Check"
+		OPERATION_SUMMARY="interrupted"
+		summary_line
 	elif [[ "${MD5CHECK}" == "true" ]] ; then
-		# Did Not Run
-		printf "%s${BOLD_BLUE}%s${NORMAL}%s${YELLOW}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}%s${MAGENTA}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}%s${BOLD_RED}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}%s${BOLD_GREEN}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}%s${BOLD_RED}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}\n" \
-		"   " "│" "  " "MD5 Check" "  " "│" " " "Did Not Run" " " "│" "     " "0" " " "/" " " "${TOTAL_FLACS_DIGITS}" "${TOTAL_FLAC_SPACING}" "│" "   " "0%" " " "│"
+		OPERATION="MD5 Check"
+		OPERATION_SUMMARY="did not run"
+		summary_line
 	fi
 
-	# Test for ReplayGain execution
+	# ReplayGain operations
 	if [[ "${REPLAYGAIN}" == "true" && "${REPLAYGAIN_COMPLETE}" == "true" ]] ; then
-		# Complete
-		printf "%s${BOLD_BLUE}%s${NORMAL}%s${YELLOW}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}%s${BOLD_GREEN}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}%s${BOLD_GREEN}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}%s${BOLD_GREEN}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}%s${BOLD_GREEN}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}\n" \
-		"   " "│" " " "ReplayGain" "  " "│" "  " "Completed" "  " "│" "${TOTAL_FLAC_SPACING}" "${TOTAL_FLACS_DIGITS}" " " "/" " " "${TOTAL_FLACS_DIGITS}" "${TOTAL_FLAC_SPACING}" "│" " " "100%" " " "│"
+		OPERATION="ReplayGain"
+		OPERATION_SUMMARY="complete"
+		summary_line
 	elif [[ "${REPLAYGAIN}" == "true" && "${REPLAYGAIN_COMPLETE}" == "false" ]] ; then
-		# Failed
-		printf "%s${BOLD_BLUE}%s${NORMAL}%s${YELLOW}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}%s${BOLD_RED}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}%s${BOLD_RED}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}%s${BOLD_GREEN}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}%s${BOLD_GREEN}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}\n" \
-		"   " "│" " " "ReplayGain" "  " "│" "   " "Failed" "    " "│" "${TOTAL_FLAC_SPACING}" "${TOTAL_FLACS_DIGITS}" " " "/" " " "${TOTAL_FLACS_DIGITS}" "${TOTAL_FLAC_SPACING}" "│" " " "100%" " " "│"
+		OPERATION="ReplayGain"
+		OPERATION_SUMMARY="failed"
+		summary_line
 	elif [[ "${REPLAYGAIN}" == "true" && "${REPLAYGAIN_COMPLETE}" == "interrupt" ]] ; then
-		# Interrupted
-		printf "%s${BOLD_BLUE}%s${NORMAL}%s${YELLOW}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}%s${CYAN}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}%s${YELLOW}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}%s${BOLD_GREEN}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}%s${YELLOW}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}\n" \
-		"   " "│" " " "ReplayGain" "  " "│" " " "Interrupted" " " "│" "${PROCESSED_FLAC_SPACING}" "${PROCESSED_FLACS_DIGITS}" " " "/" " " "${TOTAL_FLACS_DIGITS}" "${TOTAL_FLAC_SPACING}" "│" "${PERCENTAGE_SPACING}" "${PERCENTAGE_DIGITS}%" " " "│"
+		OPERATION="ReplayGain"
+		OPERATION_SUMMARY="interrupted"
+		summary_line
 	elif [[ "${REPLAYGAIN}" == "true" ]] ; then
-		# Did Not Run
-		printf "%s${BOLD_BLUE}%s${NORMAL}%s${YELLOW}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}%s${MAGENTA}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}%s${BOLD_RED}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}%s${BOLD_GREEN}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}%s${BOLD_RED}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}\n" \
-		"   " "│" " " "ReplayGain" "  " "│" " " "Did Not Run" " " "│" "     " "0" " " "/" " " "${TOTAL_FLACS_DIGITS}" "${TOTAL_FLAC_SPACING}" "│" "   " "0%" " " "│"
+		OPERATION="ReplayGain"
+		OPERATION_SUMMARY="did not run"
+		summary_line
 	fi
 
-	# Test for Redo Tags execution
+	# Redo Tags operations
 	if [[ "${REDO}" == "true" && "${REDO_COMPLETE}" == "true" ]] ; then
-		# Complete
-		printf "%s${BOLD_BLUE}%s${NORMAL}%s${YELLOW}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}%s${BOLD_GREEN}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}%s${BOLD_GREEN}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}%s${BOLD_GREEN}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}%s${BOLD_GREEN}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}\n" \
-		"   " "│" "  " "Redo Tags" "  " "│" "  " "Completed" "  " "│" "${TOTAL_FLAC_SPACING}" "${TOTAL_FLACS_DIGITS}" " " "/" " " "${TOTAL_FLACS_DIGITS}" "${TOTAL_FLAC_SPACING}" "│" " " "100%" " " "│"
+		OPERATION="Redo Tags"
+		OPERATION_SUMMARY="complete"
+		summary_line
 	elif [[ "${REDO}" == "true" && "${REDO_COMPLETE}" == "false" ]] ; then
-		# Failed
-		printf "%s${BOLD_BLUE}%s${NORMAL}%s${YELLOW}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}%s${BOLD_RED}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}%s${BOLD_RED}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}%s${BOLD_GREEN}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}%s${BOLD_GREEN}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}\n" \
-		"   " "│" "  " "Redo Tags" "  " "│" "   " "Failed" "    " "│" "${TOTAL_FLAC_SPACING}" "${TOTAL_FLACS_DIGITS}" " " "/" " " "${TOTAL_FLACS_DIGITS}" "${TOTAL_FLAC_SPACING}" "│" " " "100%" " " "│"
+		OPERATION="Redo Tags"
+		OPERATION_SUMMARY="failed"
+		summary_line
 	elif [[ "${REDO}" == "true" && "${REDO_COMPLETE}" == "interrupt" ]] ; then
-		# Interrupted
-		printf "%s${BOLD_BLUE}%s${NORMAL}%s${YELLOW}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}%s${CYAN}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}%s${YELLOW}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}%s${BOLD_GREEN}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}%s${YELLOW}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}\n" \
-		"   " "│" "  " "Redo Tags" "  " "│" " " "Interrupted" " " "│" "${PROCESSED_FLAC_SPACING}" "${PROCESSED_FLACS_DIGITS}" " " "/" " " "${TOTAL_FLACS_DIGITS}" "${TOTAL_FLAC_SPACING}" "│" "${PERCENTAGE_SPACING}" "${PERCENTAGE_DIGITS}%" " " "│"
+		OPERATION="Redo Tags"
+		OPERATION_SUMMARY="interrupted"
+		summary_line
 	elif [[ "${REDO}" == "true" ]] ; then
-		# Did Not Run
-		printf "%s${BOLD_BLUE}%s${NORMAL}%s${YELLOW}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}%s${MAGENTA}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}%s${BOLD_RED}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}%s${BOLD_GREEN}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}%s${BOLD_RED}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}\n" \
-		"   " "│" "  " "Redo Tags" "  " "│" " " "Did Not Run" " " "│" "     " "0" " " "/" " " "${TOTAL_FLACS_DIGITS}" "${TOTAL_FLAC_SPACING}" "│" "   " "0%" " " "│"
+		OPERATION="Redo Tags"
+		OPERATION_SUMMARY="did not run"
+		summary_line
 	fi
 
-	# Test for Prune FLACS execution
+	# Prune Flacs operations
 	if [[ "${PRUNE}" == "true" && "${PRUNE_COMPLETE}" == "true" ]] ; then
-		# Complete
-		printf "%s${BOLD_BLUE}%s${NORMAL}%s${YELLOW}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}%s${BOLD_GREEN}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}%s${BOLD_GREEN}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}%s${BOLD_GREEN}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}%s${BOLD_GREEN}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}\n" \
-		"   " "│" " " "Prune Flacs" " " "│" "  " "Completed" "  " "│" "${TOTAL_FLAC_SPACING}" "${TOTAL_FLACS_DIGITS}" " " "/" " " "${TOTAL_FLACS_DIGITS}" "${TOTAL_FLAC_SPACING}" "│" " " "100%" " " "│"
+		OPERATION="Prune Flacs"
+		OPERATION_SUMMARY="complete"
+		summary_line
 	elif [[ "${PRUNE}" == "true" && "${PRUNE_COMPLETE}" == "false" ]] ; then
-		# Failed
-		printf "%s${BOLD_BLUE}%s${NORMAL}%s${YELLOW}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}%s${BOLD_RED}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}%s${BOLD_RED}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}%s${BOLD_GREEN}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}%s${BOLD_GREEN}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}\n" \
-		"   " "│" " " "Prune Flacs" " " "│" "   " "Failed" "    " "│" "${TOTAL_FLAC_SPACING}" "${TOTAL_FLACS_DIGITS}" " " "/" " " "${TOTAL_FLACS_DIGITS}" "${TOTAL_FLAC_SPACING}" "│" " " "100%" " " "│"
+		OPERATION="Prune Flacs"
+		OPERATION_SUMMARY="failed"
+		summary_line
 	elif [[ "${PRUNE}" == "true" && "${PRUNE_COMPLETE}" == "interrupt" ]] ; then
-		# Interrupted
-		printf "%s${BOLD_BLUE}%s${NORMAL}%s${YELLOW}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}%s${CYAN}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}%s${YELLOW}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}%s${BOLD_GREEN}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}%s${YELLOW}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}\n" \
-		"   " "│" " " "Prune Flacs" " " "│" " " "Interrupted" " " "│" "${PROCESSED_FLAC_SPACING}" "${PROCESSED_FLACS_DIGITS}" " " "/" " " "${TOTAL_FLACS_DIGITS}" "${TOTAL_FLAC_SPACING}" "│" "${PERCENTAGE_SPACING}" "${PERCENTAGE_DIGITS}%" " " "│"
+		OPERATION="Prune Flacs"
+		OPERATION_SUMMARY="interrupted"
+		summary_line
 	elif [[ "${PRUNE}" == "true" ]] ; then
-		# Did Not Run
-		printf "%s${BOLD_BLUE}%s${NORMAL}%s${YELLOW}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}%s${MAGENTA}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}%s${BOLD_RED}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}%s${BOLD_GREEN}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}%s${BOLD_RED}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}\n" \
-		"   " "│" " " "Prune Flacs" " " "│" " " "Did Not Run" " " "│" "     " "0" " " "/" " " "${TOTAL_FLACS_DIGITS}" "${TOTAL_FLAC_SPACING}" "│" "   " "0%" " " "│"
+		OPERATION="Prune Flacs"
+		OPERATION_SUMMARY="did not run"
+		summary_line
 	fi
 
+	# Below creates the legend
 	printf "%s${BOLD_BLUE}%s${NORMAL}\n" \
 	"   " "├─────────────┴─────────────┴───────────────┴──────┤"
 	printf "%s${BOLD_BLUE}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}\n" \
