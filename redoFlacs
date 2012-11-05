@@ -727,26 +727,13 @@ export -f print_prune_flac
 ######################################
 #  FUNCTIONS TO DO VARIOUS COMMANDS  #
 ######################################
-# General abort script to use BASH's trap command on SIGINT
-normal_abort () {
-	printf "\n%s${BOLD_GREEN}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}\n" \
-	" " "*" " Control-C received, exiting script..."
-	operation_summary
-
-	# Remove temporary FIFO
-	rm -f "${TMP_FIFO}"
-
-	exit 1
-}
-
-
 # Create a countdown function for the metadata
 # to allow user to quit script safely
 countdown_metadata () {
 	# Countdown abort
 	countdown_abort () {
 		printf "\n%s${BOLD_GREEN}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}\n" \
-		" " "*" " Control-C received, exiting script..."
+		" " "*" " Control-C received, generating summary. Please wait..."
 
 		# Set value below to prevent hanging FIFO when
 		# creating the Summary Of Operations table
@@ -821,10 +808,10 @@ replaygain () {
 
 	title_test_replaygain
 
-	# General abort script to use BASH's trap command on SIGINT
-	normal_abort () {
+	# Abort using BASH's trap command on SIGINT
+	replaygain_abort () {
 		printf "\n%s${BOLD_GREEN}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}\n" \
-		" " "*" " Control-C received, exiting script..."
+		" " "*" " Control-C received, generating summary. Please wait..."
 
 		REPLAYGAIN_COMPLETE="interrupt"
 		operation_summary
@@ -836,7 +823,7 @@ replaygain () {
 	}
 
 	# Trap SIGINT (Control-C) to abort cleanly
-	trap normal_abort SIGINT
+	trap replaygain_abort SIGINT
 
 	test_replaygain () {
 		for i ; do
@@ -1066,8 +1053,9 @@ compress_flacs () {
 	# Abort script and remove temporarily encoded FLAC files (if any)
 	# and check for any errors thus far
 	compress_abort () {
-		printf "\n%s${BOLD_GREEN}%s${NORMAL}%s\n" \
-		" " "*" " Control-C received, removing temporary files and exiting script..."
+		printf "\n%s${BOLD_GREEN}%s${NORMAL}%s\n%s${BOLD_GREEN}%s${NORMAL}%s\n" \
+		" " "*" " Control-C received, removing temporary files and " \
+		" " "*" " generating summary. Please wait..."
 		find "${DIRECTORY}" -name "*.tmp,fl-ac+en\'c" -exec rm "{}" \; 2> /dev/null
 
 		if [[ "${DISPLAY_PERMISSION_DENIED}"  == "true" ]] ; then
@@ -1178,7 +1166,7 @@ test_flacs () {
 	# Abort script and check for any errors thus far
 	test_abort () {
 		printf "\n%s${BOLD_GREEN}%s${NORMAL}%s\n" \
-		" " "*" " Control-C received, exiting script..."
+		" " "*" " Control-C received, generating summary. Please wait..."
 
 		if [[ "${DISPLAY_PERMISSION_DENIED}"  == "true" ]] ; then
 			printf '\n'
@@ -1288,7 +1276,7 @@ aucdtect () {
 	# Abort script and check for any errors thus far
 	aucdtect_abort () {
 		printf "\n%s${BOLD_GREEN}%s${NORMAL}%s\n" \
-		" " "*" " Control-C received, exiting script..."
+		" " "*" " Control-C received, generating summary. Please wait..."
 
 		# Don't remove WAV files in case user has WAV files there purposefully
 		# The script cannot determine between existing and script-created WAV files
@@ -1485,7 +1473,7 @@ md5_check () {
 	# Abort script and check for any errors thus far
 	md5_check_abort () {
 		printf "\n%s${BOLD_GREEN}%s${NORMAL}%s\n" \
-		" " "*" " Control-C received, exiting script..."
+		" " "*" " Control-C received, generating summary. Please wait..."
 
 		if [[ "${DISPLAY_PERMISSION_DENIED}"  == "true" ]] ; then
 			printf '\n'
@@ -1657,7 +1645,7 @@ redo_tags () {
 	# Abort script and check for any errors thus far
 	redo_tags_abort () {
 		printf "\n%s${BOLD_GREEN}%s${NORMAL}%s\n" \
-		" " "*" " Control-C received, exiting script..."
+		" " "*" " Control-C received, generating summary. Please wait..."
 
 		if [[ "${DISPLAY_PERMISSION_DENIED}"  == "true" ]] ; then
 			printf '\n'
@@ -2110,7 +2098,7 @@ prune_flacs () {
 	# Abort script and check for any errors thus far
 	prune_abort () {
 		printf "\n%s${BOLD_GREEN}%s${NORMAL}%s\n" \
-		" " "*" " Control-C received, exiting script..."
+		" " "*" " Control-C received, generating summary. Please wait..."
 
 		if [[ "${DISPLAY_PERMISSION_DENIED}"  == "true" ]] ; then
 			printf '\n'
@@ -2934,6 +2922,25 @@ if [[ "${#}" -eq 1 ]] ; then
 	esac
 fi
 
+# Add case where two arguments are specified and the
+# arguments called are not to have anything after them
+if [[ "${#}" -eq 2 ]] ; then
+	case "${1}" in
+		--no-color|-n)
+			short_help
+			exit 1
+		;;
+		--version|-v)
+			short_help
+			exit 1
+		;;
+		--help|-h)
+			short_help
+			exit 1
+		;;
+	esac
+fi
+
 # Separate the long and short style arguments into their
 # own arrays
 for i in "${@}" ; do
@@ -2991,6 +2998,14 @@ if [[ -n "${long_style_arguments[@]}" ]] ; then
 			--no-color)
 				converted_arguments+=( -n )
 			;;
+			--version)
+				short_help
+				exit 1
+			;;
+			--help)
+				short_help
+				exit 1
+			;;
 			*)
 				# Set invalid argument into array
 				INVALID_ARGUMENTS+=( "${i}" )
@@ -3003,7 +3018,7 @@ fi
 # them, adding the valid arguments to the "converted_arguments"
 # array and adding invalid arguments to it's own array
 if [[ -n "${short_style_arguments[@]}" ]] ; then
-	while getopts ":LlcCtgGaAmprn" ARGUMENTS "${short_style_arguments[@]}" ; do
+	while getopts ":LlcCtgGaAmprnhv" ARGUMENTS "${short_style_arguments[@]}" ; do
 		case "${ARGUMENTS}" in
 			l)
 				converted_arguments+=( -l )
@@ -3043,6 +3058,12 @@ if [[ -n "${short_style_arguments[@]}" ]] ; then
 			;;
 			n)
 				converted_arguments+=( -n )
+			;;
+			h)
+				converted_arguments+=( -h )
+			;;
+			v)
+				converted_arguments+=( -v )
 			;;
 			?)
 				# Set invalid argument from getopts into
@@ -3120,6 +3141,14 @@ for i in "${converted_arguments[@]}" ; do
 		;;
 		-n)
 			NO_COLOR="true"
+		;;
+		-v)
+			short_help
+			exit 1
+		;;
+		-h)
+			short_help
+			exit 1
 		;;
 		*)
 			# Should not ever happen!
