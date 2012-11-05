@@ -2642,70 +2642,70 @@ operation_summary () {
 		esac
 
 		case "${OPERATION_SUMMARY}" in
-				"complete")
-					# Example of printed string below:
-					# '   │ MD5 Check   │  Completed  │   104 / 104   │ 100% │'
+			"complete")
+				# Example of printed string below:
+				# '   │ MD5 Check   │  Completed  │   104 / 104   │ 100% │'
 
-					# Set up the printed string with colors
-					printf "%s${BOLD_BLUE}%s${NORMAL}%s${YELLOW}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}%s${BOLD_GREEN}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}%s${BOLD_GREEN}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}%s${BOLD_GREEN}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}%s${BOLD_GREEN}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}\n" \
-					\
-					"   " "│" " " "${OPERATION}" "${OPERATION_SPACING}" "│" \
-					"  " "Completed" "  " "│" \
-					"${TOTAL_FLAC_SPACING}" "${TOTAL_FLACS_DIGITS}" \
-					" " "/" " " \
-					"${TOTAL_FLACS_DIGITS}" "${TOTAL_FLAC_SPACING}" \
-					"│" " " "100%" " " "│"
-				;;
+				# Set up the printed string with colors
+				printf "%s${BOLD_BLUE}%s${NORMAL}%s${YELLOW}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}%s${BOLD_GREEN}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}%s${BOLD_GREEN}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}%s${BOLD_GREEN}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}%s${BOLD_GREEN}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}\n" \
+				\
+				"   " "│" " " "${OPERATION}" "${OPERATION_SPACING}" "│" \
+				"  " "Completed" "  " "│" \
+				"${TOTAL_FLAC_SPACING}" "${TOTAL_FLACS_DIGITS}" \
+				" " "/" " " \
+				"${TOTAL_FLACS_DIGITS}" "${TOTAL_FLAC_SPACING}" \
+				"│" " " "100%" " " "│"
+			;;
 
-				"failed")
-					# Example of printed string below:
-					# '   │ MD5 Check   │   Failed    │   104 / 104   │ 100% │'
+			"failed")
+				# Example of printed string below:
+				# '   │ MD5 Check   │   Failed    │   104 / 104   │ 100% │'
 
-					# Set up the printed string with colors
-					printf "%s${BOLD_BLUE}%s${NORMAL}%s${YELLOW}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}%s${BOLD_RED}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}%s${BOLD_RED}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}%s${BOLD_GREEN}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}%s${BOLD_GREEN}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}\n" \
-					\
-					"   " "│" " " "${OPERATION}" "${OPERATION_SPACING}" "│" \
-					"   " "Failed" "    " "│" \
-					"${TOTAL_FLAC_SPACING}" "${TOTAL_FLACS_DIGITS}" \
-					" " "/" " " \
-					"${TOTAL_FLACS_DIGITS}" "${TOTAL_FLAC_SPACING}" \
-					"│" " " "100%" " " "│"
-				;;
+				# Set up the printed string with colors
+				printf "%s${BOLD_BLUE}%s${NORMAL}%s${YELLOW}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}%s${BOLD_RED}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}%s${BOLD_RED}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}%s${BOLD_GREEN}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}%s${BOLD_GREEN}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}\n" \
+				\
+				"   " "│" " " "${OPERATION}" "${OPERATION_SPACING}" "│" \
+				"   " "Failed" "    " "│" \
+				"${TOTAL_FLAC_SPACING}" "${TOTAL_FLACS_DIGITS}" \
+				" " "/" " " \
+				"${TOTAL_FLACS_DIGITS}" "${TOTAL_FLAC_SPACING}" \
+				"│" " " "100%" " " "│"
+			;;
 
-				"interrupted")
-					# Example of printed string below:
-					# '   │ MD5 Check   │ Interrupted │    24 / 104   │  23% │'
+			"interrupted")
+				# Example of printed string below:
+				# '   │ MD5 Check   │ Interrupted │    24 / 104   │  23% │'
 
-					# Set up the printed string with colors
-					printf "%s${BOLD_BLUE}%s${NORMAL}%s${YELLOW}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}%s${CYAN}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}%s${YELLOW}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}%s${BOLD_GREEN}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}%s${YELLOW}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}\n" \
-					\
-					"   " "│" " " "${OPERATION}" "${OPERATION_SPACING}" "│" \
-					" " "Interrupted" " " "│" \
-					"${PROCESSED_FLAC_SPACING}" "${PROCESSED_FLACS_DIGITS}" \
-					" " "/" " " \
-					"${TOTAL_FLACS_DIGITS}" "${TOTAL_FLAC_SPACING}" \
-					"│" "${PERCENTAGE_SPACING}" "${PERCENTAGE_DIGITS}%" " " "│"
-				;;
+				# Set up the printed string with colors
+				printf "%s${BOLD_BLUE}%s${NORMAL}%s${YELLOW}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}%s${CYAN}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}%s${YELLOW}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}%s${BOLD_GREEN}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}%s${YELLOW}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}\n" \
+				\
+				"   " "│" " " "${OPERATION}" "${OPERATION_SPACING}" "│" \
+				" " "Interrupted" " " "│" \
+				"${PROCESSED_FLAC_SPACING}" "${PROCESSED_FLACS_DIGITS}" \
+				" " "/" " " \
+				"${TOTAL_FLACS_DIGITS}" "${TOTAL_FLAC_SPACING}" \
+				"│" "${PERCENTAGE_SPACING}" "${PERCENTAGE_DIGITS}%" " " "│"
+			;;
 
-				"did not run")
-					# Example of printed string below:
-					# '   │ MD5 Check   │ Did Not Run │     0 / 104   │   0% │'
+			"did not run")
+				# Example of printed string below:
+				# '   │ MD5 Check   │ Did Not Run │     0 / 104   │   0% │'
 
-					# Set up the printed string with colors
-					printf "%s${BOLD_BLUE}%s${NORMAL}%s${YELLOW}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}%s${MAGENTA}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}%s${BOLD_RED}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}%s${BOLD_GREEN}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}%s${BOLD_RED}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}\n" \
-					\
-					"   " "│" " " "${OPERATION}" "${OPERATION_SPACING}" "│" \
-					" " "Did Not Run" " " "│" \
-					"     " "0" \
-					" " "/" " " \
-					"${TOTAL_FLACS_DIGITS}" "${TOTAL_FLAC_SPACING}" \
-					"│" "   " "0%" " " "│"
-				;;
+				# Set up the printed string with colors
+				printf "%s${BOLD_BLUE}%s${NORMAL}%s${YELLOW}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}%s${MAGENTA}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}%s${BOLD_RED}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}%s${BOLD_GREEN}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}%s${BOLD_RED}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}\n" \
+				\
+				"   " "│" " " "${OPERATION}" "${OPERATION_SPACING}" "│" \
+				" " "Did Not Run" " " "│" \
+				"     " "0" \
+				" " "/" " " \
+				"${TOTAL_FLACS_DIGITS}" "${TOTAL_FLAC_SPACING}" \
+				"│" "   " "0%" " " "│"
+			;;
 
-				*)
-					# Should not ever happen!
-				;;
-			esac
+			*)
+				# Should not ever happen!
+			;;
+		esac
 	}
 
 	# Begin printing the table
@@ -2881,8 +2881,8 @@ operation_summary () {
 	printf "%s${BOLD_BLUE}%s${NORMAL}\n" \
 	"   " "└──────────────────────────────────────────────────┘"
 
-	# Restore "^C"
-	stty ctlecho 2> /dev/null
+	# Restore old stty settings
+	stty "${OLD_STTY}"
 }
 
 #######################
@@ -3164,6 +3164,8 @@ fi
 SLEEP_EXISTS="$(command -v sleep)"
 STTY_EXISTS="$(command -v stty)"
 STAT_EXISTS="$(command -v stat)"
+MKFIFO_EXISTS="$(command -v mkfifo)"
+DD_EXISTS="$(command -v dd)"
 FIND_EXISTS="$(command -v find)"
 XARGS_EXISTS="$(command -v xargs)"
 METAFLAC_EXISTS="$(command -v metaflac)"
@@ -3181,6 +3183,14 @@ fi
 
 if [[ -z "${STAT_EXISTS}" ]] ; then
 	command_exists_array+=( "You can generally install \"stat\" with the \"coreutils\" package." )
+fi
+
+if [[ -z "${MKFIFO_EXISTS}" ]] ; then
+	command_exists_array+=( "You can generally install \"mkfifo\" with the \"coreutils\" package." )
+fi
+
+if [[ -z "${DD_EXISTS}" ]] ; then
+	command_exists_array+=( "You can generally install \"dd\" with the \"coreutils\" package." )
 fi
 
 if [[ -z "${FIND_EXISTS}" ]] ; then
@@ -3398,7 +3408,9 @@ find_cores
 ##################
 #  BEGIN SCRIPT  #
 ##################
-# Prevent Control-C from displaying "^C"
+# Store current stty settings
+OLD_STTY="$(stty -g)"
+# Prevent Control-C from displaying '^C'.  May already be set
 stty -ctlecho 2> /dev/null
 
 # Create a temporary FIFO pipe
