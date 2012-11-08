@@ -86,7 +86,7 @@ REPLAYGAIN_ALBUM_PEAK
 # values are:
 #    "true"  (Remove Artwork)
 #    "false" (Keep Artwork)
-#REMOVE_ARTWORK="true"
+REMOVE_ARTWORK="true"
 
 # Set the type of COMPRESSION to compress the
 # FLAC files.  Numbers range from 1-8, with 1 being
