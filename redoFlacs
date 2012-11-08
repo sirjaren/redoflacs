@@ -793,15 +793,18 @@ top_banner () {
 	fi
 
 	# Title
-	printf "%s${BOLD_GREEN}%s${NORMAL}%s\n" \
-	" " "*" " Runtime Settings"
+	printf "%s${BOLD_BLUE}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}%s\n" \
+	"   " "====" "  Runtime  Information  " "====" " "
 
+	# Script Version
+	printf "${NORMAL}%s${CYAN}%s${NORMAL}\n" \
+	"         Version:  " "${VERSION}"
 	# Cores to be used
-	printf "%s${BOLD_GREEN}%s${NORMAL}%s${CYAN}%s${NORMAL}\n" \
-	" " "*" "    Threads/Cores:  " "${CORES}"
+	printf "${NORMAL}%s${CYAN}%s${NORMAL}\n" \
+	"   Threads/Cores:  " "${CORES}"
 	# Log directory to be used
-	printf "%s${BOLD_GREEN}%s${NORMAL}%s${CYAN}%s${NORMAL}" \
-	" " "*" "    Log Directory:  " "${ERROR_LOG}"
+	printf "${NORMAL}%s${CYAN}%s${NORMAL}" \
+	"   Log Directory:  " "${ERROR_LOG}"
 }
 # Create a countdown function for the metadata
 # to allow user to quit script safely
