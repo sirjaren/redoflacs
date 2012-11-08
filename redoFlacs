@@ -86,7 +86,7 @@ REPLAYGAIN_ALBUM_PEAK
 # values are:
 #    "true"  (Remove Artwork)
 #    "false" (Keep Artwork)
-REMOVE_ARTWORK="true"
+#REMOVE_ARTWORK="true"
 
 # Set the type of COMPRESSION to compress the
 # FLAC files.  Numbers range from 1-8, with 1 being
@@ -205,8 +205,15 @@ title_test_replaygain () {
 }
 
 title_add_replaygain () {
+	# Change printed title based on whether there is one more directories to process
+	if [[ "${TOTAL_DIRECTORIES}" == "1" ]] ; then
+		local DIRECTORY_PLURAL="directory"
+	else
+		local DIRECTORY_PLURAL="directories"
+	fi
+
 	printf "\n\n%s${BOLD_GREEN}%s${NORMAL}%s${CYAN}%s${NORMAL}\n" \
-	" " "*" " Applying ReplayGain values by album directory :: " "${TOTAL_DIRECTORIES} directories"
+	" " "*" " Applying ReplayGain values by album directory :: " "${TOTAL_DIRECTORIES} ${DIRECTORY_PLURAL}"
 }
 
 title_analyze_tags () {
@@ -234,18 +241,19 @@ title_md5check_flac () {
 	" " "*" " Verifying the MD5 Signature in each FLAC file"
 }
 
-# Change printed title based on whether embedded artwork is to be removed
-if [[ "${REMOVE_ARTWORK}" == "false" ]] ; then
-	title_prune_flac () {
-		printf "\n\n%s${BOLD_GREEN}%s${NORMAL}%s\n" \
-		" " "*" " Removing all METADATA blocks except STREAMINFO, VORBIS_COMMENT and PICTURE"
-	}
-else
-	title_prune_flac () {
-		printf "\n\n%s${BOLD_GREEN}%s${NORMAL}%s\n" \
-		" " "*" " Removing all METADATA blocks except STREAMINFO and VORBIS_COMMENT"
-	}
-fi
+title_prune_flac () {
+	# Change printed title based on whether embedded artwork is to be removed
+	if [[ "${REMOVE_ARTWORK}" == "false" ]] ; then
+		# Keep artwork
+		local METADATA_REMOVED="STREAMINFO, VORBIS_COMMENT and PICTURE"
+	else
+		# Remove artwork
+		local METADATA_REMOVED="STREAMINFO and VORBIS_COMMENT"
+	fi
+
+	printf "\n\n%s${BOLD_GREEN}%s${NORMAL}%s\n" \
+	" " "*" " Removing all METADATA blocks except ${METADATA_REMOVED}"
+}
 
 # Error messages
 # Don't display threads as script will quit after diplaying
@@ -740,7 +748,9 @@ top_banner () {
 	# Cores to be used
 	printf "${NORMAL}%s${CYAN}%s${NORMAL}\n" \
 	"   Threads/Cores:  " "${CORES}"
-	# Log directory to be used
+	# Log directory to be used (No need for newlines
+	# since a double newline is prepended to each
+	# title operation)
 	printf "${NORMAL}%s${CYAN}%s${NORMAL}" \
 	"   Log Directory:  " "${ERROR_LOG}"
 }
@@ -3278,8 +3288,6 @@ fi
 SLEEP_EXISTS="$(command -v sleep)"
 STTY_EXISTS="$(command -v stty)"
 STAT_EXISTS="$(command -v stat)"
-MKFIFO_EXISTS="$(command -v mkfifo)"
-DD_EXISTS="$(command -v dd)"
 FIND_EXISTS="$(command -v find)"
 XARGS_EXISTS="$(command -v xargs)"
 METAFLAC_EXISTS="$(command -v metaflac)"
@@ -3297,14 +3305,6 @@ fi
 
 if [[ -z "${STAT_EXISTS}" ]] ; then
 	command_exists_array+=( "You can generally install \"stat\" with the \"coreutils\" package." )
-fi
-
-if [[ -z "${MKFIFO_EXISTS}" ]] ; then
-	command_exists_array+=( "You can generally install \"mkfifo\" with the \"coreutils\" package." )
-fi
-
-if [[ -z "${DD_EXISTS}" ]] ; then
-	command_exists_array+=( "You can generally install \"dd\" with the \"coreutils\" package." )
 fi
 
 if [[ -z "${FIND_EXISTS}" ]] ; then
