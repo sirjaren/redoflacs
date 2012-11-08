@@ -190,59 +190,59 @@ PRUNE=""
 ###################################
 # Displaying currently running tasks
 title_compress_flac () {
-	printf "%s${BOLD_GREEN}%s${NORMAL}%s${CYAN}%s${NORMAL}\n" \
+	printf "\n\n%s${BOLD_GREEN}%s${NORMAL}%s${CYAN}%s${NORMAL}\n" \
 	" " "*" " Compressing FLAC files with level ${COMPRESSION_LEVEL} compression and verifying output :: " "${CORES} Threads"
 }
 
 title_compress_notest_flac () {
-	printf "%s${BOLD_GREEN}%s${NORMAL}%s${CYAN}%s${NORMAL}\n" \
+	printf "\n\n%s${BOLD_GREEN}%s${NORMAL}%s${CYAN}%s${NORMAL}\n" \
 	" " "*" " Compressing FLAC files with level ${COMPRESSION_LEVEL} compression :: " "${CORES} Threads"
 }
 
 title_test_replaygain () {
-	printf "%s${BOLD_GREEN}%s${NORMAL}%s${CYAN}%s${NORMAL}\n" \
+	printf "\n\n%s${BOLD_GREEN}%s${NORMAL}%s${CYAN}%s${NORMAL}\n" \
 	" " "*" " Verifying FLAC Files can have ReplayGain Tags added :: " "${CORES} Threads"
 }
 
 title_add_replaygain () {
-	printf "%s${BOLD_GREEN}%s${NORMAL}%s${CYAN}%s${NORMAL}\n" \
+	printf "\n\n%s${BOLD_GREEN}%s${NORMAL}%s${CYAN}%s${NORMAL}\n" \
 	" " "*" " Applying ReplayGain values by album directory :: " "${CORES} Threads"
 }
 
 title_analyze_tags () {
-	printf "%s${BOLD_GREEN}%s${NORMAL}%s${CYAN}%s${NORMAL}\n" \
+	printf "\n\n%s${BOLD_GREEN}%s${NORMAL}%s${CYAN}%s${NORMAL}\n" \
 	" " "*" " Analyzing FLAC Tags :: " "${CORES} Threads"
 }
 
 title_setting_tags () {
-	printf "%s${BOLD_GREEN}%s${NORMAL}%s${CYAN}%s${NORMAL}\n" \
+	printf "\n\n%s${BOLD_GREEN}%s${NORMAL}%s${CYAN}%s${NORMAL}\n" \
 	" " "*" " Setting new FLAC Tags :: " "${CORES} Threads"
 }
 
 title_testing_flac () {
-	printf "%s${BOLD_GREEN}%s${NORMAL}%s${CYAN}%s${NORMAL}\n" \
+	printf "\n\n%s${BOLD_GREEN}%s${NORMAL}%s${CYAN}%s${NORMAL}\n" \
 	" " "*" " Testing the integrity of each FLAC file :: " "${CORES} Threads"
 }
 
 title_aucdtect_flac () {
-	printf "%s${BOLD_GREEN}%s${NORMAL}%s${CYAN}%s${NORMAL}\n" \
+	printf "\n\n%s${BOLD_GREEN}%s${NORMAL}%s${CYAN}%s${NORMAL}\n" \
 	" " "*" " Validating FLAC is not lossy sourced :: " "${CORES} Threads"
 }
 
 title_md5check_flac () {
-	printf "%s${BOLD_GREEN}%s${NORMAL}%s${CYAN}%s${NORMAL}\n" \
+	printf "\n\n%s${BOLD_GREEN}%s${NORMAL}%s${CYAN}%s${NORMAL}\n" \
 	" " "*" " Verifying the MD5 Signature in each FLAC file :: " "${CORES} Threads"
 }
 
 # Change printed title based on whether embedded artwork is to be removed
 if [[ "${REMOVE_ARTWORK}" == "false" ]] ; then
 	title_prune_flac () {
-		printf "%s${BOLD_GREEN}%s${NORMAL}%s${CYAN}%s${NORMAL}\n" \
+		printf "\n\n%s${BOLD_GREEN}%s${NORMAL}%s${CYAN}%s${NORMAL}\n" \
 		" " "*" " Removing all METADATA blocks except STREAMINFO, VORBIS_COMMENT and PICTURE :: " "${CORES} Threads"
 	}
 else
 	title_prune_flac () {
-		printf "%s${BOLD_GREEN}%s${NORMAL}%s${CYAN}%s${NORMAL}\n" \
+		printf "\n\n%s${BOLD_GREEN}%s${NORMAL}%s${CYAN}%s${NORMAL}\n" \
 		" " "*" " Removing all METADATA blocks except STREAMINFO and VORBIS_COMMENT :: " "${CORES} Threads"
 	}
 fi
@@ -271,14 +271,17 @@ print_compressing_flac () {
 	MAX_FILENAME_LENGTH="$((${COLUMNS} - 30))"
 
 	FILENAME="${i##*/}"
+	# Replace possible newlines in filename with '?' (like 'ls' output)
+	FILENAME="${FILENAME//
+/?}"
 	FILENAME_LENGTH="${#FILENAME}"
 
 	if [[ "${FILENAME_LENGTH}" -gt "${MAX_FILENAME_LENGTH}" ]] ; then
 		FILENAME="${FILENAME::$MAX_FILENAME_LENGTH}…"
 	fi
 
-	printf "\r${NORMAL}%$((${COLUMNS} - 20))s${BOLD_BLUE}%s${NORMAL}%s${YELLOW}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}\r%s${NORMAL}${YELLOW}%s${NORMAL}%s" \
-	"" "[" " " "Compressing FLAC" " " "]" "     " "*" " ${FILENAME}"
+	printf "\r${NORMAL}%$((${COLUMNS} - 20))s${BOLD_BLUE}%s${NORMAL}%s${YELLOW}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}\r%s${CYAN}%s${NORMAL}%s${YELLOW}%s${NORMAL}%s" \
+	"" "[" " " "Compressing FLAC" " " "]" "   " "${PERCENT_DISPLAY}" " " "*" " ${FILENAME}"
 }
 print_test_replaygain () {
 	# Grab the first line of 'stty -a' output
@@ -296,14 +299,18 @@ print_test_replaygain () {
 	MAX_FILENAME_LENGTH="$((${COLUMNS} - 32))"
 
 	FILENAME="${i##*/}"
+	# Replace possible newlines in filename with '?' (like 'ls' output)
+	FILENAME="${FILENAME//
+/?}"
+
 	FILENAME_LENGTH="${#FILENAME}"
 
 	if [[ "${FILENAME_LENGTH}" -gt "${MAX_FILENAME_LENGTH}" ]] ; then
 		FILENAME="${FILENAME::$MAX_FILENAME_LENGTH}…"
 	fi
 
-	printf "\r${NORMAL}%$((${COLUMNS} - 22))s${BOLD_BLUE}%s${NORMAL}%s${YELLOW}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}\r%s${NORMAL}${YELLOW}%s${NORMAL}%s" \
-	"" "[" " " "Testing ReplayGain" " " "]" "     " "*" " ${FILENAME}"
+	printf "\r${NORMAL}%$((${COLUMNS} - 22))s${BOLD_BLUE}%s${NORMAL}%s${YELLOW}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}\r%s${CYAN}%s${NORMAL}%s${YELLOW}%s${NORMAL}%s" \
+	"" "[" " " "Testing ReplayGain" " " "]" "   " "${PERCENT_DISPLAY}" " " "*" " ${FILENAME}"
 }
 print_add_replaygain () {
 	# Grab the first line of 'stty -a' output
@@ -321,6 +328,10 @@ print_add_replaygain () {
 	MAX_FILENAME_LENGTH="$((${COLUMNS} - 43))"
 
 	FILENAME="${i##*/}"
+	# Replace possible newlines in filename with '?' (like 'ls' output)
+	FILENAME="${FILENAME//
+/?}"
+
 	# Plus '12' below to account for ' [Directory]'
 	FILENAME_LENGTH="${#FILENAME}"
 
@@ -328,8 +339,8 @@ print_add_replaygain () {
 		FILENAME="${FILENAME::$MAX_FILENAME_LENGTH}…"
 	fi
 
-	printf "\r${NORMAL}%$((${COLUMNS} - 21))s${BOLD_BLUE}%s${NORMAL}%s${YELLOW}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}\r%s${NORMAL}${YELLOW}%s${NORMAL}%s${CYAN}%s${NORMAL}" \
-	"" "[" " " "Adding ReplayGain" " " "]" "     " "*" " ${FILENAME} " "[Directory]"
+	printf "\r${NORMAL}%$((${COLUMNS} - 21))s${BOLD_BLUE}%s${NORMAL}%s${YELLOW}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}\r%s${CYAN}%s${NORMAL}%s${YELLOW}%s${NORMAL}%s${CYAN}%s${NORMAL}" \
+	"" "[" " " "Adding ReplayGain" " " "]" "   " "${PERCENT_DISPLAY}" " " "*" " ${FILENAME} " "[Directory]"
 }
 print_testing_flac () {
 	# Grab the first line of 'stty -a' output
@@ -347,14 +358,17 @@ print_testing_flac () {
 	MAX_FILENAME_LENGTH="$((${COLUMNS} - 26))"
 
 	FILENAME="${i##*/}"
+	# Replace possible newlines in filename with '?' (like 'ls' output)
+	FILENAME="${FILENAME//
+/?}"
 	FILENAME_LENGTH="${#FILENAME}"
 
 	if [[ "${FILENAME_LENGTH}" -gt "${MAX_FILENAME_LENGTH}" ]] ; then
 		FILENAME="${FILENAME::$MAX_FILENAME_LENGTH}…"
 	fi
 	
-	printf "\r${NORMAL}%$((${COLUMNS} - 16))s${BOLD_BLUE}%s${NORMAL}%s${YELLOW}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}\r%s${NORMAL}${YELLOW}%s${NORMAL}%s" \
-	"" "[" " " "Testing FLAC" " " "]" "     " "*" " ${FILENAME}"
+	printf "\r${NORMAL}%$((${COLUMNS} - 16))s${BOLD_BLUE}%s${NORMAL}%s${YELLOW}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}\r%s${CYAN}%s${NORMAL}%s${YELLOW}%s${NORMAL}%s" \
+	"" "[" " " "Testing FLAC" " " "]" "   " "${PERCENT_DISPLAY}" " " "*" " ${FILENAME}"
 }
 print_failed_flac () {
 	# Grab the first line of 'stty -a' output
@@ -371,6 +385,9 @@ print_failed_flac () {
 	MAX_FILENAME_LENGTH="$((${COLUMNS} - 19))"
 
 	FILENAME="${i##*/}"
+	# Replace possible newlines in filename with '?' (like 'ls' output)
+	FILENAME="${FILENAME//
+/?}"
 	FILENAME_LENGTH="${#FILENAME}"
 
 	if [[ "${FILENAME_LENGTH}" -gt "${MAX_FILENAME_LENGTH}" ]] ; then
@@ -378,7 +395,7 @@ print_failed_flac () {
 	fi
 
 	printf "\r${NORMAL}%$((${COLUMNS} - 10))s${BOLD_BLUE}%s${NORMAL}%s${BOLD_RED}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}\r%s${YELLOW}%s${NORMAL}%s\n" \
-	"" "[" " " "FAILED" " " "]" "     " "*" " ${FILENAME}"
+	"" "[" " " "FAILED" " " "]" "        " "*" " ${FILENAME}"
 }
 print_failed_replaygain () {
 	# Grab the first line of 'stty -a' output
@@ -396,6 +413,9 @@ print_failed_replaygain () {
 	MAX_FILENAME_LENGTH="$((${COLUMNS} - 31))"
 
 	FILENAME="${i##*/}"
+	# Replace possible newlines in filename with '?' (like 'ls' output)
+	FILENAME="${FILENAME//
+/?}"
 	# Plus '12' below to account for ' [Directory]'
 	FILENAME_LENGTH="${#FILENAME}"
 
@@ -403,8 +423,8 @@ print_failed_replaygain () {
 		FILENAME="${FILENAME::$MAX_FILENAME_LENGTH}…"
 	fi
 
-	printf "\r${NORMAL}%$((${COLUMNS} - 10))s${BOLD_BLUE}%s${NORMAL}%s${BOLD_RED}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}\r%s${NORMAL}${YELLOW}%s${NORMAL}%s${CYAN}%s${NORMAL}\n" \
-	"" "[" " " "FAILED" " " "]" "     " "*" " ${FILENAME} " "[Directory]"
+	printf "\r${NORMAL}%$((${COLUMNS} - 10))s${BOLD_BLUE}%s${NORMAL}%s${BOLD_RED}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}\r%s${YELLOW}%s${NORMAL}%s${CYAN}%s${NORMAL}\n" \
+	"" "[" " " "FAILED" " " "]" "        " "*" " ${FILENAME} " "[Directory]"
 }
 print_checking_md5 () {
 	# Grab the first line of 'stty -a' output
@@ -422,14 +442,17 @@ print_checking_md5 () {
 	MAX_FILENAME_LENGTH="$((${COLUMNS} - 26))"
 
 	FILENAME="${i##*/}"
+	# Replace possible newlines in filename with '?' (like 'ls' output)
+	FILENAME="${FILENAME//
+/?}"
 	FILENAME_LENGTH="${#FILENAME}"
 
 	if [[ "${FILENAME_LENGTH}" -gt "${MAX_FILENAME_LENGTH}" ]] ; then
 		FILENAME="${FILENAME::$MAX_FILENAME_LENGTH}…"
 	fi
 
-	printf "\r${NORMAL}%$((${COLUMNS} - 16))s${BOLD_BLUE}%s${NORMAL}%s${YELLOW}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}\r%s${NORMAL}${YELLOW}%s${NORMAL}%s" \
-	"" "[" " " "Checking MD5" " " "]" "     " "*" " ${FILENAME}"
+	printf "\r${NORMAL}%$((${COLUMNS} - 16))s${BOLD_BLUE}%s${NORMAL}%s${YELLOW}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}\r%s${CYAN}%s${NORMAL}%s${YELLOW}%s${NORMAL}%s" \
+	"" "[" " " "Checking MD5" " " "]" "   " "${PERCENT_DISPLAY}" " " "*" " ${FILENAME}"
 }
 print_ok_flac () {
 	# Grab the first line of 'stty -a' output
@@ -446,14 +469,18 @@ print_ok_flac () {
 	MAX_FILENAME_LENGTH="$((${COLUMNS} - 15))"
 
 	FILENAME="${i##*/}"
+	# Replace possible newlines in filename with '?' (like 'ls' output)
+	FILENAME="${FILENAME//
+/?}"
+
 	FILENAME_LENGTH="${#FILENAME}"
 
 	if [[ "${FILENAME_LENGTH}" -gt "${MAX_FILENAME_LENGTH}" ]] ; then
 		FILENAME="${FILENAME::$MAX_FILENAME_LENGTH}…"
 	fi
 
-	printf "\r${NORMAL}%$((${COLUMNS} - 6))s${BOLD_BLUE}%s${NORMAL}%s${BOLD_GREEN}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}\r%s${YELLOW}%s${NORMAL}%s\n" \
-	"" "[" " " "OK" " " "]" "     " "*" " ${FILENAME}"
+	printf "\r${NORMAL}%$((${COLUMNS} - 6))s${BOLD_BLUE}%s${NORMAL}%s${BOLD_GREEN}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}\r%s${CYAN}%s${NORMAL}%s${YELLOW}%s${NORMAL}%s" \
+	"" "[" " " "OK" " " "]" "   " "${PERCENT_DISPLAY}" " " "*" " ${FILENAME}"
 }
 print_ok_replaygain () {
 	# Grab the first line of 'stty -a' output
@@ -471,6 +498,10 @@ print_ok_replaygain () {
 	MAX_FILENAME_LENGTH="$((${COLUMNS} - 27))"
 
 	FILENAME="${i##*/}"
+	# Replace possible newlines in filename with '?' (like 'ls' output)
+	FILENAME="${FILENAME//
+/?}"
+
 	# Plus '12' below to account for ' [Directory]'
 	FILENAME_LENGTH="${#FILENAME}"
 
@@ -478,8 +509,8 @@ print_ok_replaygain () {
 		FILENAME="${FILENAME::$MAX_FILENAME_LENGTH}…"
 	fi
 
-	printf "\r${NORMAL}%$((${COLUMNS} - 6))s${BOLD_BLUE}%s${NORMAL}%s${BOLD_GREEN}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}\r%s${NORMAL}${YELLOW}%s${NORMAL}%s${CYAN}%s${NORMAL}\n" \
-	"" "[" " " "OK" " " "]" "     " "*" " ${FILENAME} " "[Directory]"
+	printf "\r${NORMAL}%$((${COLUMNS} - 6))s${BOLD_BLUE}%s${NORMAL}%s${BOLD_GREEN}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}\r%s${CYAN}%s${NORMAL}%s${YELLOW}%s${NORMAL}%s${CYAN}%s${NORMAL}" \
+	"" "[" " " "OK" " " "]" "   " "${PERCENT_DISPLAY}" " " "*" " ${FILENAME} " "[Directory]"
 }
 print_aucdtect_flac () {
 	# Grab the first line of 'stty -a' output
@@ -497,14 +528,17 @@ print_aucdtect_flac () {
 	MAX_FILENAME_LENGTH="$((${COLUMNS} - 29))"
 
 	FILENAME="${i##*/}"
+	# Replace possible newlines in filename with '?' (like 'ls' output)
+	FILENAME="${FILENAME//
+/?}"
 	FILENAME_LENGTH="${#FILENAME}"
 
 	if [[ "${FILENAME_LENGTH}" -gt "${MAX_FILENAME_LENGTH}" ]] ; then
 		FILENAME="${FILENAME::$MAX_FILENAME_LENGTH}…"
 	fi
 
-	printf "\r${NORMAL}%$((${COLUMNS} - 19))s${BOLD_BLUE}%s${NORMAL}%s${YELLOW}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}\r%s${NORMAL}${YELLOW}%s${NORMAL}%s" \
-	"" "[" " " "Validating FLAC" " " "]" "     " "*" " ${FILENAME}"
+	printf "\r${NORMAL}%$((${COLUMNS} - 19))s${BOLD_BLUE}%s${NORMAL}%s${YELLOW}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}\r%s${CYAN}%s${NORMAL}%s${YELLOW}%s${NORMAL}%s" \
+	"" "[" " " "Validating FLAC" " " "]" "   " "${PERCENT_DISPLAY}" " " "*" " ${FILENAME}"
 }
 print_aucdtect_issue () {
 	# Grab the first line of 'stty -a' output
@@ -521,6 +555,9 @@ print_aucdtect_issue () {
 	MAX_FILENAME_LENGTH="$((${COLUMNS} - 18))"
 
 	FILENAME="${i##*/}"
+	# Replace possible newlines in filename with '?' (like 'ls' output)
+	FILENAME="${FILENAME//
+/?}"
 	FILENAME_LENGTH="${#FILENAME}"
 
 	if [[ "${FILENAME_LENGTH}" -gt "${MAX_FILENAME_LENGTH}" ]] ; then
@@ -528,7 +565,7 @@ print_aucdtect_issue () {
 	fi
 
 	printf "\r${NORMAL}%$((${COLUMNS} - 9))s${BOLD_BLUE}%s${NORMAL}%s${YELLOW}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}\r%s${YELLOW}%s${NORMAL}%s\n" \
-	"" "[" " " "ISSUE" " " "]" "     " "*" " ${FILENAME}"
+	"" "[" " " "ISSUE" " " "]" "        " "*" " ${FILENAME}"
 }
 print_aucdtect_spectrogram () {
 	# Grab the first line of 'stty -a' output
@@ -546,14 +583,17 @@ print_aucdtect_spectrogram () {
 	MAX_FILENAME_LENGTH="$((${COLUMNS} - 34))"
 
 	FILENAME="${i##*/}"
+	# Replace possible newlines in filename with '?' (like 'ls' output)
+	FILENAME="${FILENAME//
+/?}"
 	FILENAME_LENGTH="${#FILENAME}"
 
 	if [[ "${FILENAME_LENGTH}" -gt "${MAX_FILENAME_LENGTH}" ]] ; then
 		FILENAME="${FILENAME::$MAX_FILENAME_LENGTH}…"
 	fi
 
-	printf "\r${NORMAL}%$((${COLUMNS} - 24))s${BOLD_BLUE}%s${NORMAL}%s${YELLOW}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}\r%s${NORMAL}${YELLOW}%s${NORMAL}%s" \
-	"" "[" " " "Creating Spectrogram" " " "]" "     " "*" " ${FILENAME}"
+	printf "\r${NORMAL}%$((${COLUMNS} - 24))s${BOLD_BLUE}%s${NORMAL}%s${YELLOW}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}\r%s${CYAN}%s${NORMAL}%s${YELLOW}%s${NORMAL}%s" \
+	"" "[" " " "Creating Spectrogram" " " "]" "   " "${PERCENT_DISPLAY}" " " "*" " ${FILENAME}"
 }
 print_aucdtect_skip () {
 	# Grab the first line of 'stty -a' output
@@ -570,6 +610,9 @@ print_aucdtect_skip () {
 	MAX_FILENAME_LENGTH="$((${COLUMNS} - 20))"
 
 	FILENAME="${i##*/}"
+	# Replace possible newlines in filename with '?' (like 'ls' output)
+	FILENAME="${FILENAME//
+/?}"
 	FILENAME_LENGTH="${#FILENAME}"
 
 	if [[ "${FILENAME_LENGTH}" -gt "${MAX_FILENAME_LENGTH}" ]] ; then
@@ -577,7 +620,7 @@ print_aucdtect_skip () {
 	fi
 
 	printf "\r${NORMAL}%$((${COLUMNS} - 11))s${BOLD_BLUE}%s${NORMAL}%s${YELLOW}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}\r%s${YELLOW}%s${NORMAL}%s\n" \
-	"" "[" " " "SKIPPED" " " "]" "     " "*" " ${FILENAME}"
+	"" "[" " " "SKIPPED" " " "]" "        " "*" " ${FILENAME}"
 }
 print_done_flac () {
 	# Grab the first line of 'stty -a' output
@@ -594,14 +637,17 @@ print_done_flac () {
 	MAX_FILENAME_LENGTH="$((${COLUMNS} - 17))"
 
 	FILENAME="${i##*/}"
+	# Replace possible newlines in filename with '?' (like 'ls' output)
+	FILENAME="${FILENAME//
+/?}"
 	FILENAME_LENGTH="${#FILENAME}"
 
 	if [[ "${FILENAME_LENGTH}" -gt "${MAX_FILENAME_LENGTH}" ]] ; then
 		FILENAME="${FILENAME::$MAX_FILENAME_LENGTH}…"
 	fi
 
-	printf "\r${NORMAL}%$((${COLUMNS} - 8))s${BOLD_BLUE}%s${NORMAL}%s${BOLD_GREEN}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}\r%s${YELLOW}%s${NORMAL}%s\n" \
-	"" "[" " " "DONE" " " "]" "     " "*" " ${FILENAME}"
+	printf "\r${NORMAL}%$((${COLUMNS} - 8))s${BOLD_BLUE}%s${NORMAL}%s${BOLD_GREEN}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}\r%s${CYAN}%s${NORMAL}%s${YELLOW}%s${NORMAL}%s" \
+	"" "[" " " "DONE" " " "]" "   " "${PERCENT_DISPLAY}" " " "*" " ${FILENAME}"
 }
 print_level_same_compression () {
 	# Grab the first line of 'stty -a' output
@@ -619,6 +665,9 @@ print_level_same_compression () {
 	MAX_FILENAME_LENGTH="$((${COLUMNS} - 31))"
 
 	FILENAME="${i##*/}"
+	# Replace possible newlines in filename with '?' (like 'ls' output)
+	FILENAME="${FILENAME//
+/?}"
 	FILENAME_LENGTH="${#FILENAME}"
 
 	if [[ "${FILENAME_LENGTH}" -gt "${MAX_FILENAME_LENGTH}" ]] ; then
@@ -626,7 +675,7 @@ print_level_same_compression () {
 	fi
 
 	printf "\r${NORMAL}%$((${COLUMNS} - 22))s${BOLD_BLUE}%s${NORMAL}%s${YELLOW}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}\r%s${YELLOW}%s${NORMAL}%s\n" \
-	"" "[" " " "Already At Level ${COMPRESSION_LEVEL}" " " "]" "     " "*" " ${FILENAME}"
+	"" "[" " " "Already At Level ${COMPRESSION_LEVEL}" " " "]" "        " "*" " ${FILENAME}"
 }
 print_analyzing_tags () {
 	# Grab the first line of 'stty -a' output
@@ -644,14 +693,17 @@ print_analyzing_tags () {
 	MAX_FILENAME_LENGTH="$((${COLUMNS} - 28))"
 
 	FILENAME="${i##*/}"
+	# Replace possible newlines in filename with '?' (like 'ls' output)
+	FILENAME="${FILENAME//
+/?}"
 	FILENAME_LENGTH="${#FILENAME}"
 
 	if [[ "${FILENAME_LENGTH}" -gt "${MAX_FILENAME_LENGTH}" ]] ; then
 		FILENAME="${FILENAME::$MAX_FILENAME_LENGTH}…"
 	fi
 
-	printf "\r${NORMAL}%$((${COLUMNS} - 18))s${BOLD_BLUE}%s${NORMAL}%s${YELLOW}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}\r%s${NORMAL}${YELLOW}%s${NORMAL}%s" \
-	"" "[" " " "Analyzing Tags" " " "]" "     " "*" " ${FILENAME}"
+	printf "\r${NORMAL}%$((${COLUMNS} - 18))s${BOLD_BLUE}%s${NORMAL}%s${YELLOW}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}\r%s${CYAN}%s${NORMAL}%s${YELLOW}%s${NORMAL}%s" \
+	"" "[" " " "Analyzing Tags" " " "]" "   " "${PERCENT_DISPLAY}" " " "*" " ${FILENAME}"
 }
 print_setting_tags () {
 	# Grab the first line of 'stty -a' output
@@ -669,14 +721,17 @@ print_setting_tags () {
 	MAX_FILENAME_LENGTH="$((${COLUMNS} - 26))"
 
 	FILENAME="${i##*/}"
+	# Replace possible newlines in filename with '?' (like 'ls' output)
+	FILENAME="${FILENAME//
+/?}"
 	FILENAME_LENGTH="${#FILENAME}"
 
 	if [[ "${FILENAME_LENGTH}" -gt "${MAX_FILENAME_LENGTH}" ]] ; then
 		FILENAME="${FILENAME::$MAX_FILENAME_LENGTH}…"
 	fi
 
-	printf "\r${NORMAL}%$((${COLUMNS} - 16))s${BOLD_BLUE}%s${NORMAL}%s${YELLOW}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}\r%s${NORMAL}${YELLOW}%s${NORMAL}%s" \
-	"" "[" " " "Setting Tags" " " "]" "     " "*" " ${FILENAME}"
+	printf "\r${NORMAL}%$((${COLUMNS} - 16))s${BOLD_BLUE}%s${NORMAL}%s${YELLOW}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}\r%s${CYAN}%s${NORMAL}%s${YELLOW}%s${NORMAL}%s" \
+	"" "[" " " "Setting Tags" " " "]" "   " "${PERCENT_DISPLAY}" " " "*" " ${FILENAME}"
 }
 print_prune_flac () {
 	# Grab the first line of 'stty -a' output
@@ -694,14 +749,17 @@ print_prune_flac () {
 	MAX_FILENAME_LENGTH="$((${COLUMNS} - 30))"
 
 	FILENAME="${i##*/}"
+	# Replace possible newlines in filename with '?' (like 'ls' output)
+	FILENAME="${FILENAME//
+/?}"
 	FILENAME_LENGTH="${#FILENAME}"
 
 	if [[ "${FILENAME_LENGTH}" -gt "${MAX_FILENAME_LENGTH}" ]] ; then
 		FILENAME="${FILENAME::$MAX_FILENAME_LENGTH}…"
 	fi
 
-	printf "\r${NORMAL}%$((${COLUMNS} - 20))s${BOLD_BLUE}%s${NORMAL}%s${YELLOW}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}\r%s${NORMAL}${YELLOW}%s${NORMAL}%s" \
-	"" "[" " " "Pruning Metadata" " " "]" "     " "*" " ${FILENAME}"
+	printf "\r${NORMAL}%$((${COLUMNS} - 20))s${BOLD_BLUE}%s${NORMAL}%s${YELLOW}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}\r%s${CYAN}%s${NORMAL}%s${YELLOW}%s${NORMAL}%s" \
+	"" "[" " " "Pruning Metadata" " " "]" "   " "${PERCENT_DISPLAY}" " " "*" " ${FILENAME}"
 }
 
 # Export all the above functions for subshell access
@@ -727,21 +785,36 @@ export -f print_prune_flac
 ######################################
 #  FUNCTIONS TO DO VARIOUS COMMANDS  #
 ######################################
+# Top banner displaying invocation settings
+top_banner () {
+	# If Redo Tags is called, create the necessary spacing
+	if [[ "${REDO}" == "true" ]] ; then
+		printf '\n\n'
+	fi
+
+	# Title
+	printf "%s${BOLD_GREEN}%s${NORMAL}%s\n" \
+	" " "*" " Runtime Settings"
+
+	# Cores to be used
+	printf "%s${BOLD_GREEN}%s${NORMAL}%s${CYAN}%s${NORMAL}\n" \
+	" " "*" "    Threads/Cores:  " "${CORES}"
+	# Log directory to be used
+	printf "%s${BOLD_GREEN}%s${NORMAL}%s${CYAN}%s${NORMAL}" \
+	" " "*" "    Log Directory:  " "${ERROR_LOG}"
+}
 # Create a countdown function for the metadata
 # to allow user to quit script safely
 countdown_metadata () {
 	# Countdown abort
 	countdown_abort () {
-		printf "\n%s${BOLD_GREEN}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}\n" \
+		printf "\n%s${BOLD_GREEN}%s${NORMAL}%s\n" \
 		" " "*" " Control-C received, generating summary. Please wait..."
 
-		# Set value below to prevent hanging FIFO when
-		# creating the Summary Of Operations table
-		REDO_TAGS_ABORT="true"
 		operation_summary
 
-		# Remove temporary FIFO
-		rm -f "${TMP_FIFO}"
+		# Remove temporary file
+		rm -f "${PROCESSED_TMP_FILE}"
 
 		exit 1
 	}
@@ -767,7 +840,6 @@ countdown_metadata () {
 		# Put here for UI refinement (No extra spacing after last second)
 		printf "${BOLD_RED}%s${NORMAL}" "1"
 		sleep 1
-		printf "\n\n"
 	}
 
 	# Trap SIGINT (Control-C) to abort cleanly
@@ -795,6 +867,74 @@ countdown_metadata () {
 	countdown_10
 }
 
+###################################################
+#  INCREMENT FLACS PROCESSED & CREATE PERCENTAGE  #
+###################################################
+increment_count_percent () {
+	# Add counter to temporary file (used for number of flacs processed/percentage)
+	printf "%s\n" '.' >> "${PROCESSED_TMP_FILE}"
+
+	# Obtain current number of processed FLAC files and create a percentage
+	mapfile -n0 processed_array < "${PROCESSED_TMP_FILE}"
+	PERCENT_DISPLAY="$(( ${#processed_array[@]} * 100 / ${TOTAL_FLACS} ))"
+
+	case "${#PERCENT_DISPLAY}" in
+		1)
+			PERCENT_DISPLAY="  ${PERCENT_DISPLAY}%"
+		;;
+		2)
+			PERCENT_DISPLAY=" ${PERCENT_DISPLAY}%"
+		;;
+		3)
+			PERCENT_DISPLAY="${PERCENT_DISPLAY}%"
+		;;
+	esac	
+}
+export -f increment_count_percent
+
+#########################################################
+#  INCREMENT DIRECTORIES PROCESSED & CREATE PERCENTAGE  #
+#########################################################
+increment_directories_count_percent () {
+	# Add counter to temporary file (used for number of directories processed/percentage)
+	printf "%s\n" '.' >> "${PROCESSED_TMP_FILE}"
+
+	# Obtain current number of processed directories and create a percentage
+	mapfile -n0 processed_array < "${PROCESSED_TMP_FILE}"
+	PERCENT_DISPLAY="$(( ${#processed_array[@]} * 100 / ${TOTAL_DIRECTORIES} ))"
+
+	case "${#PERCENT_DISPLAY}" in
+		1)
+			PERCENT_DISPLAY="  ${PERCENT_DISPLAY}%"
+		;;
+		2)
+			PERCENT_DISPLAY=" ${PERCENT_DISPLAY}%"
+		;;
+		3)
+			PERCENT_DISPLAY="${PERCENT_DISPLAY}%"
+		;;
+	esac	
+}
+export -f increment_directories_count_percent
+
+###############################################
+#  FIND TOTAL DIRECTORIES HOUSING FLAC FILES  #
+###############################################
+total_directories () {
+	# Find all the directories in which to process the FLAC files. This will allow
+	# multithreading when applying the ReplayGain tags without fear of race
+	# conditions
+	for i in "${total_flacs_array[@]}" ; do
+		if [[ "${PROCESSED_DIRECTORY}" != "${i%/*}" ]] ; then
+			flac_directories_array+=( "${i%/*}" )
+		fi
+		local PROCESSED_DIRECTORY="${i%/*}"
+	done
+
+	# Allow the number of Directories found to be accessible in subshells
+	export TOTAL_DIRECTORIES="${#flac_directories_array[@]}"
+}
+
 ################
 #  REPLAYGAIN  #
 ################
@@ -816,8 +956,8 @@ replaygain () {
 		REPLAYGAIN_COMPLETE="interrupt"
 		operation_summary
 
-		# Remove temporary FIFO
-		rm -f "${TMP_FIFO}"
+		# Remove temporary file
+		rm -f "${PROCESSED_TMP_FILE}"
 
 		exit 1
 	}
@@ -827,8 +967,9 @@ replaygain () {
 
 	test_replaygain () {
 		for i ; do
-			# Add counter to FIFO (used for number of flacs processed/percentage)
-			printf "%s\n" '.' > "${TMP_FIFO}" &
+			# Increment number of FLACs processed and create percentage
+			# of total processed out of the total FLACS
+			increment_count_percent
 
 			print_test_replaygain
 
@@ -852,8 +993,8 @@ replaygain () {
 	}
 	export -f test_replaygain
 
-	# Flush FIFO pipe
-	dd if="${TMP_FIFO}" iflag=nonblock of=/dev/null >/dev/null 2>&1
+	# Make sure the temporary file is cleared before proceeding
+	> "${PROCESSED_TMP_FILE}"
 
 	# Run the above function with the configured threads (multithreaded)
 	find "${DIRECTORY}" -name "*${FLAC_EXTENSION}" -print0 2> /dev/null | xargs -0 -n 1 -P "${CORES}" bash -c 'test_replaygain "${@}"' --
@@ -873,8 +1014,8 @@ replaygain () {
 		REPLAYGAIN_COMPLETE="false"
 		operation_summary
 
-		# Remove temporary FIFO
-		rm -f "${TMP_FIFO}"
+		# Remove temporary file
+		rm -f "${PROCESSED_TMP_FILE}"
 
 		exit 1
 	fi
@@ -883,27 +1024,17 @@ replaygain () {
 	#  PROCESS REPLAYGAIN  #
 	########################
 
-	title_add_replaygain
-
 	# Make printing pretty if specified DIRECTORY is either:
 	# "." or "./"
 	if [[ "${DIRECTORY}" == "." || "${DIRECTORY}" == "./" ]] ; then
 		DIRECTORY="${PWD}"
 	fi
 
-	# Find all the directories in which to process the FLAC files. This will allow
-	# multithreading when applying the ReplayGain tags without fear of race
-	# conditions (exported for subshell access)
-	export REPLAYGAIN_DIRECTORIES="$(find "${DIRECTORY}" -name "*${FLAC_EXTENSION}" -print 2> /dev/null | \
-		while read i ; do
-			if [[ "${PROCESSED_DIRECTORY}" == "${i%/*}" ]] ; then
-				continue
-			else
-				printf "%s\n" "${i%/*}"
-			fi
-			local PROCESSED_DIRECTORY="${i%/*}"
-		done
-	)"
+	# Grab number of directories to process provided as
+	# TOTAL_DIRECTORIES variable
+	total_directories
+
+	title_add_replaygain
 
 	# Check if "-G, --replaygain-noforce" was called
 	if [[ "${REPLAYGAIN_NOFORCE}" == "true" ]] ; then
@@ -912,8 +1043,9 @@ replaygain () {
 		process_replaygain () {
 			# ${i} is the parent directory to the FLAC files
 			for i; do
-				# Add counter to FIFO (used for number of flacs processed/percentage)
-				printf "%s\n" '.' > "${TMP_FIFO}" &
+				# Increment number of directories processed and create percentage
+				# of total processed out of the total directories
+				increment_directories_count_percent
 
 				# ${j} is a FLAC file -> under ${i}
 				for j in "${i}"/*${FLAC_EXTENSION} ; do
@@ -985,8 +1117,9 @@ replaygain () {
 		# Above option was NOT called
 		process_replaygain () {
 			for i; do
-				# Add counter to FIFO (used for number of flacs processed/percentage)
-				printf "%s\n" '.' > "${TMP_FIFO}" &
+				# Increment number of directories processed and create percentage
+				# of total processed out of the total directories
+				increment_directories_count_percent
 
 				print_add_replaygain
 				ERROR="$((metaflac --add-replay-gain "${i}"/*${FLAC_EXTENSION}) 2>&1)"
@@ -1005,15 +1138,11 @@ replaygain () {
 	fi
 	export -f process_replaygain
 
-	# Flush FIFO pipe
-	dd if="${TMP_FIFO}" iflag=nonblock of=/dev/null >/dev/null 2>&1
+	# Make sure the temporary file is cleared before proceeding
+	> "${PROCESSED_TMP_FILE}"
 
 	# Run the above function with the configured threads (multithreaded)
-	printf "%s\n" "${REPLAYGAIN_DIRECTORIES}" | \
-		while read i ; do
-			printf "%s\n" "\"${i}\""
-		done | \
-		xargs -n 1 -P "${CORES}" bash -c 'process_replaygain "${@}"' --
+	printf "%s\0" "${flac_directories_array[@]}" | xargs -0 -n 1 -P "${CORES}" bash -c 'process_replaygain "${@}"' --
 
 	if [[ -f "${REPLAY_ADD_ERRORS}" ]] ; then
 		printf "\n%s${BOLD_RED}%s${NORMAL}%s\n" \
@@ -1026,8 +1155,8 @@ replaygain () {
 		REPLAYGAIN_COMPLETE="false"
 		operation_summary
 
-		# Remove temporary FIFO
-		rm -f "${TMP_FIFO}"
+		# Remove temporary file
+		rm -f "${PROCESSED_TMP_FILE}"
 
 		exit 1
 	fi
@@ -1073,8 +1202,8 @@ compress_flacs () {
 		COMPRESS_COMPLETE="interrupt"
 		operation_summary
 
-		# Remove temporary FIFO
-		rm -f "${TMP_FIFO}"
+		# Remove temporary file
+		rm -f "${PROCESSED_TMP_FILE}"
 
 		exit 1
 	}
@@ -1084,8 +1213,9 @@ compress_flacs () {
 
 	compress_f () {
 		for i ; do
-			# Add counter to FIFO (used for number of flacs processed/percentage)
-			printf "%s\n" '.' > "${TMP_FIFO}" &
+			# Increment number of FLACs processed and create percentage
+			# of total processed out of the total FLACS
+			increment_count_percent
 
 			# Trap errors into a variable as the output doesn't help
 			# for there is a better way to test below using the
@@ -1131,8 +1261,8 @@ compress_flacs () {
 	}
 	export -f compress_f
 
-	# Flush FIFO pipe
-	dd if="${TMP_FIFO}" iflag=nonblock of=/dev/null >/dev/null 2>&1
+	# Make sure the temporary file is cleared before proceeding
+	> "${PROCESSED_TMP_FILE}"
 
 	# Run the above function with the configured threads (multithreaded)
 	find "${DIRECTORY}" -name "*${FLAC_EXTENSION}" -print0 2> /dev/null | xargs -0 -n 1 -P "${CORES}" bash -c 'compress_f "${@}"' --
@@ -1146,8 +1276,8 @@ compress_flacs () {
 		COMPRESS_COMPLETE="false"
 		operation_summary
 
-		# Remove temporary FIFO
-		rm -f "${TMP_FIFO}"
+		# Remove temporary file
+		rm -f "${PROCESSED_TMP_FILE}"
 
 		exit 1
 	fi
@@ -1182,16 +1312,16 @@ test_flacs () {
 			TEST_COMPLETE="interrupt"
 			operation_summary
 
-			# Remove temporary FIFO
-			rm -f "${TMP_FIFO}"
+			# Remove temporary file
+			rm -f "${PROCESSED_TMP_FILE}"
 
 			exit 1
 		else
 			TEST_COMPLETE="interrupt"
 			operation_summary
 
-			# Remove temporary FIFO
-			rm -f "${TMP_FIFO}"
+			# Remove temporary file
+			rm -f "${PROCESSED_TMP_FILE}"
 
 			exit 1
 		fi
@@ -1202,8 +1332,9 @@ test_flacs () {
 
 	test_f () {
 		for i ; do
-			# Add counter to FIFO (used for number of flacs processed/percentage)
-			printf "%s\n" '.' > "${TMP_FIFO}" &
+			# Increment number of FLACs processed and create percentage
+			# of total processed out of the total FLACS
+			increment_count_percent
 
 			print_testing_flac
 			ERROR="$((flac -ts "${i}") 2>&1)"
@@ -1221,8 +1352,8 @@ test_flacs () {
 	}
 	export -f test_f
 
-	# Flush FIFO pipe
-	dd if="${TMP_FIFO}" iflag=nonblock of=/dev/null >/dev/null 2>&1
+	# Make sure the temporary file is cleared before proceeding
+	> "${PROCESSED_TMP_FILE}"
 
 	# Run the above function with the configured threads (multithreaded)
 	find "${DIRECTORY}" -name "*${FLAC_EXTENSION}" -print0 2> /dev/null | xargs -0 -n 1 -P "${CORES}" bash -c 'test_f "${@}"' --
@@ -1236,8 +1367,8 @@ test_flacs () {
 		TEST_COMPLETE="false"
 		operation_summary
 
-		# Remove temporary FIFO
-		rm -f "${TMP_FIFO}"
+		# Remove temporary file
+		rm -f "${PROCESSED_TMP_FILE}"
 
 		exit 1
 	fi
@@ -1264,8 +1395,8 @@ aucdtect () {
 			AUCDTECT_COMPLETE="false"
 			operation_summary
 
-			# Remove temporary FIFO
-			rm -f "${TMP_FIFO}"
+			# Remove temporary file
+			rm -f "${PROCESSED_TMP_FILE}"
 
 			exit 1
 		fi
@@ -1316,8 +1447,8 @@ aucdtect () {
 		AUCDTECT_COMPLETE="interrupt"
 		operation_summary
 
-		# Remove temporary FIFO
-		rm -f "${TMP_FIFO}"
+		# Remove temporary file
+		rm -f "${PROCESSED_TMP_FILE}"
 
 		exit 1
 	}
@@ -1327,8 +1458,9 @@ aucdtect () {
 
 	aucdtect_f () {
 		for i ; do
-			# Add counter to FIFO (used for number of flacs processed/percentage)
-			printf "%s\n" '.' > "${TMP_FIFO}" &
+			# Increment number of FLACs processed and create percentage
+			# of total processed out of the total FLACS
+			increment_count_percent
 
 			print_aucdtect_flac
 
@@ -1438,8 +1570,8 @@ aucdtect () {
 	}
 	export -f aucdtect_f
 
-	# Flush FIFO pipe
-	dd if="${TMP_FIFO}" iflag=nonblock of=/dev/null >/dev/null 2>&1
+	# Make sure the temporary file is cleared before proceeding
+	> "${PROCESSED_TMP_FILE}"
 
 	# Run the above function with the configured threads (multithreaded)
 	find "${DIRECTORY}" -name "*${FLAC_EXTENSION}" -print0 2> /dev/null | xargs -0 -n 1 -P "${CORES}" bash -c 'aucdtect_f "${@}"' --
@@ -1453,8 +1585,8 @@ aucdtect () {
 		AUCDTECT_COMPLETE="false"
 		operation_summary
 
-		# Remove temporary FIFO
-		rm -f "${TMP_FIFO}"
+		# Remove temporary file
+		rm -f "${PROCESSED_TMP_FILE}"
 
 		exit 1
 	fi
@@ -1472,7 +1604,7 @@ md5_check () {
 
 	# Abort script and check for any errors thus far
 	md5_check_abort () {
-		printf "\n%s${BOLD_GREEN}%s${NORMAL}%s\n" \
+		printf "\n\n%s${BOLD_GREEN}%s${NORMAL}%s\n" \
 		" " "*" " Control-C received, generating summary. Please wait..."
 
 		if [[ "${DISPLAY_PERMISSION_DENIED}"  == "true" ]] ; then
@@ -1492,8 +1624,8 @@ md5_check () {
 		MD5CHECK_COMPLETE="interrupt"
 		operation_summary
 
-		# Remove temporary FIFO
-		rm -f "${TMP_FIFO}"
+		# Remove temporary file
+		rm -f "${PROCESSED_TMP_FILE}"
 
 		exit 1
 	}
@@ -1503,8 +1635,9 @@ md5_check () {
 
 	md5_c () {
 		for i ; do
-			# Add counter to FIFO (used for number of flacs processed/percentage)
-			printf "%s\n" '.' > "${TMP_FIFO}" &
+			# Increment number of FLACs processed and create percentage
+			# of total processed out of the total FLACS
+			increment_count_percent
 
 			print_checking_md5
 
@@ -1527,19 +1660,24 @@ md5_check () {
 					   "------------------------------------------------------------------" \
 					   >> "${MD5_ERRORS}"
 			else
-				print_ok_flac
+					print_ok_flac
 			fi
 		done
 	}
 	export -f md5_c
 
-	# Flush FIFO pipe
-	dd if="${TMP_FIFO}" iflag=nonblock of=/dev/null >/dev/null 2>&1
+	# Make sure the temporary file is cleared before proceeding
+	> "${PROCESSED_TMP_FILE}"
 
 	# Run the above function with the configured threads (multithreaded)
 	find "${DIRECTORY}" -name "*${FLAC_EXTENSION}" -print0 2> /dev/null | xargs -0 -n 1 -P "${CORES}" bash -c 'md5_c "${@}"' --
 
 	if [[ -f "${MD5_ERRORS}" ]] ; then
+		if [[ "${DISPLAY_PERMISSION_DENIED}"  == "true" ]] ; then
+			printf '\n'
+			display_permission_denied
+		fi
+	
 		printf "\n%s${BOLD_RED}%s${NORMAL}%s\n" \
 		" " "*" " The MD5 Signature is unset for some FLAC files or there were"
 		printf "%s${BOLD_RED}%s${NORMAL}%s\n" \
@@ -1550,8 +1688,8 @@ md5_check () {
 		MD5CHECK_COMPLETE="false"
 		operation_summary
 
-		# Remove temporary FIFO
-		rm -f "${TMP_FIFO}"
+		# Remove temporary file
+		rm -f "${PROCESSED_TMP_FILE}"
 
 		exit 1
 	fi  
@@ -1600,8 +1738,8 @@ coverart_remove_conflict () {
 				REDO_COMPLETE="false"
 				operation_summary
 
-				# Remove temporary FIFO
-				rm -f "${TMP_FIFO}"
+				# Remove temporary file
+				rm -f "${PROCESSED_TMP_FILE}"
 
 				exit 1
 			# COVERART was found, but artwork is to be removed,
@@ -1682,8 +1820,8 @@ redo_tags () {
 			REDO_COMPLETE="interrupt"
 			operation_summary
 
-			# Remove temporary FIFO
-			rm -f "${TMP_FIFO}"
+			# Remove temporary file
+			rm -f "${PROCESSED_TMP_FILE}"
 
 			exit 1
 		elif [[ -f "${METADATA_ERRORS}" ]] ; then
@@ -1700,8 +1838,8 @@ redo_tags () {
 			REDO_COMPLETE="interrupt"
 			operation_summary
 
-			# Remove temporary FIFO
-			rm -f "${TMP_FIFO}"
+			# Remove temporary file
+			rm -f "${PROCESSED_TMP_FILE}"
 
 			exit 1
 		fi
@@ -1709,8 +1847,8 @@ redo_tags () {
 		REDO_COMPLETE="interrupt"
 		operation_summary
 
-		# Remove temporary FIFO
-		rm -f "${TMP_FIFO}"
+		# Remove temporary file
+		rm -f "${PROCESSED_TMP_FILE}"
 
 		exit 1
 	}
@@ -1889,8 +2027,9 @@ redo_tags () {
 		# Function check_tags to allow multithreading
 		check_tags () {
 			for i ; do
-				# Add counter to FIFO (used for number of flacs processed/percentage)
-				printf "%s\n" '.' > "${TMP_FIFO}" &
+				# Increment number of FLACs processed and create percentage
+				# of total processed out of the total FLACS
+				increment_count_percent
 
 				# Print script operation title
 				print_analyzing_tags
@@ -1910,8 +2049,9 @@ redo_tags () {
 			# Function check_tags to allow multithreading
 			check_tags () {
 				for i ; do
-					# Add counter to FIFO (used for number of flacs processed/percentage)
-					printf "%s\n" '.' > "${TMP_FIFO}" &
+					# Increment number of FLACs processed and create percentage
+					# of total processed out of the total FLACS
+					increment_count_percent
 
 					# Print script operation title
 					print_analyzing_tags
@@ -1929,8 +2069,9 @@ redo_tags () {
 			# Function check_tags to allow multithreading
 			check_tags () {
 				for i ; do
-					# Add counter to FIFO (used for number of flacs processed/percentage)
-					printf "%s\n" '.' > "${TMP_FIFO}" &
+					# Increment number of FLACs processed and create percentage
+					# of total processed out of the total FLACS
+					increment_count_percent
 
 					# Print script operation title
 					print_analyzing_tags
@@ -1943,8 +2084,8 @@ redo_tags () {
 		fi
 	fi
 
-	# Flush FIFO pipe
-	dd if="${TMP_FIFO}" iflag=nonblock of=/dev/null >/dev/null 2>&1
+	# Make sure the temporary file is cleared before proceeding
+	> "${PROCESSED_TMP_FILE}"
 
 	# Run the "check_tags" function with the configured threads (multithreaded)
 	find "${DIRECTORY}" -name "*${FLAC_EXTENSION}" -print0 2> /dev/null | xargs -0 -n 1 -P "${CORES}" bash -c 'check_tags "${@}"' --
@@ -1979,8 +2120,8 @@ redo_tags () {
 		REDO_COMPLETE="false"
 		operation_summary
 
-		# Remove temporary FIFO
-		rm -f "${TMP_FIFO}"
+		# Remove temporary file
+		rm -f "${PROCESSED_TMP_FILE}"
 
 		exit 1
 	elif [[ -f "${METADATA_ERRORS}" ]] ; then
@@ -1997,8 +2138,8 @@ redo_tags () {
 		REDO_COMPLETE="false"
 		operation_summary
 
-		# Remove temporary FIFO
-		rm -f "${TMP_FIFO}"
+		# Remove temporary file
+		rm -f "${PROCESSED_TMP_FILE}"
 
 		exit 1
 	fi
@@ -2068,8 +2209,9 @@ redo_tags () {
 		# Recreate the tags array so it can be used by the child process
 		eval "tags=(${EXPORT_TAG})"
 		for i ; do
-			# Add counter to FIFO (used for number of flacs processed/percentage)
-			printf "%s\n" '.' > "${TMP_FIFO}" &
+			# Increment number of FLACs processed and create percentage
+			# of total processed out of the total FLACS
+			increment_count_percent
 
 			print_setting_tags
 			remove_set_tags
@@ -2078,8 +2220,8 @@ redo_tags () {
 	}
 	export -f retag_flacs
 	
-	# Flush FIFO pipe
-	dd if="${TMP_FIFO}" iflag=nonblock of=/dev/null >/dev/null 2>&1
+	# Make sure the temporary file is cleared before proceeding
+	> "${PROCESSED_TMP_FILE}"
 
 	# Run the above function with the configured threads (multithreaded)
 	find "${DIRECTORY}" -name "*${FLAC_EXTENSION}" -print0 2> /dev/null | xargs -0 -n 1 -P "${CORES}" bash -c 'retag_flacs "${@}"' --
@@ -2116,16 +2258,16 @@ prune_flacs () {
 			PRUNE_COMPLETE="interrupt"
 			operation_summary
 
-			# Remove temporary FIFO
-			rm -f "${TMP_FIFO}"
+			# Remove temporary file
+			rm -f "${PROCESSED_TMP_FILE}"
 
 			exit 1
 		else
 			PRUNE_COMPLETE="interrupt"
 			operation_summary
 
-			# Remove temporary FIFO
-			rm -f "${TMP_FIFO}"
+			# Remove temporary file
+			rm -f "${PROCESSED_TMP_FILE}"
 
 			exit 1
 		fi
@@ -2135,8 +2277,9 @@ prune_flacs () {
 	trap prune_abort SIGINT
 
 	prune_f () {
-		# Add counter to FIFO (used for number of flacs processed/percentage)
-		printf "%s\n" '.' > "${TMP_FIFO}" &
+		# Increment number of FLACs processed and create percentage
+		# of total processed out of the total FLACS
+		increment_count_percent
 
 		# Don't remove artwork if user wants it kept.  We don't have to check
 		# for the legacy COVERART tag as we are NOT removing any VORBIS_COMMENTs.
@@ -2173,8 +2316,8 @@ prune_flacs () {
 	}
 	export -f prune_f
 	
-	# Flush FIFO pipe
-	dd if="${TMP_FIFO}" iflag=nonblock of=/dev/null >/dev/null 2>&1
+	# Make sure the temporary file is cleared before proceeding
+	> "${PROCESSED_TMP_FILE}"
 
 	# Run the above function with the configured threads (multithreaded)
 	find "${DIRECTORY}" -name "*${FLAC_EXTENSION}" -print0 2> /dev/null | xargs -0 -n 1 -P "${CORES}" bash -c 'prune_f "${@}"' --
@@ -2525,24 +2668,14 @@ find_cores () {
 #  DISPLAY COMPLETED OPERATIONS  #
 ##################################
 operation_summary () {
-	# Grab the total number of FLAC files
-	mapfile -n0 TOTAL_FLACS < <(find "${DIRECTORY}" -name "*${FLAC_EXTENSION}" -print 2> /dev/null)
-	# Change above array to variable
-	TOTAL_FLACS_DIGITS="${#TOTAL_FLACS[@]}"
+	# Grab the number of processed FLAC files
+	mapfile -n0 PROCESSED_FLACS_ARR < "${PROCESSED_TMP_FILE}"
 
-	# If user called Control-C during the Redo Tags warning/countdown,
-	# skip obtaining the number of processed FLAC files as this will
-	# always be 0 (zero).  This ensures the FIFO will NOT block the
-	# rest of the script as it's empty
-	if [[ "${REDO_TAGS_ABORT}" != "true" ]] ; then
-		# Grab the number of processed FLAC files
-		mapfile -n0 PROCESSED_FLACS_ARR < "${TMP_FIFO}"
-		# Change the above array to variable
-		PROCESSED_FLACS_DIGITS="${#PROCESSED_FLACS_ARR[@]}"
+	# Change the above array to variable
+	PROCESSED_FLACS_DIGITS="${#PROCESSED_FLACS_ARR[@]}"
 
-		# Find the percentage of Processed Flacs / Total Flacs
-		PERCENTAGE_DIGITS="$(( ${PROCESSED_FLACS_DIGITS} * 100 / ${TOTAL_FLACS_DIGITS} ))"
-	fi
+	# Find the percentage of Processed Flacs / Total Flacs
+	PERCENTAGE_DIGITS="$(( ${PROCESSED_FLACS_DIGITS} * 100 / ${TOTAL_FLACS} ))"
 
 	# Set up spacing for Processed Flacs
 	case "${#PROCESSED_FLACS_DIGITS}" in
@@ -2567,7 +2700,7 @@ operation_summary () {
 	esac
 
 	# Set up spacing for Total Flacs
-	case "${#TOTAL_FLACS_DIGITS}" in
+	case "${#TOTAL_FLACS}" in
 		1)
 			TOTAL_FLAC_SPACING="     "
 		;;
@@ -2639,9 +2772,9 @@ operation_summary () {
 				\
 				"   " "│" " " "${OPERATION}" "${OPERATION_SPACING}" "│" \
 				"  " "Completed" "  " "│" \
-				"${TOTAL_FLAC_SPACING}" "${TOTAL_FLACS_DIGITS}" \
+				"${TOTAL_FLAC_SPACING}" "${TOTAL_FLACS}" \
 				" " "/" " " \
-				"${TOTAL_FLACS_DIGITS}" "${TOTAL_FLAC_SPACING}" \
+				"${TOTAL_FLACS}" "${TOTAL_FLAC_SPACING}" \
 				"│" " " "100%" " " "│"
 			;;
 
@@ -2654,9 +2787,9 @@ operation_summary () {
 				\
 				"   " "│" " " "${OPERATION}" "${OPERATION_SPACING}" "│" \
 				"   " "Failed" "    " "│" \
-				"${TOTAL_FLAC_SPACING}" "${TOTAL_FLACS_DIGITS}" \
+				"${TOTAL_FLAC_SPACING}" "${TOTAL_FLACS}" \
 				" " "/" " " \
-				"${TOTAL_FLACS_DIGITS}" "${TOTAL_FLAC_SPACING}" \
+				"${TOTAL_FLACS}" "${TOTAL_FLAC_SPACING}" \
 				"│" " " "100%" " " "│"
 			;;
 
@@ -2671,7 +2804,7 @@ operation_summary () {
 				" " "Interrupted" " " "│" \
 				"${PROCESSED_FLAC_SPACING}" "${PROCESSED_FLACS_DIGITS}" \
 				" " "/" " " \
-				"${TOTAL_FLACS_DIGITS}" "${TOTAL_FLAC_SPACING}" \
+				"${TOTAL_FLACS}" "${TOTAL_FLAC_SPACING}" \
 				"│" "${PERCENTAGE_SPACING}" "${PERCENTAGE_DIGITS}%" " " "│"
 			;;
 
@@ -2686,7 +2819,7 @@ operation_summary () {
 				" " "Did Not Run" " " "│" \
 				"     " "0" \
 				" " "/" " " \
-				"${TOTAL_FLACS_DIGITS}" "${TOTAL_FLAC_SPACING}" \
+				"${TOTAL_FLACS}" "${TOTAL_FLAC_SPACING}" \
 				"│" "   " "0%" " " "│"
 			;;
 
@@ -2697,7 +2830,7 @@ operation_summary () {
 	}
 
 	# Begin printing the table
-	printf "%s${BOLD_BLUE}%s${NORMAL}\n" \
+	printf "\n%s${BOLD_BLUE}%s${NORMAL}\n" \
 	"   " "┌───────────────────────────┬──────────────────────┐"
 	printf "%s${BOLD_BLUE}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}\n" \
 	"   " "│" "   Summary Of Operations   " "│" " # Of Processed Flacs " "│"
@@ -2865,7 +2998,9 @@ operation_summary () {
 	printf "%s${BOLD_BLUE}%s${NORMAL}%s${MAGENTA}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}%s\n" \
 	"   " "│" " " "Did Not Run" " " ":" " Operation did not run due to       " "│"
 	printf "%s${BOLD_BLUE}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}\n" \
-	"   " "│" "               interruption from user.            " "│"
+	"   " "│" "               interruption from user or failure  " "│"
+	printf "%s${BOLD_BLUE}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}\n" \
+	"   " "│" "               of the previous operation.         " "│"
 	printf "%s${BOLD_BLUE}%s${NORMAL}\n" \
 	"   " "└──────────────────────────────────────────────────┘"
 
@@ -3398,7 +3533,7 @@ display_permission_denied () {
 	printf "%s\n" "${FIND_PERMISSION_DENIED}" | while read i ; do
 		DENIED_LOCATION="${i#find: \`}"
 		DENIED_LOCATION="${DENIED_LOCATION%\': Permission denied}"
-		printf "%s${YELLOW}%s${NORMAL}%s\n" \
+		printf "%s${BOLD_RED}%s${NORMAL}%s\n" \
 		" " "*" " Permission denied: ${DENIED_LOCATION}"
 	done
 }
@@ -3407,7 +3542,7 @@ display_permission_denied () {
 FIND_PERMISSION_DENIED="$(find "${DIRECTORY}" 2>&1 >/dev/null)"
 
 # Check for at least 1 FLAC file
-read -r FIND_FLACS < <(find "${DIRECTORY}" -name "*${FLAC_EXTENSION}" -print 2> /dev/null)
+read -r FIND_FLACS < <(find "${DIRECTORY}" -name "*${FLAC_EXTENSION}" -print0 2> /dev/null)
 
 # Check if there are any files/directories with permission denied errors
 # and if so, display them to the user if there are no other FLACS to
@@ -3451,9 +3586,18 @@ OLD_STTY="$(stty -g)"
 # Prevent Control-C from displaying '^C'.  May already be set
 stty -ctlecho 2> /dev/null
 
-# Create a temporary FIFO pipe
-mkfifo /tmp/redoflacs.fifo.$$
-export TMP_FIFO="/tmp/redoflacs.fifo.$$"
+# Grab the total flacs (NUL terminated)
+while read -r -d '' i ; do
+	total_flacs_array+=( "${i}" )
+done < <(find "${DIRECTORY}" -name "*${FLAC_EXTENSION}" -print0 2> /dev/null)
+
+export TOTAL_FLACS="${#total_flacs_array[@]}"
+
+# Create temporary file
+export PROCESSED_TMP_FILE="/tmp/redoflacs_tmpfile_$$"
+
+# Initialize / Clear the temporary file
+> "${PROCESSED_TMP_FILE}"
 
 # If "-l, --all" or "-L, --reallyall" was called,
 # enable the various arguments to allow script to
@@ -3480,8 +3624,12 @@ fi
 # isn't wasted on doing unnecessary operations if the
 # FLAC files are corrupt or have metadata issues
 if [[ "${REDO}" == "true" ]] ; then
-	# Display conflict warning and exit
+	# Display conflict warning
 	coverart_remove_conflict
+	top_banner
+else
+	# Just display the banner
+	top_banner
 fi
 
 if [[ "${AUCDTECT}" == "true" ]] ; then
@@ -3559,8 +3707,8 @@ fi
 # Display summary of completed tasks
 operation_summary
 
-# Remove temporary FIFO
-rm -f "${TMP_FIFO}"
+# Remove temporary file
+rm -f "${PROCESSED_TMP_FILE}"
 
 exit 0
 ################
