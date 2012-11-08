@@ -190,60 +190,60 @@ PRUNE=""
 ###################################
 # Displaying currently running tasks
 title_compress_flac () {
-	printf "\n\n%s${BOLD_GREEN}%s${NORMAL}%s${CYAN}%s${NORMAL}\n" \
-	" " "*" " Compressing FLAC files with level ${COMPRESSION_LEVEL} compression and verifying output :: " "${CORES} Threads"
+	printf "\n\n%s${BOLD_GREEN}%s${NORMAL}%s\n" \
+	" " "*" " Compressing FLAC files with level ${COMPRESSION_LEVEL} compression and verifying output"
 }
 
 title_compress_notest_flac () {
-	printf "\n\n%s${BOLD_GREEN}%s${NORMAL}%s${CYAN}%s${NORMAL}\n" \
-	" " "*" " Compressing FLAC files with level ${COMPRESSION_LEVEL} compression :: " "${CORES} Threads"
+	printf "\n\n%s${BOLD_GREEN}%s${NORMAL}%s\n" \
+	" " "*" " Compressing FLAC files with level ${COMPRESSION_LEVEL} compression"
 }
 
 title_test_replaygain () {
-	printf "\n\n%s${BOLD_GREEN}%s${NORMAL}%s${CYAN}%s${NORMAL}\n" \
-	" " "*" " Verifying FLAC Files can have ReplayGain Tags added :: " "${CORES} Threads"
+	printf "\n\n%s${BOLD_GREEN}%s${NORMAL}%s\n" \
+	" " "*" " Verifying FLAC Files can have ReplayGain Tags added"
 }
 
 title_add_replaygain () {
 	printf "\n\n%s${BOLD_GREEN}%s${NORMAL}%s${CYAN}%s${NORMAL}\n" \
-	" " "*" " Applying ReplayGain values by album directory :: " "${CORES} Threads"
+	" " "*" " Applying ReplayGain values by album directory :: " "${TOTAL_DIRECTORIES} directories"
 }
 
 title_analyze_tags () {
-	printf "\n\n%s${BOLD_GREEN}%s${NORMAL}%s${CYAN}%s${NORMAL}\n" \
-	" " "*" " Analyzing FLAC Tags :: " "${CORES} Threads"
+	printf "\n\n%s${BOLD_GREEN}%s${NORMAL}%s\n" \
+	" " "*" " Analyzing FLAC Tags"
 }
 
 title_setting_tags () {
-	printf "\n\n%s${BOLD_GREEN}%s${NORMAL}%s${CYAN}%s${NORMAL}\n" \
-	" " "*" " Setting new FLAC Tags :: " "${CORES} Threads"
+	printf "\n\n%s${BOLD_GREEN}%s${NORMAL}%s\n" \
+	" " "*" " Setting new FLAC Tags"
 }
 
 title_testing_flac () {
-	printf "\n\n%s${BOLD_GREEN}%s${NORMAL}%s${CYAN}%s${NORMAL}\n" \
-	" " "*" " Testing the integrity of each FLAC file :: " "${CORES} Threads"
+	printf "\n\n%s${BOLD_GREEN}%s${NORMAL}%s\n" \
+	" " "*" " Testing the integrity of each FLAC file"
 }
 
 title_aucdtect_flac () {
-	printf "\n\n%s${BOLD_GREEN}%s${NORMAL}%s${CYAN}%s${NORMAL}\n" \
-	" " "*" " Validating FLAC is not lossy sourced :: " "${CORES} Threads"
+	printf "\n\n%s${BOLD_GREEN}%s${NORMAL}%s\n" \
+	" " "*" " Validating FLAC is not lossy sourced"
 }
 
 title_md5check_flac () {
-	printf "\n\n%s${BOLD_GREEN}%s${NORMAL}%s${CYAN}%s${NORMAL}\n" \
-	" " "*" " Verifying the MD5 Signature in each FLAC file :: " "${CORES} Threads"
+	printf "\n\n%s${BOLD_GREEN}%s${NORMAL}%s\n" \
+	" " "*" " Verifying the MD5 Signature in each FLAC file"
 }
 
 # Change printed title based on whether embedded artwork is to be removed
 if [[ "${REMOVE_ARTWORK}" == "false" ]] ; then
 	title_prune_flac () {
-		printf "\n\n%s${BOLD_GREEN}%s${NORMAL}%s${CYAN}%s${NORMAL}\n" \
-		" " "*" " Removing all METADATA blocks except STREAMINFO, VORBIS_COMMENT and PICTURE :: " "${CORES} Threads"
+		printf "\n\n%s${BOLD_GREEN}%s${NORMAL}%s\n" \
+		" " "*" " Removing all METADATA blocks except STREAMINFO, VORBIS_COMMENT and PICTURE"
 	}
 else
 	title_prune_flac () {
-		printf "\n\n%s${BOLD_GREEN}%s${NORMAL}%s${CYAN}%s${NORMAL}\n" \
-		" " "*" " Removing all METADATA blocks except STREAMINFO and VORBIS_COMMENT :: " "${CORES} Threads"
+		printf "\n\n%s${BOLD_GREEN}%s${NORMAL}%s\n" \
+		" " "*" " Removing all METADATA blocks except STREAMINFO and VORBIS_COMMENT"
 	}
 fi
 
@@ -323,24 +323,23 @@ print_add_replaygain () {
 	COLUMNS="${COLUMNS/%;*}"
 
 	# This is the number of $COLUMNS minus the indent (7) minus length of the printed
-	# message, [ Adding ReplayGain ] (21) minus ' [Directory]' (12) minus 3 (leaves a gap and the gives room for the
+	# message, [ Adding ReplayGain ] (21) minus 3 (leaves a gap and the gives room for the
 	# ellipsis (…) and cursor)
-	MAX_FILENAME_LENGTH="$((${COLUMNS} - 43))"
+	MAX_FILENAME_LENGTH="$((${COLUMNS} - 31))"
 
 	FILENAME="${i##*/}"
 	# Replace possible newlines in filename with '?' (like 'ls' output)
 	FILENAME="${FILENAME//
 /?}"
 
-	# Plus '12' below to account for ' [Directory]'
 	FILENAME_LENGTH="${#FILENAME}"
 
 	if [[ "${FILENAME_LENGTH}" -gt "${MAX_FILENAME_LENGTH}" ]] ; then
 		FILENAME="${FILENAME::$MAX_FILENAME_LENGTH}…"
 	fi
 
-	printf "\r${NORMAL}%$((${COLUMNS} - 21))s${BOLD_BLUE}%s${NORMAL}%s${YELLOW}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}\r%s${CYAN}%s${NORMAL}%s${YELLOW}%s${NORMAL}%s${CYAN}%s${NORMAL}" \
-	"" "[" " " "Adding ReplayGain" " " "]" "   " "${PERCENT_DISPLAY}" " " "*" " ${FILENAME} " "[Directory]"
+	printf "\r${NORMAL}%$((${COLUMNS} - 21))s${BOLD_BLUE}%s${NORMAL}%s${YELLOW}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}\r%s${CYAN}%s${NORMAL}%s${YELLOW}%s${NORMAL}%s" \
+	"" "[" " " "Adding ReplayGain" " " "]" "   " "${PERCENT_DISPLAY}" " " "*" " ${FILENAME}"
 }
 print_testing_flac () {
 	# Grab the first line of 'stty -a' output
@@ -397,35 +396,6 @@ print_failed_flac () {
 	printf "\r${NORMAL}%$((${COLUMNS} - 10))s${BOLD_BLUE}%s${NORMAL}%s${BOLD_RED}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}\r%s${YELLOW}%s${NORMAL}%s\n" \
 	"" "[" " " "FAILED" " " "]" "        " "*" " ${FILENAME}"
 }
-print_failed_replaygain () {
-	# Grab the first line of 'stty -a' output
-	# Redirecting '/dev/stderr' to 'stty' allows valid arguments
-	read -r COLUMNS < <(stty -a < /dev/stderr)
-
-	# Remove superflous information from 'stty -a'
-	# Ends up with number of ${COLUMNS}
-	COLUMNS="${COLUMNS/#*columns }"
-	COLUMNS="${COLUMNS/%;*}"
-
-	# This is the number of $COLUMNS minus the indent (7) minus length of the printed
-	# message, [ FAILED ] (10) minus ' [Directory]' (12) minus 2 (leaves a gap and the gives room for the
-	# ellipsis (…) and cursor)
-	MAX_FILENAME_LENGTH="$((${COLUMNS} - 31))"
-
-	FILENAME="${i##*/}"
-	# Replace possible newlines in filename with '?' (like 'ls' output)
-	FILENAME="${FILENAME//
-/?}"
-	# Plus '12' below to account for ' [Directory]'
-	FILENAME_LENGTH="${#FILENAME}"
-
-	if [[ "${FILENAME_LENGTH}" -gt "${MAX_FILENAME_LENGTH}" ]] ; then
-		FILENAME="${FILENAME::$MAX_FILENAME_LENGTH}…"
-	fi
-
-	printf "\r${NORMAL}%$((${COLUMNS} - 10))s${BOLD_BLUE}%s${NORMAL}%s${BOLD_RED}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}\r%s${YELLOW}%s${NORMAL}%s${CYAN}%s${NORMAL}\n" \
-	"" "[" " " "FAILED" " " "]" "        " "*" " ${FILENAME} " "[Directory]"
-}
 print_checking_md5 () {
 	# Grab the first line of 'stty -a' output
 	# Redirecting '/dev/stderr' to 'stty' allows valid arguments
@@ -481,36 +451,6 @@ print_ok_flac () {
 
 	printf "\r${NORMAL}%$((${COLUMNS} - 6))s${BOLD_BLUE}%s${NORMAL}%s${BOLD_GREEN}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}\r%s${CYAN}%s${NORMAL}%s${YELLOW}%s${NORMAL}%s" \
 	"" "[" " " "OK" " " "]" "   " "${PERCENT_DISPLAY}" " " "*" " ${FILENAME}"
-}
-print_ok_replaygain () {
-	# Grab the first line of 'stty -a' output
-	# Redirecting '/dev/stderr' to 'stty' allows valid arguments
-	read -r COLUMNS < <(stty -a < /dev/stderr)
-
-	# Remove superflous information from 'stty -a'
-	# Ends up with number of ${COLUMNS}
-	COLUMNS="${COLUMNS/#*columns }"
-	COLUMNS="${COLUMNS/%;*}"
-
-	# This is the number of $COLUMNS minus the indent (7) minus length of the printed
-	# message, [ OK ] (6) minus ' [Directory]' (12) minus 2 (leaves a gap and the gives room for the
-	# ellipsis (…) and cursor)
-	MAX_FILENAME_LENGTH="$((${COLUMNS} - 27))"
-
-	FILENAME="${i##*/}"
-	# Replace possible newlines in filename with '?' (like 'ls' output)
-	FILENAME="${FILENAME//
-/?}"
-
-	# Plus '12' below to account for ' [Directory]'
-	FILENAME_LENGTH="${#FILENAME}"
-
-	if [[ "${FILENAME_LENGTH}" -gt "${MAX_FILENAME_LENGTH}" ]] ; then
-		FILENAME="${FILENAME::$MAX_FILENAME_LENGTH}…"
-	fi
-
-	printf "\r${NORMAL}%$((${COLUMNS} - 6))s${BOLD_BLUE}%s${NORMAL}%s${BOLD_GREEN}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}\r%s${CYAN}%s${NORMAL}%s${YELLOW}%s${NORMAL}%s${CYAN}%s${NORMAL}" \
-	"" "[" " " "OK" " " "]" "   " "${PERCENT_DISPLAY}" " " "*" " ${FILENAME} " "[Directory]"
 }
 print_aucdtect_flac () {
 	# Grab the first line of 'stty -a' output
@@ -766,12 +706,10 @@ print_prune_flac () {
 export -f print_compressing_flac
 export -f print_test_replaygain
 export -f print_add_replaygain
-export -f print_failed_replaygain
 export -f print_testing_flac
 export -f print_failed_flac
 export -f print_checking_md5
 export -f print_ok_flac
-export -f print_ok_replaygain
 export -f print_aucdtect_flac
 export -f print_aucdtect_issue
 export -f print_aucdtect_spectrogram
@@ -794,7 +732,7 @@ top_banner () {
 
 	# Title
 	printf "%s${BOLD_BLUE}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}%s\n" \
-	"   " "====" "  Runtime  Information  " "====" " "
+	"   " "=====" "  Runtime  Information  " "=====" " "
 
 	# Script Version
 	printf "${NORMAL}%s${CYAN}%s${NORMAL}\n" \
@@ -1083,7 +1021,7 @@ replaygain () {
 						# takes care of this when adding new values
 						ERROR="$((metaflac --add-replay-gain "${i}"/*${FLAC_EXTENSION}) 2>&1)"
 						if [[ -n "${ERROR}" ]] ; then
-							print_failed_replaygain
+							print_failed_flac
 							printf "%s\n%s\n%s\n" \
 								   "Directory: ${i}" \
 								   "Error:     ${ERROR}" \
@@ -1097,7 +1035,7 @@ replaygain () {
 							# Break out of loop and on to next directory
 							break
 						else
-							print_ok_replaygain
+							print_ok_flac
 
 							# Placeholder variable tested after this loop
 							# if the loop completes with 'break'
@@ -1112,7 +1050,7 @@ replaygain () {
 				# If processed directory did not have missing ReplayGain
 				# tags, print ok (skipped adding ReplayGain tags)
 				if [[ "${BROKE_OUT_OF_LOOP}" != "true" ]] ; then
-					print_ok_replaygain
+					print_ok_flac
 				fi
 			done
 		}
@@ -1127,14 +1065,14 @@ replaygain () {
 				print_add_replaygain
 				ERROR="$((metaflac --add-replay-gain "${i}"/*${FLAC_EXTENSION}) 2>&1)"
 				if [[ -n "${ERROR}" ]] ; then
-					print_failed_replaygain
+					print_failed_flac
 					printf "%s\n%s\n%s\n" \
 						   "Directory: ${i}" \
 						   "Error:     ${ERROR}" \
 						   "------------------------------------------------------------------" \
 						   >> "${REPLAY_ADD_ERRORS}"
 				else
-					print_ok_replaygain
+					print_ok_flac
 				fi
 			done
 		}
