@@ -968,7 +968,7 @@ total_directories () {
 	# Grab the total number of indices of above array
 	TOTAL_DIRECTORIES_INDICES="$(( ${#flac_directories_array[@]} - 1 ))"
 
-	# Allow the number of Directories found to be accessible in subshells
+	# The total number of directories in a string variable
 	TOTAL_DIRECTORIES="${#flac_directories_array[@]}"
 }
 
@@ -3759,7 +3759,6 @@ for i in "${converted_arguments[@]}" ; do
 		;;
 		-a)
 			AUCDTECT="true"
-			# Not used in subshell(s)
 			NO_SPECTROGRAM="true"
 		;;
 		-A)
