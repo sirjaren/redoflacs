@@ -982,15 +982,16 @@ clear_processed_tmp_file () {
 ##########################
 #  CLEAR TEMPORARY FIFO  #
 ##########################
-clear_tmp_fifo () {
-	# Remove temporary FIFO (if it exists)
-	rm -f "${TMP_FIFO}"
-
+clear_tmp_fd () {
 	# Create temporary FIFO
 	mkfifo "${TMP_FIFO}"
 
 	# Open FIFO for reading and writing on file descriptor '3'
 	exec 3<>"${TMP_FIFO}"
+
+	# Remove temporary FIFO and leave just the file
+	# descriptor available
+	rm -f "${TMP_FIFO}"
 }
 
 ####################################################
@@ -1106,8 +1107,8 @@ replaygain () {
 	# Make sure the temporary file is cleared before proceeding
 	clear_processed_tmp_file
 
-	# Make sure the temporary FIFO is cleared before proceeding
-	clear_tmp_fifo
+	# Make sure to clear file descriptor '3' before proceeding
+	clear_tmp_fd
 
 	# Start as many processes as determined by ${CORES}
 	for i in "${total_flacs_array[@]:0:${CORES}}" ; do
@@ -1308,8 +1309,8 @@ replaygain () {
 	# Make sure the temporary file is cleared before proceeding
 	clear_processed_tmp_file
 
-	# Make sure the temporary FIFO is cleared before proceeding
-	clear_tmp_fifo
+	# Make sure to clear file descriptor '3' before proceeding
+	clear_tmp_fd
 
 	# Start as many processes as determined by ${CORES}
 	for i in "${flac_directories_array[@]:0:${CORES}}" ; do
@@ -1487,8 +1488,8 @@ compress_flacs () {
 	# Make sure the temporary file is cleared before proceeding
 	clear_processed_tmp_file
 
-	# Make sure the temporary FIFO is cleared before proceeding
-	clear_tmp_fifo
+	# Make sure to clear file descriptor '3' before proceeding
+	clear_tmp_fd
 
 	# Start as many processes as determined by ${CORES}
 	for i in "${total_flacs_array[@]:0:${CORES}}" ; do
@@ -1611,8 +1612,8 @@ test_flacs () {
 	# Make sure the temporary file is cleared before proceeding
 	clear_processed_tmp_file
 
-	# Make sure the temporary FIFO is cleared before proceeding
-	clear_tmp_fifo
+	# Make sure to clear file descriptor '3' before proceeding
+	clear_tmp_fd
 
 	# Start as many processes as determined by ${CORES}
 	for i in "${total_flacs_array[@]:0:${CORES}}" ; do
@@ -1890,8 +1891,8 @@ aucdtect () {
 	# Make sure the temporary file is cleared before proceeding
 	clear_processed_tmp_file
 
-	# Make sure the temporary FIFO is cleared before proceeding
-	clear_tmp_fifo
+	# Make sure to clear file descriptor '3' before proceeding
+	clear_tmp_fd
 
 	# Open up a temporary file descriptor to send auCDtect's
 	# STDOUT to
@@ -2029,8 +2030,8 @@ md5_check () {
 	# Make sure the temporary file is cleared before proceeding
 	clear_processed_tmp_file
 
-	# Make sure the temporary FIFO is cleared before proceeding
-	clear_tmp_fifo
+	# Make sure to clear file descriptor '3' before proceeding
+	clear_tmp_fd
 
 	# Start as many processes as determined by ${CORES}
 	for i in "${total_flacs_array[@]:0:${CORES}}" ; do
@@ -2463,8 +2464,8 @@ redo_tags () {
 	# Make sure the temporary file is cleared before proceeding
 	clear_processed_tmp_file
 
-	# Make sure the temporary FIFO is cleared before proceeding
-	clear_tmp_fifo
+	# Make sure to clear file descriptor '3' before proceeding
+	clear_tmp_fd
 
 	# Start as many processes as determined by ${CORES}
 	for i in "${total_flacs_array[@]:0:${CORES}}" ; do
@@ -2634,8 +2635,8 @@ redo_tags () {
 	# Make sure the temporary file is cleared before proceeding
 	clear_processed_tmp_file
 
-	# Make sure the temporary FIFO is cleared before proceeding
-	clear_tmp_fifo
+	# Make sure to clear file descriptor '3' before proceeding
+	clear_tmp_fd
 
 	# Start as many processes as determined by ${CORES}
 	for i in "${total_flacs_array[@]:0:${CORES}}" ; do
@@ -2768,8 +2769,8 @@ prune_flacs () {
 	# Make sure the temporary file is cleared before proceeding
 	clear_processed_tmp_file
 
-	# Make sure the temporary FIFO is cleared before proceeding
-	clear_tmp_fifo
+	# Make sure to clear file descriptor '3' before proceeding
+	clear_tmp_fd
 
 	# Start as many processes as determined by ${CORES}
 	for i in "${total_flacs_array[@]:0:${CORES}}" ; do
@@ -3494,9 +3495,6 @@ operation_summary () {
 	# Remove temporary file
 	rm -f "${PROCESSED_TMP_FILE}"
 
-	# Remove temporary FIFO
-	rm -f "${TMP_FIFO}"
-
 	# Restore old stty settings, make stty happy
 	# by redirecting /dev/stderr
 	stty ${OLD_STTY} < /dev/stderr
@@ -3805,7 +3803,7 @@ called_arguments_array=( "${@}" )
 # This only appears if the directory chosen is the direct
 # parent directory to the FLAC files to be processed.
 #
-# BASH 4.2 allows negative indices:
+# BASH 4.2 allows negative indices (ie):
 #
 # DIRECTORY="${called_arguments_array[-1]%/}"
 DIRECTORY="${called_arguments_array[$(( ${#called_arguments_array[@]} - 1 ))]%/}"
@@ -4052,8 +4050,7 @@ TMP_FIFO="/tmp/redoflacs_fifo_$$"
 # Temporary processed files location
 PROCESSED_TMP_FILE="/tmp/redoflacs_tmpfile_$$"
 
-# Display the top banner if the user did not call
-# --redo argument
+# Display the top banner
 if [[ "${REDO}" != "true" ]] ; then
 	# Display top banner (in background to allow
 	# the script to continue processing
