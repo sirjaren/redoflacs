@@ -845,7 +845,7 @@ top_banner () {
 
 	# Message indicating the searching of FLAC files
 	printf "%s${BOLD_GREEN}%s${NORMAL}%s" \
-	" " "*" " Finding FLAC files to proces..."
+	" " "*" " Finding FLAC files to process..."
 }
 
 # Create a countdown function for the metadata
@@ -854,7 +854,7 @@ countdown_metadata () {
 	# Countdown abort
 	countdown_abort () {
 		printf "\n%s${BOLD_GREEN}%s${NORMAL}%s\n" \
-		" " "*" " Control-C received, generating summary. Please wait..."
+		" " "*" " Control-C received, exiting. Please wait..."
 
 		# Restore old stty settings, make stty happy
 		# by redirecting /dev/stderr
@@ -1003,6 +1003,23 @@ clear_tmp_fifo () {
 	exec 3<>"${TMP_FIFO}"
 }
 
+####################################################
+#  CREATE AUCDTECT TEMPORARY FIFO/FILE DESCRIPTOR  #
+####################################################
+create_aucdtect_fd () {
+	# Set up a temporary FIFO location
+	TMP_AUCDTECT_FIFO="/tmp/redoflacs_aucdtect_fifo_$$"
+
+	# Create the temporary FIFO
+	mkfifo "${TMP_AUCDTECT_FIFO}"
+
+	# Open FIFO for reading and writing on file descriptor '4'
+	exec 4<>"${TMP_AUCDTECT_FIFO}"
+
+	# Remove FIFO and leave just the file descriptor available
+	rm "${TMP_AUCDTECT_FIFO}"
+}
+
 ###############
 #  KILL JOBS  #
 ###############
@@ -1110,32 +1127,31 @@ replaygain () {
 	# Add the number of processes started above to count
 	ITERATION="${CORES}"
 
-	# After each newline is read from FIFO, start a new process
-	while read ; do
-		# If there are less FLAC files to process than there are CORES
-		# available, then break out of loop and finish up script since
-		# all files are done from previous 'for' loop
-		if [[ "${TOTAL_FLACS}" -le "${CORES}" ]] ; then
-			break
-		fi
+	# If the FLAC files to process are greater than the # of CORES
+	# available, continue processing them, else quit
+	if [[ "${TOTAL_FLACS}" -gt "${CORES}" ]] ; then
 
-		# If current number of FLACs to process is less than total FLACs
-		# found, add another FLAC to process
-		if [[ "${ITERATION}" -lt "${TOTAL_FLACS_INDICES}" ]] ; then
-			# Set ${i} to current FLAC to process
-			i="${total_flacs_array[${ITERATION}]}"
-			((ITERATION++))
-			test_replaygain &
+		# After each newline is read from FIFO, start a new process
+		while read ; do
+			# If current number of FLACs to process is less than total FLACs
+			# found, add another FLAC to process
+			if [[ "${ITERATION}" -lt "${TOTAL_FLACS_INDICES}" ]] ; then
+				# Set ${i} to current FLAC to process
+				i="${total_flacs_array[${ITERATION}]}"
+				((ITERATION++))
+				test_replaygain &
 
-		# If current number of FLACs to process is the last FLAC file, continue
-		# processing it and break out of loop (to prevent hanging FIFO)
-		elif [[ "${ITERATION}" -eq "${TOTAL_FLACS_INDICES}" ]] ; then
-			# Set ${i} to current FLAC to process
-			i="${total_flacs_array[${ITERATION}]}"
-			test_replaygain &
-			break
-		fi
-	done <&3
+			# If current number of FLACs to process is the last FLAC file, continue
+			# processing it and break out of loop (to prevent hanging FIFO)
+			elif [[ "${ITERATION}" -eq "${TOTAL_FLACS_INDICES}" ]] ; then
+				# Set ${i} to current FLAC to process
+				i="${total_flacs_array[${ITERATION}]}"
+				test_replaygain &
+				break
+			fi
+		done <&3
+
+	fi
 
     # Wait for children processes
     wait
@@ -1337,10 +1353,10 @@ replaygain () {
 			fi
 		done <&3
 
-		# Wait for children processes
-		wait
-
 	fi
+
+	# Wait for children processes
+	wait
 
 	if [[ -f "${REPLAY_ADD_ERRORS}" ]] ; then
 		printf "\n%s${BOLD_RED}%s${NORMAL}%s\n" \
@@ -1443,9 +1459,6 @@ compress_flacs () {
 				print_ok_flac
 			fi
 
-			# Print newline into FIFO after completion
-			printf '\n' >&3
-
 		# If already at COMPRESSION_LEVEL, test the FLAC file instead
 		# or skip the file if '-C, --compress-notest' was specified
 		else
@@ -1475,9 +1488,10 @@ compress_flacs () {
 				fi
 			fi
 
-			# Print newline into FIFO after completion
-			printf '\n' >&3
 		fi
+
+		# Print newline into FIFO after completion
+		printf '\n' >&3
 	}
 
 	# Make sure the temporary file is cleared before proceeding
@@ -1494,9 +1508,8 @@ compress_flacs () {
 	# Add the number of processes started above to count
 	ITERATION="${CORES}"
 
-	# If the FLAC files to process are <= to the # of CORES
-	# available, skip loop below as there are not any more FLACs to
-	# process
+	# If the FLAC files to process are greater than the # of CORES
+	# available, continue processing them, else quit
 	if [[ "${TOTAL_FLACS}" -gt "${CORES}" ]] ; then
 
 		# After each newline is read from FIFO, start a new process
@@ -1516,10 +1529,10 @@ compress_flacs () {
 			fi
 		done <&3
 
-		# Wait for children processes
-		wait
-
 	fi
+
+	# Wait for children processes
+	wait
 
 	if [[ -f "${VERIFY_ERRORS}" ]] ; then
 		printf "\n%s${BOLD_RED}%s${NORMAL}%s\n" \
@@ -1619,9 +1632,8 @@ test_flacs () {
 	# Add the number of processes started above to count
 	ITERATION="${CORES}"
 
-	# If the FLAC files to process are <= to the # of CORES
-	# available, skip loop below as there are not any more FLACs to
-	# process
+	# If the FLAC files to process are greater than the # of CORES
+	# available, continue processing them, else quit
 	if [[ "${TOTAL_FLACS}" -gt "${CORES}" ]] ; then
 
 		# After each newline is read from FIFO, start a new process
@@ -1645,10 +1657,10 @@ test_flacs () {
 			fi
 		done <&3
 
-		# Wait for children processes
-		wait
-
 	fi
+
+	# Wait for children processes
+	wait
 
 	if [[ -f "${TEST_ERRORS}" ]] ; then
 		printf "\n%s${BOLD_RED}%s${NORMAL}%s\n" \
@@ -1741,8 +1753,6 @@ aucdtect () {
 				   "ERROR: Not a FLAC file" \
 				   "------------------------------------------------------------------" \
 				   >> "${AUCDTECT_ERRORS}"
-			# File is not a FLAC file, display failed
-			print_failed_flac
 
 		# Skip the FLAC file if it has a bit depth greater
 		# than 16 since auCDtect doesn't support audio
@@ -1757,16 +1767,6 @@ aucdtect () {
 
 		# FLAC checks out, continue processing
 		else
-			# Set up a temporary FIFO for auCDtect to send information to
-			TMP_AUCDTECT_FIFO="/tmp/redoflacs_aucdtect_fifo_$$"
-			mkfifo "${TMP_AUCDTECT_FIFO}"
-
-			# Open FIFO for reading and writing on file descriptor '4'
-			exec 4<>"${TMP_AUCDTECT_FIFO}"
-
-			# Remove FIFO and leave just the file descriptor
-			rm "${TMP_AUCDTECT_FIFO}"
-
 			# The WAV file to be created from current FLAC file
 			DECODED_WAV="${i%${FLAC_EXTENSION}}_redoflacs_"$$".wav"
 
@@ -1797,7 +1797,7 @@ aucdtect () {
 				# 2> hides the displayed progress to /dev/null disabling the progress percentage
 				# STDOUT is sent to file descriptor '4' and the prcess sent to the background to allow
 				# killing via SIGTERM
-				"${AUCDTECT_COMMAND}" -m40 "${DECODED_WAV}" 2>/dev/null >&4 &
+				"${AUCDTECT_COMMAND}" -m0 "${DECODED_WAV}" 2>/dev/null >&4 &
 
 				# Wait on background process and return exit code of
 				# said process
@@ -1855,11 +1855,10 @@ aucdtect () {
 
 							# SoX command to create the spectrogram and place it in SPECTROGRAM_PICTURE,
 							# sent to the background to allow killing via SIGTERM
-							#
+							"${SOX_COMMAND}" "${i}" -n spectrogram -c '' -t "${i}" -p1 -z90 -Z0 -q249 -wHann -x1800 -y513 -o "${SPECTROGRAM_PICTURE}" &
+
 							# Use the below version of the command to create hi-res spectrograms
 							#"${SOX_COMMAND}" "${i}" -n spectrogram -c '' -t "${i}" -p1 -z90 -Z0 -q249 -wHann -x5000 -y1025 -o "${SPECTROGRAM_PICTURE}"
-
-							"${SOX_COMMAND}" "${i}" -n spectrogram -c '' -t "${i}" -p1 -z90 -Z0 -q249 -wHann -x1800 -y513 -o "${SPECTROGRAM_PICTURE}" &
 
 							# Wait on background process and return exit code of
 							# said process
@@ -1904,6 +1903,10 @@ aucdtect () {
 	# Make sure the temporary FIFO is cleared before proceeding
 	clear_tmp_fifo
 
+	# Open up a temporary file descriptor to send auCDtect's
+	# STDOUT to
+	create_aucdtect_fd
+
 	# Start as many processes as determined by ${CORES}
 	for i in "${total_flacs_array[@]:0:${CORES}}" ; do
 		aucdtect_f &
@@ -1912,9 +1915,8 @@ aucdtect () {
 	# Add the number of processes started above to count
 	ITERATION="${CORES}"
 
-	# If the FLAC files to process are <= to the # of CORES
-	# available, skip loop below as there are not any more FLACs to
-	# process
+	# If the FLAC files to process are greater than the # of CORES
+	# available, continue processing them, else quit
 	if [[ "${TOTAL_FLACS}" -gt "${CORES}" ]] ; then
 
 		# After each newline is read from FIFO, start a new process
@@ -1967,7 +1969,12 @@ md5_check () {
 
 	# Abort script and check for any errors thus far
 	md5_check_abort () {
-		printf "\n\n%s${BOLD_GREEN}%s${NORMAL}%s\n" \
+		print_interrupt
+
+		# Kill running children
+		kill_jobs
+
+		printf "\n%s${BOLD_GREEN}%s${NORMAL}%s\n" \
 		" " "*" " Control-C received, generating summary. Please wait..."
 
 		if [[ -f "${MD5_ERRORS}" ]] ; then
@@ -1982,9 +1989,6 @@ md5_check () {
 		MD5CHECK_COMPLETE="interrupt"
 		operation_summary
 
-		# Remove temporary file
-		rm -f "${PROCESSED_TMP_FILE}"
-
 		exit 1
 	}
 
@@ -1992,46 +1996,91 @@ md5_check () {
 	trap md5_check_abort SIGINT
 
 	md5_c () {
-		for i ; do
-			# Increment number of FLACs processed and create percentage
-			# of total processed out of the total FLACS
-			increment_count_percent
+		# Let's make sure to kill running children if this
+		# function was aborted via SIGINT.  This function
+		# will receive SIGTERM from the kill in previous trap
+		trap 'kill_jobs ; exit 1' SIGTERM
 
-			print_checking_md5
+		# Increment number of FLACs processed
+		increment_count
 
-			# Check if file is a FLAC file (variable hides output)
-			MD5_SUM="$(metaflac --show-md5sum "${i}" 2>&1)"
+		print_checking_md5
 
-			# If above command return anything other than '0', log output
-			if [[ "${?}" -ne "0" ]] ; then
-				print_failed_flac
-				printf "%s\n%s\n%s\n" \
-					   "FLAC:  ${i}" \
-					   "ERROR: The above file does not appear to be a FLAC file" \
-					   "------------------------------------------------------------------" \
-					   >> "${MD5_ERRORS}"
-			elif [[ "${MD5_SUM}" == "00000000000000000000000000000000" ]] ; then
-				print_failed_flac
-				printf "%s\n%s\n%s\n" \
-					   "FLAC:  ${i}" \
-					   "ERROR: MD5 Signature unset (${MD5_SUM})" \
-					   "------------------------------------------------------------------" \
-					   >> "${MD5_ERRORS}"
-			else
-					print_ok_flac
-			fi
-		done
+		# Get the MD5 checksum (hide stderr output).  Also
+		# used to check if FLAC file is real
+		MD5_SUM="$(metaflac --show-md5sum "${i}" 2> /dev/null)"
+
+		# Exit code 130 is SIGINT so only check for exit code '1'
+		if [[ "${?}" -eq "1" ]] ; then
+			# File is not a FLAC file, display failed
+			print_failed_flac
+			printf "%s\n%s\n%s\n" \
+				   "FLAC:  ${i}" \
+				   "ERROR: Not a FLAC file" \
+				   "------------------------------------------------------------------" \
+				   >> "${MD5_ERRORS}"
+
+		# FLAC file is real, check for unset MD5 checksum
+		elif [[ "${MD5_SUM}" == "00000000000000000000000000000000" ]] ; then
+			print_failed_flac
+			printf "%s\n%s\n%s\n" \
+				   "FLAC:  ${i}" \
+				   "ERROR: MD5 Signature unset: (${MD5_SUM})" \
+				   "------------------------------------------------------------------" \
+				   >> "${MD5_ERRORS}"
+		else
+				print_ok_flac
+		fi
+
+		# Print newline into FIFO after completion
+		printf '\n' >&3
 	}
-	export -f md5_c
 
 	# Make sure the temporary file is cleared before proceeding
-	> "${PROCESSED_TMP_FILE}"
+	clear_processed_tmp_file
 
-	# Run the above function with the configured threads (multithreaded)
-	find "${DIRECTORY}" -name "*${FLAC_EXTENSION}" -print0 2> /dev/null | xargs -0 -n 1 -P "${CORES}" bash -c 'md5_c "${@}"' --
+	# Make sure the temporary FIFO is cleared before proceeding
+	clear_tmp_fifo
+
+	# Start as many processes as determined by ${CORES}
+	for i in "${total_flacs_array[@]:0:${CORES}}" ; do
+		md5_c &
+	done
+
+	# Add the number of processes started above to count
+	ITERATION="${CORES}"
+
+	# If the FLAC files to process are greater than the # of CORES
+	# available, continue processing them, else quit
+	if [[ "${TOTAL_FLACS}" -gt "${CORES}" ]] ; then
+
+		# After each newline is read from FIFO, start a new process
+		while read ; do
+
+			# If current number of FLACs to process is less than total FLACs
+			# found, add another FLAC to process
+			if [[ "${ITERATION}" -lt "${TOTAL_FLACS_INDICES}" ]] ; then
+				# Set ${i} to current FLAC to process
+				i="${total_flacs_array[${ITERATION}]}"
+				((ITERATION++))
+				md5_c &
+
+			# If current number of FLACs to process is the last FLAC file, continue
+			# processing it and break out of loop (to prevent hanging FIFO)
+			elif [[ "${ITERATION}" -eq "${TOTAL_FLACS_INDICES}" ]] ; then
+				# Set ${i} to current FLAC to process
+				i="${total_flacs_array[${ITERATION}]}"
+				md5_c &
+				break
+			fi
+		done <&3
+
+	fi
+
+	# Wait for children processes
+	wait
 
 	if [[ -f "${MD5_ERRORS}" ]] ; then
-	
 		printf "\n%s${BOLD_RED}%s${NORMAL}%s\n" \
 		" " "*" " The MD5 Signature is unset for some FLAC files or there were"
 		printf "%s${BOLD_RED}%s${NORMAL}%s\n" \
@@ -2041,9 +2090,6 @@ md5_check () {
 
 		MD5CHECK_COMPLETE="false"
 		operation_summary
-
-		# Remove temporary file
-		rm -f "${PROCESSED_TMP_FILE}"
 
 		exit 1
 	fi  
@@ -2128,6 +2174,11 @@ coverart_warning () {
 redo_tags () {
 	# Abort script and check for any errors thus far
 	redo_tags_abort () {
+		print_interrupt
+
+		# Kill running children
+		kill_jobs
+
 		printf "\n%s${BOLD_GREEN}%s${NORMAL}%s\n" \
 		" " "*" " Control-C received, generating summary. Please wait..."
 
@@ -2161,10 +2212,8 @@ redo_tags () {
 			REDO_COMPLETE="interrupt"
 			operation_summary
 
-			# Remove temporary file
-			rm -f "${PROCESSED_TMP_FILE}"
-
 			exit 1
+
 		elif [[ -f "${METADATA_ERRORS}" ]] ; then
 			# Just display metadata issues
 			printf "\n%s${BOLD_RED}%s${NORMAL}%s\n" \
@@ -2179,17 +2228,11 @@ redo_tags () {
 			REDO_COMPLETE="interrupt"
 			operation_summary
 
-			# Remove temporary file
-			rm -f "${PROCESSED_TMP_FILE}"
-
 			exit 1
 		fi
 
 		REDO_COMPLETE="interrupt"
 		operation_summary
-
-		# Remove temporary file
-		rm -f "${PROCESSED_TMP_FILE}"
 
 		exit 1
 	}
@@ -2269,7 +2312,6 @@ redo_tags () {
 		print_done_flac
 		fi
 	}
-	export -f analyze_tags
 
 	analyze_tags_dont_log_coverart () {
 		# Check if file is a FLAC file (variable hides output)
@@ -2355,7 +2397,6 @@ redo_tags () {
 		print_done_flac
 		fi
 	}
-	export -f analyze_tags_dont_log_coverart
 
 	# If COVERART was specified under USER CONFIGURATION
 	# set the tag array accordingly and test whether there
@@ -2365,21 +2406,24 @@ redo_tags () {
 
 		# COVERART is already in the tag array. Implies album
 		# artwork is to be kept, so log if COVERART tag is missing
-		# Function check_tags to allow multithreading
 		check_tags () {
-			for i ; do
-				# Increment number of FLACs processed and create percentage
-				# of total processed out of the total FLACS
-				increment_count_percent
+			# Let's make sure to kill running children if this
+			# function was aborted via SIGINT.  This function
+			# will receive SIGTERM from the kill in previous trap
+			trap 'kill_jobs ; exit 1' SIGTERM
 
-				# Print script operation title
-				print_analyzing_tags
+			# Increment number of FLACs processed
+			increment_count
 
-				# Analyze FLACs for missing tags
-				analyze_tags
-			done
+			# Print script operation title
+			print_analyzing_tags
+
+			# Analyze FLACs for missing tags
+			analyze_tags
+
+			# Print newline into FIFO after completion
+			printf '\n' >&3
 		}
-		export -f check_tags
 	else
 		# COVERART is not in the tag array, so add it if album artwork
 		# is to be kept
@@ -2387,49 +2431,92 @@ redo_tags () {
 			title_analyze_tags
 
 			# Analyze tags but don't log COVERART is missing tag
-			# Function check_tags to allow multithreading
 			check_tags () {
-				for i ; do
-					# Increment number of FLACs processed and create percentage
-					# of total processed out of the total FLACS
-					increment_count_percent
+				# Let's make sure to kill running children if this
+				# function was aborted via SIGINT.  This function
+				# will receive SIGTERM from the kill in previous trap
+				trap 'kill_jobs ; exit 1' SIGTERM
 
-					# Print script operation title
-					print_analyzing_tags
+				# Increment number of FLACs processed
+				increment_count
 
-					# Analyze FLACs for missing tags
-					# (except for COVERART tag)
-					analyze_tags_dont_log_coverart
-				done
+				# Print script operation title
+				print_analyzing_tags
+
+				# Analyze FLACs for missing tags
+				# (except for COVERART tag)
+				analyze_tags_dont_log_coverart
+
+				# Print newline into FIFO after completion
+				printf '\n' >&3
 			}
-			export -f check_tags
 		else
 			title_analyze_tags
 
 			# Album artwork is NOT kept, so process tag fields, omitting COVERART
-			# Function check_tags to allow multithreading
 			check_tags () {
-				for i ; do
-					# Increment number of FLACs processed and create percentage
-					# of total processed out of the total FLACS
-					increment_count_percent
+				# Let's make sure to kill running children if this
+				# function was aborted via SIGINT.  This function
+				# will receive SIGTERM from the kill in previous trap
+				trap 'kill_jobs ; exit 1' SIGTERM
 
-					# Print script operation title
-					print_analyzing_tags
+				# Increment number of FLACs processed
+				increment_count
 
-					# Analyze FLACs for missing tags
-					analyze_tags
-				done
+				# Print script operation title
+				print_analyzing_tags
+
+				# Analyze FLACs for missing tags
+				analyze_tags
+
+				# Print newline into FIFO after completion
+				printf '\n' >&3
 			}
-			export -f check_tags
 		fi
 	fi
 
 	# Make sure the temporary file is cleared before proceeding
-	> "${PROCESSED_TMP_FILE}"
+	clear_processed_tmp_file
 
-	# Run the "check_tags" function with the configured threads (multithreaded)
-	find "${DIRECTORY}" -name "*${FLAC_EXTENSION}" -print0 2> /dev/null | xargs -0 -n 1 -P "${CORES}" bash -c 'check_tags "${@}"' --
+	# Make sure the temporary FIFO is cleared before proceeding
+	clear_tmp_fifo
+
+	# Start as many processes as determined by ${CORES}
+	for i in "${total_flacs_array[@]:0:${CORES}}" ; do
+		check_tags &
+	done
+
+	# Add the number of processes started above to count
+	ITERATION="${CORES}"
+
+	# If the FLAC files to process are greater than the # of CORES
+	# available, continue processing them, else quit
+	if [[ "${TOTAL_FLACS}" -gt "${CORES}" ]] ; then
+
+		# After each newline is read from FIFO, start a new process
+		while read ; do
+			# If current number of FLACs to process is less than total FLACs
+			# found, add another FLAC to process
+			if [[ "${ITERATION}" -lt "${TOTAL_FLACS_INDICES}" ]] ; then
+				# Set ${i} to current FLAC to process
+				i="${total_flacs_array[${ITERATION}]}"
+				((ITERATION++))
+				check_tags &
+
+			# If current number of FLACs to process is the last FLAC file, continue
+			# processing it and break out of loop (to prevent hanging FIFO)
+			elif [[ "${ITERATION}" -eq "${TOTAL_FLACS_INDICES}" ]] ; then
+				# Set ${i} to current FLAC to process
+				i="${total_flacs_array[${ITERATION}]}"
+				check_tags &
+				break
+			fi
+		done <&3
+
+	fi
+
+	# Wait for children processes
+	wait
 
 	# Test for DEPRECATED tag, COVERART in METADATA_ERROR log.  If it
 	# exists, set COVERART_WARNING variable to make script output
@@ -2461,9 +2548,6 @@ redo_tags () {
 		REDO_COMPLETE="false"
 		operation_summary
 
-		# Remove temporary file
-		rm -f "${PROCESSED_TMP_FILE}"
-
 		exit 1
 	elif [[ -f "${METADATA_ERRORS}" ]] ; then
 		# Just display metadata issues
@@ -2478,9 +2562,6 @@ redo_tags () {
 
 		REDO_COMPLETE="false"
 		operation_summary
-
-		# Remove temporary file
-		rm -f "${PROCESSED_TMP_FILE}"
 
 		exit 1
 	fi
@@ -2498,8 +2579,8 @@ redo_tags () {
 
 	# Set the FLAC metadata to each FLAC file
 	remove_set_tags () {
-		# Set up 'albumTags' associative array
-		declare -A albumTags
+		# Set up 'album_tags_array' associative array
+		declare -A album_tags_array
 
 		# Iterate through the tag array and set a variable for each tag
 		for j in "${tags[@]}" ; do
@@ -2532,7 +2613,7 @@ redo_tags () {
 			local TAG_VALUE="${TEMP_TAG/#*=}"
 
 			# Put new tag values into associative array
-			albumTags["${TAG_KEY}"]="${TAG_VALUE}"
+			album_tags_array["${TAG_KEY}"]="${TAG_VALUE}"
 		done
 	
 		# Iterate through the tag array and add the saved tags back.
@@ -2540,32 +2621,74 @@ redo_tags () {
 		# invokes SIGINT
 		metaflac --remove-all-tags --import-tags-from=- "${i}" \
 			< <(for j in "${tags[@]}" ; do
-				printf "%s\n" "${j}=${albumTags["${j}"]}"
+				printf "%s\n" "${j}=${album_tags_array["${j}"]}"
 			done)
 	}
-	export -f remove_set_tags
 
-	# Function retag_flacs to allow multithreading
+	# Actual function to re-tag FLAC files
 	retag_flacs () {
-		# Recreate the tags array so it can be used by the child process
-		eval "tags=(${EXPORT_TAG})"
-		for i ; do
-			# Increment number of FLACs processed and create percentage
-			# of total processed out of the total FLACS
-			increment_count_percent
+		# Let's make sure to kill running children if this
+		# function was aborted via SIGINT.  This function
+		# will receive SIGTERM from the kill in previous trap
+		trap 'kill_jobs ; exit 1' SIGTERM
 
-			print_setting_tags
-			remove_set_tags
-			print_ok_flac
-		done
+		# Increment number of FLACs processed
+		increment_count
+
+		print_setting_tags
+
+		# Remove and set new tags
+		remove_set_tags
+
+		print_ok_flac
+
+		# Print newline into FIFO after completion
+		printf '\n' >&3
 	}
-	export -f retag_flacs
-	
-	# Make sure the temporary file is cleared before proceeding
-	> "${PROCESSED_TMP_FILE}"
 
-	# Run the above function with the configured threads (multithreaded)
-	find "${DIRECTORY}" -name "*${FLAC_EXTENSION}" -print0 2> /dev/null | xargs -0 -n 1 -P "${CORES}" bash -c 'retag_flacs "${@}"' --
+	# Make sure the temporary file is cleared before proceeding
+	clear_processed_tmp_file
+
+	# Make sure the temporary FIFO is cleared before proceeding
+	clear_tmp_fifo
+
+	# Start as many processes as determined by ${CORES}
+	for i in "${total_flacs_array[@]:0:${CORES}}" ; do
+		retag_flacs &
+	done
+
+	# Add the number of processes started above to count
+	ITERATION="${CORES}"
+
+	# If the FLAC files to process are greater than the # of CORES
+	# available, continue processing them, else quit
+	if [[ "${TOTAL_FLACS}" -gt "${CORES}" ]] ; then
+
+		# After each newline is read from FIFO, start a new process
+		while read ; do
+
+			# If current number of FLACs to process is less than total FLACs
+			# found, add another FLAC to process
+			if [[ "${ITERATION}" -lt "${TOTAL_FLACS_INDICES}" ]] ; then
+				# Set ${i} to current FLAC to process
+				i="${total_flacs_array[${ITERATION}]}"
+				((ITERATION++))
+				retag_flacs &
+
+			# If current number of FLACs to process is the last FLAC file, continue
+			# processing it and break out of loop (to prevent hanging FIFO)
+			elif [[ "${ITERATION}" -eq "${TOTAL_FLACS_INDICES}" ]] ; then
+				# Set ${i} to current FLAC to process
+				i="${total_flacs_array[${ITERATION}]}"
+				retag_flacs &
+				break
+			fi
+		done <&3
+
+	fi
+
+	# Wait for children processes
+	wait
 
 	# Redo Tags completed successfully
 	REDO_COMPLETE="true"
@@ -2580,6 +2703,11 @@ prune_flacs () {
 
 	# Abort script and check for any errors thus far
 	prune_abort () {
+		print_interrupt
+
+		# Kill running children
+		kill_jobs
+
 		printf "\n%s${BOLD_GREEN}%s${NORMAL}%s\n" \
 		" " "*" " Control-C received, generating summary. Please wait..."
 
@@ -2590,73 +2718,110 @@ prune_flacs () {
 			" " "*" " please check:"
 			printf "%s${BOLD_RED}%s${NORMAL}%s\n" \
 			" " "*" " \"${PRUNE_ERRORS}\" for details."
-
-			PRUNE_COMPLETE="interrupt"
-			operation_summary
-
-			# Remove temporary file
-			rm -f "${PROCESSED_TMP_FILE}"
-
-			exit 1
-		else
-			PRUNE_COMPLETE="interrupt"
-			operation_summary
-
-			# Remove temporary file
-			rm -f "${PROCESSED_TMP_FILE}"
-
-			exit 1
 		fi
+
+		PRUNE_COMPLETE="interrupt"
+		operation_summary
+
+		exit 1
 	}
 
 	# Trap SIGINT (Control-C) to abort cleanly	
 	trap prune_abort SIGINT
 
 	prune_f () {
-		# Increment number of FLACs processed and create percentage
-		# of total processed out of the total FLACS
-		increment_count_percent
+		# Let's make sure to kill running children if this
+		# function was aborted via SIGINT.  This function
+		# will receive SIGTERM from the kill in previous trap
+		trap 'kill_jobs ; exit 1' SIGTERM
 
-		# Don't remove artwork if user wants it kept.  We don't have to check
-		# for the legacy COVERART tag as we are NOT removing any VORBIS_COMMENTs.
-		if [[ "${REMOVE_ARTWORK}" == "true" ]] ; then
-			# Remove artwork (exported for subshell access)
-			export DONT_PRUNE_FLAC_METADATA="STREAMINFO,VORBIS_COMMENT"
+		# Increment number of FLACs processed
+		increment_count
+
+		print_prune_flac
+
+		# Check if file is a FLAC file (hide output) and send to
+		# background to allow killing on SIGTERM
+		metaflac --show-md5sum "${i}" >/dev/null 2>&1 &
+
+		# Wait on background process and return exit code of
+		# said process
+		wait "${!}"
+
+		# Exit code 130 is SIGINT so only check for exit code '1'
+		if [[ "${?}" -eq "1" ]] ; then
+			# File is not a FLAC file, display failed
+			print_failed_flac
+			printf "%s\n%s\n%s\n" \
+				   "FLAC:  ${i}" \
+				   "ERROR: The above file does not appear to be a FLAC file" \
+				   "------------------------------------------------------------------" \
+				   >> "${PRUNE_ERRORS}"
 		else
-			# Don't remove artwork (exported for subshell access)
-			export DONT_PRUNE_FLAC_METADATA="STREAMINFO,PICTURE,VORBIS_COMMENT"
+			# Remove all information but STREAMINFO,VORBIS_COMMENTs, and
+			# possibly METADATA_BLOCK_PICTURE
+			metaflac --remove --dont-use-padding --except-block-type="${DONT_PRUNE_FLAC_METADATA}" "${i}"
+
+			# File is a FLAC file, display ok
+			print_ok_flac
 		fi
 
-		for i ; do
-			print_prune_flac
-
-			# Check if file is a FLAC file (variable hides output)
-			CHECK_FLAC="$(metaflac --show-md5sum "${i}" 2>&1)"
-
-			# If above command return anything other than '0', log output
-			if [[ "${?}" -ne "0" ]] ; then
-				printf "%s\n%s\n%s\n" \
-					   "FLAC:  ${i}" \
-					   "ERROR: The above file does not appear to be a FLAC file" \
-					   "------------------------------------------------------------------" \
-					   >> "${PRUNE_ERRORS}"
-				# File is not a FLAC file, display failed
-				print_failed_flac
-			else
-				# Remove all information but STREAMINFO,VORBIS_COMMENTs, and
-				# possibly METADATA_BLOCK_PICTURE
-				metaflac --remove --dont-use-padding --except-block-type="${DONT_PRUNE_FLAC_METADATA}" "${i}"
-				print_ok_flac
-			fi
-		done
+		# Print newline into FIFO after completion
+		printf '\n' >&3
 	}
-	export -f prune_f
 	
-	# Make sure the temporary file is cleared before proceeding
-	> "${PROCESSED_TMP_FILE}"
+	# Don't remove artwork if user wants it kept.  We don't have to check
+	# for the legacy COVERART tag as we are NOT removing any VORBIS_COMMENTs.
+	if [[ "${REMOVE_ARTWORK}" == "true" ]] ; then
+		# Remove artwork (exported for subshell access)
+		DONT_PRUNE_FLAC_METADATA="STREAMINFO,VORBIS_COMMENT"
+	else
+		# Don't remove artwork (exported for subshell access)
+		DONT_PRUNE_FLAC_METADATA="STREAMINFO,PICTURE,VORBIS_COMMENT"
+	fi
 
-	# Run the above function with the configured threads (multithreaded)
-	find "${DIRECTORY}" -name "*${FLAC_EXTENSION}" -print0 2> /dev/null | xargs -0 -n 1 -P "${CORES}" bash -c 'prune_f "${@}"' --
+	# Make sure the temporary file is cleared before proceeding
+	clear_processed_tmp_file
+
+	# Make sure the temporary FIFO is cleared before proceeding
+	clear_tmp_fifo
+
+	# Start as many processes as determined by ${CORES}
+	for i in "${total_flacs_array[@]:0:${CORES}}" ; do
+		prune_f &
+	done
+
+	# Add the number of processes started above to count
+	ITERATION="${CORES}"
+
+	# If the FLAC files to process are greater than the # of CORES
+	# available, continue processing them, else quit
+	if [[ "${TOTAL_FLACS}" -gt "${CORES}" ]] ; then
+
+		# After each newline is read from FIFO, start a new process
+		while read ; do
+			# If current number of FLACs to process is less than total FLACs
+			# found, add another FLAC to process
+			if [[ "${ITERATION}" -lt "${TOTAL_FLACS_INDICES}" ]] ; then
+				# Set ${i} to current FLAC to process
+				i="${total_flacs_array[${ITERATION}]}"
+				((ITERATION++))
+				prune_f &
+
+			# If current number of FLACs to process is the last FLAC file, continue
+			# processing it and break out of loop (to prevent hanging FIFO)
+			elif [[ "${ITERATION}" -eq "${TOTAL_FLACS_INDICES}" ]] ; then
+				# Set ${i} to current FLAC to process
+				i="${total_flacs_array[${ITERATION}]}"
+				prune_f &
+				break
+			fi
+		done <&3
+
+	fi
+
+	# Wait for children processes
+	wait
 
 	if [[ -f "${PRUNE_ERRORS}" ]] ; then
 		printf "\n%s${BOLD_RED}%s${NORMAL}%s\n" \
