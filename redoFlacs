@@ -3856,7 +3856,7 @@ fi
 SLEEP_EXISTS="$(command -v sleep)"
 STTY_EXISTS="$(command -v stty)"
 STAT_EXISTS="$(command -v stat)"
-TMKFIFO_EXISTS="$(command -v mkfifo)"
+MKFIFO_EXISTS="$(command -v mkfifo)"
 METAFLAC_EXISTS="$(command -v metaflac)"
 FLAC_EXISTS="$(command -v flac)"
 
