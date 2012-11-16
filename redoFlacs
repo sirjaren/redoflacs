@@ -22,6 +22,34 @@
 #
 # Please submit requests/changes/patches and/or comments
 #-----------------------------------------------------------------
+# TODO: Error messages to STDERR
+# TODO: Include time spent doing each process (time builtin?)
+# TODO: Rework the Summary Of Operations to show sub processes (aka
+#       Analyze Tags & Setting Tags)
+# TODO: Allow a one character gap between the printed message
+#       and the edge of the terminal window
+# TODO: Lowercase printed messages for consistency (gentoo-like)
+# TODO: Allow setting the number of jobs upon script
+#       invocation (like -j3)
+# TODO: Fix issues with conflicting arguments
+# TODO: Condense some of the functions, separating bulky code
+#       and getting rid of duplicated code
+# TODO: Find a general format for logs and stick with it!
+# TODO: Colorize filename and commands in STDERR
+# TODO: Add directories/files processed during operations
+#       (maybe next to percentage?)
+# TODO: Make it more clear on the Summary Of Operations
+#       what it means when an operation has failed
+# TODO: Make it clear that we are not multithreading anything
+#       but actually using more processes/jobs
+# TODO: Possible use box drawing characters under the top
+#       banner for readability
+# TODO: Consider creating a fallback to using box drawing
+#       characters (ascii output?)
+# TODO: Create a check on ReplayGain if using non git FLAC
+#       and trying to create ReplayGain values on FLAC files
+#       whos sample rate is higher than 48kHz
+#-----------------------------------------------------------------
 
 tags=(
 ########################
