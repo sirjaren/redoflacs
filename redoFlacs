@@ -139,9 +139,9 @@ VERSION="0.16.2"
 # Force all the tag fields to be uppercase
 tags=( "${tags[@]^^}" )
 
-# Copy the tag array because we may need to use it
-# later as we are adding a temporary element to the
-# current array
+# Copy the above 'tag' array because we will need to use it
+# later as we are _may_ add a temporary element to the
+# 'tag' array
 old_tags=( "${tags[@]}" )
 
 # Various file extensions
@@ -2277,22 +2277,22 @@ redo_tags () {
 				# to be logged
 				if [[ -z "${TAG_VALUE}" && "${FILE_PRINTED}" != "true" ]] ; then
 					# First instance of missing tag for current file
-					missingTags+=( "$(printf "%s" "FLAC:  ${i}")"
-								   "$(printf "%s" "ERROR: ${j} tag not found")" )
+					missing_tags_array+=( "FLAC:  ${i}"
+								   "ERROR: ${j} tag not found" )
 					FILE_PRINTED="true"
 				elif [[ -z "${TAG_VALUE}" && "${FILE_PRINTED}" == "true" ]] ; then
 					# If more than one missing tag in current file,
-					# don't print out filename
-					missingTags+=( "$(printf "%s" "       ${j} tag not found")" )
+					# don't print out filename, just the missing tag
+					missing_tags_array+=( "       ${j} tag not found" )
 				fi
 			done
-				# If missingTags array is not empty, there are missing
+				# If missing_tags_array is not empty, there are missing
 				# tags in the current file so log output
-				if [[ -n "${missingTags[@]}" ]] ; then
+				if [[ -n "${missing_tags_array[@]}" ]] ; then
 					# Add separator to log for each file
-					missingTags+=( "------------------------------------------------------------------" )
+					missing_tags_array+=( "------------------------------------------------------------------" )
 					# Print array into log file
-					printf "%s\n" "${missingTags[@]}" >> "${METADATA_ERRORS}"
+					printf "%s\n" "${missing_tags_array[@]}" >> "${METADATA_ERRORS}"
 				fi
 
 		# Done analyzing FLAC file tags
@@ -2360,22 +2360,22 @@ redo_tags () {
 				# addition to the tag array (for processing legacy artwork)
 				if [[ -z "${TAG_VALUE}" && "${FILE_PRINTED}" != "true" && "${j}" != "COVERART" ]] ; then
 					# First instance of missing tag for current file
-					missingTags+=( "$(printf "%s" "FLAC:  ${i}")"
-								   "$(printf "%s" "ERROR: ${j} tag not found")" )
+					missing_tags_array+=( "FLAC:  ${i}"
+										  "ERROR: ${j} tag not found" )
 					FILE_PRINTED="true"
 				elif [[ -z "${TAG_VALUE}" && "${FILE_PRINTED}" == "true" && "${j}" != "COVERART" ]] ; then
 					# If more than one missing tag in current file, don't print
 					# out filename
-					missingTags+=( "$(printf "%s" "       ${j} tag not found")" )
+					missing_tags_array+=( "       ${j} tag not found" )
 				fi
 			done
-				# If missingTags array is not empty, there are missing
+				# If missing_tags_array is not empty, there are missing
 				# tags in the current file so log output
-				if [[ -n "${missingTags[@]}" ]] ; then
+				if [[ -n "${missing_tags_array[@]}" ]] ; then
 					# Add separator to log for each file
-					missingTags+=( "------------------------------------------------------------------" )
+					missing_tags_array+=( "------------------------------------------------------------------" )
 					# Print array into log file
-					printf "%s\n" "${missingTags[@]}" >> "${METADATA_ERRORS}"
+					printf "%s\n" "${missing_tags_array[@]}" >> "${METADATA_ERRORS}"
 				fi
 
 		# Done analyzing FLAC file tags
@@ -3131,12 +3131,12 @@ find_cores () {
 				# of cores to use
 
 				# Store contents of /proc/cpuinfo into
-				# CORES_ARRAY array
-				mapfile -n0 -t CORES_ARRAY < /proc/cpuinfo
+				# cores_array
+				mapfile -n0 -t cores_array < /proc/cpuinfo
 
 				# For each line, if matched string is found,
 				# add processor number to CORES variable
-				for i in "${CORES_ARRAY[@]}" ; do
+				for i in "${cores_array[@]}" ; do
 					if [[ "${i}" == processor$'\t':\ * ]] ; then
 						CORES="${i#processor$'\t': }"
 					fi
@@ -3155,10 +3155,10 @@ find_cores () {
 ##################################
 operation_summary () {
 	# Grab the number of processed FLAC files
-	mapfile -n0 PROCESSED_FLACS_ARR < "${PROCESSED_TMP_FILE}"
+	mapfile -n0 processed_flacs_array < "${PROCESSED_TMP_FILE}"
 
-	# Change the above array to variable
-	PROCESSED_FLACS_DIGITS="${#PROCESSED_FLACS_ARR[@]}"
+	# Change the number of elements from above array to a variable
+	PROCESSED_FLACS_DIGITS="${#processed_flacs_array[@]}"
 
 	# Find the percentage of Processed Flacs / Total Flacs
 	PERCENTAGE_DIGITS="$(( ${PROCESSED_FLACS_DIGITS} * 100 / ${TOTAL_FLACS} ))"
@@ -3573,16 +3573,16 @@ fi
 # prevent multiple directories being called
 for i in "${@}" ; do
 	if [[ "${i}" == --* ]] ; then
-		long_style_arguments+=( "${i}" )
+		long_style_arguments_array+=( "${i}" )
 	elif [[ "${i}" == -* ]] ; then
-		short_style_arguments+=( "${i}" )
+		short_style_arguments_array+=( "${i}" )
 	else
-		non_arguments+=( "${i}" )
+		non_arguments_array+=( "${i}" )
 	fi
 done
 
 # If there are 0 (zero) directories or more than 1, exit script
-if [[ "${#non_arguments[@]}" -eq 0 || "${#non_arguments[@]}" -gt 1 ]] ; then
+if [[ "${#non_arguments_array[@]}" -eq 0 || "${#non_arguments_array[@]}" -gt 1 ]] ; then
 	short_help
 	exit 1
 fi
@@ -3592,47 +3592,47 @@ fi
 # them correctly (ignoring "--help" and "--version" since
 # this is taken care of above).  Add invalid arguments to it's
 # own array
-if [[ -n "${long_style_arguments[@]}" ]] ; then
-	for i in "${long_style_arguments[@]}" ; do
+if [[ -n "${long_style_arguments_array[@]}" ]] ; then
+	for i in "${long_style_arguments_array[@]}" ; do
 		case "${i}" in
 			--compress)
-				converted_arguments+=( -c )
+				converted_arguments_array+=( -c )
 			;;
 			--compress-notest)
-				converted_arguments+=( -C )
+				converted_arguments_array+=( -C )
 			;;
 			--test)
-				converted_arguments+=( -t )
+				converted_arguments_array+=( -t )
 			;;
 			--md5check)
-				converted_arguments+=( -m )
+				converted_arguments_array+=( -m )
 			;;
 			--aucdtect)
-				converted_arguments+=( -a )
+				converted_arguments_array+=( -a )
 			;;
 			--aucdtect-spectrogram)
-				converted_arguments+=( -A )
+				converted_arguments_array+=( -A )
 			;;
 			--prune)
-				converted_arguments+=( -p )
+				converted_arguments_array+=( -p )
 			;;
 			--replaygain)
-				converted_arguments+=( -g )
+				converted_arguments_array+=( -g )
 			;;
 			--replaygain-noforce)
-				converted_arguments+=( -G )
+				converted_arguments_array+=( -G )
 			;;
 			--redo)
-				converted_arguments+=( -r )
+				converted_arguments_array+=( -r )
 			;;
 			--all)
-				converted_arguments+=( -l )
+				converted_arguments_array+=( -l )
 			;;
 			--reallyall)
-				converted_arguments+=( -L )
+				converted_arguments_array+=( -L )
 			;;
 			--no-color)
-				converted_arguments+=( -n )
+				converted_arguments_array+=( -n )
 			;;
 			--version)
 				short_help
@@ -3644,7 +3644,7 @@ if [[ -n "${long_style_arguments[@]}" ]] ; then
 			;;
 			*)
 				# Set invalid argument into array
-				INVALID_ARGUMENTS+=( "${i}" )
+				invalid_arguments_array+=( "${i}" )
 			;;
 		esac
 	done
@@ -3653,58 +3653,58 @@ fi
 # If there were any short style arguments called, go through
 # them, adding the valid arguments to the "converted_arguments"
 # array and adding invalid arguments to it's own array
-if [[ -n "${short_style_arguments[@]}" ]] ; then
-	while getopts ":LlcCtgGaAmprnhv" ARGUMENTS "${short_style_arguments[@]}" ; do
+if [[ -n "${short_style_arguments_array[@]}" ]] ; then
+	while getopts ":LlcCtgGaAmprnhv" ARGUMENTS "${short_style_arguments_array[@]}" ; do
 		case "${ARGUMENTS}" in
 			l)
-				converted_arguments+=( -l )
+				converted_arguments_array+=( -l )
 			;;
 			L)
-				converted_arguments+=( -L )
+				converted_arguments_array+=( -L )
 			;;
 			c)
-				converted_arguments+=( -c )
+				converted_arguments_array+=( -c )
 			;;
 			C)
-				converted_arguments+=( -C )
+				converted_arguments_array+=( -C )
 			;;
 			t)
-				converted_arguments+=( -t )
+				converted_arguments_array+=( -t )
 			;;
 			g)
-				converted_arguments+=( -g )
+				converted_arguments_array+=( -g )
 			;;
 			G)
-				converted_arguments+=( -G )
+				converted_arguments_array+=( -G )
 			;;
 			a)
-				converted_arguments+=( -a )
+				converted_arguments_array+=( -a )
 			;;
 			A)
-				converted_arguments+=( -A )
+				converted_arguments_array+=( -A )
 			;;
 			m)
-				converted_arguments+=( -m )
+				converted_arguments_array+=( -m )
 			;;
 			p)
-				converted_arguments+=( -p )
+				converted_arguments_array+=( -p )
 			;;
 			r)
-				converted_arguments+=( -r )
+				converted_arguments_array+=( -r )
 			;;
 			n)
-				converted_arguments+=( -n )
+				converted_arguments_array+=( -n )
 			;;
 			h)
-				converted_arguments+=( -h )
+				converted_arguments_array+=( -h )
 			;;
 			v)
-				converted_arguments+=( -v )
+				converted_arguments_array+=( -v )
 			;;
 			?)
 				# Set invalid argument from getopts into
 				# array using ${OPTARG}
-				INVALID_ARGUMENTS+=( "-${OPTARG}" )
+				invalid_arguments_array+=( "-${OPTARG}" )
 			;;
 		esac
 	done
@@ -3712,12 +3712,12 @@ fi
 
 # If there were invalid arguments called, display them and
 # exit script
-if [[ -n "${INVALID_ARGUMENTS}" ]] ; then
+if [[ -n "${invalid_arguments_array[@]}" ]] ; then
 	short_help
 	printf "\n%s${BOLD_RED}%s${NORMAL}%s" \
 	" " "*" " Invalid options:"
 
-	for i in "${INVALID_ARGUMENTS[@]}" ; do
+	for i in "${invalid_arguments_array[@]}" ; do
 		printf "%s" " ${i}"
 	done
 	printf '\n'
@@ -3728,7 +3728,7 @@ fi
 # values based on what the user called, thereby allowing the
 # script to process said values and execute the corresponding
 # functions
-for i in "${converted_arguments[@]}" ; do
+for i in "${converted_arguments_array[@]}" ; do
 	case "${i}" in
 		-l)
 			ALL="true"
@@ -3909,54 +3909,54 @@ if [[ "${ALL}" == "true" || "${REALLYALL}" == "true" ]] ; then
 
 	# Check for "-c, --compress".  If used add it to array
 	if [[ "${COMPRESS}" == "true" && "${SKIP_TEST}" == "false" ]] ; then
-		argumentConflict+=( "-c, --compress" )
+		argument_conflict_array+=( "-c, --compress" )
 	# Check for "-C, --compress-notest".  If used add it to array
 	elif [[ "${COMPRESS}" == "true" && "${SKIP_TEST}" == "true" ]] ; then
-		argumentConflict+=( "-C, --compress-notest" )
+		argument_conflict_array+=( "-C, --compress-notest" )
 	fi
 
 	# Check for "-t, --test".  If used add it to array
 	if [[ "${TEST}" == "true" ]] ; then
-		argumentConflict+=( "-t, --test" )
+		argument_conflict_array+=( "-t, --test" )
 	fi
 
 	# Check for "-m, --md5check".  If used add it to array
 	if [[ "${MD5CHECK}" == "true" ]] ; then
-		argumentConflict+=( "-m, --md5check" )
+		argument_conflict_array+=( "-m, --md5check" )
 	fi
 
 	# Check for "-p, --prune".  If used add it to array
 	if [[ "${PRUNE}" == "true" ]] ; then
-		argumentConflict+=( "-p, --prune" )
+		argument_conflict_array+=( "-p, --prune" )
 	fi
 
 	# Check for "-g, --replaygain".  If used add it to array
 	if [[ "${REPLAYGAIN}" == "true" && "${REPLAYGAIN_NOFORCE}" != "true" ]] ; then
-		argumentConflict+=( "-g, --replaygain" )
+		argument_conflict_array+=( "-g, --replaygain" )
 	# Check for "-G, --replaygain-noforce".  If used add it to array
 	elif [[ "${REPLAYGAIN}" == "true" && "${REPLAYGAIN_NOFORCE}" == "true" ]] ; then
-		argumentConflict+=( "-G, --replaygain-noforce" )
+		argument_conflict_array+=( "-G, --replaygain-noforce" )
 	fi
 
 	# Check for "-r, --redo".  If used add it to array
 	if [[ "${REDO}" == "true" ]] ; then
-		argumentConflict+=( "-r, --redo" )
+		argument_conflict_array+=( "-r, --redo" )
 	fi
 
 	# If "-L, --reallyall" was called, check for the various forms of calling
 	# auCDtect.  If it was called, add it to array
 	if [[ "${REALLYALL}" == "true" ]] ; then
 		if [[ "${AUCDTECT}" == "true" && "${CREATE_SPECTROGRAM}" == "true" ]] ; then
-			argumentConflict+=( "-A, --aucdtect-spectrogram" )
+			argument_conflict_array+=( "-A, --aucdtect-spectrogram" )
 		elif [[ "${AUCDTECT}" == "true" && "${CREATE_SPECTROGRAM}" != "true" ]] ; then
-			argumentConflict+=( "-a, --aucdtect" )
+			argument_conflict_array+=( "-a, --aucdtect" )
 		fi
 	fi
 
 	# If the array is not empty, the user called some incompatible options with
 	# "-l, --all" or "-L, --reallyall", so print which options were called that
 	# are incompatible and exit script
-	if [[ -n "${argumentConflict[@]}" ]] ; then
+	if [[ -n "${argument_conflict_array[@]}" ]] ; then
 		# "-l, --all"
 		if [[ "${ALL}" == "true" ]] ; then
 			printf "%s${BOLD_RED}%s${NORMAL}%s\n" \
@@ -3968,7 +3968,7 @@ if [[ "${ALL}" == "true" || "${REALLYALL}" == "true" ]] ; then
 		fi
 
 		# Iterate through array and print each value
-		for i in "${argumentConflict[@]}" ; do
+		for i in "${argument_conflict_array[@]}" ; do
 			printf "%s${BOLD_RED}%s${NORMAL}%s\n" \
 			" " "*" "     ${i}"
 		done
