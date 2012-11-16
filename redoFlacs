@@ -136,44 +136,36 @@ SPECTROGRAM_LOCATION="default"
 # Version
 VERSION="0.16.2"
 
-# Export REMOVE_ARTWORK to allow subshell access
-export REMOVE_ARTWORK
+# Force all the tag fields to be uppercase
+tags=( "${tags[@]^^}" )
 
-# Export COMPRESSION_LEVEL to allow subshell access
-export COMPRESSION_LEVEL
+# Copy the tag array because we may need to use it
+# later as we are adding a temporary element to the
+# current array
+old_tags=( "${tags[@]}" )
 
-# Export SPECTROGRAM_LOCATION to allow subshell access
-export SPECTROGRAM_LOCATION
-
-# Export the tag array using some trickery (BASH doesn't
-# support exporting arrays natively).  Also make the tag
-# fields uppercase
-export EXPORT_TAG="${tags[@]^^}"
-
-# Various file extensions exported
-export FLAC_EXTENSION=".[Ff][Ll][Aa][Cc]"
-export WAV_EXTENSION=".[Ww][Aa][Vv]"
+# Various file extensions
+FLAC_EXTENSION=".[Ff][Ll][Aa][Cc]"
+WAV_EXTENSION=".[Ww][Aa][Vv]"
 
 # Colors on by default
-# Export to allow subshell access
-export BOLD_BLUE="\033[1;34m"
-export BOLD_GREEN="\033[1;32m"
-export BOLD_RED="\033[1;31m"
-export CYAN="\033[0;36m"
-export MAGENTA="\033[0;35m"
-export YELLOW="\033[0;33m"
-export NORMAL="\033[0m"
+BOLD_BLUE="\033[1;34m"
+BOLD_GREEN="\033[1;32m"
+BOLD_RED="\033[1;31m"
+CYAN="\033[0;36m"
+MAGENTA="\033[0;35m"
+YELLOW="\033[0;33m"
+NORMAL="\033[0m"
 
 # Log files with timestamp
-# Export to allow subshell access
-export VERIFY_ERRORS="${ERROR_LOG}/FLAC_Verify_Errors_$(date "+%Y%m%d-%H.%M.%S").log"
-export TEST_ERRORS="${ERROR_LOG}/FLAC_Test_Errors_$(date "+%Y%m%d-%H.%M.%S").log"
-export MD5_ERRORS="${ERROR_LOG}/MD5_Signature_Errors_$(date "+%Y%m%d-%H.%M.%S").log"
-export METADATA_ERRORS="${ERROR_LOG}/FLAC_Metadata_Errors_$(date "+%Y%m%d-%H.%M.%S").log"
-export REPLAY_TEST_ERRORS="${ERROR_LOG}/ReplayGain_Test_Errors_$(date "+%Y%m%d-%H.%M.%S").log"
-export REPLAY_ADD_ERRORS="${ERROR_LOG}/ReplayGain_Add_Errors_$(date "+%Y%m%d-%H.%M.%S").log"
-export AUCDTECT_ERRORS="${ERROR_LOG}/auCDtect_Errors_$(date "+%Y%m%d-%H.%M.%S").log"
-export PRUNE_ERRORS="${ERROR_LOG}/FLAC_Prune_Errors_$(date "+%Y%m%d-%H.%M.%S").log"
+VERIFY_ERRORS="${ERROR_LOG}/FLAC_Verify_Errors_$(date "+%Y%m%d-%H.%M.%S").log"
+TEST_ERRORS="${ERROR_LOG}/FLAC_Test_Errors_$(date "+%Y%m%d-%H.%M.%S").log"
+MD5_ERRORS="${ERROR_LOG}/MD5_Signature_Errors_$(date "+%Y%m%d-%H.%M.%S").log"
+METADATA_ERRORS="${ERROR_LOG}/FLAC_Metadata_Errors_$(date "+%Y%m%d-%H.%M.%S").log"
+REPLAY_TEST_ERRORS="${ERROR_LOG}/ReplayGain_Test_Errors_$(date "+%Y%m%d-%H.%M.%S").log"
+REPLAY_ADD_ERRORS="${ERROR_LOG}/ReplayGain_Add_Errors_$(date "+%Y%m%d-%H.%M.%S").log"
+AUCDTECT_ERRORS="${ERROR_LOG}/auCDtect_Errors_$(date "+%Y%m%d-%H.%M.%S").log"
+PRUNE_ERRORS="${ERROR_LOG}/FLAC_Prune_Errors_$(date "+%Y%m%d-%H.%M.%S").log"
 
 # Set arguments to null
 # If enabled they will be changed to true
@@ -865,8 +857,6 @@ countdown_metadata () {
 
 	# Creates the listing of tags to be kept
 	tags_countdown () {
-		# Recreate the tags array so it can be parsed easily
-		eval "tags=(${EXPORT_TAG})"
 		for i in "${tags[@]}" ; do
 			printf "%s\n" "     ${i}"
 		done
@@ -2258,9 +2248,6 @@ redo_tags () {
 			# File is not a FLAC file, display failed
 			print_failed_flac
 		else
-			# Recreate the tags array so it can be used by the child process
-			eval "tags=(${EXPORT_TAG})"
-
 			# Iterate through each tag field and check if tag is missing
 			for j in "${tags[@]}" ; do
 				# Check if ALBUMARTIST is in tag array and apply operations on
@@ -2327,10 +2314,8 @@ redo_tags () {
 			# File is not a FLAC file, display failed
 			print_failed_flac
 		else
-			# Recreate the tags array so it can be used by the child process
-			eval "tags=(${EXPORT_TAG})"
-
-			# Album artwork is to be kept so preserve COVERART
+			# Album artwork is to be kept so preserve COVERART by adding
+			# it to the tag array (temporary)
 			tags+=( COVERART )
 
 			# Iterate through each tag field and check if tag is missing (except
@@ -2570,10 +2555,10 @@ redo_tags () {
 	# SET TAGS #
 	############
 
-	# Recreate the tags array as it may have added the
+	# Restore the original tags array as it _may_ have added the
 	# COVERART tag.  This way, we ensure that the COVERART
-	# tag is, in fact, temporary.
-	eval "tags=(${EXPORT_TAG})"
+	# tag was, in fact, temporary.
+	tags=( "${old_tags[@]}" )
 
 	title_setting_tags
 
@@ -2773,10 +2758,10 @@ prune_flacs () {
 	# Don't remove artwork if user wants it kept.  We don't have to check
 	# for the legacy COVERART tag as we are NOT removing any VORBIS_COMMENTs.
 	if [[ "${REMOVE_ARTWORK}" == "true" ]] ; then
-		# Remove artwork (exported for subshell access)
+		# Remove artwork
 		DONT_PRUNE_FLAC_METADATA="STREAMINFO,VORBIS_COMMENT"
 	else
-		# Don't remove artwork (exported for subshell access)
+		# Don't remove artwork
 		DONT_PRUNE_FLAC_METADATA="STREAMINFO,PICTURE,VORBIS_COMMENT"
 	fi
 
@@ -3757,7 +3742,7 @@ for i in "${converted_arguments[@]}" ; do
 		;;
 		-C)
 			COMPRESS="true"
-			export SKIP_TEST="true"
+			SKIP_TEST="true"
 		;;
 		-t)
 			TEST="true"
@@ -3779,7 +3764,7 @@ for i in "${converted_arguments[@]}" ; do
 		;;
 		-A)
 			AUCDTECT="true"
-			export CREATE_SPECTROGRAM="true"
+			CREATE_SPECTROGRAM="true"
 		;;
 		-m)
 			MD5CHECK="true"
@@ -4119,17 +4104,17 @@ fi
 # FLAC files are corrupt or have metadata issues
 if [[ "${AUCDTECT}" == "true" ]] ; then
 	# Check if auCDtect is found/installed
-	export AUCDTECT_COMMAND="$(command -v auCDtect)"
+	AUCDTECT_COMMAND="$(command -v auCDtect)"
 	if [[ -z "${AUCDTECT_COMMAND}" ]] ; then
 		# Check alternate spelling
-		export AUCDTECT_COMMAND="$(command -v aucdtect)"
+		AUCDTECT_COMMAND="$(command -v aucdtect)"
 	fi
 
 	if [[ -n "${AUCDTECT_COMMAND}" ]] ; then
 		# If "-A, --aucdtect-spectrogram" was called
 		# make sure SoX is installed before starting
 		if [[ "${CREATE_SPECTROGRAM}" == "true" ]] ; then
-			export SOX_COMMAND="$(command -v sox)"
+			SOX_COMMAND="$(command -v sox)"
 			if [[ -z "${SOX_COMMAND}" ]] ; then
 				# SoX can't be found, exit
 				printf "%s${BOLD_RED}%s${NORMAL}%s\n" \
