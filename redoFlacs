@@ -3856,8 +3856,7 @@ fi
 SLEEP_EXISTS="$(command -v sleep)"
 STTY_EXISTS="$(command -v stty)"
 STAT_EXISTS="$(command -v stat)"
-FIND_EXISTS="$(command -v find)"
-XARGS_EXISTS="$(command -v xargs)"
+TMKFIFO_EXISTS="$(command -v mkfifo)"
 METAFLAC_EXISTS="$(command -v metaflac)"
 FLAC_EXISTS="$(command -v flac)"
 
@@ -3875,12 +3874,8 @@ if [[ -z "${STAT_EXISTS}" ]] ; then
 	command_exists_array+=( "You can generally install \"stat\" with the \"coreutils\" package." )
 fi
 
-if [[ -z "${FIND_EXISTS}" ]] ; then
-	command_exists_array+=( "You can generally install \"find\" with the \"findutils\" package." )
-fi
-
-if [[ -z "${XARGS_EXISTS}" ]] ; then
-	command_exists_array+=( "You can generally install \"xargs\" with the \"findutils\" package." )
+if [[ -z "${MKFIFO_EXISTS}" ]] ; then
+	command_exists_array+=( "You can generally install \"mkfifo\" with the \"coreutils\" package." )
 fi
 
 if [[ -z "${METAFLAC_EXISTS}" ]] ; then
