@@ -23,7 +23,6 @@
 # Please submit requests/changes/patches and/or comments
 #-----------------------------------------------------------------
 # TODO: Error messages to STDERR
-# TODO: Include time spent doing each process (time builtin?)
 # TODO: Rework the Summary Of Operations to show sub processes (aka
 #       Analyze Tags & Setting Tags)
 # TODO: Allow a one character gap between the printed message
@@ -42,13 +41,18 @@
 #       what it means when an operation has failed
 # TODO: Make it clear that we are not multithreading anything
 #       but actually using more processes/jobs
-# TODO: Possible use box drawing characters under the top
-#       banner for readability
 # TODO: Consider creating a fallback to using box drawing
 #       characters (ascii output?)
 # TODO: Create a check on ReplayGain if using non git FLAC
 #       and trying to create ReplayGain values on FLAC files
 #       whos sample rate is higher than 48kHz
+#-----------------------------------------------------------------
+# File Descriptors used in this script
+#    0: STDIN
+#    1: STDOUT
+#    2: STDERR
+#    3: FIFO process manager
+#    4: auCDtect's (STDOUT) output
 #-----------------------------------------------------------------
 
 tags=(
@@ -163,14 +167,6 @@ SPECTROGRAM_LOCATION="default"
 ######################
 # Version
 VERSION="0.16.2"
-
-# Force all the tag fields to be uppercase
-tags=( "${tags[@]^^}" )
-
-# Copy the above 'tag' array because we will need to use it
-# later as we are _may_ add a temporary element to the
-# 'tag' array
-old_tags=( "${tags[@]}" )
 
 # Various file extensions
 FLAC_EXTENSION=".[Ff][Ll][Aa][Cc]"
@@ -846,25 +842,29 @@ top_banner () {
 	fi
 
 	# Title
-	printf "%s${BOLD_BLUE}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}%s\n" \
-	" " "=======" "  Runtime  Information  " "=======" " "
+	printf "${NORMAL}%s\n" \
+	"        Runtime Information"
+
+	# Title Line
+	printf "${NORMAL}%s${BOLD_BLUE}%s${NORMAL}\n" \
+	"   " "──────────────┬──────────────"
 
 	# Script Version
-	printf "${NORMAL}%s${CYAN}%s${NORMAL}\n" \
-	"         Version:  " "${VERSION}"
+	printf "${NORMAL}%s${BOLD_BLUE}%s${NORMAL}%s${CYAN}%s${NORMAL}\n" \
+	"         Version " "│" " " "${VERSION}"
 
-	# Cores to be used
-	printf "${NORMAL}%s${CYAN}%s${NORMAL}\n" \
-	"   Threads/Cores:  " "${CORES}"
+	# Processes to be used
+	printf "${NORMAL}%s${BOLD_BLUE}%s${NORMAL}%s${CYAN}%s${NORMAL}\n" \
+	"      Cores/CPUs " "│" " " "${CORES}"
 
 	# Log directory to be used (No need for newlines
 	# since a double newline is prepended to each
 	# title operation)
-	printf "${NORMAL}%s${CYAN}%s${NORMAL}\n\n" \
-	"   Log Directory:  " "${ERROR_LOG}"
+	printf "${NORMAL}%s${BOLD_BLUE}%s${NORMAL}%s${CYAN}%s${NORMAL}\n\n" \
+	"   Log Directory " "│" " " "${ERROR_LOG}"
 
 	# Message indicating the searching of FLAC files
-	printf "%s${BOLD_GREEN}%s${NORMAL}%s" \
+	printf "${NORMAL}%s${BOLD_GREEN}%s${NORMAL}%s" \
 	" " "*" " Finding FLAC files to process..."
 }
 
@@ -2008,7 +2008,7 @@ md5_check () {
 		MD5CHECK_COMPLETE="interrupt"
 		operation_summary
 
-		exit 1
+		exit 130
 	}
 
 	# Trap SIGINT (Control-C) to abort cleanly
@@ -2018,7 +2018,7 @@ md5_check () {
 		# Let's make sure to kill running children if this
 		# function was aborted via SIGINT.  This function
 		# will receive SIGTERM from the kill in previous trap
-		trap 'kill_jobs ; exit 1' SIGTERM
+		trap 'kill_jobs ; exit 130' SIGTERM
 
 		# Increment number of FLACs processed
 		increment_count
@@ -2111,7 +2111,7 @@ md5_check () {
 		operation_summary
 
 		exit 1
-	fi  
+	fi
 
 	# MD5 Check completed successfully
 	MD5CHECK_COMPLETE="true"
@@ -4077,6 +4077,14 @@ TMP_FIFO="/tmp/redoflacs_fifo_$$"
 
 # Temporary processed files location
 PROCESSED_TMP_FILE="/tmp/redoflacs_tmpfile_$$"
+
+# Force all the tag fields to be uppercase
+tags=( "${tags[@]^^}" )
+
+# Copy the above 'tag' array because we will need to use it
+# later as we are _may_ add a temporary element to the
+# 'tag' array
+old_tags=( "${tags[@]}" )
 
 # Display the top banner
 if [[ "${REDO}" != "true" ]] ; then
