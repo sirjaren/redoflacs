@@ -221,15 +221,8 @@ title_test_replaygain () {
 }
 
 title_add_replaygain () {
-	# Change printed title based on whether there is one more directories to process
-	if [[ "${TOTAL_DIRECTORIES}" == "1" ]] ; then
-		local DIRECTORY_PLURAL="directory"
-	else
-		local DIRECTORY_PLURAL="directories"
-	fi
-
-	printf "\n\n%s${BOLD_GREEN}%s${NORMAL}%s${CYAN}%s${NORMAL}\n" \
-	" " "*" " Applying ReplayGain values by album directory :: " "${TOTAL_DIRECTORIES} ${DIRECTORY_PLURAL}"
+	printf "\n\n%s${BOLD_GREEN}%s${NORMAL}%s\n" \
+	" " "*" " Applying ReplayGain values by album directory"
 }
 
 title_analyze_tags () {
@@ -281,7 +274,12 @@ no_flacs () {
 # Information relating to currently running tasks
 print_compressing_flac () {
 	# Obtain percentage of completed files
+	# (stored in: ${PERCENT_DISPLAY} variable)
 	find_percentage
+
+	# Obtain current flac (stored in:
+	# ${CURRENT_FLAC_TOTAL} variable)
+	current_flac
 
 	# Grab the first line of 'stty -a' output
 	# Redirecting '/dev/stderr' to 'stty' allows valid arguments
@@ -307,12 +305,17 @@ print_compressing_flac () {
 		FILENAME="${FILENAME::$MAX_FILENAME_LENGTH}…"
 	fi
 
-	printf "\r${NORMAL}%$((${COLUMNS} - 20))s${BOLD_BLUE}%s${NORMAL}%s${YELLOW}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}\r${CYAN}%s${NORMAL}%s${YELLOW}%s${NORMAL}%s" \
-	"" "[" " " "Compressing FLAC" " " "]" "${PERCENT_DISPLAY}" " " "*" " ${FILENAME}"
+	printf "\r${NORMAL}%$((${COLUMNS} - 20))s${BOLD_BLUE}%s${NORMAL}%s${YELLOW}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}\r${CYAN}%s${NORMAL}%s${MAGENTA}%s${NORMAL}%s" \
+	"" "[" " " "Compressing FLAC" " " "]" "${PERCENT_DISPLAY}" " " "${CURRENT_FLAC_TOTAL}" " ${FILENAME}"
 }
 print_test_replaygain () {
 	# Obtain percentage of completed files
+	# (stored in: ${PERCENT_DISPLAY} variable)
 	find_percentage
+
+	# Obtain current flac (stored in:
+	# ${CURRENT_FLAC_TOTAL} variable)
+	current_flac
 
 	# Grab the first line of 'stty -a' output
 	# Redirecting '/dev/stderr' to 'stty' allows valid arguments
@@ -339,12 +342,17 @@ print_test_replaygain () {
 		FILENAME="${FILENAME::$MAX_FILENAME_LENGTH}…"
 	fi
 
-	printf "\r${NORMAL}%$((${COLUMNS} - 22))s${BOLD_BLUE}%s${NORMAL}%s${YELLOW}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}\r${CYAN}%s${NORMAL}%s${YELLOW}%s${NORMAL}%s" \
-	"" "[" " " "Testing ReplayGain" " " "]" "${PERCENT_DISPLAY}" " " "*" " ${FILENAME}"
+	printf "\r${NORMAL}%$((${COLUMNS} - 22))s${BOLD_BLUE}%s${NORMAL}%s${YELLOW}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}\r${CYAN}%s${NORMAL}%s${MAGENTA}%s${NORMAL}%s" \
+	"" "[" " " "Testing ReplayGain" " " "]" "${PERCENT_DISPLAY}" " " "${CURRENT_FLAC_TOTAL}" " ${FILENAME}"
 }
 print_add_replaygain () {
 	# Obtain percentage of completed directories
+	# (stored in: ${PERCENT_DISPLAY} variable)
 	find_percentage_directories
+
+	# Obtain current directory (stored in:
+	# ${CURRENT_DIRECTORY_TOTAL} variable)
+	current_directory
 
 	# Grab the first line of 'stty -a' output
 	# Redirecting '/dev/stderr' to 'stty' allows valid arguments
@@ -371,12 +379,17 @@ print_add_replaygain () {
 		FILENAME="${FILENAME::$MAX_FILENAME_LENGTH}…"
 	fi
 
-	printf "\r${NORMAL}%$((${COLUMNS} - 21))s${BOLD_BLUE}%s${NORMAL}%s${YELLOW}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}\r${CYAN}%s${NORMAL}%s${YELLOW}%s${NORMAL}%s" \
-	"" "[" " " "Adding ReplayGain" " " "]" "${PERCENT_DISPLAY}" " " "*" " ${FILENAME}"
+	printf "\r${NORMAL}%$((${COLUMNS} - 21))s${BOLD_BLUE}%s${NORMAL}%s${YELLOW}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}\r${CYAN}%s${NORMAL}%s${MAGENTA}%s${NORMAL}%s" \
+	"" "[" " " "Adding ReplayGain" " " "]" "${PERCENT_DISPLAY}" " " "${CURRENT_DIRECTORY_TOTAL}" " ${FILENAME}"
 }
 print_testing_flac () {
 	# Obtain percentage of completed files
+	# (stored in: ${PERCENT_DISPLAY} variable)
 	find_percentage
+
+	# Obtain current flac (stored in:
+	# ${CURRENT_FLAC_TOTAL} variable)
+	current_flac
 
 	# Grab the first line of 'stty -a' output
 	# Redirecting '/dev/stderr' to 'stty' allows valid arguments
@@ -402,8 +415,8 @@ print_testing_flac () {
 		FILENAME="${FILENAME::$MAX_FILENAME_LENGTH}…"
 	fi
 	
-	printf "\r${NORMAL}%$((${COLUMNS} - 16))s${BOLD_BLUE}%s${NORMAL}%s${YELLOW}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}\r${CYAN}%s${NORMAL}%s${YELLOW}%s${NORMAL}%s" \
-	"" "[" " " "Testing FLAC" " " "]" "${PERCENT_DISPLAY}" " " "*" " ${FILENAME}"
+	printf "\r${NORMAL}%$((${COLUMNS} - 16))s${BOLD_BLUE}%s${NORMAL}%s${YELLOW}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}\r${CYAN}%s${NORMAL}%s${MAGENTA}%s${NORMAL}%s" \
+	"" "[" " " "Testing FLAC" " " "]" "${PERCENT_DISPLAY}" " " "${CURRENT_FLAC_TOTAL}" " ${FILENAME}"
 }
 print_failed_flac () {
 	# Obtain percentage of completed files
@@ -437,7 +450,12 @@ print_failed_flac () {
 }
 print_checking_md5 () {
 	# Obtain percentage of completed files
+	# (stored in: ${PERCENT_DISPLAY} variable)
 	find_percentage
+
+	# Obtain current flac (stored in:
+	# ${CURRENT_FLAC_TOTAL} variable)
+	current_flac
 
 	# Grab the first line of 'stty -a' output
 	# Redirecting '/dev/stderr' to 'stty' allows valid arguments
@@ -463,12 +481,17 @@ print_checking_md5 () {
 		FILENAME="${FILENAME::$MAX_FILENAME_LENGTH}…"
 	fi
 
-	printf "\r${NORMAL}%$((${COLUMNS} - 16))s${BOLD_BLUE}%s${NORMAL}%s${YELLOW}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}\r${CYAN}%s${NORMAL}%s${YELLOW}%s${NORMAL}%s" \
-	"" "[" " " "Checking MD5" " " "]" "${PERCENT_DISPLAY}" " " "*" " ${FILENAME}"
+	printf "\r${NORMAL}%$((${COLUMNS} - 16))s${BOLD_BLUE}%s${NORMAL}%s${YELLOW}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}\r${CYAN}%s${NORMAL}%s${MAGENTA}%s${NORMAL}%s" \
+	"" "[" " " "Checking MD5" " " "]" "${PERCENT_DISPLAY}" " " "${CURRENT_FLAC_TOTAL}" " ${FILENAME}"
 }
 print_ok_flac () {
 	# Obtain percentage of completed files
+	# (stored in: ${PERCENT_DISPLAY} variable)
 	find_percentage
+
+	# Obtain current flac (stored in:
+	# ${CURRENT_FLAC_TOTAL} variable)
+	current_flac
 
 	# Grab the first line of 'stty -a' output
 	# Redirecting '/dev/stderr' to 'stty' allows valid arguments
@@ -494,12 +517,17 @@ print_ok_flac () {
 		FILENAME="${FILENAME::$MAX_FILENAME_LENGTH}…"
 	fi
 
-	printf "\r${NORMAL}%$((${COLUMNS} - 6))s${BOLD_BLUE}%s${NORMAL}%s${BOLD_GREEN}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}\r${CYAN}%s${NORMAL}%s${YELLOW}%s${NORMAL}%s" \
-	"" "[" " " "OK" " " "]" "${PERCENT_DISPLAY}" " " "*" " ${FILENAME}"
+	printf "\r${NORMAL}%$((${COLUMNS} - 6))s${BOLD_BLUE}%s${NORMAL}%s${BOLD_GREEN}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}\r${CYAN}%s${NORMAL}%s${MAGENTA}%s${NORMAL}%s" \
+	"" "[" " " "OK" " " "]" "${PERCENT_DISPLAY}" " " "${CURRENT_FLAC_TOTAL}" " ${FILENAME}"
 }
 print_ok_replaygain () {
 	# Obtain percentage of completed directories
+	# (stored in: ${PERCENT_DISPLAY} variable)
 	find_percentage_directories
+
+	# Obtain current directory (stored in:
+	# ${CURRENT_DIRECTORY_TOTAL} variable)
+	current_directory
 
 	# Grab the first line of 'stty -a' output
 	# Redirecting '/dev/stderr' to 'stty' allows valid arguments
@@ -525,12 +553,17 @@ print_ok_replaygain () {
 		FILENAME="${FILENAME::$MAX_FILENAME_LENGTH}…"
 	fi
 
-	printf "\r${NORMAL}%$((${COLUMNS} - 6))s${BOLD_BLUE}%s${NORMAL}%s${BOLD_GREEN}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}\r${CYAN}%s${NORMAL}%s${YELLOW}%s${NORMAL}%s" \
-	"" "[" " " "OK" " " "]" "${PERCENT_DISPLAY}" " " "*" " ${FILENAME}"
+	printf "\r${NORMAL}%$((${COLUMNS} - 6))s${BOLD_BLUE}%s${NORMAL}%s${BOLD_GREEN}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}\r${CYAN}%s${NORMAL}%s${MAGENTA}%s${NORMAL}%s" \
+	"" "[" " " "OK" " " "]" "${PERCENT_DISPLAY}" " " "${CURRENT_DIRECTORY_TOTAL}" " ${FILENAME}"
 }
 print_aucdtect_flac () {
 	# Obtain percentage of completed files
+	# (stored in: ${PERCENT_DISPLAY} variable)
 	find_percentage
+
+	# Obtain current flac (stored in:
+	# ${CURRENT_FLAC_TOTAL} variable)
+	current_flac
 
 	# Grab the first line of 'stty -a' output
 	# Redirecting '/dev/stderr' to 'stty' allows valid arguments
@@ -556,8 +589,8 @@ print_aucdtect_flac () {
 		FILENAME="${FILENAME::$MAX_FILENAME_LENGTH}…"
 	fi
 
-	printf "\r${NORMAL}%$((${COLUMNS} - 19))s${BOLD_BLUE}%s${NORMAL}%s${YELLOW}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}\r${CYAN}%s${NORMAL}%s${YELLOW}%s${NORMAL}%s" \
-	"" "[" " " "Validating FLAC" " " "]" "${PERCENT_DISPLAY}" " " "*" " ${FILENAME}"
+	printf "\r${NORMAL}%$((${COLUMNS} - 19))s${BOLD_BLUE}%s${NORMAL}%s${YELLOW}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}\r${CYAN}%s${NORMAL}%s${MAGENTA}%s${NORMAL}%s" \
+	"" "[" " " "Validating FLAC" " " "]" "${PERCENT_DISPLAY}" " " "${CURRENT_FLAC_TOTAL}" " ${FILENAME}"
 }
 print_aucdtect_issue () {
 	# Grab the first line of 'stty -a' output
@@ -588,7 +621,12 @@ print_aucdtect_issue () {
 }
 print_aucdtect_spectrogram () {
 	# Obtain percentage of completed files
+	# (stored in: ${PERCENT_DISPLAY} variable)
 	find_percentage
+
+	# Obtain current flac (stored in:
+	# ${CURRENT_FLAC_TOTAL} variable)
+	current_flac
 
 	# Grab the first line of 'stty -a' output
 	# Redirecting '/dev/stderr' to 'stty' allows valid arguments
@@ -614,8 +652,8 @@ print_aucdtect_spectrogram () {
 		FILENAME="${FILENAME::$MAX_FILENAME_LENGTH}…"
 	fi
 
-	printf "\r${NORMAL}%$((${COLUMNS} - 24))s${BOLD_BLUE}%s${NORMAL}%s${YELLOW}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}\r${CYAN}%s${NORMAL}%s${YELLOW}%s${NORMAL}%s" \
-	"" "[" " " "Creating Spectrogram" " " "]" "${PERCENT_DISPLAY}" " " "*" " ${FILENAME}"
+	printf "\r${NORMAL}%$((${COLUMNS} - 24))s${BOLD_BLUE}%s${NORMAL}%s${YELLOW}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}\r${CYAN}%s${NORMAL}%s${MAGENTA}%s${NORMAL}%s" \
+	"" "[" " " "Creating Spectrogram" " " "]" "${PERCENT_DISPLAY}" " " "${CURRENT_FLAC_TOTAL}" " ${FILENAME}"
 }
 print_aucdtect_skip () {
 	# Grab the first line of 'stty -a' output
@@ -641,12 +679,17 @@ print_aucdtect_skip () {
 		FILENAME="${FILENAME::$MAX_FILENAME_LENGTH}…"
 	fi
 
-	printf "\r${NORMAL}%$((${COLUMNS} - 11))s${BOLD_BLUE}%s${NORMAL}%s${YELLOW}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}\r%s${YELLOW}%s${NORMAL}%s\n" \
-	"" "[" " " "SKIPPED" " " "]" "        " "*" " ${FILENAME}"
+	printf "\r${NORMAL}%$((${COLUMNS} - 11))s${BOLD_BLUE}%s${NORMAL}%s${YELLOW}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}\r%s${BOLD_RED}%s${NORMAL}%s\n" \
+	"" "[" " " "SKIPPED" " " "]" "     " "*" " ${FILENAME}"
 }
 print_done_flac () {
 	# Obtain percentage of completed files
+	# (stored in: ${PERCENT_DISPLAY} variable)
 	find_percentage
+
+	# Obtain current flac (stored in:
+	# ${CURRENT_FLAC_TOTAL} variable)
+	current_flac
 
 	# Grab the first line of 'stty -a' output
 	# Redirecting '/dev/stderr' to 'stty' allows valid arguments
@@ -671,12 +714,17 @@ print_done_flac () {
 		FILENAME="${FILENAME::$MAX_FILENAME_LENGTH}…"
 	fi
 
-	printf "\r${NORMAL}%$((${COLUMNS} - 8))s${BOLD_BLUE}%s${NORMAL}%s${BOLD_GREEN}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}\r${CYAN}%s${NORMAL}%s${YELLOW}%s${NORMAL}%s" \
-	"" "[" " " "DONE" " " "]" "${PERCENT_DISPLAY}" " " "*" " ${FILENAME}"
+	printf "\r${NORMAL}%$((${COLUMNS} - 8))s${BOLD_BLUE}%s${NORMAL}%s${BOLD_GREEN}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}\r${CYAN}%s${NORMAL}%s${MAGENTA}%s${NORMAL}%s" \
+	"" "[" " " "DONE" " " "]" "${PERCENT_DISPLAY}" " " "${CURRENT_FLAC_TOTAL}" " ${FILENAME}"
 }
 print_level_same_compression () {
 	# Obtain percentage of completed files
+	# (stored in: ${PERCENT_DISPLAY} variable)
 	find_percentage
+
+	# Obtain current flac (stored in:
+	# ${CURRENT_FLAC_TOTAL} variable)
+	current_flac
 
 	# Grab the first line of 'stty -a' output
 	# Redirecting '/dev/stderr' to 'stty' allows valid arguments
@@ -702,12 +750,17 @@ print_level_same_compression () {
 		FILENAME="${FILENAME::$MAX_FILENAME_LENGTH}…"
 	fi
 
-	printf "\r${NORMAL}%$((${COLUMNS} - 22))s${BOLD_BLUE}%s${NORMAL}%s${YELLOW}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}\r${CYAN}%s${NORMAL}%s${YELLOW}%s${NORMAL}%s" \
-	"" "[" " " "Already At Level ${COMPRESSION_LEVEL}" " " "]" "${PERCENT_DISPLAY}" " " "*" " ${FILENAME}"
+	printf "\r${NORMAL}%$((${COLUMNS} - 22))s${BOLD_BLUE}%s${NORMAL}%s${YELLOW}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}\r${CYAN}%s${NORMAL}%s${MAGENTA}%s${NORMAL}%s" \
+	"" "[" " " "Already At Level ${COMPRESSION_LEVEL}" " " "]" "${PERCENT_DISPLAY}" " " "${CURRENT_FLAC_TOTAL}" " ${FILENAME}"
 }
 print_analyzing_tags () {
 	# Obtain percentage of completed files
+	# (stored in: ${PERCENT_DISPLAY} variable)
 	find_percentage
+
+	# Obtain current flac (stored in:
+	# ${CURRENT_FLAC_TOTAL} variable)
+	current_flac
 
 	# Grab the first line of 'stty -a' output
 	# Redirecting '/dev/stderr' to 'stty' allows valid arguments
@@ -733,12 +786,17 @@ print_analyzing_tags () {
 		FILENAME="${FILENAME::$MAX_FILENAME_LENGTH}…"
 	fi
 
-	printf "\r${NORMAL}%$((${COLUMNS} - 18))s${BOLD_BLUE}%s${NORMAL}%s${YELLOW}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}\r${CYAN}%s${NORMAL}%s${YELLOW}%s${NORMAL}%s" \
-	"" "[" " " "Analyzing Tags" " " "]" "${PERCENT_DISPLAY}" " " "*" " ${FILENAME}"
+	printf "\r${NORMAL}%$((${COLUMNS} - 18))s${BOLD_BLUE}%s${NORMAL}%s${YELLOW}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}\r${CYAN}%s${NORMAL}%s${MAGENTA}%s${NORMAL}%s" \
+	"" "[" " " "Analyzing Tags" " " "]" "${PERCENT_DISPLAY}" " " "${CURRENT_FLAC_TOTAL}" " ${FILENAME}"
 }
 print_setting_tags () {
 	# Obtain percentage of completed files
+	# (stored in: ${PERCENT_DISPLAY} variable)
 	find_percentage
+
+	# Obtain current flac (stored in:
+	# ${CURRENT_FLAC_TOTAL} variable)
+	current_flac
 
 	# Grab the first line of 'stty -a' output
 	# Redirecting '/dev/stderr' to 'stty' allows valid arguments
@@ -764,12 +822,17 @@ print_setting_tags () {
 		FILENAME="${FILENAME::$MAX_FILENAME_LENGTH}…"
 	fi
 
-	printf "\r${NORMAL}%$((${COLUMNS} - 16))s${BOLD_BLUE}%s${NORMAL}%s${YELLOW}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}\r${CYAN}%s${NORMAL}%s${YELLOW}%s${NORMAL}%s" \
-	"" "[" " " "Setting Tags" " " "]" "${PERCENT_DISPLAY}" " " "*" " ${FILENAME}"
+	printf "\r${NORMAL}%$((${COLUMNS} - 16))s${BOLD_BLUE}%s${NORMAL}%s${YELLOW}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}\r${CYAN}%s${NORMAL}%s${MAGENTA}%s${NORMAL}%s" \
+	"" "[" " " "Setting Tags" " " "]" "${PERCENT_DISPLAY}" " " "${CURRENT_FLAC_TOTAL}" " ${FILENAME}"
 }
 print_prune_flac () {
 	# Obtain percentage of completed files
+	# (stored in: ${PERCENT_DISPLAY} variable)
 	find_percentage
+
+	# Obtain current flac (stored in:
+	# ${CURRENT_FLAC_TOTAL} variable)
+	current_flac
 
 	# Grab the first line of 'stty -a' output
 	# Redirecting '/dev/stderr' to 'stty' allows valid arguments
@@ -795,13 +858,18 @@ print_prune_flac () {
 		FILENAME="${FILENAME::$MAX_FILENAME_LENGTH}…"
 	fi
 
-	printf "\r${NORMAL}%$((${COLUMNS} - 20))s${BOLD_BLUE}%s${NORMAL}%s${YELLOW}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}\r${CYAN}%s${NORMAL}%s${YELLOW}%s${NORMAL}%s" \
-	"" "[" " " "Pruning Metadata" " " "]" "${PERCENT_DISPLAY}" " " "*" " ${FILENAME}"
+	printf "\r${NORMAL}%$((${COLUMNS} - 20))s${BOLD_BLUE}%s${NORMAL}%s${YELLOW}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}\r${CYAN}%s${NORMAL}%s${MAGENTA}%s${NORMAL}%s" \
+	"" "[" " " "Pruning Metadata" " " "]" "${PERCENT_DISPLAY}" " " "${CURRENT_FLAC_TOTAL}" " ${FILENAME}"
 }
 
 print_interrupt () {
 	# Obtain percentage of completed files
+	# (stored in: ${PERCENT_DISPLAY} variable)
 	find_percentage
+
+	# Obtain current flac (stored in:
+	# ${CURRENT_FLAC_TOTAL} variable)
+	current_flac
 
 	# Grab the first line of 'stty -a' output
 	# Redirecting '/dev/stderr' to 'stty' allows valid arguments
@@ -827,8 +895,45 @@ print_interrupt () {
 		FILENAME="${FILENAME::$MAX_FILENAME_LENGTH}…"
 	fi
 
-	printf "\r${NORMAL}%$((${COLUMNS} - 15))s${BOLD_BLUE}%s${NORMAL}%s${YELLOW}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}\r${CYAN}%s${NORMAL}%s${YELLOW}%s${NORMAL}%s" \
-	"" "[" " " "Interrupted" " " "]" "${PERCENT_DISPLAY}" " " "*" " ${FILENAME}"
+	printf "\r${NORMAL}%$((${COLUMNS} - 15))s${BOLD_BLUE}%s${NORMAL}%s${YELLOW}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}\r${CYAN}%s${NORMAL}%s${MAGENTA}%s${NORMAL}%s" \
+	"" "[" " " "Interrupted" " " "]" "${PERCENT_DISPLAY}" " " "${CURRENT_FLAC_TOTAL}" " ${FILENAME}"
+}
+print_interrupt_replaygain () {
+	# Obtain percentage of completed directories
+	# (stored in: ${PERCENT_DISPLAY} variable)
+	find_percentage_directories
+
+	# Obtain current directory (stored in:
+	# ${CURRENT_DIRECTORY_TOTAL} variable)
+	current_directory
+
+	# Grab the first line of 'stty -a' output
+	# Redirecting '/dev/stderr' to 'stty' allows valid arguments
+	read -r COLUMNS < <(stty -a < /dev/stderr)
+
+	# Remove superflous information from 'stty -a'
+	# Ends up with number of ${COLUMNS}
+	COLUMNS="${COLUMNS/#*columns }"
+	COLUMNS="${COLUMNS/%;*}"
+
+	# This is the number of $COLUMNS minus the indent (7) minus length of the printed
+	# message, [ Interrupted ] (15) minus 3 (leaves a gap and the gives room for the
+	# ellipsis (…) and cursor)
+	MAX_FILENAME_LENGTH="$((${COLUMNS} - 31))"
+
+	FILENAME="${i##*/}"
+	# Replace possible newlines in filename with '?' (like 'ls' output)
+	FILENAME="${FILENAME//
+/?}"
+
+	FILENAME_LENGTH="${#FILENAME}"
+
+	if [[ "${FILENAME_LENGTH}" -gt "${MAX_FILENAME_LENGTH}" ]] ; then
+		FILENAME="${FILENAME::$MAX_FILENAME_LENGTH}…"
+	fi
+
+	printf "\r${NORMAL}%$((${COLUMNS} - 15))s${BOLD_BLUE}%s${NORMAL}%s${YELLOW}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}\r${CYAN}%s${NORMAL}%s${MAGENTA}%s${NORMAL}%s" \
+	"" "[" " " "Interrupted" " " "]" "${PERCENT_DISPLAY}" " " "${CURRENT_DIRECTORY_TOTAL}" " ${FILENAME}"
 }
 
 ######################################
@@ -929,12 +1034,36 @@ countdown_metadata () {
 	countdown_10
 }
 
-###############################
-#  INCREMENT FLACS PROCESSED  #
-###############################
+##############################################
+#  INCREMENT FLACS PROCESSED OR DIRECTORIES  #
+##############################################
 increment_count () {
 	# Add counter to temporary file (used for number of flacs processed/percentage)
 	printf "%s\n" '.' >> "${PROCESSED_TMP_FILE}"
+}
+
+##################################
+#  FIND CURRENT NUMBER OF FLACS  #
+##################################
+current_flac () {
+	# Obtain current number of processed FLAC files
+	mapfile -n0 processed_array < "${PROCESSED_TMP_FILE}"
+	CURRENT_FLAC="${#processed_array[@]}"
+
+	# Store current FLAC out of total for display
+	CURRENT_FLAC_TOTAL="[${CURRENT_FLAC}/${TOTAL_FLACS}]"
+}
+
+########################################
+#  FIND CURRENT NUMBER OF DIRECTORIES  #
+########################################
+current_directory () {
+	# Obtain current number of processed directories
+	mapfile -n0 processed_array < "${PROCESSED_TMP_FILE}"
+	CURRENT_DIRECTORY="${#processed_array[@]}"
+
+	# Store current directories out of total for display
+	CURRENT_DIRECTORY_TOTAL="[${CURRENT_DIRECTORY}/${TOTAL_DIRECTORIES}]"
 }
 
 #######################
@@ -1061,7 +1190,7 @@ replaygain () {
 	title_test_replaygain
 
 	# Abort using BASH's trap command on SIGINT
-	replaygain_abort () {
+	replaygain_test_abort () {
 		print_interrupt
 
 		# Kill running children
@@ -1077,13 +1206,6 @@ replaygain () {
 			" " "*" " please check:"
 			printf "%s${BOLD_RED}%s${NORMAL}%s\n" \
 			" " "*" " \"${REPLAY_TEST_ERRORS}\" for details."
-		elif [[ -f "${REPLAY_ADD_ERRORS}" ]] ; then
-			printf "\n%s${BOLD_RED}%s${NORMAL}%s\n" \
-			" " "*" " There were issues adding ReplayGain values,"
-			printf "%s${BOLD_RED}%s${NORMAL}%s\n" \
-			" " "*" " please check:"
-			printf "%s${BOLD_RED}%s${NORMAL}%s\n" \
-			" " "*" " \"${REPLAY_ADD_ERRORS}\" for details."
 		fi
 
 		REPLAYGAIN_COMPLETE="interrupt"
@@ -1093,7 +1215,7 @@ replaygain () {
 	}
 
 	# Trap SIGINT (Control-C) to abort cleanly
-	trap replaygain_abort SIGINT
+	trap replaygain_test_abort SIGINT
 
 	test_replaygain () {
 		# Let's make sure to kill running children if this
@@ -1203,6 +1325,34 @@ replaygain () {
 	total_directories
 
 	title_add_replaygain
+
+	# Trap SIGINT (Control-C) to abort cleanly
+	trap replaygain_process_abort SIGINT
+
+	# Abort using BASH's trap command on SIGINT
+	replaygain_process_abort () {
+		print_interrupt_replaygain
+
+		# Kill running children
+		kill_jobs
+
+		printf "\n%s${BOLD_GREEN}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}\n" \
+		" " "*" " Control-C received, generating summary. Please wait..."
+
+		if [[ -f "${REPLAY_ADD_ERRORS}" ]] ; then
+			printf "\n%s${BOLD_RED}%s${NORMAL}%s\n" \
+			" " "*" " There were issues adding ReplayGain values,"
+			printf "%s${BOLD_RED}%s${NORMAL}%s\n" \
+			" " "*" " please check:"
+			printf "%s${BOLD_RED}%s${NORMAL}%s\n" \
+			" " "*" " \"${REPLAY_ADD_ERRORS}\" for details."
+		fi
+
+		REPLAYGAIN_COMPLETE="interrupt"
+		operation_summary
+
+		exit 1
+	}
 
 	# Check if "-G, --replaygain-noforce" was called
 	if [[ "${REPLAYGAIN_NOFORCE}" == "true" ]] ; then
@@ -1421,7 +1571,7 @@ compress_flacs () {
 		" " "*" " generating summary. Please wait..."
 
 		# Remove temporarily encoded FLAC files
-		rm "${DIRECTORY}"/**/*.tmp,fl-ac+en\'c
+		rm -f "${DIRECTORY}"/**/*.tmp,fl-ac+en\'c
 
 		if [[ -f "${VERIFY_ERRORS}" ]] ; then
 			printf "\n%s${BOLD_RED}%s${NORMAL}%s\n" \
