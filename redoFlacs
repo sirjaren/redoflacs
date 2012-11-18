@@ -1,6 +1,5 @@
 #!/usr/bin/env bash
 
-#-----------------------------------------------------------------
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
 # as published by the Free Software Foundation; either version 2
@@ -10,7 +9,7 @@
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 # GNU General Public License for more details.
-#-----------------------------------------------------------------
+
 # You can follow development of this script on Github at:
 # https://github.com/sirjaren/redoflacs
 #
@@ -303,10 +302,11 @@ __print_compressing_flac () {
 	COLUMNS="${COLUMNS/#*columns }"
 	COLUMNS="${COLUMNS/%;*}"
 
-	# This is the number of $COLUMNS minus the indent (7) minus length of the printed
-	# message, [ Compressing FLAC ] (20) minus 3 (leaves a gap and the gives room for the
+	# This is the number of ${COLUMNS} minus the length of the percent (4), minus the length
+	# of the printed message, '[ Compressing FLAC ]' (20), minus three gaps (3), minus the
+	# length of processed FLAC files, minus 3 (leaves a gap and the gives room for the
 	# ellipsis (…) and cursor)
-	MAX_FILENAME_LENGTH="$((${COLUMNS} - 30))"
+	MAX_FILENAME_LENGTH="$(( ${COLUMNS} - 30 - ${#CURRENT_FLAC_TOTAL} ))"
 
 	FILENAME="${i##*/}"
 	# Replace possible newlines in filename with '?' (like 'ls' output)
@@ -318,7 +318,8 @@ __print_compressing_flac () {
 		FILENAME="${FILENAME::$MAX_FILENAME_LENGTH}…"
 	fi
 
-	printf "\r${NORMAL}%$((${COLUMNS} - 20))s${BOLD_BLUE}%s${NORMAL}%s${YELLOW}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}\r${CYAN}%s${NORMAL}%s${MAGENTA}%s${NORMAL}%s" \
+	# 21 is the length of the printed message plus 1 for the gap at the end
+	printf "\r${NORMAL}%$(( ${COLUMNS} - 21 ))s${BOLD_BLUE}%s${NORMAL}%s${YELLOW}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}\r${CYAN}%s${NORMAL}%s${MAGENTA}%s${NORMAL}%s" \
 	"" "[" " " "Compressing FLAC" " " "]" "${PERCENT_DISPLAY}" " " "${CURRENT_FLAC_TOTAL}" " ${FILENAME}"
 }
 __print_test_replaygain () {
@@ -339,10 +340,11 @@ __print_test_replaygain () {
 	COLUMNS="${COLUMNS/#*columns }"
 	COLUMNS="${COLUMNS/%;*}"
 
-	# This is the number of $COLUMNS minus the indent (7) minus length of the printed
-	# message, [ Testing ReplayGain ] (22) minus 3 (leaves a gap and the gives room for the
+	# This is the number of ${COLUMNS} minus the length of the percent (4), minus the length
+	# of the printed message, '[ Testing ReplayGain ]' (22), minus three gaps (3), minus the
+	# length of processed FLAC files, minus 3 (leaves a gap and the gives room for the
 	# ellipsis (…) and cursor)
-	MAX_FILENAME_LENGTH="$((${COLUMNS} - 32))"
+	MAX_FILENAME_LENGTH="$(( ${COLUMNS} - 32 - ${#CURRENT_FLAC_TOTAL} ))"
 
 	FILENAME="${i##*/}"
 	# Replace possible newlines in filename with '?' (like 'ls' output)
@@ -355,7 +357,8 @@ __print_test_replaygain () {
 		FILENAME="${FILENAME::$MAX_FILENAME_LENGTH}…"
 	fi
 
-	printf "\r${NORMAL}%$((${COLUMNS} - 22))s${BOLD_BLUE}%s${NORMAL}%s${YELLOW}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}\r${CYAN}%s${NORMAL}%s${MAGENTA}%s${NORMAL}%s" \
+	# 23 is the length of the printed message plus 1 for the gap at the end
+	printf "\r${NORMAL}%$(( ${COLUMNS} - 23 ))s${BOLD_BLUE}%s${NORMAL}%s${YELLOW}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}\r${CYAN}%s${NORMAL}%s${MAGENTA}%s${NORMAL}%s" \
 	"" "[" " " "Testing ReplayGain" " " "]" "${PERCENT_DISPLAY}" " " "${CURRENT_FLAC_TOTAL}" " ${FILENAME}"
 }
 __print_add_replaygain () {
@@ -376,10 +379,11 @@ __print_add_replaygain () {
 	COLUMNS="${COLUMNS/#*columns }"
 	COLUMNS="${COLUMNS/%;*}"
 
-	# This is the number of $COLUMNS minus the indent (7) minus length of the printed
-	# message, [ Adding ReplayGain ] (21) minus 3 (leaves a gap and the gives room for the
+	# This is the number of ${COLUMNS} minus the length of the percent (4), minus the length
+	# of the printed message, '[ Adding ReplayGain ]' (21), minus three gaps (3), minus the
+	# length of processed directories, minus 3 (leaves a gap and the gives room for the
 	# ellipsis (…) and cursor)
-	MAX_FILENAME_LENGTH="$((${COLUMNS} - 31))"
+	MAX_FILENAME_LENGTH="$(( ${COLUMNS} - 31 - ${#CURRENT_DIRECTORY_TOTAL} ))"
 
 	FILENAME="${i##*/}"
 	# Replace possible newlines in filename with '?' (like 'ls' output)
@@ -392,7 +396,8 @@ __print_add_replaygain () {
 		FILENAME="${FILENAME::$MAX_FILENAME_LENGTH}…"
 	fi
 
-	printf "\r${NORMAL}%$((${COLUMNS} - 21))s${BOLD_BLUE}%s${NORMAL}%s${YELLOW}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}\r${CYAN}%s${NORMAL}%s${MAGENTA}%s${NORMAL}%s" \
+	# 22 is the length of the printed message plus 1 for the gap at the end
+	printf "\r${NORMAL}%$(( ${COLUMNS} - 22 ))s${BOLD_BLUE}%s${NORMAL}%s${YELLOW}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}\r${CYAN}%s${NORMAL}%s${MAGENTA}%s${NORMAL}%s" \
 	"" "[" " " "Adding ReplayGain" " " "]" "${PERCENT_DISPLAY}" " " "${CURRENT_DIRECTORY_TOTAL}" " ${FILENAME}"
 }
 __print_testing_flac () {
@@ -413,10 +418,11 @@ __print_testing_flac () {
 	COLUMNS="${COLUMNS/#*columns }"
 	COLUMNS="${COLUMNS/%;*}"
 
-	# This is the number of $COLUMNS minus the indent (7) minus length of the printed
-	# message, [ Testing FLAC ] (16) minus 3 (leaves a gap and the gives room for the
+	# This is the number of ${COLUMNS} minus the length of the percent (4), minus the length
+	# of the printed message, '[ Testing FLAC ]' (16), minus three gaps (3), minus the
+	# length of processed FLAC files, minus 3 (leaves a gap and the gives room for the
 	# ellipsis (…) and cursor)
-	MAX_FILENAME_LENGTH="$((${COLUMNS} - 26))"
+	MAX_FILENAME_LENGTH="$(( ${COLUMNS} - 26 - ${#CURRENT_FLAC_TOTAL} ))"
 
 	FILENAME="${i##*/}"
 	# Replace possible newlines in filename with '?' (like 'ls' output)
@@ -428,7 +434,8 @@ __print_testing_flac () {
 		FILENAME="${FILENAME::$MAX_FILENAME_LENGTH}…"
 	fi
 	
-	printf "\r${NORMAL}%$((${COLUMNS} - 16))s${BOLD_BLUE}%s${NORMAL}%s${YELLOW}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}\r${CYAN}%s${NORMAL}%s${MAGENTA}%s${NORMAL}%s" \
+	# 17 is the length of the printed message plus 1 for the gap at the end
+	printf "\r${NORMAL}%$(( ${COLUMNS} - 17 ))s${BOLD_BLUE}%s${NORMAL}%s${YELLOW}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}\r${CYAN}%s${NORMAL}%s${MAGENTA}%s${NORMAL}%s" \
 	"" "[" " " "Testing FLAC" " " "]" "${PERCENT_DISPLAY}" " " "${CURRENT_FLAC_TOTAL}" " ${FILENAME}"
 }
 __print_failed_flac () {
@@ -444,9 +451,10 @@ __print_failed_flac () {
 	COLUMNS="${COLUMNS/#*columns }"
 	COLUMNS="${COLUMNS/%;*}"
 
-	# This is the number of $COLUMNS minus the indent (7) minus length of the printed
-	# message, [ FAILED ] (10) minus 2 (leaves a gap and the gives room for the ellipsis (…))
-	MAX_FILENAME_LENGTH="$((${COLUMNS} - 19))"
+	# This is the number of ${COLUMNS} minus the length of the gaps (and *) (8), minus the length
+	# of the printed message, '[ Failed ]' (10), minus 2 (leaves a gap and the gives room for the
+	# ellipsis (…))
+	MAX_FILENAME_LENGTH="$(( ${COLUMNS} - 20 ))"
 
 	FILENAME="${i##*/}"
 	# Replace possible newlines in filename with '?' (like 'ls' output)
@@ -458,8 +466,9 @@ __print_failed_flac () {
 		FILENAME="${FILENAME::$MAX_FILENAME_LENGTH}…"
 	fi
 
-	printf "\r${NORMAL}%$((${COLUMNS} - 10))s${BOLD_BLUE}%s${NORMAL}%s${BOLD_RED}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}\r%s${BOLD_RED}%s${NORMAL}%s\n" \
-	"" "[" " " "FAILED" " " "]" "     " "*" " ${FILENAME}"
+	# 11 is the length of the printed message plus 1 for the gap at the end
+	printf "\r${NORMAL}%$(( ${COLUMNS} - 11 ))s${BOLD_BLUE}%s${NORMAL}%s${BOLD_RED}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}\r%s${BOLD_RED}%s${NORMAL}%s\n" \
+	"" "[" " " "Failed" " " "]" "     " "*" " ${FILENAME}"
 }
 __print_checking_md5 () {
 	# Obtain percentage of completed files
@@ -479,10 +488,11 @@ __print_checking_md5 () {
 	COLUMNS="${COLUMNS/#*columns }"
 	COLUMNS="${COLUMNS/%;*}"
 
-	# This is the number of $COLUMNS minus the indent (7) minus length of the printed
-	# message, [ Checking MD5 ] (16) minus 3 (leaves a gap and the gives room for the
+	# This is the number of ${COLUMNS} minus the length of the percent (4), minus the length
+	# of the printed message, '[ Checking MD5 ]' (16), minus three gaps (3), minus the
+	# length of processed FLAC files, minus 3 (leaves a gap and the gives room for the
 	# ellipsis (…) and cursor)
-	MAX_FILENAME_LENGTH="$((${COLUMNS} - 26))"
+	MAX_FILENAME_LENGTH="$(( ${COLUMNS} - 26 - ${#CURRENT_FLAC_TOTAL} ))"
 
 	FILENAME="${i##*/}"
 	# Replace possible newlines in filename with '?' (like 'ls' output)
@@ -494,7 +504,8 @@ __print_checking_md5 () {
 		FILENAME="${FILENAME::$MAX_FILENAME_LENGTH}…"
 	fi
 
-	printf "\r${NORMAL}%$((${COLUMNS} - 16))s${BOLD_BLUE}%s${NORMAL}%s${YELLOW}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}\r${CYAN}%s${NORMAL}%s${MAGENTA}%s${NORMAL}%s" \
+	# 17 is the length of the printed message plus 1 for the gap at the end
+	printf "\r${NORMAL}%$(( ${COLUMNS} - 17 ))s${BOLD_BLUE}%s${NORMAL}%s${YELLOW}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}\r${CYAN}%s${NORMAL}%s${MAGENTA}%s${NORMAL}%s" \
 	"" "[" " " "Checking MD5" " " "]" "${PERCENT_DISPLAY}" " " "${CURRENT_FLAC_TOTAL}" " ${FILENAME}"
 }
 __print_ok_flac () {
@@ -515,9 +526,11 @@ __print_ok_flac () {
 	COLUMNS="${COLUMNS/#*columns }"
 	COLUMNS="${COLUMNS/%;*}"
 
-	# This is the number of $COLUMNS minus the indent (7) minus length of the printed
-	# message, [ OK ] (6) minus 2 (leaves a gap and the gives room for the ellipsis (…))
-	MAX_FILENAME_LENGTH="$((${COLUMNS} - 15))"
+	# This is the number of ${COLUMNS} minus the length of the percent (4), minus the length
+	# of the printed message, '[ ok ]' (6), minus three gaps (3), minus the
+	# length of processed FLAC files, minus 2 (leaves a gap and the gives room for the
+	# ellipsis (…))
+	MAX_FILENAME_LENGTH="$(( ${COLUMNS} - 15 - ${#CURRENT_FLAC_TOTAL} ))"
 
 	FILENAME="${i##*/}"
 	# Replace possible newlines in filename with '?' (like 'ls' output)
@@ -530,8 +543,9 @@ __print_ok_flac () {
 		FILENAME="${FILENAME::$MAX_FILENAME_LENGTH}…"
 	fi
 
-	printf "\r${NORMAL}%$((${COLUMNS} - 6))s${BOLD_BLUE}%s${NORMAL}%s${BOLD_GREEN}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}\r${CYAN}%s${NORMAL}%s${MAGENTA}%s${NORMAL}%s" \
-	"" "[" " " "OK" " " "]" "${PERCENT_DISPLAY}" " " "${CURRENT_FLAC_TOTAL}" " ${FILENAME}"
+	# 7 is the length of the printed message plus 1 for the gap at the end
+	printf "\r${NORMAL}%$(( ${COLUMNS} - 7 ))s${BOLD_BLUE}%s${NORMAL}%s${BOLD_GREEN}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}\r${CYAN}%s${NORMAL}%s${MAGENTA}%s${NORMAL}%s" \
+	"" "[" " " "ok" " " "]" "${PERCENT_DISPLAY}" " " "${CURRENT_FLAC_TOTAL}" " ${FILENAME}"
 }
 __print_ok_replaygain () {
 	# Obtain percentage of completed directories
@@ -551,9 +565,11 @@ __print_ok_replaygain () {
 	COLUMNS="${COLUMNS/#*columns }"
 	COLUMNS="${COLUMNS/%;*}"
 
-	# This is the number of $COLUMNS minus the indent (7) minus length of the printed
-	# message, [ OK ] (6) minus 2 (leaves a gap and the gives room for the ellipsis (…))
-	MAX_FILENAME_LENGTH="$((${COLUMNS} - 15))"
+	# This is the number of ${COLUMNS} minus the length of the percent (4), minus the length
+	# of the printed message, '[ ok ]' (6), minus three gaps (3), minus the
+	# length of processed directories, minus 2 (leaves a gap and the gives room for the
+	# ellipsis (…))
+	MAX_FILENAME_LENGTH="$(( ${COLUMNS} - 15 - ${#CURRENT_DIRECTORY_TOTAL} ))"
 
 	FILENAME="${i##*/}"
 	# Replace possible newlines in filename with '?' (like 'ls' output)
@@ -566,8 +582,9 @@ __print_ok_replaygain () {
 		FILENAME="${FILENAME::$MAX_FILENAME_LENGTH}…"
 	fi
 
-	printf "\r${NORMAL}%$((${COLUMNS} - 6))s${BOLD_BLUE}%s${NORMAL}%s${BOLD_GREEN}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}\r${CYAN}%s${NORMAL}%s${MAGENTA}%s${NORMAL}%s" \
-	"" "[" " " "OK" " " "]" "${PERCENT_DISPLAY}" " " "${CURRENT_DIRECTORY_TOTAL}" " ${FILENAME}"
+	# 7 is the length of the printed message plus 1 for the gap at the end
+	printf "\r${NORMAL}%$(( ${COLUMNS} - 7 ))s${BOLD_BLUE}%s${NORMAL}%s${BOLD_GREEN}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}\r${CYAN}%s${NORMAL}%s${MAGENTA}%s${NORMAL}%s" \
+	"" "[" " " "ok" " " "]" "${PERCENT_DISPLAY}" " " "${CURRENT_DIRECTORY_TOTAL}" " ${FILENAME}"
 }
 __print_aucdtect_flac () {
 	# Obtain percentage of completed files
@@ -587,10 +604,11 @@ __print_aucdtect_flac () {
 	COLUMNS="${COLUMNS/#*columns }"
 	COLUMNS="${COLUMNS/%;*}"
 
-	# This is the number of $COLUMNS minus the indent (7) minus length of the printed
-	# message, [ Validating FLAC ] (19) minus 3 (leaves a gap and the gives room for the
+	# This is the number of ${COLUMNS} minus the length of the percent (4), minus the length
+	# of the printed message, '[ Validating FLAC ]' (19), minus three gaps (3), minus the
+	# length of processed FLAC files, minus 3 (leaves a gap and the gives room for the
 	# ellipsis (…) and cursor)
-	MAX_FILENAME_LENGTH="$((${COLUMNS} - 29))"
+	MAX_FILENAME_LENGTH="$(( ${COLUMNS} - 29 - ${#CURRENT_FLAC_TOTAL} ))"
 
 	FILENAME="${i##*/}"
 	# Replace possible newlines in filename with '?' (like 'ls' output)
@@ -602,7 +620,8 @@ __print_aucdtect_flac () {
 		FILENAME="${FILENAME::$MAX_FILENAME_LENGTH}…"
 	fi
 
-	printf "\r${NORMAL}%$((${COLUMNS} - 19))s${BOLD_BLUE}%s${NORMAL}%s${YELLOW}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}\r${CYAN}%s${NORMAL}%s${MAGENTA}%s${NORMAL}%s" \
+	# 20 is the length of the printed message plus 1 for the gap at the end
+	printf "\r${NORMAL}%$(( ${COLUMNS} - 20 ))s${BOLD_BLUE}%s${NORMAL}%s${YELLOW}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}\r${CYAN}%s${NORMAL}%s${MAGENTA}%s${NORMAL}%s" \
 	"" "[" " " "Validating FLAC" " " "]" "${PERCENT_DISPLAY}" " " "${CURRENT_FLAC_TOTAL}" " ${FILENAME}"
 }
 __print_aucdtect_issue () {
@@ -615,9 +634,10 @@ __print_aucdtect_issue () {
 	COLUMNS="${COLUMNS/#*columns }"
 	COLUMNS="${COLUMNS/%;*}"
 
-	# This is the number of $COLUMNS minus the indent (7) minus length of the printed
-	# message, [ ISSUE ] (9) minus 2 (leaves a gap and the gives room for the ellipsis (…))
-	MAX_FILENAME_LENGTH="$((${COLUMNS} - 18))"
+	# This is the number of ${COLUMNS} minus the length of the gaps (and *) (8), minus the length
+	# of the printed message, '[ Issue ]' (9), minus 2 (leaves a gap and the gives room for the
+	# ellipsis (…))
+	MAX_FILENAME_LENGTH="$(( ${COLUMNS} - 19 ))"
 
 	FILENAME="${i##*/}"
 	# Replace possible newlines in filename with '?' (like 'ls' output)
@@ -629,8 +649,9 @@ __print_aucdtect_issue () {
 		FILENAME="${FILENAME::$MAX_FILENAME_LENGTH}…"
 	fi
 
-	printf "\r${NORMAL}%$((${COLUMNS} - 9))s${BOLD_BLUE}%s${NORMAL}%s${YELLOW}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}\r%s${BOLD_RED}%s${NORMAL}%s\n" \
-	"" "[" " " "ISSUE" " " "]" "     " "*" " ${FILENAME}"
+	# 10 is the length of the printed message plus 1 for the gap at the end
+	printf "\r${NORMAL}%$(( ${COLUMNS} - 10 ))s${BOLD_BLUE}%s${NORMAL}%s${YELLOW}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}\r%s${BOLD_RED}%s${NORMAL}%s\n" \
+	"" "[" " " "Issue" " " "]" "     " "*" " ${FILENAME}"
 }
 __print_aucdtect_spectrogram () {
 	# Obtain percentage of completed files
@@ -650,10 +671,11 @@ __print_aucdtect_spectrogram () {
 	COLUMNS="${COLUMNS/#*columns }"
 	COLUMNS="${COLUMNS/%;*}"
 
-	# This is the number of $COLUMNS minus the indent (7) minus length of the printed
-	# message, [ Creating Spectrogram ] (24) minus 3 (leaves a gap and the gives room for the
+	# This is the number of ${COLUMNS} minus the length of the percent (4), minus the length
+	# of the printed message, '[ Creating Spectrogram ]' (24), minus three gaps (3), minus the
+	# length of processed FLAC files, minus 3 (leaves a gap and the gives room for the
 	# ellipsis (…) and cursor)
-	MAX_FILENAME_LENGTH="$((${COLUMNS} - 34))"
+	MAX_FILENAME_LENGTH="$(( ${COLUMNS} - 34 - ${#CURRENT_FLAC_TOTAL} ))"
 
 	FILENAME="${i##*/}"
 	# Replace possible newlines in filename with '?' (like 'ls' output)
@@ -665,7 +687,8 @@ __print_aucdtect_spectrogram () {
 		FILENAME="${FILENAME::$MAX_FILENAME_LENGTH}…"
 	fi
 
-	printf "\r${NORMAL}%$((${COLUMNS} - 24))s${BOLD_BLUE}%s${NORMAL}%s${YELLOW}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}\r${CYAN}%s${NORMAL}%s${MAGENTA}%s${NORMAL}%s" \
+	# 25 is the length of the printed message plus 1 for the gap at the end
+	printf "\r${NORMAL}%$(( ${COLUMNS} - 25 ))s${BOLD_BLUE}%s${NORMAL}%s${YELLOW}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}\r${CYAN}%s${NORMAL}%s${MAGENTA}%s${NORMAL}%s" \
 	"" "[" " " "Creating Spectrogram" " " "]" "${PERCENT_DISPLAY}" " " "${CURRENT_FLAC_TOTAL}" " ${FILENAME}"
 }
 __print_aucdtect_skip () {
@@ -678,9 +701,10 @@ __print_aucdtect_skip () {
 	COLUMNS="${COLUMNS/#*columns }"
 	COLUMNS="${COLUMNS/%;*}"
 
-	# This is the number of $COLUMNS minus the indent (7) minus length of the printed
-	# message, [ SKIPPED ] (11) minus 2 (leaves a gap and the gives room for the ellipsis (…))
-	MAX_FILENAME_LENGTH="$((${COLUMNS} - 20))"
+	# This is the number of ${COLUMNS} minus the length of the gaps (and *) (8), minus the length
+	# of the printed message, '[ Skipped ]' (11), minus 2 (leaves a gap and the gives room for the
+	# ellipsis (…))
+	MAX_FILENAME_LENGTH="$(( ${COLUMNS} - 21 ))"
 
 	FILENAME="${i##*/}"
 	# Replace possible newlines in filename with '?' (like 'ls' output)
@@ -692,8 +716,9 @@ __print_aucdtect_skip () {
 		FILENAME="${FILENAME::$MAX_FILENAME_LENGTH}…"
 	fi
 
-	printf "\r${NORMAL}%$((${COLUMNS} - 11))s${BOLD_BLUE}%s${NORMAL}%s${YELLOW}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}\r%s${BOLD_RED}%s${NORMAL}%s\n" \
-	"" "[" " " "SKIPPED" " " "]" "     " "*" " ${FILENAME}"
+	# 12 is the length of the printed message plus 1 for the gap at the end
+	printf "\r${NORMAL}%$(( ${COLUMNS} - 12 ))s${BOLD_BLUE}%s${NORMAL}%s${YELLOW}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}\r%s${BOLD_RED}%s${NORMAL}%s\n" \
+	"" "[" " " "Skipped" " " "]" "     " "*" " ${FILENAME}"
 }
 __print_done_flac () {
 	# Obtain percentage of completed files
@@ -713,9 +738,11 @@ __print_done_flac () {
 	COLUMNS="${COLUMNS/#*columns }"
 	COLUMNS="${COLUMNS/%;*}"
 
-	# This is the number of $COLUMNS minus the indent (7) minus length of the printed
-	# message, [ DONE ] (8) minus 2 (leaves a gap and the gives room for the ellipsis (…))
-	MAX_FILENAME_LENGTH="$((${COLUMNS} - 17))"
+	# This is the number of ${COLUMNS} minus the length of the percent (4), minus the length
+	# of the printed message, '[ Done ]' (8), minus three gaps (3), minus the
+	# length of processed FLAC files, minus 2 (leaves a gap and the gives room for the
+	# ellipsis (…))
+	MAX_FILENAME_LENGTH="$(( ${COLUMNS} - 17 - ${#CURRENT_FLAC_TOTAL} ))"
 
 	FILENAME="${i##*/}"
 	# Replace possible newlines in filename with '?' (like 'ls' output)
@@ -727,8 +754,9 @@ __print_done_flac () {
 		FILENAME="${FILENAME::$MAX_FILENAME_LENGTH}…"
 	fi
 
-	printf "\r${NORMAL}%$((${COLUMNS} - 8))s${BOLD_BLUE}%s${NORMAL}%s${BOLD_GREEN}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}\r${CYAN}%s${NORMAL}%s${MAGENTA}%s${NORMAL}%s" \
-	"" "[" " " "DONE" " " "]" "${PERCENT_DISPLAY}" " " "${CURRENT_FLAC_TOTAL}" " ${FILENAME}"
+	# 9 is the length of the printed message plus 1 for the gap at the end
+	printf "\r${NORMAL}%$(( ${COLUMNS} - 9 ))s${BOLD_BLUE}%s${NORMAL}%s${BOLD_GREEN}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}\r${CYAN}%s${NORMAL}%s${MAGENTA}%s${NORMAL}%s" \
+	"" "[" " " "Done" " " "]" "${PERCENT_DISPLAY}" " " "${CURRENT_FLAC_TOTAL}" " ${FILENAME}"
 }
 __print_level_same_compression () {
 	# Obtain percentage of completed files
@@ -751,7 +779,12 @@ __print_level_same_compression () {
 	# This is the number of $COLUMNS minus the indent (7) minus length of the printed
 	# message, [ Already At Level 8 ] (22) minus 2 (leaves a gap and the gives room for
 	# the ellipsis (…))
-	MAX_FILENAME_LENGTH="$((${COLUMNS} - 31))"
+
+	# This is the number of ${COLUMNS} minus the length of the percent (4), minus the length
+	# of the printed message, '[ Already At Level 8 ]' (22), minus three gaps (3), minus the
+	# length of processed FLAC files, minus 2 (leaves a gap and the gives room for the
+	# ellipsis (…))
+	MAX_FILENAME_LENGTH="$(( ${COLUMNS} - 31 - ${#CURRENT_FLAC_TOTAL} ))"
 
 	FILENAME="${i##*/}"
 	# Replace possible newlines in filename with '?' (like 'ls' output)
@@ -763,7 +796,8 @@ __print_level_same_compression () {
 		FILENAME="${FILENAME::$MAX_FILENAME_LENGTH}…"
 	fi
 
-	printf "\r${NORMAL}%$((${COLUMNS} - 22))s${BOLD_BLUE}%s${NORMAL}%s${YELLOW}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}\r${CYAN}%s${NORMAL}%s${MAGENTA}%s${NORMAL}%s" \
+	# 23 is the length of the printed message plus 1 for the gap at the end
+	printf "\r${NORMAL}%$(( ${COLUMNS} - 23 ))s${BOLD_BLUE}%s${NORMAL}%s${YELLOW}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}\r${CYAN}%s${NORMAL}%s${MAGENTA}%s${NORMAL}%s" \
 	"" "[" " " "Already At Level ${COMPRESSION_LEVEL}" " " "]" "${PERCENT_DISPLAY}" " " "${CURRENT_FLAC_TOTAL}" " ${FILENAME}"
 }
 __print_analyzing_tags () {
@@ -784,10 +818,11 @@ __print_analyzing_tags () {
 	COLUMNS="${COLUMNS/#*columns }"
 	COLUMNS="${COLUMNS/%;*}"
 
-	# This is the number of $COLUMNS minus the indent (7) minus length of the printed
-	# message, [ Analyzing Tags ] (18) minus 3 (leaves a gap and the gives room for the
+	# This is the number of ${COLUMNS} minus the length of the percent (4), minus the length
+	# of the printed message, '[ Analyzing Tags ]' (18), minus three gaps (3), minus the
+	# length of processed FLAC files, minus 3 (leaves a gap and the gives room for the
 	# ellipsis (…) and cursor)
-	MAX_FILENAME_LENGTH="$((${COLUMNS} - 28))"
+	MAX_FILENAME_LENGTH="$(( ${COLUMNS} - 28 - ${#CURRENT_FLAC_TOTAL} ))"
 
 	FILENAME="${i##*/}"
 	# Replace possible newlines in filename with '?' (like 'ls' output)
@@ -799,7 +834,8 @@ __print_analyzing_tags () {
 		FILENAME="${FILENAME::$MAX_FILENAME_LENGTH}…"
 	fi
 
-	printf "\r${NORMAL}%$((${COLUMNS} - 18))s${BOLD_BLUE}%s${NORMAL}%s${YELLOW}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}\r${CYAN}%s${NORMAL}%s${MAGENTA}%s${NORMAL}%s" \
+	# 19 is the length of the printed message plus 1 for the gap at the end
+	printf "\r${NORMAL}%$(( ${COLUMNS} - 19 ))s${BOLD_BLUE}%s${NORMAL}%s${YELLOW}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}\r${CYAN}%s${NORMAL}%s${MAGENTA}%s${NORMAL}%s" \
 	"" "[" " " "Analyzing Tags" " " "]" "${PERCENT_DISPLAY}" " " "${CURRENT_FLAC_TOTAL}" " ${FILENAME}"
 }
 __print_setting_tags () {
@@ -820,10 +856,11 @@ __print_setting_tags () {
 	COLUMNS="${COLUMNS/#*columns }"
 	COLUMNS="${COLUMNS/%;*}"
 
-	# This is the number of $COLUMNS minus the indent (7) minus length of the printed
-	# message, [ Setting Tags ] (16) minus 3 (leaves a gap and the gives room for the
+	# This is the number of ${COLUMNS} minus the length of the percent (4), minus the length
+	# of the printed message, '[ Setting Tags ]' (16), minus three gaps (3), minus the
+	# length of processed FLAC files, minus 3 (leaves a gap and the gives room for the
 	# ellipsis (…) and cursor)
-	MAX_FILENAME_LENGTH="$((${COLUMNS} - 26))"
+	MAX_FILENAME_LENGTH="$(( ${COLUMNS} - 26 - ${#CURRENT_FLAC_TOTAL} ))"
 
 	FILENAME="${i##*/}"
 	# Replace possible newlines in filename with '?' (like 'ls' output)
@@ -835,7 +872,8 @@ __print_setting_tags () {
 		FILENAME="${FILENAME::$MAX_FILENAME_LENGTH}…"
 	fi
 
-	printf "\r${NORMAL}%$((${COLUMNS} - 16))s${BOLD_BLUE}%s${NORMAL}%s${YELLOW}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}\r${CYAN}%s${NORMAL}%s${MAGENTA}%s${NORMAL}%s" \
+	# 17 is the length of the printed message plus 1 for the gap at the end
+	printf "\r${NORMAL}%$(( ${COLUMNS} - 17 ))s${BOLD_BLUE}%s${NORMAL}%s${YELLOW}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}\r${CYAN}%s${NORMAL}%s${MAGENTA}%s${NORMAL}%s" \
 	"" "[" " " "Setting Tags" " " "]" "${PERCENT_DISPLAY}" " " "${CURRENT_FLAC_TOTAL}" " ${FILENAME}"
 }
 __print_prune_flac () {
@@ -856,10 +894,11 @@ __print_prune_flac () {
 	COLUMNS="${COLUMNS/#*columns }"
 	COLUMNS="${COLUMNS/%;*}"
 
-	# This is the number of $COLUMNS minus the indent (7) minus length of the printed
-	# message, [ Pruning Metadata ] (20) minus 3 (leaves a gap and the gives room for the
+	# This is the number of ${COLUMNS} minus the length of the percent (4), minus the length
+	# of the printed message, '[ Pruning Metadata ]' (20), minus three gaps (3), minus the
+	# length of processed FLAC files, minus 3 (leaves a gap and the gives room for the
 	# ellipsis (…) and cursor)
-	MAX_FILENAME_LENGTH="$((${COLUMNS} - 30))"
+	MAX_FILENAME_LENGTH="$(( ${COLUMNS} - 30 - ${#CURRENT_FLAC_TOTAL} ))"
 
 	FILENAME="${i##*/}"
 	# Replace possible newlines in filename with '?' (like 'ls' output)
@@ -871,7 +910,8 @@ __print_prune_flac () {
 		FILENAME="${FILENAME::$MAX_FILENAME_LENGTH}…"
 	fi
 
-	printf "\r${NORMAL}%$((${COLUMNS} - 20))s${BOLD_BLUE}%s${NORMAL}%s${YELLOW}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}\r${CYAN}%s${NORMAL}%s${MAGENTA}%s${NORMAL}%s" \
+	# 21 is the length of the printed message plus 1 for the gap at the end
+	printf "\r${NORMAL}%$(( ${COLUMNS} - 21 ))s${BOLD_BLUE}%s${NORMAL}%s${YELLOW}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}\r${CYAN}%s${NORMAL}%s${MAGENTA}%s${NORMAL}%s" \
 	"" "[" " " "Pruning Metadata" " " "]" "${PERCENT_DISPLAY}" " " "${CURRENT_FLAC_TOTAL}" " ${FILENAME}"
 }
 
@@ -893,10 +933,11 @@ __print_interrupt () {
 	COLUMNS="${COLUMNS/#*columns }"
 	COLUMNS="${COLUMNS/%;*}"
 
-	# This is the number of $COLUMNS minus the indent (7) minus length of the printed
-	# message, [ Interrupted ] (15) minus 3 (leaves a gap and the gives room for the
-	# ellipsis (…) and cursor)
-	MAX_FILENAME_LENGTH="$((${COLUMNS} - 25))"
+	# This is the number of ${COLUMNS} minus the length of the percent (4), minus the length
+	# of the printed message, '[ Interrupted ]' (15), minus three gaps (3), minus the
+	# length of processed FLAC files, minus 2 (leaves a gap and the gives room for the
+	# ellipsis (…))
+	MAX_FILENAME_LENGTH="$(( ${COLUMNS} - 24 - ${#CURRENT_FLAC_TOTAL} ))"
 
 	FILENAME="${i##*/}"
 	# Replace possible newlines in filename with '?' (like 'ls' output)
@@ -908,7 +949,8 @@ __print_interrupt () {
 		FILENAME="${FILENAME::$MAX_FILENAME_LENGTH}…"
 	fi
 
-	printf "\r${NORMAL}%$((${COLUMNS} - 15))s${BOLD_BLUE}%s${NORMAL}%s${YELLOW}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}\r${CYAN}%s${NORMAL}%s${MAGENTA}%s${NORMAL}%s" \
+	# 16 is the length of the printed message plus 1 for the gap at the end
+	printf "\r${NORMAL}%$(( ${COLUMNS} - 16 ))s${BOLD_BLUE}%s${NORMAL}%s${YELLOW}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}\r${CYAN}%s${NORMAL}%s${MAGENTA}%s${NORMAL}%s" \
 	"" "[" " " "Interrupted" " " "]" "${PERCENT_DISPLAY}" " " "${CURRENT_FLAC_TOTAL}" " ${FILENAME}"
 }
 __print_interrupt_replaygain () {
@@ -929,10 +971,11 @@ __print_interrupt_replaygain () {
 	COLUMNS="${COLUMNS/#*columns }"
 	COLUMNS="${COLUMNS/%;*}"
 
-	# This is the number of $COLUMNS minus the indent (7) minus length of the printed
-	# message, [ Interrupted ] (15) minus 3 (leaves a gap and the gives room for the
-	# ellipsis (…) and cursor)
-	MAX_FILENAME_LENGTH="$((${COLUMNS} - 31))"
+	# This is the number of ${COLUMNS} minus the length of the percent (4), minus the length
+	# of the printed message, '[ Interrupted ]' (15), minus three gaps (3), minus the
+	# length of processed directories, minus 2 (leaves a gap and the gives room for the
+	# ellipsis (…))
+	MAX_FILENAME_LENGTH="$(( ${COLUMNS} - 24 - ${#CURRENT_DIRECTORY_TOTAL} ))"
 
 	FILENAME="${i##*/}"
 	# Replace possible newlines in filename with '?' (like 'ls' output)
@@ -945,7 +988,8 @@ __print_interrupt_replaygain () {
 		FILENAME="${FILENAME::$MAX_FILENAME_LENGTH}…"
 	fi
 
-	printf "\r${NORMAL}%$((${COLUMNS} - 15))s${BOLD_BLUE}%s${NORMAL}%s${YELLOW}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}\r${CYAN}%s${NORMAL}%s${MAGENTA}%s${NORMAL}%s" \
+	# 16 is the length of the printed message plus 1 for the gap at the end
+	printf "\r${NORMAL}%$(( ${COLUMNS} - 16 ))s${BOLD_BLUE}%s${NORMAL}%s${YELLOW}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}\r${CYAN}%s${NORMAL}%s${MAGENTA}%s${NORMAL}%s" \
 	"" "[" " " "Interrupted" " " "]" "${PERCENT_DISPLAY}" " " "${CURRENT_DIRECTORY_TOTAL}" " ${FILENAME}"
 }
 
@@ -977,7 +1021,7 @@ __top_banner () {
 
 	# Log directory
 	printf "${NORMAL}%s${BOLD_BLUE}%s${NORMAL}%s${CYAN}%s${NORMAL}" \
-	"   Log Directory " "│" " " "${ERROR_LOG}" ; __newline
+	"   Log Directory " "│" " " "${ERROR_LOG}" ; __newline 2
 
 	# Message indicating the searching of FLAC files
 	__info "Finding FLAC files to process..."
@@ -4193,7 +4237,7 @@ if [[ "${REDO}" != "true" ]] ; then
 else
 	# Check for coverart conflicts and display
 	# top banner
-	coverart_remove_conflict
+	__coverart_remove_conflict
 	__top_banner
 fi
 
