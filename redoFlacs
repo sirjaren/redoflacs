@@ -1,11 +1,5 @@
 #!/usr/bin/env bash
 
-#------------------------------------------------------------
-# Re-compress, Verify, Test, Re-tag, and Clean Up FLAC Files
-#                     Version 0.16.2
-#                       sirjaren
-#------------------------------------------------------------
-
 #-----------------------------------------------------------------
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -22,7 +16,6 @@
 #
 # Please submit requests/changes/patches and/or comments
 #-----------------------------------------------------------------
-# TODO: Error messages to STDERR
 # TODO: Rework the Summary Of Operations to show sub processes (aka
 #       Analyze Tags & Setting Tags)
 # TODO: Allow a one character gap between the printed message
@@ -30,13 +23,10 @@
 # TODO: Lowercase printed messages for consistency (gentoo-like)
 # TODO: Allow setting the number of jobs upon script
 #       invocation (like -j3)
-# TODO: Fix issues with conflicting arguments
 # TODO: Condense some of the functions, separating bulky code
 #       and getting rid of duplicated code
 # TODO: Find a general format for logs and stick with it!
 # TODO: Colorize filename and commands in STDERR
-# TODO: Add directories/files processed during operations
-#       (maybe next to percentage?)
 # TODO: Make it more clear on the Summary Of Operations
 #       what it means when an operation has failed
 # TODO: Make it clear that we are not multithreading anything
@@ -165,6 +155,9 @@ SPECTROGRAM_LOCATION="default"
 ######################
 #  STATIC VARIABLES  #
 ######################
+# Enable BASH 4 globstar
+shopt -s globstar
+
 # Version
 VERSION="0.16.2"
 
@@ -204,50 +197,71 @@ PRUNE=""
 ###################################
 #  INFORMATION PRINTED TO STDOUT  # 
 ###################################
+# Bold green message
+__info () {
+	printf "${NORMAL}%s${BOLD_GREEN}%s${NORMAL}%s" \
+	" " "*" " ${@}"
+}
+# Yellow message
+__warn () {
+	printf "${NORMAL}%s${YELLOW}%s${NORMAL}%s" \
+	" " "*" " ${@}"
+}
+# Bold red message
+__error () {
+	printf "${NORMAL}%s${BOLD_RED}%s${NORMAL}%s" \
+	" " "*" " ${@}"
+}
+
+# Prints a newline
+__newline () {
+	eval "printf '\n%.0s' {1..${1}}"
+}
+
 # Displaying currently running tasks
 title_compress_flac () {
-	printf "\n\n%s${BOLD_GREEN}%s${NORMAL}%s\n" \
-	" " "*" " Compressing FLAC files with level ${COMPRESSION_LEVEL} compression and verifying output"
+	__newline 2
+	__info "Compressing FLAC files with level ${COMPRESSION_LEVEL} compression and verifying output" ; __newline
 }
 
 title_compress_notest_flac () {
-	printf "\n\n%s${BOLD_GREEN}%s${NORMAL}%s\n" \
-	" " "*" " Compressing FLAC files with level ${COMPRESSION_LEVEL} compression"
+	__newline 2
+	__info "Compressing FLAC files with level ${COMPRESSION_LEVEL} compression" ; __newline
 }
 
 title_test_replaygain () {
-	printf "\n\n%s${BOLD_GREEN}%s${NORMAL}%s\n" \
-	" " "*" " Verifying FLAC Files can have ReplayGain Tags added"
+	__newline 2
+	__info "Verifying FLAC Files can have ReplayGain Tags added" ; __newline
 }
 
 title_add_replaygain () {
-	printf "\n\n%s${BOLD_GREEN}%s${NORMAL}%s\n" \
-	" " "*" " Applying ReplayGain values by album directory"
+	__newline 2
+	__info "Applying ReplayGain values by album directory" ; __newline
 }
 
 title_analyze_tags () {
-	printf "\n\n%s${BOLD_GREEN}%s${NORMAL}%s\n" \
-	" " "*" " Analyzing FLAC Tags"
+	__newline 2
+	__info "Analyzing FLAC Tags" ; __newline
 }
 
 title_setting_tags () {
-	printf "\n\n%s${BOLD_GREEN}%s${NORMAL}%s\n" \
-	" " "*" " Setting new FLAC Tags"
+	__newline 2
+	__info "Setting new FLAC Tags" ; __newline
 }
 
 title_testing_flac () {
-	printf "\n\n%s${BOLD_GREEN}%s${NORMAL}%s\n" \
-	" " "*" " Testing the integrity of each FLAC file"
+	__newline 2
+	__info "Testing the integrity of each FLAC file" ; __newline
 }
 
 title_aucdtect_flac () {
-	printf "\n\n%s${BOLD_GREEN}%s${NORMAL}%s\n" \
-	" " "*" " Validating FLAC is not lossy sourced"
+	__newline 2
+	__info "Validating FLAC is not lossy sourced" ; __newline
 }
 
 title_md5check_flac () {
-	printf "\n\n%s${BOLD_GREEN}%s${NORMAL}%s\n" \
-	" " "*" " Verifying the MD5 Signature in each FLAC file"
+	__newline 2
+	__info "Verifying the MD5 Signature in each FLAC file" ; __newline
 }
 
 title_prune_flac () {
@@ -260,15 +274,14 @@ title_prune_flac () {
 		local METADATA_REMOVED="STREAMINFO and VORBIS_COMMENT"
 	fi
 
-	printf "\n\n%s${BOLD_GREEN}%s${NORMAL}%s\n" \
-	" " "*" " Removing all METADATA blocks except ${METADATA_REMOVED}"
+	__newline 2
+	__info "Removing all METADATA blocks except ${METADATA_REMOVED}" ; __newline
 }
 
 # Error messages
 # Don't display threads as script will quit after diplaying
 no_flacs () {
-	printf "%s${BOLD_RED}%s${NORMAL}%s\n" \
-	" " "*" " There are not any FLAC files to process!"
+	{ __error "There are not any FLAC files to process!" ; __newline ;} >&2
 }
 
 # Information relating to currently running tasks
@@ -943,34 +956,31 @@ print_interrupt_replaygain () {
 top_banner () {
 	# If Redo Tags is called, create the necessary spacing
 	if [[ "${REDO}" == "true" ]] ; then
-		printf '\n\n'
+		__newline 2
 	fi
 
 	# Title
-	printf "${NORMAL}%s\n" \
-	"        Runtime Information"
+	printf "${NORMAL}%s" \
+	"        Runtime Information" ; __newline
 
 	# Title Line
-	printf "${NORMAL}%s${BOLD_BLUE}%s${NORMAL}\n" \
-	"   " "──────────────┬──────────────"
+	printf "${NORMAL}%s${BOLD_BLUE}%s${NORMAL}" \
+	"   " "──────────────┬──────────────" ; __newline
 
 	# Script Version
-	printf "${NORMAL}%s${BOLD_BLUE}%s${NORMAL}%s${CYAN}%s${NORMAL}\n" \
-	"         Version " "│" " " "${VERSION}"
+	printf "${NORMAL}%s${BOLD_BLUE}%s${NORMAL}%s${CYAN}%s${NORMAL}" \
+	"         Version " "│" " " "${VERSION}" ; __newline
 
 	# Processes to be used
-	printf "${NORMAL}%s${BOLD_BLUE}%s${NORMAL}%s${CYAN}%s${NORMAL}\n" \
-	"      Cores/CPUs " "│" " " "${CORES}"
+	printf "${NORMAL}%s${BOLD_BLUE}%s${NORMAL}%s${CYAN}%s${NORMAL}" \
+	"      Cores/CPUs " "│" " " "${CORES}" ; __newline
 
-	# Log directory to be used (No need for newlines
-	# since a double newline is prepended to each
-	# title operation)
-	printf "${NORMAL}%s${BOLD_BLUE}%s${NORMAL}%s${CYAN}%s${NORMAL}\n\n" \
-	"   Log Directory " "│" " " "${ERROR_LOG}"
+	# Log directory
+	printf "${NORMAL}%s${BOLD_BLUE}%s${NORMAL}%s${CYAN}%s${NORMAL}" \
+	"   Log Directory " "│" " " "${ERROR_LOG}" ; __newline
 
 	# Message indicating the searching of FLAC files
-	printf "${NORMAL}%s${BOLD_GREEN}%s${NORMAL}%s" \
-	" " "*" " Finding FLAC files to process..."
+	__info "Finding FLAC files to process..."
 }
 
 # Create a countdown function for the metadata
@@ -978,8 +988,8 @@ top_banner () {
 countdown_metadata () {
 	# Countdown abort
 	countdown_abort () {
-		printf "\n%s${BOLD_GREEN}%s${NORMAL}%s\n" \
-		" " "*" " Control-C received, exiting. Please wait..."
+		__newline
+		__info "Control-C received, exiting. Please wait..." ; __newline
 
 		# Restore old stty settings, make stty happy
 		# by redirecting /dev/stderr
@@ -989,7 +999,7 @@ countdown_metadata () {
 	}
 
 	# Creates the listing of tags to be kept
-	tags_countdown () {
+	tags_listing () {
 		for i in "${tags[@]}" ; do
 			printf "%s\n" "     ${i}"
 		done
@@ -1012,25 +1022,23 @@ countdown_metadata () {
 	# Trap SIGINT (Control-C) to abort cleanly
 	trap countdown_abort SIGINT
 
-	printf "%s${YELLOW}%s${NORMAL}%s\n" \
-	" " "*" " CAUTION! These are the tag fields that will be kept"
-	printf "%s${YELLOW}%s${NORMAL}%s\n\n" \
-	" " "*" " when re-tagging the selected files:"
-	tags_countdown
-	printf "\n%s${BOLD_RED}%s${NORMAL}%s\n" \
-	" " "*" " By default, this script will REMOVE embedded coverart"
-	printf "%s${BOLD_RED}%s${NORMAL}%s\n" \
-	" " "*" " when re-tagging the files (that have the legacy COVERART"
-	printf "%s${BOLD_RED}%s${NORMAL}%s\n" \
-	" " "*" " tag).  Change the REMOVE_ARTWORK option under USER"
-	printf "%s${BOLD_RED}%s${NORMAL}%s\n\n" \
-	" " "*" " CONFIGURATION to \"false\" to keep embedded artwork."
-	printf "%s${YELLOW}%s${NORMAL}%s\n" \
-	" " "*" " Waiting 10 seconds before starting script..."
-	printf "%s${YELLOW}%s${NORMAL}%s\n" \
-	" " "*" " Ctrl+C (Control-C) to abort..."
+	__warn "CAUTION! These are the tag fields that will be kept" ; __newline
+	__warn "when re-tagging the selected files:" ; __newline 2
+
+	tags_listing
+
+	__newline
+	__error "By default, this script will REMOVE embedded coverart" ; __newline
+	__error "when re-tagging the files (that have the legacy COVERART" ; __newline
+	__error "tag).  Change the REMOVE_ARTWORK option under USER" ; __newline
+	__error "CONFIGURATION to \"false\" to keep embedded artwork." ; __newline 2
+
+	__warn "Waiting 10 seconds before starting script..." ; __newline
+	__warn "Ctrl+C (Control-C) to abort..." ; __newline
+
 	printf "%s${BOLD_GREEN}%s${NORMAL}%s" \
 	" " "*" " Starting in: "
+
 	countdown_10
 }
 
@@ -1196,16 +1204,14 @@ replaygain () {
 		# Kill running children
 		kill_jobs
 
-		printf "\n%s${BOLD_GREEN}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}\n" \
-		" " "*" " Control-C received, generating summary. Please wait..."
+		__newline
+		__info "Control-C received, generating summary. Please wait..."
 
 		if [[ -f "${REPLAY_TEST_ERRORS}" ]] ; then
-			printf "\n%s${BOLD_RED}%s${NORMAL}%s\n" \
-			" " "*" " There were issues with some of the FLAC files,"
-			printf "%s${BOLD_RED}%s${NORMAL}%s\n" \
-			" " "*" " please check:"
-			printf "%s${BOLD_RED}%s${NORMAL}%s\n" \
-			" " "*" " \"${REPLAY_TEST_ERRORS}\" for details."
+			__newline >&2
+			{ __error "There were issues with some of the FLAC files," ; __newline ;} >&2
+			{ __error "please check:" ; __newline ;} >&2
+			{ __error "\"${REPLAY_TEST_ERRORS}\" for details." ; __newline ;} >&2
 		fi
 
 		REPLAYGAIN_COMPLETE="interrupt"
@@ -1251,7 +1257,7 @@ replaygain () {
 		fi
 
 		# Print newline into FIFO after completion
-		printf '\n' >&3
+		__newline >&3
 	}
 
 	# Make sure the temporary file is cleared before proceeding
@@ -1298,12 +1304,10 @@ replaygain () {
     wait
 
 	if [[ -f "${REPLAY_TEST_ERRORS}" ]] ; then
-		printf "\n%s${BOLD_RED}%s${NORMAL}%s\n" \
-		" " "*" " There were issues with some of the FLAC files,"
-		printf "%s${BOLD_RED}%s${NORMAL}%s\n" \
-		" " "*" " please check:"
-		printf "%s${BOLD_RED}%s${NORMAL}%s\n" \
-		" " "*" " \"${REPLAY_TEST_ERRORS}\" for details."
+		__newline >&2
+		{ __error "There were issues with some of the FLAC files," ; __newline ;} >&2
+		{ __error "please check:" ; __newline ;} >&2
+		{ __error "\"${REPLAY_TEST_ERRORS}\" for details." ; __newline ;} >&2
 
 		REPLAYGAIN_COMPLETE="false"
 		operation_summary
@@ -1336,16 +1340,14 @@ replaygain () {
 		# Kill running children
 		kill_jobs
 
-		printf "\n%s${BOLD_GREEN}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}\n" \
-		" " "*" " Control-C received, generating summary. Please wait..."
+		__newline
+		__info "Control-C received, generating summary. Please wait..." ; __newline
 
 		if [[ -f "${REPLAY_ADD_ERRORS}" ]] ; then
-			printf "\n%s${BOLD_RED}%s${NORMAL}%s\n" \
-			" " "*" " There were issues adding ReplayGain values,"
-			printf "%s${BOLD_RED}%s${NORMAL}%s\n" \
-			" " "*" " please check:"
-			printf "%s${BOLD_RED}%s${NORMAL}%s\n" \
-			" " "*" " \"${REPLAY_ADD_ERRORS}\" for details."
+			__newline >&2
+			{ __error "There were issues adding ReplayGain values," ; __newline ;} >&2
+			{ __error "please check:" ; __newline ;} >&2
+			{ __error "\"${REPLAY_ADD_ERRORS}\" for details." ; __newline ;} >&2
 		fi
 
 		REPLAYGAIN_COMPLETE="interrupt"
@@ -1443,7 +1445,8 @@ replaygain () {
 				print_ok_replaygain
 			fi
 
-			printf '\n' >&3
+			# Print newline into FIFO after completion
+			__newline >&3
 		}
 	else
 		# Above option was NOT called
@@ -1480,7 +1483,7 @@ replaygain () {
 			fi
 
 			# Print newline into FIFO after completion
-			printf '\n' >&3
+			__newline >&3
 		}
 	fi
 
@@ -1528,12 +1531,10 @@ replaygain () {
 	wait
 
 	if [[ -f "${REPLAY_ADD_ERRORS}" ]] ; then
-		printf "\n%s${BOLD_RED}%s${NORMAL}%s\n" \
-		" " "*" " There were issues with some of the FLAC files,"
-		printf "%s${BOLD_RED}%s${NORMAL}%s\n" \
-		" " "*" " please check:"
-		printf "%s${BOLD_RED}%s${NORMAL}%s\n" \
-		" " "*" " \"${REPLAY_ADD_ERRORS}\" for details."
+		__newline >&2
+		{ __error "There were issues with some of the FLAC files," ; __newline ;} >&2
+		{ __error "please check:" ; __newline ;} >&2
+		{ __error "\"${REPLAY_ADD_ERRORS}\" for details." ; __newline ;} >&2
 
 		REPLAYGAIN_COMPLETE="false"
 		operation_summary
@@ -1566,18 +1567,17 @@ compress_flacs () {
 		# Kill running children
 		kill_jobs
 
-		printf "\n%s${BOLD_GREEN}%s${NORMAL}%s\n%s${BOLD_GREEN}%s${NORMAL}%s\n" \
-		" " "*" " Control-C received, removing temporary files and" \
-		" " "*" " generating summary. Please wait..."
+		__newline
+		__info "Control-C received, removing temporary files and" ; __newline
+		__info "generating summary. Please wait..." ; __newline
 
 		# Remove temporarily encoded FLAC files
 		rm -f "${DIRECTORY}"/**/*.tmp,fl-ac+en\'c
 
 		if [[ -f "${VERIFY_ERRORS}" ]] ; then
-			printf "\n%s${BOLD_RED}%s${NORMAL}%s\n" \
-			" " "*" " Errors found in some FLAC files, please check:"
-			printf "%s${BOLD_RED}%s${NORMAL}%s\n" \
-			" " "*" " \"${VERIFY_ERRORS}\" for errors"
+			__newline >&2
+			{ __error "Errors found in some FLAC files, please check:" ; __newline ;} >&2
+			{ __error "\"${VERIFY_ERRORS}\" for errors" ; __newline ;} >&2
 		fi
 
 		COMPRESS_COMPLETE="interrupt"
@@ -1660,7 +1660,7 @@ compress_flacs () {
 		fi
 
 		# Print newline into FIFO after completion
-		printf '\n' >&3
+		__newline >&3
 	}
 
 	# Make sure the temporary file is cleared before proceeding
@@ -1704,10 +1704,9 @@ compress_flacs () {
 	wait
 
 	if [[ -f "${VERIFY_ERRORS}" ]] ; then
-		printf "\n%s${BOLD_RED}%s${NORMAL}%s\n" \
-		" " "*" " Errors found in some FLAC files, please check:"
-		printf "%s${BOLD_RED}%s${NORMAL}%s\n" \
-		" " "*" " \"${VERIFY_ERRORS}\" for errors"
+		__newline >&2
+		{ __error "Errors found in some FLAC files, please check:" ; __newline ;} >&2
+		{ __error "\"${VERIFY_ERRORS}\" for errors" ; __newline ;} >&2
 
 		COMPRESS_COMPLETE="false"
 		operation_summary
@@ -1733,14 +1732,13 @@ test_flacs () {
 		# Kill running children
 		kill_jobs
 
-		printf "\n%s${BOLD_GREEN}%s${NORMAL}%s\n" \
-		" " "*" " Control-C received, generating summary. Please wait..."
+		__newline
+		__info "Control-C received, generating summary. Please wait..." ; __newline
 
 		if [[ -f "${TEST_ERRORS}" ]] ; then
-			printf "\n%s${BOLD_RED}%s${NORMAL}%s\n" \
-			" " "*" " Errors found in some FLAC files, please check:"
-			printf "%s${BOLD_RED}%s${NORMAL}%s\n" \
-			" " "*" " \"${TEST_ERRORS}\" for errors"
+			__newline >&2
+			{ __error "Errors found in some FLAC files, please check:" ; __newline ;} >&2
+			{ __error "\"${TEST_ERRORS}\" for errors" ; __newline ;} >&2
 		fi
 
 		TEST_COMPLETE="interrupt"
@@ -1784,7 +1782,7 @@ test_flacs () {
 		fi
 
 		# Print newline into FIFO after completion
-		printf '\n' >&3
+		__newline >&3
 	}
 
 	# Make sure the temporary file is cleared before proceeding
@@ -1832,10 +1830,9 @@ test_flacs () {
 	wait
 
 	if [[ -f "${TEST_ERRORS}" ]] ; then
-		printf "\n%s${BOLD_RED}%s${NORMAL}%s\n" \
-		" " "*" " Errors found in some FLAC files, please check:"
-		printf "%s${BOLD_RED}%s${NORMAL}%s\n" \
-		" " "*" " \"${TEST_ERRORS}\" for errors"
+		__newline >&2
+		{ __error "Errors found in some FLAC files, please check:" ; __newline ;} >&2
+		{ __error "\"${TEST_ERRORS}\" for errors" ; __newline ;} >&2
 
 		TEST_COMPLETE="false"
 		operation_summary
@@ -1857,10 +1854,8 @@ aucdtect () {
 		# Put spectrograms in user-defined location
 		# Test to make sure directory exists
 		if [[ ! -d "${SPECTROGRAM_LOCATION}" ]] ; then
-			printf "%s${BOLD_RED}%s${NORMAL}%s\n" \
-			" " "*" " \"${SPECTROGRAM_LOCATION}\" doesn't exist!"
-			printf "%s${BOLD_RED}%s${NORMAL}%s\n" \
-			" " "*" " Please choose a valid directory under USER CONFIGURATION!"
+			{ __error "\"${SPECTROGRAM_LOCATION}\" doesn't exist!" ; __newline ;} >&2
+			{ __error "Please choose a valid directory under USER CONFIGURATION!" ; __newline ;} >&2
 
 			exit 1
 		fi
@@ -1875,18 +1870,17 @@ aucdtect () {
 		# Kill running children
 		kill_jobs
 
-		printf "\n%s${BOLD_GREEN}%s${NORMAL}%s\n%s${BOLD_GREEN}%s${NORMAL}%s\n" \
-		" " "*" " Control-C received, removing temporary files and" \
-		" " "*" " generating summary. Please wait..."
+		__newline
+		__info "Control-C received, removing temporary files and" ; __newline
+		__info "generating summary. Please wait..." ; __newline
 
 		# Remove temporarily created WAV files (if any)
 		rm -f "${DIRECTORY}"/**/*_redoflacs_"$$".wav
 
 		if [[ -f "${AUCDTECT_ERRORS}" ]] ; then
-			printf "\n%s${BOLD_RED}%s${NORMAL}%s\n" \
-			" " "*" " Some FLAC files may be lossy sourced, please check:"
-			printf "%s${BOLD_RED}%s${NORMAL}%s\n" \
-			" " "*" " \"${AUCDTECT_ERRORS}\" for details"
+			__newline >&2
+			{ __error "Some FLAC files may be lossy sourced, please check:" ; __newline ;} >&2
+			{ __error "\"${AUCDTECT_ERRORS}\" for details" ; __newline ;} >&2
 		fi
 
 		AUCDTECT_COMPLETE="interrupt"
@@ -2063,7 +2057,7 @@ aucdtect () {
 		fi
 
 		# Print newline into FIFO after completion
-		printf '\n' >&3
+		__newline >&3
 	}
 
 	# Make sure the temporary file is cleared before proceeding
@@ -2114,10 +2108,9 @@ aucdtect () {
 	wait
 
 	if [[ -f "${AUCDTECT_ERRORS}" ]] ; then
-		printf "\n%s${BOLD_RED}%s${NORMAL}%s\n" \
-		" " "*" " Some FLAC files may be lossy sourced, please check:"
-		printf "%s${BOLD_RED}%s${NORMAL}%s\n" \
-		" " "*" " \"${AUCDTECT_ERRORS}\" for details"
+		__newline >&2
+		{ __error "Some FLAC files may be lossy sourced, please check:" ; __newline ;} >&2
+		{ __error "\"${AUCDTECT_ERRORS}\" for details" ; __newline ;} >&2
 
 		AUCDTECT_COMPLETE="false"
 		operation_summary
@@ -2143,16 +2136,14 @@ md5_check () {
 		# Kill running children
 		kill_jobs
 
-		printf "\n%s${BOLD_GREEN}%s${NORMAL}%s\n" \
-		" " "*" " Control-C received, generating summary. Please wait..."
+		__newline
+		__info "Control-C received, generating summary. Please wait..." ; __newline
 
 		if [[ -f "${MD5_ERRORS}" ]] ; then
-			printf "\n%s${BOLD_RED}%s${NORMAL}%s\n" \
-			" " "*" " The MD5 Signature is unset for some FLAC files or there were"
-			printf "%s${BOLD_RED}%s${NORMAL}%s\n" \
-			" " "*" " issues with some of the FLAC files, please check:"
-			printf "%s${BOLD_RED}%s${NORMAL}%s\n" \
-			" " "*" " \"${MD5_ERRORS}\" for details"
+			__newline >&2
+			{ __error "The MD5 Signature is unset for some FLAC files or there were" ; __newline ;} >&2
+			{ __error "issues with some of the FLAC files, please check:" ; __newline ;} >&2
+			{ __error "\"${MD5_ERRORS}\" for details" ; __newline ;} >&2
 		fi
 
 		MD5CHECK_COMPLETE="interrupt"
@@ -2202,7 +2193,7 @@ md5_check () {
 		fi
 
 		# Print newline into FIFO after completion
-		printf '\n' >&3
+		__newline >&3
 	}
 
 	# Make sure the temporary file is cleared before proceeding
@@ -2250,12 +2241,10 @@ md5_check () {
 	wait
 
 	if [[ -f "${MD5_ERRORS}" ]] ; then
-		printf "\n%s${BOLD_RED}%s${NORMAL}%s\n" \
-		" " "*" " The MD5 Signature is unset for some FLAC files or there were"
-		printf "%s${BOLD_RED}%s${NORMAL}%s\n" \
-		" " "*" " issues with some of the FLAC files, please check:"
-		printf "%s${BOLD_RED}%s${NORMAL}%s\n" \
-		" " "*" " \"${MD5_ERRORS}\" for details"
+		__newline >&2
+		{ __error "The MD5 Signature is unset for some FLAC files or there were" ; __newline ;} >&2
+		{ __error "issues with some of the FLAC files, please check:" ; __newline ;} >&2
+		{ __error "\"${MD5_ERRORS}\" for details" ; __newline ;} >&2
 
 		MD5CHECK_COMPLETE="false"
 		operation_summary
@@ -2286,18 +2275,13 @@ coverart_remove_conflict () {
 				# Display COVERART tag warning
 				coverart_warning
 
-				printf "\n%s${BOLD_RED}%s${NORMAL}%s\n" \
-				" " "*" " It appears you have REMOVE_ARTWORK set to \"true\" under"
-				printf "%s${BOLD_RED}%s${NORMAL}%s\n" \
-				" " "*" " USER CONFIGURATION, yet COVERART is specified as one"
-				printf "%s${BOLD_RED}%s${NORMAL}%s\n" \
-				" " "*" " (or more) of the FLAC tags to be kept. Please choose either"
-				printf "%s${BOLD_RED}%s${NORMAL}%s\n" \
-				" " "*" " keep album artwork (ie REMOVE_ARTWORK=\"false\") or remove"
-				printf "%s${BOLD_RED}%s${NORMAL}%s\n" \
-				" " "*" " the COVERART tag under the USER CONFIGURATION portion of this"
-				printf "%s${BOLD_RED}%s${NORMAL}%s\n" \
-				" " "*" " script."
+				__newline >&2
+				{ __error "It appears you have REMOVE_ARTWORK set to \"true\" under" ; __newline ;} >&2
+				{ __error "USER CONFIGURATION, yet COVERART is specified as one" ; __newline ;} >&2
+				{ __error "(or more) of the FLAC tags to be kept. Please choose either" ; __newline ;} >&2
+				{ __error "keep album artwork (ie REMOVE_ARTWORK=\"false\") or remove" ; __newline ;} >&2
+				{ __error "the COVERART tag under the USER CONFIGURATION portion of this" ; __newline ;} >&2
+				{ __error "script." ; __newline ;} >&2
 
 				# Remove temporary file
 				rm -f "${PROCESSED_TMP_FILE}"
@@ -2326,16 +2310,12 @@ coverart_remove_conflict () {
 
 # Display why COVERART tag should not be used
 coverart_warning () {
-	printf "\n%s${YELLOW}%s${NORMAL}%s\n" \
-	" " "*" " The COVERART tag is deprecated and should not be"
-	printf "%s${YELLOW}%s${NORMAL}%s\n" \
-	" " "*" " used. Instead, consider migrating over to the new format:"
-	printf "%s${YELLOW}%s${NORMAL}%s\n" \
-	" " "*" " METADATA_BLOCK_PICTURE, using modern tag editors. Read:"
-	printf "%s${YELLOW}%s${NORMAL}%s\n" \
-	" " "*" " http://wiki.xiph.org/VorbisComment#Unofficial_COVERART_field_.28deprecated.29"
-	printf "%s${YELLOW}%s${NORMAL}%s\n" \
-	" " "*" " for more details."
+	__newline >&2
+	{ __warn "The COVERART tag is deprecated and should not be" ; __newline ;} >&2
+	{ __warn "used. Instead, consider migrating over to the new format:" ; __newline ;} >&2
+	{ __warn "METADATA_BLOCK_PICTURE, using modern tag editors. Read:" ; __newline ;} >&2
+	{ __warn "http://wiki.xiph.org/VorbisComment#Unofficial_COVERART_field_.28deprecated.29" ; __newline ;} >&2
+	{ __warn "for more details." ; __newline ;} >&2
 }
 
 # Check for missing tags and retag FLAC files if all files
@@ -2348,8 +2328,8 @@ redo_tags () {
 		# Kill running children
 		kill_jobs
 
-		printf "\n%s${BOLD_GREEN}%s${NORMAL}%s\n" \
-		" " "*" " Control-C received, generating summary. Please wait..."
+		__newline
+		__info "Control-C received, generating summary. Please wait..." ; __newline
 
 		# Test for DEPRECATED tag, COVERART in METADATA_ERROR log.  If it
 		# exists, set COVERART_WARNING variable to make script output
@@ -2367,16 +2347,16 @@ redo_tags () {
 
 		if [[ -f "${METADATA_ERRORS}"  && "${COVERART_WARNING}" == "true" ]] ; then
 			# Display COVERART warning function and metadata issues
-			printf ''
+			__newline >&2
+
+			# Below is already redirected to STDERR
 			coverart_warning
-			printf "\n%s${BOLD_RED}%s${NORMAL}%s\n" \
-			" " "*" " Some FLAC files have missing tags or there were"
-			printf "%s${BOLD_RED}%s${NORMAL}%s\n" \
-			" " "*" " issues with some of the FLAC files, please check:"
-			printf "%s${BOLD_RED}%s${NORMAL}%s\n" \
-			" " "*" " \"${METADATA_ERRORS}\" for details."
-			printf "%s${BOLD_RED}%s${NORMAL}%s\n" \
-			" " "*" " Not Re-Tagging files."
+
+			__newline >&2
+			{ __error "Some FLAC files have missing tags or there were" ; __newline ;} >&2
+			{ __error "issues with some of the FLAC files, please check:" ; __newline ;} >&2
+			{ __error "\"${METADATA_ERRORS}\" for details." ; __newline ;} >&2
+			{ __error "Not Re-Tagging files." ; __newline ;} >&2
 
 			REDO_COMPLETE="interrupt"
 			operation_summary
@@ -2385,14 +2365,11 @@ redo_tags () {
 
 		elif [[ -f "${METADATA_ERRORS}" ]] ; then
 			# Just display metadata issues
-			printf "\n%s${BOLD_RED}%s${NORMAL}%s\n" \
-			" " "*" " Some FLAC files have missing tags or there were"
-			printf "%s${BOLD_RED}%s${NORMAL}%s\n" \
-			" " "*" " issues with some of the FLAC files, please check:"
-			printf "%s${BOLD_RED}%s${NORMAL}%s\n" \
-			" " "*" " \"${METADATA_ERRORS}\" for details."
-			printf "%s${BOLD_RED}%s${NORMAL}%s\n" \
-			" " "*" " Not Re-Tagging files."
+			__newline >&2
+			{ __error "Some FLAC files have missing tags or there were" ; __newline ;} >&2
+			{ __error "issues with some of the FLAC files, please check:" ; __newline ;} >&2
+			{ __error "\"${METADATA_ERRORS}\" for details." ; __newline ;} >&2
+			{ __error "Not Re-Tagging files." ; __newline ;} >&2
 
 			REDO_COMPLETE="interrupt"
 			operation_summary
@@ -2586,7 +2563,7 @@ redo_tags () {
 			analyze_tags
 
 			# Print newline into FIFO after completion
-			printf '\n' >&3
+			__newline >&3
 		}
 	else
 		# COVERART is not in the tag array, so add it if album artwork
@@ -2612,7 +2589,7 @@ redo_tags () {
 				analyze_tags_dont_log_coverart
 
 				# Print newline into FIFO after completion
-				printf '\n' >&3
+				__newline >&3
 			}
 		else
 			title_analyze_tags
@@ -2634,7 +2611,7 @@ redo_tags () {
 				analyze_tags
 
 				# Print newline into FIFO after completion
-				printf '\n' >&3
+				__newline >&3
 			}
 		fi
 	fi
@@ -2698,16 +2675,16 @@ redo_tags () {
 
 	if [[ -f "${METADATA_ERRORS}"  && "${COVERART_WARNING}" == "true" ]] ; then
 		# Display COVERART warning function and metadata issues
-		printf ''
+		__newline >&2
+
+		# Below is already redirected to STDERR
 		coverart_warning
-		printf "\n%s${BOLD_RED}%s${NORMAL}%s\n" \
-		" " "*" " Some FLAC files have missing tags or there were"
-		printf "%s${BOLD_RED}%s${NORMAL}%s\n" \
-		" " "*" " issues with some of the FLAC files, please check:"
-		printf "%s${BOLD_RED}%s${NORMAL}%s\n" \
-		" " "*" " \"${METADATA_ERRORS}\" for details."
-		printf "%s${BOLD_RED}%s${NORMAL}%s\n" \
-		" " "*" " Not Re-Tagging files."
+
+		__newline >&2
+		{ __error "Some FLAC files have missing tags or there were" ; __newline ;} >&2
+		{ __error "issues with some of the FLAC files, please check:" ; __newline ;} >&2
+		{ __error "\"${METADATA_ERRORS}\" for details." ; __newline ;} >&2
+		{ __error "Not Re-Tagging files." ; __newline ;} >&2
 
 		REDO_COMPLETE="false"
 		operation_summary
@@ -2715,14 +2692,11 @@ redo_tags () {
 		exit 1
 	elif [[ -f "${METADATA_ERRORS}" ]] ; then
 		# Just display metadata issues
-		printf "\n%s${BOLD_RED}%s${NORMAL}%s\n" \
-		" " "*" " Some FLAC files have missing tags or there were"
-		printf "%s${BOLD_RED}%s${NORMAL}%s\n" \
-		" " "*" " issues with some of the FLAC files, please check:"
-		printf "%s${BOLD_RED}%s${NORMAL}%s\n" \
-		" " "*" " \"${METADATA_ERRORS}\" for details."
-		printf "%s${BOLD_RED}%s${NORMAL}%s\n" \
-		" " "*" " Not Re-Tagging files."
+		__newline >&2
+		{ __error "Some FLAC files have missing tags or there were" ; __newline ;} >&2
+		{ __error "issues with some of the FLAC files, please check:" ; __newline ;} >&2
+		{ __error "\"${METADATA_ERRORS}\" for details." ; __newline ;} >&2
+		{ __error "Not Re-Tagging files." ; __newline ;} >&2
 
 		REDO_COMPLETE="false"
 		operation_summary
@@ -2807,7 +2781,7 @@ redo_tags () {
 		print_ok_flac
 
 		# Print newline into FIFO after completion
-		printf '\n' >&3
+		__newline >&3
 	}
 
 	# Make sure the temporary file is cleared before proceeding
@@ -2872,16 +2846,14 @@ prune_flacs () {
 		# Kill running children
 		kill_jobs
 
-		printf "\n%s${BOLD_GREEN}%s${NORMAL}%s\n" \
-		" " "*" " Control-C received, generating summary. Please wait..."
+		__newline
+		__info "Control-C received, generating summary. Please wait..." ; __newline
 
 		if [[ -f "${PRUNE_ERRORS}" ]] ; then
-			printf "\n%s${BOLD_RED}%s${NORMAL}%s\n" \
-			" " "*" " There were issues with some of the FLAC files,"
-			printf "%s${BOLD_RED}%s${NORMAL}%s\n" \
-			" " "*" " please check:"
-			printf "%s${BOLD_RED}%s${NORMAL}%s\n" \
-			" " "*" " \"${PRUNE_ERRORS}\" for details."
+			__newline >&2
+			{ __error "There were issues with some of the FLAC files," ; __newline ;} >&2
+			{ __error "please check:" ; __newline ;} >&2
+			{ __error "\"${PRUNE_ERRORS}\" for details." ; __newline ;} >&2
 		fi
 
 		PRUNE_COMPLETE="interrupt"
@@ -2931,7 +2903,7 @@ prune_flacs () {
 		fi
 
 		# Print newline into FIFO after completion
-		printf '\n' >&3
+		__newline >&3
 	}
 	
 	# Don't remove artwork if user wants it kept.  We don't have to check
@@ -2988,12 +2960,10 @@ prune_flacs () {
 	wait
 
 	if [[ -f "${PRUNE_ERRORS}" ]] ; then
-		printf "\n%s${BOLD_RED}%s${NORMAL}%s\n" \
-		" " "*" " There were issues with some of the FLAC files,"
-		printf "%s${BOLD_RED}%s${NORMAL}%s\n" \
-		" " "*" " please check:"
-		printf "%s${BOLD_RED}%s${NORMAL}%s\n" \
-		" " "*" " \"${PRUNE_ERRORS}\" for details."
+		__newline >&2
+		{ __error "There were issues with some of the FLAC files," ; __newline ;} >&2
+		{ __error "please check:" ; __newline ;} >&2
+		{ __error "\"${PRUNE_ERRORS}\" for details." ; __newline ;} >&2
 	fi
 
 	# Prune FLACS completed successfully
@@ -3684,10 +3654,8 @@ operation_summary () {
 # Make sure we are running BASH 4.1 or greater
 BASH_VERSION_CHECK="${BASH_VERSION%.*}"
 if [[ "${BASH_VERSION_CHECK}" < 4.1 ]] ; then
-	printf "%s${BOLD_RED}%s${NORMAL}%s\n" \
-	" " "*" " You must be running BASH version 4.1 or greater to use"
-	printf "%s${BOLD_RED}%s${NORMAL}%s\n" \
-	" " "*" " this program!"
+	{ __error "You must be running BASH version 4.1 or greater to use" ; __newline ;} >&2
+	{ __error "this program!" ; __newline ;} >&2
 	exit 1
 fi
 
@@ -3890,13 +3858,16 @@ fi
 # exit script
 if [[ -n "${invalid_arguments_array[@]}" ]] ; then
 	short_help
-	printf "\n%s${BOLD_RED}%s${NORMAL}%s" \
-	" " "*" " Invalid options:"
+
+	__newline >&2
+	{ _error "Invalid options:" ; __newline ;} >&2
 
 	for i in "${invalid_arguments_array[@]}" ; do
 		printf "%s" " ${i}"
 	done
-	printf '\n'
+
+	__newline >&2
+
 	exit 1
 fi
 
@@ -3963,9 +3934,9 @@ for i in "${converted_arguments_array[@]}" ; do
 		;;
 		*)
 			# Should not ever happen!
-			printf "%s${BOLD_RED}%s${NORMAL}%s\n%s\n" \
-			" " "*" " This is a BUG! Please report to:" \
-			"   https://github.com/sirjaren/redoflacs/issues/new"
+			{ __error "This is a BUG! Please report to:" ; __newline ;} >&2
+			{ printf "%s\n" "   https://github.com/sirjaren/redoflacs/issues/new" ;} >&2
+
 			exit 1
 		;;
 	esac
@@ -4004,9 +3975,9 @@ fi
 
 # Check whether DIRECTORY exists
 if [[ ! -d "${DIRECTORY}" ]] ; then
-	printf "%s\n" "  Usage: ${0} [OPTION] [PATH_TO_FLAC(s)]..."
-	printf "%s${BOLD_RED}%s${NORMAL}%s\n" \
-	" " "*" " Please specify a directory!"
+	{ printf "%s\n" "  Usage: ${0} [OPTION] [PATH_TO_FLAC(s)]..." ;} >&2
+	{ __error "Please specify a directory!" ; __newline ;} >&2
+
 	exit 1
 fi
 
@@ -4048,12 +4019,9 @@ fi
 
 # Display (in bold red) message that system is missing vital programs
 display_missing_commands_header () {
-	printf "%s${BOLD_RED}%s${NORMAL}%s\n" \
-	" " "*" " You seem to be missing one or more necessary programs"
-	printf "%s${BOLD_RED}%s${NORMAL}%s\n" \
-	" " "*" " to run this script reliably.  Below shows the program(s)"
-	printf "%s${BOLD_RED}%s${NORMAL}%s\n\n" \
-	" " "*" " missing, as well as where you can install them from:"
+	{ __error "You seem to be missing one or more necessary programs" ; __newline ;} >&2
+	{ __error "to run this script reliably.  Below shows the program(s)" ; __newline ;} >&2
+	{ __error "missing, as well as where you can install them from:" ; __newline 2 ;} >&2
 }
 
 # If all the programs above were found, continue with script.  Else
@@ -4063,18 +4031,16 @@ if [[ -n "${command_exists_array[@]}" ]] ; then
 	display_missing_commands_header
 	# Iterate through array and print each value
 	for i in "${command_exists_array[@]}" ; do
-		printf "%s${YELLOW}%s${NORMAL}%s\n" \
-		" " "*" " ${i}"
+		{ __warn "${i}" ; __newline ;} >&2
 	done
 	exit 1
 fi
 
 # If "-l, --all" and "-L, --reallyall" are both called, warn and exit
 if [[ "${ALL}" == "true" && "${REALLYALL}" == "true" ]] ; then
-	printf "%s${BOLD_RED}%s${NORMAL}%s\n" \
-	" " "*" " Running both \"-l, --all\" and \"-L, --reallyall\" conflict!"
-	printf "%s${BOLD_RED}%s${NORMAL}%s\n" \
-	" " "*" " Please choose one or the other." 
+	{ __error "Running both \"-l, --all\" and \"-L, --reallyall\" conflict!" ; __newline ;} >&2
+	{ __error "Please choose one or the other." ; __newline ;} >&2
+
 	exit 1
 fi
 
@@ -4135,70 +4101,56 @@ if [[ "${ALL}" == "true" || "${REALLYALL}" == "true" ]] ; then
 	if [[ -n "${argument_conflict_array[@]}" ]] ; then
 		# "-l, --all"
 		if [[ "${ALL}" == "true" ]] ; then
-			printf "%s${BOLD_RED}%s${NORMAL}%s\n" \
-			" " "*" " The below options conflict with \"-l, --all\""
+			{ __error "The below options conflict with \"-l, --all\"" ; __newline ;} >&2
 		# "-L, --reallyall"
 		elif [[ "${REALLYALL}" == "true" ]] ; then
-			printf "%s${BOLD_RED}%s${NORMAL}%s\n" \
-			" " "*" " The below options conflict with \"-L, --reallyall\""
+			{ __error "The below options conflict with \"-L, --reallyall\"" ; __newline ;} >&2
 		fi
 
 		# Iterate through array and print each value
 		for i in "${argument_conflict_array[@]}" ; do
-			printf "%s${BOLD_RED}%s${NORMAL}%s\n" \
-			" " "*" "     ${i}"
+			{ __error "     ${i}" ; __newline ;} >&2
 		done
 
-		printf "%s${BOLD_RED}%s${NORMAL}%s\n" \
-		" " "*" " Please remove incompatible options."
+		{ __error "Please remove incompatible options." ; __newline ;} >&2
+
 		exit 1
 	fi
 fi
 
 # If "-C, --compress-notest" and "-c, --compress" are both called, warn and exit
 if [[ "${SKIP_TEST}" == "true" && "${COMPRESS_TEST}" == "true" ]] ; then
-	printf "%s${BOLD_RED}%s${NORMAL}%s\n" \
-	" " "*" " Running both \"-c, --compress\" and \"-C, --compress-notest\" conflict!"
-	printf "%s${BOLD_RED}%s${NORMAL}%s\n" \
-	" " "*" " Please choose one or the other."
+	{ __error "Running both \"-c, --compress\" and \"-C, --compress-notest\" conflict!" ; __newline ;} >&2
+	{ __error "Please choose one or the other." ; __newline ;} >&2
 	exit 1
 fi
 
 # If "-c, --compress" and "-t, --test" are both called, warn and exit
 if [[ "${COMPRESS_TEST}" == "true" && "${TEST}" == "true" ]] ; then
-	printf "%s${BOLD_RED}%s${NORMAL}%s\n" \
-	" " "*" " Running both \"-c, --compress\" and \"-t, --test\" conflict!"
-	printf "%s${BOLD_RED}%s${NORMAL}%s\n" \
-	" " "*" " Please choose one or the other."
+	{ __error "Running both \"-c, --compress\" and \"-t, --test\" conflict!" ; __newline ;} >&2
+	{ __error "Please choose one or the other." ; __newline ;} >&2
 	exit 1
 fi
 
 # If "-g, --replaygain" and "-G, --replaygain-noforce" are both called, warn and exit
 if [[ "${REPLAYGAIN_FORCE}" == "true" && "${REPLAYGAIN_NOFORCE}" == "true" ]] ; then
-	printf "%s${BOLD_RED}%s${NORMAL}%s\n" \
-	" " "*" " Running both \"-g, --replaygain\" and \"-G, --replaygain-noforce\" conflict!"
-	printf "%s${BOLD_RED}%s${NORMAL}%s\n" \
-	" " "*" " Please choose one or the other."
+	{ __error "Running both \"-g, --replaygain\" and \"-G, --replaygain-noforce\" conflict!" ; __newline ;} >&2
+	{ __error "Please choose one or the other." ; __newline ;} >&2
 	exit 1
 fi
 
 # If "-a, --aucdtect" and "-A, --aucdtect-spectrogram" are both called, warn and exit
 if [[ "${NO_SPECTROGRAM}" == "true"  && "${CREATE_SPECTROGRAM}" == "true" ]] ; then
-	printf "%s${BOLD_RED}%s${NORMAL}%s\n" \
-	" " "*" " Running both \"-a, --aucdtect\" and \"-A, --aucdtect-spectrogram\" conflict!"
-	printf "%s${BOLD_RED}%s${NORMAL}%s\n" \
-	" " "*" " Please choose one or the other."
+	{ __error "Running both \"-a, --aucdtect\" and \"-A, --aucdtect-spectrogram\" conflict!" ; __newline ;} >&2
+	{ __error "Please choose one or the other." ; __newline ;} >&2
 	exit 1
 fi
 
 # Check for at least 1 FLAC file
-read -r FIND_FLACS < \
-	<( for i in "${DIRECTORY}"/**/*${FLAC_EXTENSION} ; do
-		printf "%s\n" "${i}"
-	done )
+read -r FIND_FLACS < <( printf "%s\n" "${DIRECTORY}"/**/*${FLAC_EXTENSION} )
 
 # No FLAC files found
-if [[ -z "${FIND_FLACS}" ]] ; then
+if [[ ! -f "${FIND_FLACS}" ]] ; then
 	no_flacs
 	exit 1
 fi
@@ -4213,9 +4165,6 @@ find_cores
 ##################
 #  BEGIN SCRIPT  #
 ##################
-# Enable BASH 4 globstar
-shopt -s globstar
-
 # Store current stty settings
 OLD_STTY="$(stty -g)"
 
@@ -4299,10 +4248,9 @@ if [[ "${AUCDTECT}" == "true" ]] ; then
 			SOX_COMMAND="$(command -v sox)"
 			if [[ -z "${SOX_COMMAND}" ]] ; then
 				# SoX can't be found, exit
-				printf "%s${BOLD_RED}%s${NORMAL}%s\n" \
-				" " "*" " It appears SoX is not installed. Please verify you"
-				printf "%s${BOLD_RED}%s${NORMAL}%s\n" \
-				" " "*" " have this program installed and can be found in \$PATH"
+				{ __error "It appears SoX is not installed. Please verify you" ; __newline ;} >&2
+				{ __error "have this program installed and can be found in \$PATH" ; __newline ;} >&2
+
 				exit 1
 			fi
 		fi
@@ -4311,10 +4259,9 @@ if [[ "${AUCDTECT}" == "true" ]] ; then
 		aucdtect
 	else
 		# auCDtect can't be found, exit
-		printf "%s${BOLD_RED}%s${NORMAL}%s\n" \
-		" " "*" " It appears auCDtect is not installed. Please verify you"
-		printf "%s${BOLD_RED}%s${NORMAL}%s\n" \
-		" " "*" " have this program installed and can be found in \$PATH"
+		{ __error "It appears auCDtect is not installed. Please verify you" ; __newline ;} >&2
+		{ __error "have this program installed and can be found in \$PATH" ; __newline ;} >&2
+
 		exit 1
 	fi
 fi
