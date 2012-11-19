@@ -985,23 +985,23 @@ __top_banner () {
 
 	# Title
 	printf "${NORMAL}%s" \
-	"        Runtime Information" ; __newline
+	"                Runtime Information" ; __newline
 
 	# Title Line
 	printf "${NORMAL}%s${BOLD_BLUE}%s${NORMAL}" \
-	"   " "──────────────┬──────────────" ; __newline
+	" " "─────────────────────────┬─────────────────────────" ; __newline
 
 	# Script Version
 	printf "${NORMAL}%s${BOLD_BLUE}%s${NORMAL}%s${CYAN}%s${NORMAL}" \
-	"         Version " "│" " " "${VERSION}" ; __newline
+	"                  Version " "│" " " "${VERSION}" ; __newline
 
 	# Processes to be used
-	printf "${NORMAL}%s${BOLD_BLUE}%s${NORMAL}%s${CYAN}%s${NORMAL}" \
-	"   Parallel Jobs " "│" " " "${jobs}" ; __newline
+	printf "${NORMAL}%s${BOLD_BLUE}%s${NORMAL}%s${CYAN}%s${NORMAL}%s${CYAN}%s${NORMAL}" \
+	"            Parallel Jobs " "│" " " "${jobs}" " " "${jobs_display}" ; __newline
 
 	# Log directory
 	printf "${NORMAL}%s${BOLD_BLUE}%s${NORMAL}%s${CYAN}%s${NORMAL}" \
-	"   Log Directory " "│" " " "${ERROR_LOG}" ; __newline 2
+	"            Log Directory " "│" " " "${ERROR_LOG}" ; __newline 2
 
 	# Message indicating the searching of FLAC files
 	__info "Finding FLAC files to process..."
@@ -3229,33 +3229,33 @@ printf "%s\n" "${LONG_HELP}"
 ########################
 # Display short help
 __short_help () {
-	printf "%s\n" "   Usage: ${0} [operations] [options] [target] ..."
-	printf "%s\n" "   Operations:"
-	printf "%s\n" "     -c, --compress"
-	printf "%s\n" "     -C, --compress-notest"
-	printf "%s\n" "     -t, --test"
-	printf "%s\n" "     -m, --md5check"
-	printf "%s\n" "     -a, --aucdtect"
-	printf "%s\n" "     -A, --aucdtect-spectrogram"
-	printf "%s\n" "     -p, --prune"
-	printf "%s\n" "     -g, --replaygain"
-	printf "%s\n" "     -G, --replaygain-noforce"
-	printf "%s\n" "     -r, --redo"
-	printf "%s\n" "     -l, --all"
-	printf "%s\n" "     -L, --reallyall"
-	printf "%s\n" "   Options:"
-	printf "%s\n" "     -j[N], --jobs[=N]"
-	printf "%s\n" "     -n, --no-color"
-	printf "%s\n" "     -v, --version"
-	printf "%s\n" "     -h, --help"
-	printf "%s\n" "   This is the short help; for details use '${0} --help' or '${0} -h'"
+	printf "%s\n" " Usage: ${0} [operations] [options] [target] ..."
+	printf "%s\n" " Operations:"
+	printf "%s\n" "   -c, --compress"
+	printf "%s\n" "   -C, --compress-notest"
+	printf "%s\n" "   -t, --test"
+	printf "%s\n" "   -m, --md5check"
+	printf "%s\n" "   -a, --aucdtect"
+	printf "%s\n" "   -A, --aucdtect-spectrogram"
+	printf "%s\n" "   -p, --prune"
+	printf "%s\n" "   -g, --replaygain"
+	printf "%s\n" "   -G, --replaygain-noforce"
+	printf "%s\n" "   -r, --redo"
+	printf "%s\n" "   -l, --all"
+	printf "%s\n" "   -L, --reallyall"
+	printf "%s\n" " Options:"
+	printf "%s\n" "   -j[N], --jobs[=N]"
+	printf "%s\n" "   -n, --no-color"
+	printf "%s\n" "   -v, --version"
+	printf "%s\n" "   -h, --help"
+	printf "%s\n" " This is the short help; for details use '${0} --help' or '${0} -h'"
 }
 
 ###################
 #  DISPLAY USAGE  #
 ###################
 __usage () {
-	printf "%s\n" "   Usage: ${0} [operations] [options] [target] ..."
+	printf "%s\n" " Usage: ${0} [operations] [options] [target] ..."
 }
 
 ############################
@@ -3274,11 +3274,13 @@ __find_cores () {
 	# /proc and / and see if they don't match (ie, /proc is mounted)
 	if [[ "$(stat -c %d%D /proc)" == "$(stat -c %d%D /)" ]] ; then
 		# /proc is not mounted, default to 2 jobs
+		jobs_display="(Default)"
 		jobs=2
 	else
 		# /proc is mounted, check for cpuinfo
 		if [[ ! -f /proc/cpuinfo ]] ; then
 			# /proc/cpuinfo doesn't exist
+			jobs_display="(Default)"
 			jobs=2
 		else
 			# /proc/cpuinfo exists, find total number
@@ -3299,6 +3301,7 @@ __find_cores () {
 			# Add +1 to jobs since the number of useable cores
 			# starts at 0
 			((jobs++))
+			jobs_display="(/proc/cpuinfo)"
 		fi
 	fi
 }
@@ -3409,7 +3412,7 @@ __operation_summary () {
 				# Set up the printed string with colors
 				printf "%s${BOLD_BLUE}%s${NORMAL}%s${YELLOW}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}%s${BOLD_GREEN}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}%s${BOLD_GREEN}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}%s${BOLD_GREEN}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}%s${BOLD_GREEN}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}\n" \
 				\
-				"   " "│" " " "${OPERATION}" "${OPERATION_SPACING}" "│" \
+				" " "│" " " "${OPERATION}" "${OPERATION_SPACING}" "│" \
 				"  " "Completed" "  " "│" \
 				"${TOTAL_FLAC_SPACING}" "${TOTAL_FLACS}" \
 				" " "/" " " \
@@ -3424,7 +3427,7 @@ __operation_summary () {
 				# Set up the printed string with colors
 				printf "%s${BOLD_BLUE}%s${NORMAL}%s${YELLOW}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}%s${BOLD_RED}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}%s${BOLD_RED}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}%s${BOLD_GREEN}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}%s${BOLD_GREEN}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}\n" \
 				\
-				"   " "│" " " "${OPERATION}" "${OPERATION_SPACING}" "│" \
+				" " "│" " " "${OPERATION}" "${OPERATION_SPACING}" "│" \
 				"   " "Failed" "    " "│" \
 				"${TOTAL_FLAC_SPACING}" "${TOTAL_FLACS}" \
 				" " "/" " " \
@@ -3439,7 +3442,7 @@ __operation_summary () {
 				# Set up the printed string with colors
 				printf "%s${BOLD_BLUE}%s${NORMAL}%s${YELLOW}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}%s${CYAN}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}%s${YELLOW}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}%s${BOLD_GREEN}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}%s${YELLOW}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}\n" \
 				\
-				"   " "│" " " "${OPERATION}" "${OPERATION_SPACING}" "│" \
+				" " "│" " " "${OPERATION}" "${OPERATION_SPACING}" "│" \
 				" " "Interrupted" " " "│" \
 				"${PROCESSED_FLAC_SPACING}" "${PROCESSED_FLACS_DIGITS}" \
 				" " "/" " " \
@@ -3454,7 +3457,7 @@ __operation_summary () {
 				# Set up the printed string with colors
 				printf "%s${BOLD_BLUE}%s${NORMAL}%s${YELLOW}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}%s${MAGENTA}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}%s${BOLD_RED}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}%s${BOLD_GREEN}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}%s${BOLD_RED}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}\n" \
 				\
-				"   " "│" " " "${OPERATION}" "${OPERATION_SPACING}" "│" \
+				" " "│" " " "${OPERATION}" "${OPERATION_SPACING}" "│" \
 				" " "Did Not Run" " " "│" \
 				"     " "0" \
 				" " "/" " " \
@@ -3470,11 +3473,11 @@ __operation_summary () {
 
 	# Begin printing the table
 	printf "\n%s${BOLD_BLUE}%s${NORMAL}\n" \
-	"   " "┌───────────────────────────┬──────────────────────┐"
+	" " "┌───────────────────────────┬──────────────────────┐"
 	printf "%s${BOLD_BLUE}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}\n" \
-	"   " "│" "   Summary Of Operations   " "│" " # Of Processed Flacs " "│"
+	" " "│" "   Summary Of Operations   " "│" " # Of Processed Flacs " "│"
 	printf "%s${BOLD_BLUE}%s${NORMAL}\n" \
-	"   " "├─────────────┬─────────────┼───────────────┬──────┤"
+	" " "├─────────────┬─────────────┼───────────────┬──────┤"
 
 	# auCDtect operations
 	if [[ "${AUCDTECT}" == "true" && "${AUCDTECT_COMPLETE}" == "true" ]] ; then
@@ -3611,37 +3614,37 @@ __operation_summary () {
 
 	# Below creates the legend
 	printf "%s${BOLD_BLUE}%s${NORMAL}\n" \
-	"   " "├─────────────┴─────────────┴───────────────┴──────┤"
+	" " "├─────────────┴─────────────┴───────────────┴──────┤"
 	printf "%s${BOLD_BLUE}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}\n" \
-	"   " "│" "                      Legend                      " "│"
+	" " "│" "                      Legend                      " "│"
 	printf "%s${BOLD_BLUE}%s${NORMAL}\n" \
-	"   " "├──────────────────────────────────────────────────┤"
+	" " "├──────────────────────────────────────────────────┤"
 	printf "%s${BOLD_BLUE}%s${NORMAL}%s${BOLD_GREEN}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}%s\n" \
-	"   " "│" "   " "Completed" " " ":" " Entire operation completed without " "│"
+	" " "│" "   " "Completed" " " ":" " Entire operation completed without " "│"
 	printf "%s${BOLD_BLUE}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}\n" \
-	"   " "│" "               any issues.                        " "│"
+	" " "│" "               any issues.                        " "│"
 	printf "%s${BOLD_BLUE}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}\n" \
-	"   " "│" "                                                  " "│"
+	" " "│" "                                                  " "│"
 	printf "%s${BOLD_BLUE}%s${NORMAL}%s${BOLD_RED}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}%s\n" \
-	"   " "│" "      " "Failed" " " ":" " Entire operation completed, but    " "│"
+	" " "│" "      " "Failed" " " ":" " Entire operation completed, but    " "│"
 	printf "%s${BOLD_BLUE}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}\n" \
-	"   " "│" "               some files have issues.            " "│"
+	" " "│" "               some files have issues.            " "│"
 	printf "%s${BOLD_BLUE}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}\n" \
-	"   " "│" "                                                  " "│"
+	" " "│" "                                                  " "│"
 	printf "%s${BOLD_BLUE}%s${NORMAL}%s${CYAN}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}%s\n" \
-	"   " "│" " " "Interrupted" " " ":" " Operation halted by user via the   " "│"
+	" " "│" " " "Interrupted" " " ":" " Operation halted by user via the   " "│"
 	printf "%s${BOLD_BLUE}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}\n" \
-	"   " "│" "               SIGINT signal (Control-C).         " "│"
+	" " "│" "               SIGINT signal (Control-C).         " "│"
 	printf "%s${BOLD_BLUE}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}\n" \
-	"   " "│" "                                                  " "│"
+	" " "│" "                                                  " "│"
 	printf "%s${BOLD_BLUE}%s${NORMAL}%s${MAGENTA}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}%s\n" \
-	"   " "│" " " "Did Not Run" " " ":" " Operation did not run due to       " "│"
+	" " "│" " " "Did Not Run" " " ":" " Operation did not run due to       " "│"
 	printf "%s${BOLD_BLUE}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}\n" \
-	"   " "│" "               interruption from user or failure  " "│"
+	" " "│" "               interruption from user or failure  " "│"
 	printf "%s${BOLD_BLUE}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}\n" \
-	"   " "│" "               of the previous operation.         " "│"
+	" " "│" "               of the previous operation.         " "│"
 	printf "%s${BOLD_BLUE}%s${NORMAL}\n" \
-	"   " "└──────────────────────────────────────────────────┘"
+	" " "└──────────────────────────────────────────────────┘"
 
 	## CLEANUP SECTION ##
 	# Remove temporary file
@@ -3701,6 +3704,10 @@ fi
 # arguments called are not to have anything after them
 if [[ "${#}" -eq 2 ]] ; then
 	case "${1}" in
+		--jobs=[0-9]*|-j[0-9]*)
+			__usage >&2
+			exit 1
+		;;
 		--no-color|-n)
 			__usage >&2
 			exit 1
@@ -4180,6 +4187,27 @@ if [[ "${NO_SPECTROGRAM}" == "true"  && "${CREATE_SPECTROGRAM}" == "true" ]] ; t
 	exit 1
 fi
 
+# If "-l, --all" or "-L, --reallyall" was called,
+# enable the various arguments to allow script to
+# run them
+if [[ "${ALL}" == "true" ]] ; then
+	COMPRESS="true"
+	MD5CHECK="true"
+	PRUNE="true"
+	REPLAYGAIN="true"
+	REDO="true"
+elif [[ "${REALLYALL}" == "true" ]] ; then
+	COMPRESS="true"
+	MD5CHECK="true"
+	PRUNE="true"
+	REPLAYGAIN="true"
+	REDO="true"
+	AUCDTECT="true"
+	# This is needed to let script know that we want auCDtect
+	# to create a spectrogram (ie "-A, --aucdtect-spectrogram")
+	CREATE_SPECTROGRAM="true"
+fi
+
 # Check for at least 1 FLAC file
 read -r FIND_FLACS < <( printf "%s\n" "${DIRECTORY}"/**/*${FLAC_EXTENSION} )
 
@@ -4193,6 +4221,8 @@ fi
 # to see how many jobs should be run
 if [[ -z "${jobs}" ]] ; then
 	__find_cores
+else
+	jobs_display="(User Defined)"
 fi
 
 ###########################
@@ -4245,27 +4275,6 @@ TOTAL_FLACS_INDICES="$(( ${#total_flacs_array[@]} - 1 ))"
 
 # Initialize / Clear the temporary file
 > "${PROCESSED_TMP_FILE}"
-
-# If "-l, --all" or "-L, --reallyall" was called,
-# enable the various arguments to allow script to
-# run them
-if [[ "${ALL}" == "true" ]] ; then
-	COMPRESS="true"
-	MD5CHECK="true"
-	PRUNE="true"
-	REPLAYGAIN="true"
-	REDO="true"
-elif [[ "${REALLYALL}" == "true" ]] ; then
-	COMPRESS="true"
-	MD5CHECK="true"
-	PRUNE="true"
-	REPLAYGAIN="true"
-	REDO="true"
-	AUCDTECT="true"
-	# This is needed to let script know that we want auCDtect
-	# to create a spectrogram (ie "-A, --aucdtect-spectrogram")
-	CREATE_SPECTROGRAM="true"
-fi
 
 # The below order is probably the best bet in ensuring time
 # isn't wasted on doing unnecessary operations if the
