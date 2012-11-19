@@ -23,8 +23,6 @@
 # TODO: Colorize filename and commands in STDERR
 # TODO: Make it more clear on the Summary Of Operations
 #       what it means when an operation has failed
-# TODO: Make it clear that we are not multithreading anything
-#       but actually using more processes/jobs
 # TODO: Consider creating a fallback to using box drawing
 #       characters (ascii output?)
 # TODO: Create a check on ReplayGain if using non git FLAC
@@ -3657,10 +3655,10 @@ __operation_summary () {
 #######################
 #  PRE-SCRIPT CHECKS  #
 #######################
-# Make sure we are running BASH 4.1 or greater
-BASH_VERSION_CHECK="${BASH_VERSION%.*}"
-if [[ "${BASH_VERSION_CHECK}" < 4.1 ]] ; then
-	{ __error "You must be running BASH version 4.1 or greater to use" ; __newline ;} >&2
+# Make sure we are running BASH 4 or greater
+BASH_VERSION_CHECK="${BASH_VERSION%%.*}"
+if [[ "${BASH_VERSION_CHECK}" < 4 ]] ; then
+	{ __error "You must be running BASH version 4 or greater to use" ; __newline ;} >&2
 	{ __error "this program!" ; __newline ;} >&2
 	exit 1
 fi
