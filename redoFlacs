@@ -138,7 +138,7 @@ SPECTROGRAM_LOCATION="default"
 shopt -s globstar
 
 # Version
-VERSION="0.16.2"
+VERSION="0.17"
 
 # Various file extensions
 FLAC_EXTENSION=".[Ff][Ll][Aa][Cc]"
