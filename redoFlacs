@@ -290,8 +290,8 @@ __print_compressing_flac () {
 
 	FILENAME="${i##*/}"
 	# Replace possible newlines in filename with '?' (like 'ls' output)
-	FILENAME="${FILENAME//
-/?}"
+	FILENAME="${FILENAME//$'\n'/?}"
+
 	FILENAME_LENGTH="${#FILENAME}"
 
 	if [[ "${FILENAME_LENGTH}" -gt "${MAX_FILENAME_LENGTH}" ]] ; then
@@ -328,8 +328,7 @@ __print_test_replaygain () {
 
 	FILENAME="${i##*/}"
 	# Replace possible newlines in filename with '?' (like 'ls' output)
-	FILENAME="${FILENAME//
-/?}"
+	FILENAME="${FILENAME//$'\n'/?}"
 
 	FILENAME_LENGTH="${#FILENAME}"
 
@@ -367,8 +366,7 @@ __print_add_replaygain () {
 
 	FILENAME="${i##*/}"
 	# Replace possible newlines in filename with '?' (like 'ls' output)
-	FILENAME="${FILENAME//
-/?}"
+	FILENAME="${FILENAME//$'\n'/?}"
 
 	FILENAME_LENGTH="${#FILENAME}"
 
@@ -406,8 +404,8 @@ __print_testing_flac () {
 
 	FILENAME="${i##*/}"
 	# Replace possible newlines in filename with '?' (like 'ls' output)
-	FILENAME="${FILENAME//
-/?}"
+	FILENAME="${FILENAME//$'\n'/?}"
+
 	FILENAME_LENGTH="${#FILENAME}"
 
 	if [[ "${FILENAME_LENGTH}" -gt "${MAX_FILENAME_LENGTH}" ]] ; then
@@ -438,8 +436,8 @@ __print_failed_flac () {
 
 	FILENAME="${i##*/}"
 	# Replace possible newlines in filename with '?' (like 'ls' output)
-	FILENAME="${FILENAME//
-/?}"
+	FILENAME="${FILENAME//$'\n'/?}"
+
 	FILENAME_LENGTH="${#FILENAME}"
 
 	if [[ "${FILENAME_LENGTH}" -gt "${MAX_FILENAME_LENGTH}" ]] ; then
@@ -476,8 +474,8 @@ __print_checking_md5 () {
 
 	FILENAME="${i##*/}"
 	# Replace possible newlines in filename with '?' (like 'ls' output)
-	FILENAME="${FILENAME//
-/?}"
+	FILENAME="${FILENAME//$'\n'/?}"
+
 	FILENAME_LENGTH="${#FILENAME}"
 
 	if [[ "${FILENAME_LENGTH}" -gt "${MAX_FILENAME_LENGTH}" ]] ; then
@@ -514,8 +512,7 @@ __print_ok_flac () {
 
 	FILENAME="${i##*/}"
 	# Replace possible newlines in filename with '?' (like 'ls' output)
-	FILENAME="${FILENAME//
-/?}"
+	FILENAME="${FILENAME//$'\n'/?}"
 
 	FILENAME_LENGTH="${#FILENAME}"
 
@@ -553,8 +550,7 @@ __print_ok_replaygain () {
 
 	FILENAME="${i##*/}"
 	# Replace possible newlines in filename with '?' (like 'ls' output)
-	FILENAME="${FILENAME//
-/?}"
+	FILENAME="${FILENAME//$'\n'/?}"
 
 	FILENAME_LENGTH="${#FILENAME}"
 
@@ -592,8 +588,8 @@ __print_aucdtect_flac () {
 
 	FILENAME="${i##*/}"
 	# Replace possible newlines in filename with '?' (like 'ls' output)
-	FILENAME="${FILENAME//
-/?}"
+	FILENAME="${FILENAME//$'\n'/?}"
+
 	FILENAME_LENGTH="${#FILENAME}"
 
 	if [[ "${FILENAME_LENGTH}" -gt "${MAX_FILENAME_LENGTH}" ]] ; then
@@ -621,8 +617,8 @@ __print_aucdtect_issue () {
 
 	FILENAME="${i##*/}"
 	# Replace possible newlines in filename with '?' (like 'ls' output)
-	FILENAME="${FILENAME//
-/?}"
+	FILENAME="${FILENAME//$'\n'/?}"
+
 	FILENAME_LENGTH="${#FILENAME}"
 
 	if [[ "${FILENAME_LENGTH}" -gt "${MAX_FILENAME_LENGTH}" ]] ; then
@@ -659,8 +655,8 @@ __print_aucdtect_spectrogram () {
 
 	FILENAME="${i##*/}"
 	# Replace possible newlines in filename with '?' (like 'ls' output)
-	FILENAME="${FILENAME//
-/?}"
+	FILENAME="${FILENAME//$'\n'/?}"
+
 	FILENAME_LENGTH="${#FILENAME}"
 
 	if [[ "${FILENAME_LENGTH}" -gt "${MAX_FILENAME_LENGTH}" ]] ; then
@@ -688,8 +684,8 @@ __print_aucdtect_skip () {
 
 	FILENAME="${i##*/}"
 	# Replace possible newlines in filename with '?' (like 'ls' output)
-	FILENAME="${FILENAME//
-/?}"
+	FILENAME="${FILENAME//$'\n'/?}"
+
 	FILENAME_LENGTH="${#FILENAME}"
 
 	if [[ "${FILENAME_LENGTH}" -gt "${MAX_FILENAME_LENGTH}" ]] ; then
@@ -726,8 +722,8 @@ __print_done_flac () {
 
 	FILENAME="${i##*/}"
 	# Replace possible newlines in filename with '?' (like 'ls' output)
-	FILENAME="${FILENAME//
-/?}"
+	FILENAME="${FILENAME//$'\n'/?}"
+
 	FILENAME_LENGTH="${#FILENAME}"
 
 	if [[ "${FILENAME_LENGTH}" -gt "${MAX_FILENAME_LENGTH}" ]] ; then
@@ -768,8 +764,8 @@ __print_level_same_compression () {
 
 	FILENAME="${i##*/}"
 	# Replace possible newlines in filename with '?' (like 'ls' output)
-	FILENAME="${FILENAME//
-/?}"
+	FILENAME="${FILENAME//$'\n'/?}"
+
 	FILENAME_LENGTH="${#FILENAME}"
 
 	if [[ "${FILENAME_LENGTH}" -gt "${MAX_FILENAME_LENGTH}" ]] ; then
@@ -806,8 +802,8 @@ __print_analyzing_tags () {
 
 	FILENAME="${i##*/}"
 	# Replace possible newlines in filename with '?' (like 'ls' output)
-	FILENAME="${FILENAME//
-/?}"
+	FILENAME="${FILENAME//$'\n'/?}"
+
 	FILENAME_LENGTH="${#FILENAME}"
 
 	if [[ "${FILENAME_LENGTH}" -gt "${MAX_FILENAME_LENGTH}" ]] ; then
@@ -844,8 +840,8 @@ __print_setting_tags () {
 
 	FILENAME="${i##*/}"
 	# Replace possible newlines in filename with '?' (like 'ls' output)
-	FILENAME="${FILENAME//
-/?}"
+	FILENAME="${FILENAME//$'\n'/?}"
+
 	FILENAME_LENGTH="${#FILENAME}"
 
 	if [[ "${FILENAME_LENGTH}" -gt "${MAX_FILENAME_LENGTH}" ]] ; then
@@ -882,8 +878,8 @@ __print_prune_flac () {
 
 	FILENAME="${i##*/}"
 	# Replace possible newlines in filename with '?' (like 'ls' output)
-	FILENAME="${FILENAME//
-/?}"
+	FILENAME="${FILENAME//$'\n'/?}"
+
 	FILENAME_LENGTH="${#FILENAME}"
 
 	if [[ "${FILENAME_LENGTH}" -gt "${MAX_FILENAME_LENGTH}" ]] ; then
@@ -921,8 +917,8 @@ __print_interrupt () {
 
 	FILENAME="${i##*/}"
 	# Replace possible newlines in filename with '?' (like 'ls' output)
-	FILENAME="${FILENAME//
-/?}"
+	FILENAME="${FILENAME//$'\n'/?}"
+
 	FILENAME_LENGTH="${#FILENAME}"
 
 	if [[ "${FILENAME_LENGTH}" -gt "${MAX_FILENAME_LENGTH}" ]] ; then
@@ -959,8 +955,7 @@ __print_interrupt_replaygain () {
 
 	FILENAME="${i##*/}"
 	# Replace possible newlines in filename with '?' (like 'ls' output)
-	FILENAME="${FILENAME//
-/?}"
+	FILENAME="${FILENAME//$'\n'/?}"
 
 	FILENAME_LENGTH="${#FILENAME}"
 
@@ -1398,28 +1393,23 @@ __replaygain () {
 			# ${j} is a FLAC file -> under ${i}
 			for j in "${i}"/*${FLAC_EXTENSION} ; do
 				# Grab all of the ReplayGain tags
-				REPLAYGAIN_REFERENCE_LOUDNESS="$(metaflac --show-tag=REPLAYGAIN_REFERENCE_LOUDNESS "${j}")"
-				REPLAYGAIN_REFERENCE_LOUDNESS="${REPLAYGAIN_REFERENCE_LOUDNESS#*=}"
+				mapfile -n0 -t replaygain_array < \
+				<(\
+					metaflac \
+						--show-tag=REPLAYGAIN_REFERENCE_LOUDNESS \
+						--show-tag=REPLAYGAIN_TRACK_GAIN \
+						--show-tag=REPLAYGAIN_TRACK_PEAK \
+						--show-tag=REPLAYGAIN_ALBUM_GAIN \
+						--show-tag=REPLAYGAIN_ALBUM_PEAK \
+						"${j}"
+				)
 
-				REPLAYGAIN_TRACK_GAIN="$(metaflac --show-tag=REPLAYGAIN_TRACK_GAIN "${j}")"
-				REPLAYGAIN_TRACK_GAIN="${REPLAYGAIN_TRACK_GAIN#*=}"
+				# Strip out the tag fields (eg. REPLAYGAIN_TRACK_GAIN=)
+				replaygain_array="${replaygain_array[@]#*=}"
 
-				REPLAYGAIN_TRACK_PEAK="$(metaflac --show-tag=REPLAYGAIN_TRACK_PEAK "${j}")"
-				REPLAYGAIN_TRACK_PEAK="${REPLAYGAIN_TRACK_PEAK#*=}"
-
-				REPLAYGAIN_ALBUM_GAIN="$(metaflac --show-tag=REPLAYGAIN_ALBUM_GAIN "${j}")"
-				REPLAYGAIN_ALBUM_GAIN="${REPLAYGAIN_ALBUM_GAIN#*=}"
-
-				REPLAYGAIN_ALBUM_PEAK="$(metaflac --show-tag=REPLAYGAIN_ALBUM_PEAK "${j}")"
-				REPLAYGAIN_ALBUM_PEAK="${REPLAYGAIN_ALBUM_PEAK#*=}"
-
-				# Test if any ReplayGain values are empty
-				if [[ -z "${REPLAYGAIN_REFERENCE_LOUDNESS}" || \
-					  -z "${REPLAYGAIN_TRACK_GAIN}" || \
-					  -z "${REPLAYGAIN_TRACK_PEAK}" || \
-					  -z "${REPLAYGAIN_ALBUM_GAIN}" || \
-					  -z "${REPLAYGAIN_ALBUM_PEAK}" \
-				   ]] ; then
+				# Test if any ReplayGain values are empty (if there are less
+				# than 5 values in the replaygain array)
+				if [[ "${#replaygain_array[@]}" -lt 5 ]] ; then
 					# At _least_ one tag is missing from current file, so
 					# apply new ReplayGain values
 					__print_add_replaygain
@@ -1647,8 +1637,9 @@ __compress_flacs () {
 					   "------------------------------------------------------------------" \
 					   >> "${VERIFY_ERRORS}"
 			else
-				metaflac --remove-tag=COMPRESSION "${i}"
-				metaflac --set-tag=COMPRESSION=${COMPRESSION_LEVEL} "${i}"
+				metaflac \
+					--remove-tag=COMPRESSION \
+					--set-tag=COMPRESSION=${COMPRESSION_LEVEL} "${i}"
 				__print_ok_flac
 			fi
 
@@ -2303,7 +2294,7 @@ __coverart_remove_conflict () {
 				{ __error "It appears you have REMOVE_ARTWORK set to \"true\" under" ; __newline ;} >&2
 				{ __error "USER CONFIGURATION, yet COVERART is specified as one" ; __newline ;} >&2
 				{ __error "(or more) of the FLAC tags to be kept. Please choose either" ; __newline ;} >&2
-				{ __error "keep album artwork (ie REMOVE_ARTWORK=\"false\") or remove" ; __newline ;} >&2
+				{ __error "to keep album artwork (ie REMOVE_ARTWORK=\"false\") or remove" ; __newline ;} >&2
 				{ __error "the COVERART tag under the USER CONFIGURATION portion of this" ; __newline ;} >&2
 				{ __error "script." ; __newline ;} >&2
 
@@ -2359,7 +2350,7 @@ __redo_tags () {
 		# exists, set COVERART_WARNING variable to make script output
 		# warning upon completion
 		if [[ -f "${METADATA_ERRORS}" ]] ; then
-			while read i ; do
+			while read -r i ; do
 				# Indentation is culled from reading in "${i}"
 				# To change this, set IFS to '\n'
 				if [[ "${i}" == "the new format: METADATA_BLOCK_PICTURE." ]] ; then
@@ -2439,41 +2430,145 @@ __redo_tags () {
 
 					# "ALBUMARTIST" or "ALBUM ARTIST" or "ALBUM_ARTIST", case-insensitive
 					if [[ -n "$(metaflac --show-tag=ALBUMARTIST "${i}")" ]] ; then
-						local TEMP_TAG="$(metaflac --show-tag=ALBUMARTIST "${i}")"
+						show_tag_list+=( "--show-tag=ALBUMARTIST" )
+
 					elif [[ -n "$(metaflac --show-tag="ALBUM ARTIST" "${i}")" ]] ; then
-						local TEMP_TAG="$(metaflac --show-tag="ALBUM ARTIST" "${i}")"
+						show_tag_list+=( "--show-tag='ALBUM ARTIST'" )
+
 					elif [[ -n "$(metaflac --show-tag="ALBUM_ARTIST" "${i}")" ]] ; then
-						local TEMP_TAG="$(metaflac --show-tag="ALBUM_ARTIST" "${i}")"
+						show_tag_list+=( "--show-tag=ALBUM_ARTIST" )
 					fi
 				else
-					# Grab current tag "${j}" from FLAC file
-					local TEMP_TAG="$(metaflac --show-tag="${j}" "${i}")"
-				fi
-
-				# Tag field (ie 10 Years, 2001, etc)
-				local TAG_VALUE="${TEMP_TAG/#*=}"
-
-				# If tags are not found store missing information into an array
-				# to be logged
-				if [[ -z "${TAG_VALUE}" && "${FILE_PRINTED}" != "true" ]] ; then
-					# First instance of missing tag for current file
-					missing_tags_array+=( "FLAC:  ${i}"
-								   "ERROR: ${j} tag not found" )
-					FILE_PRINTED="true"
-				elif [[ -z "${TAG_VALUE}" && "${FILE_PRINTED}" == "true" ]] ; then
-					# If more than one missing tag in current file,
-					# don't print out filename, just the missing tag
-					missing_tags_array+=( "       ${j} tag not found" )
+					# Build up metaflac '--show-tag=' list
+					show_tag_list+=( "--show-tag=${j}" )
 				fi
 			done
-				# If missing_tags_array is not empty, there are missing
-				# tags in the current file so log output
-				if [[ -n "${missing_tags_array[@]}" ]] ; then
-					# Add separator to log for each file
-					missing_tags_array+=( "------------------------------------------------------------------" )
-					# Print array into log file
-					printf "%s\n" "${missing_tags_array[@]}" >> "${METADATA_ERRORS}"
+
+			# Load up all the tag values for current file
+			mapfile -n0 -t metaflac_tag_array < \
+			<(
+				metaflac \
+					"${show_tag_list[@]}" \
+					"${i}"
+			)
+
+			# Take above tag values and create an associative
+			# array using TAG_FIELD=TAG_VALUE as the key/value pair
+			#
+			# Specifically declare an empty associative array
+			declare -A temp_tag_array
+
+			# Run through the tag array from above and store
+			# the values into a temporary tag array
+			for tag_field in "${metaflac_tag_array[@]}" ; do
+				# This is the tag field (eg. TITLE)
+				tag_field="${tag_field%%=*}"
+				# Enforce the tag field to be uppercase
+				temp_tag_array+=( ["${tag_field^^}"]="${tag_field#*=}" )
+			done
+
+			# Run through the tags array (from USER CONFIGURATION) and test
+			# each tag value from ${temp_tag_array} with the currently
+			# processed tag in ${tag[@]}.  For each match found, test if the
+			# tag value is null, reporting any missing tags. Then remove the
+			# tag field (index) from the ${temp_tag_array}, so the next iteration
+			# is faster and we can check for missing tags (tag fields)
+			for j in "${tags[@]}" ; do
+
+				# If the total # of indices in the temporary tag array is above
+				# 0, continue testing, else store missing tag (${j}) into the
+				# missing tags array
+				if [[ "${#temp_tag_array[@]}" -gt 0 ]] ; then
+
+					# Compare each tag field from the temporary array to ${j},
+					# checking if they are equal and if so, check for missing
+					# tag values
+					for temp_tag_field in "${!temp_tag_array[@]}" ; do
+						# Both tag fields are equal
+						if [[ "${j}" == "${temp_tag_field}" ]] ; then
+							# Check if tag value is null, logging missing tags if so
+							if [[ -z "${temp_tag_array[${temp_tag_field}]}" ]] ; then
+								if [[ "${FILE_PRINTED}" != "true" ]] ; then
+									# First instance of missing tag for current file
+									missing_tags_array+=(
+										"FLAC:  ${i}"
+										"ERROR: ${j} tag not found"
+									)
+									FILE_PRINTED="true"
+								else
+									# If more than one missing tag in current file,
+									# don't print out filename, just the missing tag
+									missing_tags_array+=( "       ${j} tag not found" )
+								fi
+							fi
+
+							# Remove the current tag field from the temporary tag
+							# array since it's been matched already
+							unset temp_tag_array[${temp_tag_field}]
+
+							# This variable let's the script know that the current
+							# tag, ${j} has been matched up with a tag field in
+							# ${temp_tag_array[@]}
+							tag_match="true"
+
+							# Break out of loop since the tag fields have been
+							# matched, continuing on to the next iteration of ${j}
+							break
+						fi
+					done
+
+					# If there wasn't a tag field in the temporary tag array
+					# ( eg. ${temp_tag_array[@]} ) that matched ${j}, the FLAC file
+					# must have a missing tag, so log it by throwing the missing tag
+					# into the missing tags array
+					if [[ "${tag_match}" != "true" ]] ; then
+						if [[ "${FILE_PRINTED}" != "true" ]] ; then
+							# First instance of missing tag for current file
+							missing_tags_array+=(
+								"FLAC:  ${i}"
+								"ERROR: ${j} tag not found"
+							)
+							FILE_PRINTED="true"
+						else
+							# If more than one missing tag in current file,
+							# don't print out filename, just the missing tag
+							missing_tags_array+=( "       ${j} tag not found" )
+						fi
+					fi
+
+					# Reset the value of tag match (if any) for the next iteration
+					# of ${j}
+					unset tag_match
+
+				# The total # of indices in the temporary tag array is 0, so
+				# whatever is left in ${tags[@]} represented by ${j} is logged
+				# as missing
+				else
+					if [[ "${FILE_PRINTED}" != "true" ]] ; then
+						# First instance of missing tag for current file
+						missing_tags_array+=(
+							"FLAC:  ${i}"
+							"ERROR: ${j} tag not found"
+						)
+						FILE_PRINTED="true"
+					else
+						# If more than one missing tag in current file,
+						# don't print out filename, just the missing tag
+						missing_tags_array+=( "       ${j} tag not found" )
+					fi
+
 				fi
+
+			done
+
+			# If missing_tags_array is not empty, there are missing
+			# tags in the current file so log output
+			if [[ -n "${missing_tags_array[@]}" ]] ; then
+				# Add separator to log for each file
+				missing_tags_array+=( "------------------------------------------------------------------" )
+				# Print array into log file
+				printf "%s\n" "${missing_tags_array[@]}" >> "${METADATA_ERRORS}"
+			fi
 
 		# Done analyzing FLAC file tags
 		__print_done_flac
@@ -2510,53 +2605,164 @@ __redo_tags () {
 
 					# "ALBUMARTIST" or "ALBUM ARTIST" or "ALBUM_ARTIST", case-insensitive
 					if [[ -n "$(metaflac --show-tag=ALBUMARTIST "${i}")" ]] ; then
-						local TEMP_TAG="$(metaflac --show-tag=ALBUMARTIST "${i}")"
+						show_tag_list+=( "--show-tag=ALBUMARTIST" )
+
 					elif [[ -n "$(metaflac --show-tag="ALBUM ARTIST" "${i}")" ]] ; then
-						local TEMP_TAG="$(metaflac --show-tag="ALBUM ARTIST" "${i}")"
+						show_tag_list+=( "--show-tag='ALBUM ARTIST'" )
+
 					elif [[ -n "$(metaflac --show-tag="ALBUM_ARTIST" "${i}")" ]] ; then
-						local TEMP_TAG="$(metaflac --show-tag="ALBUM_ARTIST" "${i}")"
+						show_tag_list+=( "--show-tag=ALBUM_ARTIST" )
 					fi
 				else
-					# Grab current tag "${j}" from FLAC file
-					local TEMP_TAG="$(metaflac --show-tag="${j}" "${i}")"
+					# Build up metaflac '--show-tag=' list
+					show_tag_list+=( "--show-tag=${j}" )
 				fi
 
-				# Tag field (ie 10 Years, 2001, etc)
-				local TAG_VALUE="${TEMP_TAG/#*=}"
+				# Check if COVERART exists and is not null
+				if [[ "${j}" == "COVERART" ]] ; then
+					# Obtain COVERART value
+					coverart_value="$(metaflac --show-tag=COVERART "${i}")"
 
-				# If COVERART tag is not null, then log file that has
-				# the COVERART tag embedded within it about deprecation
-				if [[ "${j}" == "COVERART" && -n "${TAG_VALUE}" ]] ; then
-					printf "%s\n%s\n%s\n%s\n" \
-						   "FLAC:  ${i}" \
-						   "ERROR: \"${j}\" tag is DEPRECATED in above file. Consider migrating to" \
-						   "       the new format: METADATA_BLOCK_PICTURE." \
-						   "------------------------------------------------------------------" \
-						   >> "${METADATA_ERRORS}"
-				fi
-
-				# If tags are not found store missing information into an array
-				# to be logged. Skip output of COVERART tag as this is a temporary
-				# addition to the tag array (for processing legacy artwork)
-				if [[ -z "${TAG_VALUE}" && "${FILE_PRINTED}" != "true" && "${j}" != "COVERART" ]] ; then
-					# First instance of missing tag for current file
-					missing_tags_array+=( "FLAC:  ${i}"
-										  "ERROR: ${j} tag not found" )
-					FILE_PRINTED="true"
-				elif [[ -z "${TAG_VALUE}" && "${FILE_PRINTED}" == "true" && "${j}" != "COVERART" ]] ; then
-					# If more than one missing tag in current file, don't print
-					# out filename
-					missing_tags_array+=( "       ${j} tag not found" )
+					# If COVERART value is not null, so log it exists and that
+					# COVERART tag is depcrated
+					if [[ -n "${coverart_value#*=}" ]] ; then
+						printf "%s\n%s\n%s\n%s\n" \
+							   "FLAC:  ${i}" \
+							   "ERROR: \"${j}\" tag is DEPRECATED in above file. Consider migrating to" \
+							   "       the new format: METADATA_BLOCK_PICTURE." \
+							   "------------------------------------------------------------------" \
+							   >> "${METADATA_ERRORS}"
+					fi
 				fi
 			done
-				# If missing_tags_array is not empty, there are missing
-				# tags in the current file so log output
-				if [[ -n "${missing_tags_array[@]}" ]] ; then
-					# Add separator to log for each file
-					missing_tags_array+=( "------------------------------------------------------------------" )
-					# Print array into log file
-					printf "%s\n" "${missing_tags_array[@]}" >> "${METADATA_ERRORS}"
+
+			# Load up all the tag values for current file
+			mapfile -n0 -t metaflac_tag_array < \
+			<(
+				metaflac \
+					"${show_tag_list[@]}" \
+					"${i}"
+			)
+
+			# Take above tag values and create an associative
+			# array using TAG_FIELD=TAG_VALUE as the key/value pair
+			#
+			# Specifically declare an empty associative array
+			declare -A temp_tag_array
+
+			# Run through the tag array from above and store
+			# the values into a temporary tag array
+			for tag_field in "${metaflac_tag_array[@]}" ; do
+				# This is the tag field (eg. TITLE)
+				tag_field="${tag_field%%=*}"
+				# Enforce the tag field to be uppercase
+				temp_tag_array+=( ["${tag_field^^}"]="${tag_field#*=}" )
+			done
+
+			# Run through the tags array (from USER CONFIGURATION) and test
+			# each tag value from ${temp_tag_array} with the currently
+			# processed tag in ${tag[@]}.  For each match found, test if the
+			# tag value is null, reporting any missing tags. Then remove the
+			# tag field (index) from the ${temp_tag_array}, so the next iteration
+			# is faster and we can check for missing tags (tag fields)
+			for j in "${tags[@]}" ; do
+
+				# If the total # of indices in the temporary tag array is above
+				# 0, continue testing, else store missing tag (${j}) into the
+				# missing tags array
+				if [[ "${#temp_tag_array[@]}" -gt 0 ]] ; then
+
+					# Compare each tag field from the temporary array to ${j},
+					# checking if they are equal and if so, check for missing
+					# tag values.
+					# Skip output of COVERART tag as this is a temporary
+					# addition to the tag array (for processing legacy artwork)
+					for temp_tag_field in "${!temp_tag_array[@]}" ; do
+						# Both tag fields are equal
+						if [[ "${j}" == "${temp_tag_field}" && "${j}" != "COVERART" ]] ; then
+							# Check if tag value is null, logging missing tags if so
+							if [[ -z "${temp_tag_array[${temp_tag_field}]}" ]] ; then
+								if [[ "${FILE_PRINTED}" != "true" ]] ; then
+									# First instance of missing tag for current file
+									missing_tags_array+=(
+										"FLAC:  ${i}"
+										"ERROR: ${j} tag not found"
+									)
+									FILE_PRINTED="true"
+								else
+									# If more than one missing tag in current file,
+									# don't print out filename, just the missing tag
+									missing_tags_array+=( "       ${j} tag not found" )
+								fi
+							fi
+
+							# Remove the current tag field from the temporary tag
+							# array since it's been matched already
+							unset temp_tag_array[${temp_tag_field}]
+
+							# This variable let's the script know that the current
+							# tag, ${j} has been matched up with a tag field in
+							# ${temp_tag_array[@]}
+							tag_match="true"
+
+							# Break out of loop since the tag fields have been
+							# matched, continuing on to the next iteration of ${j}
+							break
+						fi
+					done
+
+					# If there wasn't a tag field in the temporary tag array
+					# ( eg. ${temp_tag_array[@]} ) that matched ${j}, the FLAC file
+					# must have a missing tag, so log it by throwing the missing tag
+					# into the missing tags array.  Also skip logging of COVERART tag
+					if [[ "${tag_match}" != "true" && "${j}" != "COVERART" ]] ; then
+						if [[ "${FILE_PRINTED}" != "true" ]] ; then
+							# First instance of missing tag for current file
+							missing_tags_array+=(
+								"FLAC:  ${i}"
+								"ERROR: ${j} tag not found"
+							)
+							FILE_PRINTED="true"
+						else
+							# If more than one missing tag in current file,
+							# don't print out filename, just the missing tag
+							missing_tags_array+=( "       ${j} tag not found" )
+						fi
+					fi
+
+					# Reset the value of tag match (if any) for the next iteration
+					# of ${j}
+					unset tag_match
+
+				# The total # of indices in the temporary tag array is 0, so
+				# whatever is left in ${tags[@]} represented by ${j} is logged
+				# as missing.  Also skip logging of COVERART tag
+				elif [[ "${j}" != "COVERART" ]] ; then
+					if [[ "${FILE_PRINTED}" != "true" ]] ; then
+						# First instance of missing tag for current file
+						missing_tags_array+=(
+							"FLAC:  ${i}"
+							"ERROR: ${j} tag not found"
+						)
+						FILE_PRINTED="true"
+					else
+						# If more than one missing tag in current file,
+						# don't print out filename, just the missing tag
+						missing_tags_array+=( "       ${j} tag not found" )
+					fi
+
 				fi
+
+			done
+
+			# If missing_tags_array is not empty, there are missing
+			# tags in the current file so log output
+			if [[ -n "${missing_tags_array[@]}" ]] ; then
+				# Add separator to log for each file
+				missing_tags_array+=( "------------------------------------------------------------------" )
+				# Print array into log file
+				printf "%s\n" "${missing_tags_array[@]}" >> "${METADATA_ERRORS}"
+			fi
 
 		# Done analyzing FLAC file tags
 		__print_done_flac
@@ -2687,7 +2893,7 @@ __redo_tags () {
 	# exists, set COVERART_WARNING variable to make script output
 	# warning upon completion
 	if [[ -f "${METADATA_ERRORS}" ]] ; then
-		while read i ; do
+		while read -r i ; do
 			# Indentation is culled from reading in "${i}"
 			# To change this, set IFS to '\n'
 			if [[ "${i}" == "the new format: METADATA_BLOCK_PICTURE." ]] ; then
@@ -2741,9 +2947,6 @@ __redo_tags () {
 
 	# Set the FLAC metadata to each FLAC file
 	__remove_set_tags () {
-		# Set up 'album_tags_array' associative array
-		declare -A album_tags_array
-
 		# Iterate through the tag array and set a variable for each tag
 		for j in "${tags[@]}" ; do
 			# Check if ALBUMARTIST is in tag array and apply operations on
@@ -2755,36 +2958,38 @@ __redo_tags () {
 
 				# "ALBUMARTIST"
 				if [[ -n "$(metaflac --show-tag=ALBUMARTIST "${i}")" ]] ; then
-					local TEMP_TAG="$(metaflac --show-tag=ALBUMARTIST "${i}")"
+					show_tag_list+=( "--show-tag=ALBUMARTIST" )
+
 				elif [[ -n "$(metaflac --show-tag="ALBUM ARTIST" "${i}")" ]] ; then
-					local TEMP_TAG="$(metaflac --show-tag="ALBUM ARTIST" "${i}")"
+					show_tag_list+=( "--show-tag='ALBUM ARTIST'" )
+
 				elif [[ -n "$(metaflac --show-tag="ALBUM_ARTIST" "${i}")" ]] ; then
-					local TEMP_TAG="$(metaflac --show-tag="ALBUM_ARTIST" "${i}")"
+					show_tag_list+=( "--show-tag=ALBUM_ARTIST" )
 				fi
 			else
-				# Grab current tag "${j}" from FLAC file
-				local TEMP_TAG="$(metaflac --show-tag="${j}" "${i}")"
+				# Build up metaflac '--show-tag=' list
+				show_tag_list+=( "--show-tag=${j}" )
 			fi
-
-			# Tag key (ie ARTIST, DATE, etc)
-			local TAG_KEY="${TEMP_TAG//=*}"
-			# Make uppercase
-			local TAG_KEY="${TAG_KEY^^}"
-
-			# Tag field (ie 10 Years, 2001, etc)
-			local TAG_VALUE="${TEMP_TAG/#*=}"
-
-			# Put new tag values into associative array
-			album_tags_array["${TAG_KEY}"]="${TAG_VALUE}"
 		done
-	
-		# Iterate through the tag array and add the saved tags back.
+
+		# Load up all the tag values for current file
+		mapfile -n0 -t metaflac_tag_array < \
+		<(
+			metaflac \
+				"${show_tag_list[@]}" \
+				"${i}"
+		)
+
+		# Add the saved tags back, by printing each tag field and value
+		# on a separate line to STDOUT.  This will be read in by metaflac.
 		# Use process substitution to allow this to finish if user
 		# invokes SIGINT
-		metaflac --remove-all-tags --import-tags-from=- "${i}" \
-			< <(for j in "${tags[@]}" ; do
-				printf "%s\n" "${j}=${album_tags_array["${j}"]}"
-			done)
+		metaflac --remove-all-tags --import-tags-from=- "${i}" < \
+		<(
+			# This prints each tag key and value pair
+			# (eg. ARTIST=Kamelot)
+			printf "%s\n" "${metaflac_tag_array[@]}"
+		)
 	}
 
 	# Actual function to re-tag FLAC files
@@ -3653,6 +3858,10 @@ __operation_summary () {
 	# Restore old stty settings, make stty happy
 	# by redirecting /dev/stderr
 	stty ${OLD_STTY} < /dev/stderr
+
+	# Restore the cursor
+	printf "\033[?25h"
+
 }
 
 #######################
@@ -4237,6 +4446,9 @@ OLD_STTY="$(stty -g)"
 
 # Prevent Control-C from displaying '^C'.  May already be set
 stty -ctlecho 2> /dev/null
+
+# Hide the cursor
+printf "\033[?25l"
 
 # Temporary FIFO location
 TMP_FIFO="/tmp/redoflacs_fifo_$$"
