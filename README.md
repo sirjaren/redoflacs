@@ -1,4 +1,4 @@
-###RedoFlacs: Multithreaded BASH commandline FLAC compressor, verifier, organizer, analyzer, and retagger.
+###RedoFlacs: Parallel BASH commandline FLAC compressor, verifier, organizer, analyzer, and retagger.
 --
 
 ### Screenshots
