@@ -100,18 +100,18 @@ REPLAYGAIN_ALBUM_PEAK
 # values are:
 #    "true"  (Remove Artwork)
 #    "false" (Keep Artwork)
-REMOVE_ARTWORK="true"
+remove_artwork="true"
 
 # Set the type of COMPRESSION to compress the
 # FLAC files.  Numbers range from 1-8, with 1 being
 # the lowest compression and 8 being the highest
 # compression.  The default is 8.
-COMPRESSION_LEVEL=8
+compression_level=8
 
 # Set the where you want the error logs to
 # be placed. By default, they are placed in
 # the user's HOME directory.
-ERROR_LOG="${HOME}"
+error_log="${HOME}"
 
 # Set where the created spectrogram files should
 # be placed. By default, the spectrogram PNG files
@@ -122,10 +122,10 @@ ERROR_LOG="${HOME}"
 # The special value, "default" does the default
 # action.  Other values are interpreted as a
 # directory. An example of a user-defined location:
-# SPECTROGRAM_LOCATION="${HOME}/Spectrogram_Images"
+# spectrogram_location="${HOME}/Spectrogram_Images"
 #
 # See "--help" or "-h" for more information.
-SPECTROGRAM_LOCATION="default"
+spectrogram_location="default"
 
 ##########################
 #  END OF CONFIGURATION  #
@@ -138,57 +138,57 @@ SPECTROGRAM_LOCATION="default"
 shopt -s globstar
 
 # Version
-VERSION="0.17"
+version="0.17"
 
 # Various file extensions
-FLAC_EXTENSION=".[Ff][Ll][Aa][Cc]"
-WAV_EXTENSION=".[Ww][Aa][Vv]"
+flac_extension=".[Ff][Ll][Aa][Cc]"
+wav_extension=".[Ww][Aa][Vv]"
 
 # Colors on by default
-BOLD_BLUE="\033[1;34m"
-BOLD_GREEN="\033[1;32m"
-BOLD_RED="\033[1;31m"
-CYAN="\033[0;36m"
-MAGENTA="\033[0;35m"
-YELLOW="\033[0;33m"
-NORMAL="\033[0m"
+blue="\033[34m"
+green="\033[32m"
+red="\033[31m"
+cyan="\033[36m"
+magenta="\033[35m"
+yellow="\033[33m"
+normal="\033[0m"
 
 # Log files with timestamp
-VERIFY_ERRORS="${ERROR_LOG}/FLAC_Verify_Errors_$(date "+%Y%m%d-%H.%M.%S").log"
-TEST_ERRORS="${ERROR_LOG}/FLAC_Test_Errors_$(date "+%Y%m%d-%H.%M.%S").log"
-MD5_ERRORS="${ERROR_LOG}/MD5_Signature_Errors_$(date "+%Y%m%d-%H.%M.%S").log"
-METADATA_ERRORS="${ERROR_LOG}/FLAC_Metadata_Errors_$(date "+%Y%m%d-%H.%M.%S").log"
-REPLAY_TEST_ERRORS="${ERROR_LOG}/ReplayGain_Test_Errors_$(date "+%Y%m%d-%H.%M.%S").log"
-REPLAY_ADD_ERRORS="${ERROR_LOG}/ReplayGain_Add_Errors_$(date "+%Y%m%d-%H.%M.%S").log"
-AUCDTECT_ERRORS="${ERROR_LOG}/auCDtect_Errors_$(date "+%Y%m%d-%H.%M.%S").log"
-PRUNE_ERRORS="${ERROR_LOG}/FLAC_Prune_Errors_$(date "+%Y%m%d-%H.%M.%S").log"
+verify_errors="${error_log}/FLAC_Verify_Errors_$(date "+%Y%m%d-%H.%M.%S").log"
+test_errors="${error_log}/FLAC_Test_Errors_$(date "+%Y%m%d-%H.%M.%S").log"
+md5_errors="${error_log}/MD5_Signature_Errors_$(date "+%Y%m%d-%H.%M.%S").log"
+metadata_errors="${error_log}/FLAC_Metadata_Errors_$(date "+%Y%m%d-%H.%M.%S").log"
+replay_test_errors="${error_log}/ReplayGain_Test_Errors_$(date "+%Y%m%d-%H.%M.%S").log"
+replay_add_errors="${error_log}/ReplayGain_Add_Errors_$(date "+%Y%m%d-%H.%M.%S").log"
+aucdtect_errors="${error_log}/auCDtect_Errors_$(date "+%Y%m%d-%H.%M.%S").log"
+prune_errors="${error_log}/FLAC_Prune_Errors_$(date "+%Y%m%d-%H.%M.%S").log"
 
 # Set arguments to null
 # If enabled they will be changed to true
-COMPRESS=""
-TEST=""
-AUCDTECT=""
-MD5CHECK=""
-REPLAYGAIN=""
-REDO=""
-PRUNE=""
+compress_flac=""
+test_flac=""
+aucdtect_flac=""
+md5check_flac=""
+replaygain_flac=""
+redo_flac=""
+prune_flac=""
 
 ###################################
 #  INFORMATION PRINTED TO STDOUT  # 
 ###################################
 # Bold green message
 __info () {
-	printf "${NORMAL}%s${BOLD_GREEN}%s${NORMAL}%s" \
+	printf "${normal}%s${green}%s${normal}%s" \
 	" " "*" " ${@}"
 }
 # Yellow message
 __warn () {
-	printf "${NORMAL}%s${YELLOW}%s${NORMAL}%s" \
+	printf "${normal}%s${yellow}%s${normal}%s" \
 	" " "*" " ${@}"
 }
 # Bold red message
 __error () {
-	printf "${NORMAL}%s${BOLD_RED}%s${NORMAL}%s" \
+	printf "${normal}%s${red}%s${normal}%s" \
 	" " "*" " ${@}"
 }
 
@@ -200,12 +200,12 @@ __newline () {
 # Displaying currently running tasks
 __title_compress_flac () {
 	__newline 2
-	__info "Compressing FLAC files with level ${COMPRESSION_LEVEL} compression and verifying output" ; __newline
+	__info "Compressing FLAC files with level ${compression_level} compression and verifying output" ; __newline
 }
 
 __title_compress_notest_flac () {
 	__newline 2
-	__info "Compressing FLAC files with level ${COMPRESSION_LEVEL} compression" ; __newline
+	__info "Compressing FLAC files with level ${compression_level} compression" ; __newline
 }
 
 __title_test_replaygain () {
@@ -245,16 +245,16 @@ __title_md5check_flac () {
 
 __title_prune_flac () {
 	# Change printed title based on whether embedded artwork is to be removed
-	if [[ "${REMOVE_ARTWORK}" == "false" ]] ; then
+	if [[ "${remove_artwork}" == "false" ]] ; then
 		# Keep artwork
-		local METADATA_REMOVED="STREAMINFO, VORBIS_COMMENT and PICTURE"
+		local metadata_removed="STREAMINFO, VORBIS_COMMENT and PICTURE"
 	else
 		# Remove artwork
-		local METADATA_REMOVED="STREAMINFO and VORBIS_COMMENT"
+		local metadata_removed="STREAMINFO and VORBIS_COMMENT"
 	fi
 
 	__newline 2
-	__info "Removing all METADATA blocks except ${METADATA_REMOVED}" ; __newline
+	__info "Removing all METADATA blocks except ${metadata_removed}" ; __newline
 }
 
 # Error messages
@@ -265,707 +265,879 @@ __no_flacs () {
 
 # Information relating to currently running tasks
 __print_compressing_flac () {
-	# Obtain percentage of completed files
-	# (stored in: ${PERCENT_DISPLAY} variable)
-	__find_percentage
-
-	# Obtain current flac (stored in:
-	# ${CURRENT_FLAC_TOTAL} variable)
-	__current_flac
-
 	# Grab the first line of 'stty -a' output
 	# Redirecting '/dev/stderr' to 'stty' allows valid arguments
-	read -r COLUMNS < <(stty -a < /dev/stderr)
+	read -r columns < <(stty -a < /dev/stderr)
 
 	# Remove superflous information from 'stty -a'
-	# Ends up with number of ${COLUMNS}
-	COLUMNS="${COLUMNS/#*columns }"
-	COLUMNS="${COLUMNS/%;*}"
+	# Ends up with the width of terminal
+	columns="${columns/#*columns }"
+	columns="${columns/%;*}"
 
-	# This is the number of ${COLUMNS} minus the length of the percent (4), minus the length
-	# of the printed message, '[ Compressing FLAC ]' (20), minus three gaps (3), minus the
-	# length of processed FLAC files, minus 3 (leaves a gap and the gives room for the
-	# ellipsis (…) and cursor)
-	MAX_FILENAME_LENGTH="$(( ${COLUMNS} - 30 - ${#CURRENT_FLAC_TOTAL} ))"
+	# This is the maximum length of a string to be displayed based on column width,
+	# obtained via the number of columns minus the length of displayed characters:
+	#
+	#             ${columns}:  Width of terminal
+	#          ${#iteration}:  Length of the # of FLACs processed
+	#  ${total_flacs_length}:  Length of the total # of FLAC files
+	#                     28:  Length of:
+	#                            [ Compressing FLAC ] (20)
+	#                            3 Spaces
+	#                            3 Characters: [/]
+	#                            2 Gap and ellipsis (…)
+	max_filename_length="$(( ${columns} - ${#iteration} - ${total_flacs_length} - 28 ))"
 
-	FILENAME="${i##*/}"
+	filename="${i##*/}"
 	# Replace possible newlines in filename with '?' (like 'ls' output)
-	FILENAME="${FILENAME//$'\n'/?}"
+	filename="${filename//$'\n'/?}"
 
-	FILENAME_LENGTH="${#FILENAME}"
-
-	if [[ "${FILENAME_LENGTH}" -gt "${MAX_FILENAME_LENGTH}" ]] ; then
-		FILENAME="${FILENAME::$MAX_FILENAME_LENGTH}…"
+	# Cull filename and add an ellipsis if the filename is too long
+	if [[ "${#filename}" -gt "${max_filename_length}" ]] ; then
+		filename="${filename::${max_filename_length}}…"
 	fi
 
-	# 21 is the length of the printed message plus 1 for the gap at the end
-	printf "\r${NORMAL}%$(( ${COLUMNS} - 21 ))s${BOLD_BLUE}%s${NORMAL}%s${YELLOW}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}\r${CYAN}%s${NORMAL}%s${MAGENTA}%s${NORMAL}%s" \
-	"" "[" " " "Compressing FLAC" " " "]" "${PERCENT_DISPLAY}" " " "${CURRENT_FLAC_TOTAL}" " ${FILENAME}"
+	# The current length is obtained via the length of what's printed now minus
+	# the length of the filename and gaps:
+	#
+	#  [1234/123456] 07 - Some_FLAC_Filename.flac <- ${current_length} -> [ Operation Message ]
+	#                                             ^^^^^^^^^^^^^^^^^^^^^^^
+	#                ${#filename}:  Length of the current filaname
+	#  ${max_filename_length} + 1:  Total length of what's printed minus the operation
+	#                               message plus one because we do not want the ellipsis
+	#                               from ${max_filename_length}, just the space/gap
+	current_length="$(( ${max_filename_length} - ${#filename} + 1 ))"
+
+	printf "\r${normal}%s${magenta}%s${normal}%s%${current_length}s${blue}%s${normal}%s${yellow}%s${normal}%s${blue}%s${normal}%s" \
+	" " "[${iteration}/${#total_flacs_array[@]}]" " ${filename} " "" "[" " " "Compressing FLAC" " " "]" " "
 }
+
 __print_test_replaygain () {
-	# Obtain percentage of completed files
-	# (stored in: ${PERCENT_DISPLAY} variable)
-	__find_percentage
-
-	# Obtain current flac (stored in:
-	# ${CURRENT_FLAC_TOTAL} variable)
-	__current_flac
-
 	# Grab the first line of 'stty -a' output
 	# Redirecting '/dev/stderr' to 'stty' allows valid arguments
-	read -r COLUMNS < <(stty -a < /dev/stderr)
+	read -r columns < <(stty -a < /dev/stderr)
 
 	# Remove superflous information from 'stty -a'
-	# Ends up with number of ${COLUMNS}
-	COLUMNS="${COLUMNS/#*columns }"
-	COLUMNS="${COLUMNS/%;*}"
+	# Ends up with the width of terminal
+	columns="${columns/#*columns }"
+	columns="${columns/%;*}"
 
-	# This is the number of ${COLUMNS} minus the length of the percent (4), minus the length
-	# of the printed message, '[ Testing ReplayGain ]' (22), minus three gaps (3), minus the
-	# length of processed FLAC files, minus 3 (leaves a gap and the gives room for the
-	# ellipsis (…) and cursor)
-	MAX_FILENAME_LENGTH="$(( ${COLUMNS} - 32 - ${#CURRENT_FLAC_TOTAL} ))"
+	# This is the maximum length of a string to be displayed based on column width,
+	# obtained via the number of columns minus the length of displayed characters:
+	#
+	#             ${columns}:  Width of terminal
+	#          ${#iteration}:  Length of the # of FLACs processed
+	#  ${total_flacs_length}:  Length of the total # of FLAC files
+	#                     30:  Length of:
+	#                            [ Testing ReplayGain ] (22)
+	#                            3 Spaces
+	#                            3 Characters: [/]
+	#                            2 Gap and ellipsis (…)
+	max_filename_length="$(( ${columns} - ${#iteration} - ${total_flacs_length} - 30 ))"
 
-	FILENAME="${i##*/}"
+	filename="${i##*/}"
 	# Replace possible newlines in filename with '?' (like 'ls' output)
-	FILENAME="${FILENAME//$'\n'/?}"
+	filename="${filename//$'\n'/?}"
 
-	FILENAME_LENGTH="${#FILENAME}"
-
-	if [[ "${FILENAME_LENGTH}" -gt "${MAX_FILENAME_LENGTH}" ]] ; then
-		FILENAME="${FILENAME::$MAX_FILENAME_LENGTH}…"
+	# Cull filename and add an ellipsis if the filename is too long
+	if [[ "${#filename}" -gt "${max_filename_length}" ]] ; then
+		filename="${filename::${max_filename_length}}…"
 	fi
 
-	# 23 is the length of the printed message plus 1 for the gap at the end
-	printf "\r${NORMAL}%$(( ${COLUMNS} - 23 ))s${BOLD_BLUE}%s${NORMAL}%s${YELLOW}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}\r${CYAN}%s${NORMAL}%s${MAGENTA}%s${NORMAL}%s" \
-	"" "[" " " "Testing ReplayGain" " " "]" "${PERCENT_DISPLAY}" " " "${CURRENT_FLAC_TOTAL}" " ${FILENAME}"
+	# The current length is obtained via the length of what's printed now minus
+	# the length of the filename and gaps:
+	#
+	#  [1234/123456] 07 - Some_FLAC_Filename.flac <- ${current_length} -> [ Operation Message ]
+	#                                             ^^^^^^^^^^^^^^^^^^^^^^^
+	#                ${#filename}:  Length of the current filaname
+	#  ${max_filename_length} + 1:  Total length of what's printed minus the operation
+	#                               message plus one because we do not want the ellipsis
+	#                               from ${max_filename_length}, just the space/gap
+	current_length="$(( ${max_filename_length} - ${#filename} + 1 ))"
+
+	printf "\r${normal}%s${magenta}%s${normal}%s%${current_length}s${blue}%s${normal}%s${yellow}%s${normal}%s${blue}%s${normal}%s" \
+	" " "[${iteration}/${#total_flacs_array[@]}]" " ${filename} " "" "[" " " "Testing ReplayGain" " " "]" " "
 }
 __print_add_replaygain () {
-	# Obtain percentage of completed directories
-	# (stored in: ${PERCENT_DISPLAY} variable)
-	__find_percentage_directories
-
-	# Obtain current directory (stored in:
-	# ${CURRENT_DIRECTORY_TOTAL} variable)
-	__current_directory
-
 	# Grab the first line of 'stty -a' output
 	# Redirecting '/dev/stderr' to 'stty' allows valid arguments
-	read -r COLUMNS < <(stty -a < /dev/stderr)
+	read -r columns < <(stty -a < /dev/stderr)
 
 	# Remove superflous information from 'stty -a'
-	# Ends up with number of ${COLUMNS}
-	COLUMNS="${COLUMNS/#*columns }"
-	COLUMNS="${COLUMNS/%;*}"
+	# Ends up with the width of terminal
+	columns="${columns/#*columns }"
+	columns="${columns/%;*}"
 
-	# This is the number of ${COLUMNS} minus the length of the percent (4), minus the length
-	# of the printed message, '[ Adding ReplayGain ]' (21), minus three gaps (3), minus the
-	# length of processed directories, minus 3 (leaves a gap and the gives room for the
-	# ellipsis (…) and cursor)
-	MAX_FILENAME_LENGTH="$(( ${COLUMNS} - 31 - ${#CURRENT_DIRECTORY_TOTAL} ))"
+	# This is the maximum length of a string to be displayed based on column width,
+	# obtained via the number of columns minus the length of displayed characters:
+	#
+	#             ${columns}:  Width of terminal
+	#          ${#iteration}:  Length of the # processed directories
+	#  ${#total_directories}:  Length of the total # of directories
+	#                     29:  Length of:
+	#                            [ Adding ReplayGain ] (21)
+	#                            3 Spaces
+	#                            3 Characters: [/]
+	#                            2 Gap and ellipsis (…)
+	max_filename_length="$(( ${columns} - ${#iteration} - ${#total_directories} - 29 ))"
 
-	FILENAME="${i##*/}"
+	filename="${i##*/}"
 	# Replace possible newlines in filename with '?' (like 'ls' output)
-	FILENAME="${FILENAME//$'\n'/?}"
+	filename="${filename//$'\n'/?}"
 
-	FILENAME_LENGTH="${#FILENAME}"
-
-	if [[ "${FILENAME_LENGTH}" -gt "${MAX_FILENAME_LENGTH}" ]] ; then
-		FILENAME="${FILENAME::$MAX_FILENAME_LENGTH}…"
+	# Cull filename and add an ellipsis if the filename is too long
+	if [[ "${#filename}" -gt "${max_filename_length}" ]] ; then
+		filename="${filename::${max_filename_length}}…"
 	fi
 
-	# 22 is the length of the printed message plus 1 for the gap at the end
-	printf "\r${NORMAL}%$(( ${COLUMNS} - 22 ))s${BOLD_BLUE}%s${NORMAL}%s${YELLOW}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}\r${CYAN}%s${NORMAL}%s${MAGENTA}%s${NORMAL}%s" \
-	"" "[" " " "Adding ReplayGain" " " "]" "${PERCENT_DISPLAY}" " " "${CURRENT_DIRECTORY_TOTAL}" " ${FILENAME}"
+	# The current length is obtained via the length of what's printed now minus
+	# the length of the filename and gaps:
+	#
+	#  [1234/123456] 07 - Some_FLAC_Filename.flac <- ${current_length} -> [ Operation Message ]
+	#                                             ^^^^^^^^^^^^^^^^^^^^^^^
+	#                ${#filename}:  Length of the current filaname
+	#  ${max_filename_length} + 1:  Total length of what's printed minus the operation
+	#                               message plus one because we do not want the ellipsis
+	#                               from ${max_filename_length}, just the space/gap
+	current_length="$(( ${max_filename_length} - ${#filename} + 1 ))"
+
+	printf "\r${normal}%s${magenta}%s${normal}%s%${current_length}s${blue}%s${normal}%s${yellow}%s${normal}%s${blue}%s${normal}%s" \
+	" " "[${iteration}/${#flac_directories_array[@]}]" " ${filename} " "" "[" " " "Adding ReplayGain" " " "]" " "
 }
 __print_testing_flac () {
-	# Obtain percentage of completed files
-	# (stored in: ${PERCENT_DISPLAY} variable)
-	__find_percentage
-
-	# Obtain current flac (stored in:
-	# ${CURRENT_FLAC_TOTAL} variable)
-	__current_flac
-
 	# Grab the first line of 'stty -a' output
 	# Redirecting '/dev/stderr' to 'stty' allows valid arguments
-	read -r COLUMNS < <(stty -a < /dev/stderr)
+	read -r columns < <(stty -a < /dev/stderr)
 
 	# Remove superflous information from 'stty -a'
-	# Ends up with number of ${COLUMNS}
-	COLUMNS="${COLUMNS/#*columns }"
-	COLUMNS="${COLUMNS/%;*}"
+	# Ends up with the width of terminal
+	columns="${columns/#*columns }"
+	columns="${columns/%;*}"
 
-	# This is the number of ${COLUMNS} minus the length of the percent (4), minus the length
-	# of the printed message, '[ Testing FLAC ]' (16), minus three gaps (3), minus the
-	# length of processed FLAC files, minus 3 (leaves a gap and the gives room for the
-	# ellipsis (…) and cursor)
-	MAX_FILENAME_LENGTH="$(( ${COLUMNS} - 26 - ${#CURRENT_FLAC_TOTAL} ))"
+	# This is the maximum length of a string to be displayed based on column width,
+	# obtained via the number of columns minus the length of displayed characters:
+	#
+	#             ${columns}:  Width of terminal
+	#          ${#iteration}:  Length of the # of FLACs processed
+	#  ${total_flacs_length}:  Length of the total # of FLAC files
+	#                     24:  Length of:
+	#                            [ Testing FLAC ] (16)
+	#                            3 Spaces
+	#                            3 Characters: [/]
+	#                            2 Gap and ellipsis (…)
+	max_filename_length="$(( ${columns} - ${#iteration} - ${total_flacs_length} - 24 ))"
 
-	FILENAME="${i##*/}"
+	filename="${i##*/}"
 	# Replace possible newlines in filename with '?' (like 'ls' output)
-	FILENAME="${FILENAME//$'\n'/?}"
+	filename="${filename//$'\n'/?}"
 
-	FILENAME_LENGTH="${#FILENAME}"
-
-	if [[ "${FILENAME_LENGTH}" -gt "${MAX_FILENAME_LENGTH}" ]] ; then
-		FILENAME="${FILENAME::$MAX_FILENAME_LENGTH}…"
+	# Cull filename and add an ellipsis if the filename is too long
+	if [[ "${#filename}" -gt "${max_filename_length}" ]] ; then
+		filename="${filename::${max_filename_length}}…"
 	fi
-	
-	# 17 is the length of the printed message plus 1 for the gap at the end
-	printf "\r${NORMAL}%$(( ${COLUMNS} - 17 ))s${BOLD_BLUE}%s${NORMAL}%s${YELLOW}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}\r${CYAN}%s${NORMAL}%s${MAGENTA}%s${NORMAL}%s" \
-	"" "[" " " "Testing FLAC" " " "]" "${PERCENT_DISPLAY}" " " "${CURRENT_FLAC_TOTAL}" " ${FILENAME}"
+
+	# The current length is obtained via the length of what's printed now minus
+	# the length of the filename and gaps:
+	#
+	#  [1234/123456] 07 - Some_FLAC_Filename.flac <- ${current_length} -> [ Operation Message ]
+	#                                             ^^^^^^^^^^^^^^^^^^^^^^^
+	#                ${#filename}:  Length of the current filaname
+	#  ${max_filename_length} + 1:  Total length of what's printed minus the operation
+	#                               message plus one because we do not want the ellipsis
+	#                               from ${max_filename_length}, just the space/gap
+	current_length="$(( ${max_filename_length} - ${#filename} + 1 ))"
+
+	printf "\r${normal}%s${magenta}%s${normal}%s%${current_length}s${blue}%s${normal}%s${yellow}%s${normal}%s${blue}%s${normal}%s" \
+	" " "[${iteration}/${#total_flacs_array[@]}]" " ${filename} " "" "[" " " "Testing FLAC" " " "]" " "
 }
 __print_failed_flac () {
-	# Obtain percentage of completed files
-	__find_percentage
-
 	# Grab the first line of 'stty -a' output
 	# Redirecting '/dev/stderr' to 'stty' allows valid arguments
-	read -r COLUMNS < <(stty -a < /dev/stderr)
+	read -r columns < <(stty -a < /dev/stderr)
 
 	# Remove superflous information from 'stty -a'
-	# Ends up with number of ${COLUMNS}
-	COLUMNS="${COLUMNS/#*columns }"
-	COLUMNS="${COLUMNS/%;*}"
+	# Ends up with the width of terminal
+	columns="${columns/#*columns }"
+	columns="${columns/%;*}"
 
-	# This is the number of ${COLUMNS} minus the length of the gaps (and *) (8), minus the length
-	# of the printed message, '[ Failed ]' (10), minus 2 (leaves a gap and the gives room for the
-	# ellipsis (…))
-	MAX_FILENAME_LENGTH="$(( ${COLUMNS} - 20 ))"
+	# This is the maximum length of a string to be displayed based on column width,
+	# obtained via the number of columns minus the length of displayed characters:
+	#
+	#             ${columns}:  Width of terminal
+	#          ${#iteration}:  Length of the # of FLACs processed
+	#  ${total_flacs_length}:  Length of the total # of FLAC files
+	#                     20:  Length of:
+	#                            [ Failed ] (10)
+	#                            7 Spaces
+	#                            1 Asterisk: *
+	#                            2 Gap and ellipsis (…)
+	max_filename_length="$(( ${columns} - 20 ))"
 
-	FILENAME="${i##*/}"
+	filename="${i##*/}"
 	# Replace possible newlines in filename with '?' (like 'ls' output)
-	FILENAME="${FILENAME//$'\n'/?}"
+	filename="${filename//$'\n'/?}"
 
-	FILENAME_LENGTH="${#FILENAME}"
-
-	if [[ "${FILENAME_LENGTH}" -gt "${MAX_FILENAME_LENGTH}" ]] ; then
-		FILENAME="${FILENAME::$MAX_FILENAME_LENGTH}…"
+	# Cull filename and add an ellipsis if the filename is too long
+	if [[ "${#filename}" -gt "${max_filename_length}" ]] ; then
+		filename="${filename::${max_filename_length}}…"
 	fi
 
-	# 11 is the length of the printed message plus 1 for the gap at the end
-	printf "\r${NORMAL}%$(( ${COLUMNS} - 11 ))s${BOLD_BLUE}%s${NORMAL}%s${BOLD_RED}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}\r%s${BOLD_RED}%s${NORMAL}%s\n" \
-	"" "[" " " "Failed" " " "]" "     " "*" " ${FILENAME}"
+	# The current length is obtained via the length of what's printed now minus
+	# the length of the filename and gaps:
+	#
+	#  [1234/123456] 07 - Some_FLAC_Filename.flac <- ${current_length} -> [ Operation Message ]
+	#                                             ^^^^^^^^^^^^^^^^^^^^^^^
+	#                ${#filename}:  Length of the current filaname
+	#  ${max_filename_length} + 1:  Total length of what's printed minus the operation
+	#                               message plus one because we do not want the ellipsis
+	#                               from ${max_filename_length}, just the space/gap
+	current_length="$(( ${max_filename_length} - ${#filename} + 1 ))"
+
+	printf "\r${normal}%s${red}%s${normal}%s%${current_length}s${blue}%s${normal}%s${red}%s${normal}%s${blue}%s${normal}%s\n" \
+	"     " "*" " ${filename} " "" "[" " " "Failed" " " "]" " "
 }
 __print_checking_md5 () {
-	# Obtain percentage of completed files
-	# (stored in: ${PERCENT_DISPLAY} variable)
-	__find_percentage
-
-	# Obtain current flac (stored in:
-	# ${CURRENT_FLAC_TOTAL} variable)
-	__current_flac
-
 	# Grab the first line of 'stty -a' output
 	# Redirecting '/dev/stderr' to 'stty' allows valid arguments
-	read -r COLUMNS < <(stty -a < /dev/stderr)
+	read -r columns < <(stty -a < /dev/stderr)
 
 	# Remove superflous information from 'stty -a'
-	# Ends up with number of ${COLUMNS}
-	COLUMNS="${COLUMNS/#*columns }"
-	COLUMNS="${COLUMNS/%;*}"
+	# Ends up with the width of terminal
+	columns="${columns/#*columns }"
+	columns="${columns/%;*}"
 
-	# This is the number of ${COLUMNS} minus the length of the percent (4), minus the length
-	# of the printed message, '[ Checking MD5 ]' (16), minus three gaps (3), minus the
-	# length of processed FLAC files, minus 3 (leaves a gap and the gives room for the
-	# ellipsis (…) and cursor)
-	MAX_FILENAME_LENGTH="$(( ${COLUMNS} - 26 - ${#CURRENT_FLAC_TOTAL} ))"
+	# This is the maximum length of a string to be displayed based on column width,
+	# obtained via the number of columns minus the length of displayed characters:
+	#
+	#             ${columns}:  Width of terminal
+	#          ${#iteration}:  Length of the # of FLACs processed
+	#  ${total_flacs_length}:  Length of the total # of FLAC files
+	#                     24:  Length of:
+	#                            [ Checking MD5 ] (16)
+	#                            3 Spaces
+	#                            3 Characters: [/]
+	#                            2 Gap and ellipsis (…)
+	max_filename_length="$(( ${columns} - ${#iteration} - ${total_flacs_length} - 24 ))"
 
-	FILENAME="${i##*/}"
+	filename="${i##*/}"
 	# Replace possible newlines in filename with '?' (like 'ls' output)
-	FILENAME="${FILENAME//$'\n'/?}"
+	filename="${filename//$'\n'/?}"
 
-	FILENAME_LENGTH="${#FILENAME}"
-
-	if [[ "${FILENAME_LENGTH}" -gt "${MAX_FILENAME_LENGTH}" ]] ; then
-		FILENAME="${FILENAME::$MAX_FILENAME_LENGTH}…"
+	# Cull filename and add an ellipsis if the filename is too long
+	if [[ "${#filename}" -gt "${max_filename_length}" ]] ; then
+		filename="${filename::${max_filename_length}}…"
 	fi
 
-	# 17 is the length of the printed message plus 1 for the gap at the end
-	printf "\r${NORMAL}%$(( ${COLUMNS} - 17 ))s${BOLD_BLUE}%s${NORMAL}%s${YELLOW}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}\r${CYAN}%s${NORMAL}%s${MAGENTA}%s${NORMAL}%s" \
-	"" "[" " " "Checking MD5" " " "]" "${PERCENT_DISPLAY}" " " "${CURRENT_FLAC_TOTAL}" " ${FILENAME}"
+	# The current length is obtained via the length of what's printed now minus
+	# the length of the filename and gaps:
+	#
+	#  [1234/123456] 07 - Some_FLAC_Filename.flac <- ${current_length} -> [ Operation Message ]
+	#                                             ^^^^^^^^^^^^^^^^^^^^^^^
+	#                ${#filename}:  Length of the current filaname
+	#  ${max_filename_length} + 1:  Total length of what's printed minus the operation
+	#                               message plus one because we do not want the ellipsis
+	#                               from ${max_filename_length}, just the space/gap
+	current_length="$(( ${max_filename_length} - ${#filename} + 1 ))"
+
+	printf "\r${normal}%s${magenta}%s${normal}%s%${current_length}s${blue}%s${normal}%s${yellow}%s${normal}%s${blue}%s${normal}%s" \
+	" " "[${iteration}/${#total_flacs_array[@]}]" " ${filename} " "" "[" " " "Checking MD5" " " "]" " "
 }
 __print_ok_flac () {
-	# Obtain percentage of completed files
-	# (stored in: ${PERCENT_DISPLAY} variable)
-	__find_percentage
-
-	# Obtain current flac (stored in:
-	# ${CURRENT_FLAC_TOTAL} variable)
-	__current_flac
-
 	# Grab the first line of 'stty -a' output
 	# Redirecting '/dev/stderr' to 'stty' allows valid arguments
-	read -r COLUMNS < <(stty -a < /dev/stderr)
+	read -r columns < <(stty -a < /dev/stderr)
 
 	# Remove superflous information from 'stty -a'
-	# Ends up with number of ${COLUMNS}
-	COLUMNS="${COLUMNS/#*columns }"
-	COLUMNS="${COLUMNS/%;*}"
+	# Ends up with the width of terminal
+	columns="${columns/#*columns }"
+	columns="${columns/%;*}"
 
-	# This is the number of ${COLUMNS} minus the length of the percent (4), minus the length
-	# of the printed message, '[ ok ]' (6), minus three gaps (3), minus the
-	# length of processed FLAC files, minus 2 (leaves a gap and the gives room for the
-	# ellipsis (…))
-	MAX_FILENAME_LENGTH="$(( ${COLUMNS} - 15 - ${#CURRENT_FLAC_TOTAL} ))"
+	# This is the maximum length of a string to be displayed based on column width,
+	# obtained via the number of columns minus the length of displayed characters:
+	#
+	#             ${columns}:  Width of terminal
+	#          ${#iteration}:  Length of the # of FLACs processed
+	#  ${total_flacs_length}:  Length of the total # of FLAC files
+	#                     14:  Length of:
+	#                            [ ok ] (6)
+	#                            3 Spaces
+	#                            3 Characters: [/]
+	#                            2 Gap and ellipsis (…)
+	max_filename_length="$(( ${columns} - ${#iteration} - ${total_flacs_length} - 14 ))"
 
-	FILENAME="${i##*/}"
+	filename="${i##*/}"
 	# Replace possible newlines in filename with '?' (like 'ls' output)
-	FILENAME="${FILENAME//$'\n'/?}"
+	filename="${filename//$'\n'/?}"
 
-	FILENAME_LENGTH="${#FILENAME}"
-
-	if [[ "${FILENAME_LENGTH}" -gt "${MAX_FILENAME_LENGTH}" ]] ; then
-		FILENAME="${FILENAME::$MAX_FILENAME_LENGTH}…"
+	# Cull filename and add an ellipsis if the filename is too long
+	if [[ "${#filename}" -gt "${max_filename_length}" ]] ; then
+		filename="${filename::${max_filename_length}}…"
 	fi
 
-	# 7 is the length of the printed message plus 1 for the gap at the end
-	printf "\r${NORMAL}%$(( ${COLUMNS} - 7 ))s${BOLD_BLUE}%s${NORMAL}%s${BOLD_GREEN}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}\r${CYAN}%s${NORMAL}%s${MAGENTA}%s${NORMAL}%s" \
-	"" "[" " " "ok" " " "]" "${PERCENT_DISPLAY}" " " "${CURRENT_FLAC_TOTAL}" " ${FILENAME}"
+	# The current length is obtained via the length of what's printed now minus
+	# the length of the filename and gaps:
+	#
+	#  [1234/123456] 07 - Some_FLAC_Filename.flac <- ${current_length} -> [ Operation Message ]
+	#                                             ^^^^^^^^^^^^^^^^^^^^^^^
+	#                ${#filename}:  Length of the current filaname
+	#  ${max_filename_length} + 1:  Total length of what's printed minus the operation
+	#                               message plus one because we do not want the ellipsis
+	#                               from ${max_filename_length}, just the space/gap
+	current_length="$(( ${max_filename_length} - ${#filename} + 1 ))"
+
+	printf "\r${normal}%s${magenta}%s${normal}%s%${current_length}s${blue}%s${normal}%s${green}%s${normal}%s${blue}%s${normal}%s" \
+	" " "[${iteration}/${#total_flacs_array[@]}]" " ${filename} " "" "[" " " "ok" " " "]" " "
 }
 __print_ok_replaygain () {
-	# Obtain percentage of completed directories
-	# (stored in: ${PERCENT_DISPLAY} variable)
-	__find_percentage_directories
-
-	# Obtain current directory (stored in:
-	# ${CURRENT_DIRECTORY_TOTAL} variable)
-	__current_directory
-
 	# Grab the first line of 'stty -a' output
 	# Redirecting '/dev/stderr' to 'stty' allows valid arguments
-	read -r COLUMNS < <(stty -a < /dev/stderr)
+	read -r columns < <(stty -a < /dev/stderr)
 
 	# Remove superflous information from 'stty -a'
-	# Ends up with number of ${COLUMNS}
-	COLUMNS="${COLUMNS/#*columns }"
-	COLUMNS="${COLUMNS/%;*}"
+	# Ends up with the width of terminal
+	columns="${columns/#*columns }"
+	columns="${columns/%;*}"
 
-	# This is the number of ${COLUMNS} minus the length of the percent (4), minus the length
-	# of the printed message, '[ ok ]' (6), minus three gaps (3), minus the
-	# length of processed directories, minus 2 (leaves a gap and the gives room for the
-	# ellipsis (…))
-	MAX_FILENAME_LENGTH="$(( ${COLUMNS} - 15 - ${#CURRENT_DIRECTORY_TOTAL} ))"
+	# This is the maximum length of a string to be displayed based on column width,
+	# obtained via the number of columns minus the length of displayed characters:
+	#
+	#             ${columns}:  Width of terminal
+	#          ${#iteration}:  Length of the # of processed directories
+	#  ${#total_directories}:  Length of the total # of directories
+	#                     14:  Length of:
+	#                            [ ok ] (6)
+	#                            3 Spaces
+	#                            3 Characters: [/]
+	#                            2 Gap and ellipsis (…)
+	max_filename_length="$(( ${columns} - ${#iteration} - ${#total_directories} - 14 ))"
 
-	FILENAME="${i##*/}"
+	filename="${i##*/}"
 	# Replace possible newlines in filename with '?' (like 'ls' output)
-	FILENAME="${FILENAME//$'\n'/?}"
+	filename="${filename//$'\n'/?}"
 
-	FILENAME_LENGTH="${#FILENAME}"
-
-	if [[ "${FILENAME_LENGTH}" -gt "${MAX_FILENAME_LENGTH}" ]] ; then
-		FILENAME="${FILENAME::$MAX_FILENAME_LENGTH}…"
+	# Cull filename and add an ellipsis if the filename is too long
+	if [[ "${#filename}" -gt "${max_filename_length}" ]] ; then
+		filename="${filename::${max_filename_length}}…"
 	fi
 
-	# 7 is the length of the printed message plus 1 for the gap at the end
-	printf "\r${NORMAL}%$(( ${COLUMNS} - 7 ))s${BOLD_BLUE}%s${NORMAL}%s${BOLD_GREEN}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}\r${CYAN}%s${NORMAL}%s${MAGENTA}%s${NORMAL}%s" \
-	"" "[" " " "ok" " " "]" "${PERCENT_DISPLAY}" " " "${CURRENT_DIRECTORY_TOTAL}" " ${FILENAME}"
+	# The current length is obtained via the length of what's printed now minus
+	# the length of the filename and gaps:
+	#
+	#  [1234/123456] 07 - Some_FLAC_Filename.flac <- ${current_length} -> [ Operation Message ]
+	#                                             ^^^^^^^^^^^^^^^^^^^^^^^
+	#                ${#filename}:  Length of the current filaname
+	#  ${max_filename_length} + 1:  Total length of what's printed minus the operation
+	#                               message plus one because we do not want the ellipsis
+	#                               from ${max_filename_length}, just the space/gap
+	current_length="$(( ${max_filename_length} - ${#filename} + 1 ))"
+
+	printf "\r${normal}%s${magenta}%s${normal}%s%${current_length}s${blue}%s${normal}%s${green}%s${normal}%s${blue}%s${normal}%s" \
+	" " "[${iteration}/${#flac_directories_array[@]}]" " ${filename} " "" "[" " " "ok" " " "]" " "
 }
 __print_aucdtect_flac () {
-	# Obtain percentage of completed files
-	# (stored in: ${PERCENT_DISPLAY} variable)
-	__find_percentage
-
-	# Obtain current flac (stored in:
-	# ${CURRENT_FLAC_TOTAL} variable)
-	__current_flac
-
 	# Grab the first line of 'stty -a' output
 	# Redirecting '/dev/stderr' to 'stty' allows valid arguments
-	read -r COLUMNS < <(stty -a < /dev/stderr)
+	read -r columns < <(stty -a < /dev/stderr)
 
 	# Remove superflous information from 'stty -a'
-	# Ends up with number of ${COLUMNS}
-	COLUMNS="${COLUMNS/#*columns }"
-	COLUMNS="${COLUMNS/%;*}"
+	# Ends up with the width of terminal
+	columns="${columns/#*columns }"
+	columns="${columns/%;*}"
 
-	# This is the number of ${COLUMNS} minus the length of the percent (4), minus the length
-	# of the printed message, '[ Validating FLAC ]' (19), minus three gaps (3), minus the
-	# length of processed FLAC files, minus 3 (leaves a gap and the gives room for the
-	# ellipsis (…) and cursor)
-	MAX_FILENAME_LENGTH="$(( ${COLUMNS} - 29 - ${#CURRENT_FLAC_TOTAL} ))"
+	# This is the maximum length of a string to be displayed based on column width,
+	# obtained via the number of columns minus the length of displayed characters:
+	#
+	#             ${columns}:  Width of terminal
+	#          ${#iteration}:  Length of the # of FLACs processed
+	#  ${total_flacs_length}:  Length of the total # of FLAC files
+	#                     27:  Length of:
+	#                            [ Validating FLAC ] (19)
+	#                            3 Spaces
+	#                            3 Characters: [/]
+	#                            2 Gap and ellipsis (…)
+	max_filename_length="$(( ${columns} - ${#iteration} - ${total_flacs_length} - 27 ))"
 
-	FILENAME="${i##*/}"
+	filename="${i##*/}"
 	# Replace possible newlines in filename with '?' (like 'ls' output)
-	FILENAME="${FILENAME//$'\n'/?}"
+	filename="${filename//$'\n'/?}"
 
-	FILENAME_LENGTH="${#FILENAME}"
-
-	if [[ "${FILENAME_LENGTH}" -gt "${MAX_FILENAME_LENGTH}" ]] ; then
-		FILENAME="${FILENAME::$MAX_FILENAME_LENGTH}…"
+	# Cull filename and add an ellipsis if the filename is too long
+	if [[ "${#filename}" -gt "${max_filename_length}" ]] ; then
+		filename="${filename::${max_filename_length}}…"
 	fi
 
-	# 20 is the length of the printed message plus 1 for the gap at the end
-	printf "\r${NORMAL}%$(( ${COLUMNS} - 20 ))s${BOLD_BLUE}%s${NORMAL}%s${YELLOW}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}\r${CYAN}%s${NORMAL}%s${MAGENTA}%s${NORMAL}%s" \
-	"" "[" " " "Validating FLAC" " " "]" "${PERCENT_DISPLAY}" " " "${CURRENT_FLAC_TOTAL}" " ${FILENAME}"
+	# The current length is obtained via the length of what's printed now minus
+	# the length of the filename and gaps:
+	#
+	#  [1234/123456] 07 - Some_FLAC_Filename.flac <- ${current_length} -> [ Operation Message ]
+	#                                             ^^^^^^^^^^^^^^^^^^^^^^^
+	#                ${#filename}:  Length of the current filaname
+	#  ${max_filename_length} + 1:  Total length of what's printed minus the operation
+	#                               message plus one because we do not want the ellipsis
+	#                               from ${max_filename_length}, just the space/gap
+	current_length="$(( ${max_filename_length} - ${#filename} + 1 ))"
+
+	printf "\r${normal}%s${magenta}%s${normal}%s%${current_length}s${blue}%s${normal}%s${yellow}%s${normal}%s${blue}%s${normal}%s" \
+	" " "[${iteration}/${#total_flacs_array[@]}]" " ${filename} " "" "[" " " "Validating FLAC" " " "]" " "
 }
 __print_aucdtect_issue () {
 	# Grab the first line of 'stty -a' output
 	# Redirecting '/dev/stderr' to 'stty' allows valid arguments
-	read -r COLUMNS < <(stty -a < /dev/stderr)
+	read -r columns < <(stty -a < /dev/stderr)
 
 	# Remove superflous information from 'stty -a'
-	# Ends up with number of ${COLUMNS}
-	COLUMNS="${COLUMNS/#*columns }"
-	COLUMNS="${COLUMNS/%;*}"
+	# Ends up with the width of terminal
+	columns="${columns/#*columns }"
+	columns="${columns/%;*}"
 
-	# This is the number of ${COLUMNS} minus the length of the gaps (and *) (8), minus the length
-	# of the printed message, '[ Issue ]' (9), minus 2 (leaves a gap and the gives room for the
-	# ellipsis (…))
-	MAX_FILENAME_LENGTH="$(( ${COLUMNS} - 19 ))"
+	# This is the maximum length of a string to be displayed based on column width,
+	# obtained via the number of columns minus the length of displayed characters:
+	#
+	#             ${columns}:  Width of terminal
+	#          ${#iteration}:  Length of the # of FLACs processed
+	#  ${total_flacs_length}:  Length of the total # of FLAC files
+	#                     19:  Length of:
+	#                            [ Issue ] (9)
+	#                            7 Spaces
+	#                            1 Asterisk: *
+	#                            2 Gap and ellipsis (…)
+	max_filename_length="$(( ${columns} - 19 ))"
 
-	FILENAME="${i##*/}"
+	filename="${i##*/}"
 	# Replace possible newlines in filename with '?' (like 'ls' output)
-	FILENAME="${FILENAME//$'\n'/?}"
+	filename="${filename//$'\n'/?}"
 
-	FILENAME_LENGTH="${#FILENAME}"
-
-	if [[ "${FILENAME_LENGTH}" -gt "${MAX_FILENAME_LENGTH}" ]] ; then
-		FILENAME="${FILENAME::$MAX_FILENAME_LENGTH}…"
+	# Cull filename and add an ellipsis if the filename is too long
+	if [[ "${#filename}" -gt "${max_filename_length}" ]] ; then
+		filename="${filename::${max_filename_length}}…"
 	fi
 
-	# 10 is the length of the printed message plus 1 for the gap at the end
-	printf "\r${NORMAL}%$(( ${COLUMNS} - 10 ))s${BOLD_BLUE}%s${NORMAL}%s${YELLOW}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}\r%s${BOLD_RED}%s${NORMAL}%s\n" \
-	"" "[" " " "Issue" " " "]" "     " "*" " ${FILENAME}"
+	# The current length is obtained via the length of what's printed now minus
+	# the length of the filename and gaps:
+	#
+	#  [1234/123456] 07 - Some_FLAC_Filename.flac <- ${current_length} -> [ Operation Message ]
+	#                                             ^^^^^^^^^^^^^^^^^^^^^^^
+	#                ${#filename}:  Length of the current filaname
+	#  ${max_filename_length} + 1:  Total length of what's printed minus the operation
+	#                               message plus one because we do not want the ellipsis
+	#                               from ${max_filename_length}, just the space/gap
+	current_length="$(( ${max_filename_length} - ${#filename} + 1 ))"
+
+	printf "\r${normal}%s${red}%s${normal}%s%${current_length}s${blue}%s${normal}%s${yellow}%s${normal}%s${blue}%s${normal}%s\n" \
+	"     " "*" " ${filename} " "" "[" " " "Issue" " " "]" " "
 }
 __print_aucdtect_spectrogram () {
-	# Obtain percentage of completed files
-	# (stored in: ${PERCENT_DISPLAY} variable)
-	__find_percentage
-
-	# Obtain current flac (stored in:
-	# ${CURRENT_FLAC_TOTAL} variable)
-	__current_flac
-
 	# Grab the first line of 'stty -a' output
 	# Redirecting '/dev/stderr' to 'stty' allows valid arguments
-	read -r COLUMNS < <(stty -a < /dev/stderr)
+	read -r columns < <(stty -a < /dev/stderr)
 
 	# Remove superflous information from 'stty -a'
-	# Ends up with number of ${COLUMNS}
-	COLUMNS="${COLUMNS/#*columns }"
-	COLUMNS="${COLUMNS/%;*}"
+	# Ends up with the width of terminal
+	columns="${columns/#*columns }"
+	columns="${columns/%;*}"
 
-	# This is the number of ${COLUMNS} minus the length of the percent (4), minus the length
-	# of the printed message, '[ Creating Spectrogram ]' (24), minus three gaps (3), minus the
-	# length of processed FLAC files, minus 3 (leaves a gap and the gives room for the
-	# ellipsis (…) and cursor)
-	MAX_FILENAME_LENGTH="$(( ${COLUMNS} - 34 - ${#CURRENT_FLAC_TOTAL} ))"
+	# This is the maximum length of a string to be displayed based on column width,
+	# obtained via the number of columns minus the length of displayed characters:
+	#
+	#             ${columns}:  Width of terminal
+	#          ${#iteration}:  Length of the # of FLACs processed
+	#  ${total_flacs_length}:  Length of the total # of FLAC files
+	#                     32:  Length of:
+	#                            [ Creating Spectrogram ] (24)
+	#                            3 Spaces
+	#                            3 Characters: [/]
+	#                            2 Gap and ellipsis (…)
+	max_filename_length="$(( ${columns} - ${#iteration} - ${total_flacs_length} - 32 ))"
 
-	FILENAME="${i##*/}"
+	filename="${i##*/}"
 	# Replace possible newlines in filename with '?' (like 'ls' output)
-	FILENAME="${FILENAME//$'\n'/?}"
+	filename="${filename//$'\n'/?}"
 
-	FILENAME_LENGTH="${#FILENAME}"
-
-	if [[ "${FILENAME_LENGTH}" -gt "${MAX_FILENAME_LENGTH}" ]] ; then
-		FILENAME="${FILENAME::$MAX_FILENAME_LENGTH}…"
+	# Cull filename and add an ellipsis if the filename is too long
+	if [[ "${#filename}" -gt "${max_filename_length}" ]] ; then
+		filename="${filename::${max_filename_length}}…"
 	fi
 
-	# 25 is the length of the printed message plus 1 for the gap at the end
-	printf "\r${NORMAL}%$(( ${COLUMNS} - 25 ))s${BOLD_BLUE}%s${NORMAL}%s${YELLOW}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}\r${CYAN}%s${NORMAL}%s${MAGENTA}%s${NORMAL}%s" \
-	"" "[" " " "Creating Spectrogram" " " "]" "${PERCENT_DISPLAY}" " " "${CURRENT_FLAC_TOTAL}" " ${FILENAME}"
+	# The current length is obtained via the length of what's printed now minus
+	# the length of the filename and gaps:
+	#
+	#  [1234/123456] 07 - Some_FLAC_Filename.flac <- ${current_length} -> [ Operation Message ]
+	#                                             ^^^^^^^^^^^^^^^^^^^^^^^
+	#                ${#filename}:  Length of the current filaname
+	#  ${max_filename_length} + 1:  Total length of what's printed minus the operation
+	#                               message plus one because we do not want the ellipsis
+	#                               from ${max_filename_length}, just the space/gap
+	current_length="$(( ${max_filename_length} - ${#filename} + 1 ))"
+
+	printf "\r${normal}%s${magenta}%s${normal}%s%${current_length}s${blue}%s${normal}%s${yellow}%s${normal}%s${blue}%s${normal}%s" \
+	" " "[${iteration}/${#total_flacs_array[@]}]" " ${filename} " "" "[" " " "Creating Spectrogram" " " "]" " "
 }
 __print_aucdtect_skip () {
 	# Grab the first line of 'stty -a' output
 	# Redirecting '/dev/stderr' to 'stty' allows valid arguments
-	read -r COLUMNS < <(stty -a < /dev/stderr)
+	read -r columns < <(stty -a < /dev/stderr)
 
 	# Remove superflous information from 'stty -a'
-	# Ends up with number of ${COLUMNS}
-	COLUMNS="${COLUMNS/#*columns }"
-	COLUMNS="${COLUMNS/%;*}"
+	# Ends up with the width of terminal
+	columns="${columns/#*columns }"
+	columns="${columns/%;*}"
 
-	# This is the number of ${COLUMNS} minus the length of the gaps (and *) (8), minus the length
-	# of the printed message, '[ Skipped ]' (11), minus 2 (leaves a gap and the gives room for the
-	# ellipsis (…))
-	MAX_FILENAME_LENGTH="$(( ${COLUMNS} - 21 ))"
+	# This is the maximum length of a string to be displayed based on column width,
+	# obtained via the number of columns minus the length of displayed characters:
+	#
+	#             ${columns}:  Width of terminal
+	#          ${#iteration}:  Length of the # of FLACs processed
+	#  ${total_flacs_length}:  Length of the total # of FLAC files
+	#                     21:  Length of:
+	#                            [ Skipped ] (11)
+	#                            7 Spaces
+	#                            1 Asterisk: *
+	#                            2 Gap and ellipsis (…)
+	max_filename_length="$(( ${columns} - 21 ))"
 
-	FILENAME="${i##*/}"
+	filename="${i##*/}"
 	# Replace possible newlines in filename with '?' (like 'ls' output)
-	FILENAME="${FILENAME//$'\n'/?}"
+	filename="${filename//$'\n'/?}"
 
-	FILENAME_LENGTH="${#FILENAME}"
-
-	if [[ "${FILENAME_LENGTH}" -gt "${MAX_FILENAME_LENGTH}" ]] ; then
-		FILENAME="${FILENAME::$MAX_FILENAME_LENGTH}…"
+	# Cull filename and add an ellipsis if the filename is too long
+	if [[ "${#filename}" -gt "${max_filename_length}" ]] ; then
+		filename="${filename::${max_filename_length}}…"
 	fi
 
-	# 12 is the length of the printed message plus 1 for the gap at the end
-	printf "\r${NORMAL}%$(( ${COLUMNS} - 12 ))s${BOLD_BLUE}%s${NORMAL}%s${YELLOW}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}\r%s${BOLD_RED}%s${NORMAL}%s\n" \
-	"" "[" " " "Skipped" " " "]" "     " "*" " ${FILENAME}"
+	# The current length is obtained via the length of what's printed now minus
+	# the length of the filename and gaps:
+	#
+	#  [1234/123456] 07 - Some_FLAC_Filename.flac <- ${current_length} -> [ Operation Message ]
+	#                                             ^^^^^^^^^^^^^^^^^^^^^^^
+	#                ${#filename}:  Length of the current filaname
+	#  ${max_filename_length} + 1:  Total length of what's printed minus the operation
+	#                               message plus one because we do not want the ellipsis
+	#                               from ${max_filename_length}, just the space/gap
+	current_length="$(( ${max_filename_length} - ${#filename} + 1 ))"
+
+	printf "\r${normal}%s${red}%s${normal}%s%${current_length}s${blue}%s${normal}%s${yellow}%s${normal}%s${blue}%s${normal}%s\n" \
+	"     " "*" " ${filename} " "" "[" " " "Skipped" " " "]" " "
 }
 __print_done_flac () {
-	# Obtain percentage of completed files
-	# (stored in: ${PERCENT_DISPLAY} variable)
-	__find_percentage
-
-	# Obtain current flac (stored in:
-	# ${CURRENT_FLAC_TOTAL} variable)
-	__current_flac
-
 	# Grab the first line of 'stty -a' output
 	# Redirecting '/dev/stderr' to 'stty' allows valid arguments
-	read -r COLUMNS < <(stty -a < /dev/stderr)
+	read -r columns < <(stty -a < /dev/stderr)
 
 	# Remove superflous information from 'stty -a'
-	# Ends up with number of ${COLUMNS}
-	COLUMNS="${COLUMNS/#*columns }"
-	COLUMNS="${COLUMNS/%;*}"
+	# Ends up with the width of terminal
+	columns="${columns/#*columns }"
+	columns="${columns/%;*}"
 
-	# This is the number of ${COLUMNS} minus the length of the percent (4), minus the length
-	# of the printed message, '[ Done ]' (8), minus three gaps (3), minus the
-	# length of processed FLAC files, minus 2 (leaves a gap and the gives room for the
-	# ellipsis (…))
-	MAX_FILENAME_LENGTH="$(( ${COLUMNS} - 17 - ${#CURRENT_FLAC_TOTAL} ))"
+	# This is the maximum length of a string to be displayed based on column width,
+	# obtained via the number of columns minus the length of displayed characters:
+	#
+	#             ${columns}:  Width of terminal
+	#          ${#iteration}:  Length of the # of FLACs processed
+	#  ${total_flacs_length}:  Length of the total # of FLAC files
+	#                     16:  Length of:
+	#                            [ Done ] (8)
+	#                            3 Spaces
+	#                            3 Characters: [/]
+	#                            2 Gap and ellipsis (…)
+	max_filename_length="$(( ${columns} - ${#iteration} - ${total_flacs_length} - 16 ))"
 
-	FILENAME="${i##*/}"
+	filename="${i##*/}"
 	# Replace possible newlines in filename with '?' (like 'ls' output)
-	FILENAME="${FILENAME//$'\n'/?}"
+	filename="${filename//$'\n'/?}"
 
-	FILENAME_LENGTH="${#FILENAME}"
-
-	if [[ "${FILENAME_LENGTH}" -gt "${MAX_FILENAME_LENGTH}" ]] ; then
-		FILENAME="${FILENAME::$MAX_FILENAME_LENGTH}…"
+	# Cull filename and add an ellipsis if the filename is too long
+	if [[ "${#filename}" -gt "${max_filename_length}" ]] ; then
+		filename="${filename::${max_filename_length}}…"
 	fi
 
-	# 9 is the length of the printed message plus 1 for the gap at the end
-	printf "\r${NORMAL}%$(( ${COLUMNS} - 9 ))s${BOLD_BLUE}%s${NORMAL}%s${BOLD_GREEN}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}\r${CYAN}%s${NORMAL}%s${MAGENTA}%s${NORMAL}%s" \
-	"" "[" " " "Done" " " "]" "${PERCENT_DISPLAY}" " " "${CURRENT_FLAC_TOTAL}" " ${FILENAME}"
+	# The current length is obtained via the length of what's printed now minus
+	# the length of the filename and gaps:
+	#
+	#  [1234/123456] 07 - Some_FLAC_Filename.flac <- ${current_length} -> [ Operation Message ]
+	#                                             ^^^^^^^^^^^^^^^^^^^^^^^
+	#                ${#filename}:  Length of the current filaname
+	#  ${max_filename_length} + 1:  Total length of what's printed minus the operation
+	#                               message plus one because we do not want the ellipsis
+	#                               from ${max_filename_length}, just the space/gap
+	current_length="$(( ${max_filename_length} - ${#filename} + 1 ))"
+
+	printf "\r${normal}%s${magenta}%s${normal}%s%${current_length}s${blue}%s${normal}%s${green}%s${normal}%s${blue}%s${normal}%s" \
+	" " "[${iteration}/${#total_flacs_array[@]}]" " ${filename} " "" "[" " " "Done" " " "]" " "
 }
 __print_level_same_compression () {
-	# Obtain percentage of completed files
-	# (stored in: ${PERCENT_DISPLAY} variable)
-	__find_percentage
-
-	# Obtain current flac (stored in:
-	# ${CURRENT_FLAC_TOTAL} variable)
-	__current_flac
-
 	# Grab the first line of 'stty -a' output
 	# Redirecting '/dev/stderr' to 'stty' allows valid arguments
-	read -r COLUMNS < <(stty -a < /dev/stderr)
+	read -r columns < <(stty -a < /dev/stderr)
 
 	# Remove superflous information from 'stty -a'
-	# Ends up with number of ${COLUMNS}
-	COLUMNS="${COLUMNS/#*columns }"
-	COLUMNS="${COLUMNS/%;*}"
+	# Ends up with the width of terminal
+	columns="${columns/#*columns }"
+	columns="${columns/%;*}"
 
-	# This is the number of $COLUMNS minus the indent (7) minus length of the printed
-	# message, [ Already At Level 8 ] (22) minus 2 (leaves a gap and the gives room for
-	# the ellipsis (…))
+	# This is the maximum length of a string to be displayed based on column width,
+	# obtained via the number of columns minus the length of displayed characters:
+	#
+	#             ${columns}:  Width of terminal
+	#          ${#iteration}:  Length of the # of FLACs processed
+	#  ${total_flacs_length}:  Length of the total # of FLAC files
+	#                     30:  Length of:
+	#                            [ Already At Level ${compression_level} ] (22)
+	#                            3 Spaces
+	#                            3 Characters: [/]
+	#                            2 Gap and ellipsis (…)
+	max_filename_length="$(( ${columns} - ${#iteration} - ${total_flacs_length} - 30 ))"
 
-	# This is the number of ${COLUMNS} minus the length of the percent (4), minus the length
-	# of the printed message, '[ Already At Level 8 ]' (22), minus three gaps (3), minus the
-	# length of processed FLAC files, minus 2 (leaves a gap and the gives room for the
-	# ellipsis (…))
-	MAX_FILENAME_LENGTH="$(( ${COLUMNS} - 31 - ${#CURRENT_FLAC_TOTAL} ))"
-
-	FILENAME="${i##*/}"
+	filename="${i##*/}"
 	# Replace possible newlines in filename with '?' (like 'ls' output)
-	FILENAME="${FILENAME//$'\n'/?}"
+	filename="${filename//$'\n'/?}"
 
-	FILENAME_LENGTH="${#FILENAME}"
-
-	if [[ "${FILENAME_LENGTH}" -gt "${MAX_FILENAME_LENGTH}" ]] ; then
-		FILENAME="${FILENAME::$MAX_FILENAME_LENGTH}…"
+	# Cull filename and add an ellipsis if the filename is too long
+	if [[ "${#filename}" -gt "${max_filename_length}" ]] ; then
+		filename="${filename::${max_filename_length}}…"
 	fi
 
-	# 23 is the length of the printed message plus 1 for the gap at the end
-	printf "\r${NORMAL}%$(( ${COLUMNS} - 23 ))s${BOLD_BLUE}%s${NORMAL}%s${YELLOW}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}\r${CYAN}%s${NORMAL}%s${MAGENTA}%s${NORMAL}%s" \
-	"" "[" " " "Already At Level ${COMPRESSION_LEVEL}" " " "]" "${PERCENT_DISPLAY}" " " "${CURRENT_FLAC_TOTAL}" " ${FILENAME}"
+	# The current length is obtained via the length of what's printed now minus
+	# the length of the filename and gaps:
+	#
+	#  [1234/123456] 07 - Some_FLAC_Filename.flac <- ${current_length} -> [ Operation Message ]
+	#                                             ^^^^^^^^^^^^^^^^^^^^^^^
+	#                ${#filename}:  Length of the current filaname
+	#  ${max_filename_length} + 1:  Total length of what's printed minus the operation
+	#                               message plus one because we do not want the ellipsis
+	#                               from ${max_filename_length}, just the space/gap
+	current_length="$(( ${max_filename_length} - ${#filename} + 1 ))"
+
+	printf "\r${normal}%s${magenta}%s${normal}%s%${current_length}s${blue}%s${normal}%s${yellow}%s${normal}%s${blue}%s${normal}%s" \
+	" " "[${iteration}/${#total_flacs_array[@]}]" " ${filename} " "" "[" " " "Already At Level ${compression_level}" " " "]" " "
 }
 __print_analyzing_tags () {
-	# Obtain percentage of completed files
-	# (stored in: ${PERCENT_DISPLAY} variable)
-	__find_percentage
-
-	# Obtain current flac (stored in:
-	# ${CURRENT_FLAC_TOTAL} variable)
-	__current_flac
-
 	# Grab the first line of 'stty -a' output
 	# Redirecting '/dev/stderr' to 'stty' allows valid arguments
-	read -r COLUMNS < <(stty -a < /dev/stderr)
+	read -r columns < <(stty -a < /dev/stderr)
 
 	# Remove superflous information from 'stty -a'
-	# Ends up with number of ${COLUMNS}
-	COLUMNS="${COLUMNS/#*columns }"
-	COLUMNS="${COLUMNS/%;*}"
+	# Ends up with the width of terminal
+	columns="${columns/#*columns }"
+	columns="${columns/%;*}"
 
-	# This is the number of ${COLUMNS} minus the length of the percent (4), minus the length
-	# of the printed message, '[ Analyzing Tags ]' (18), minus three gaps (3), minus the
-	# length of processed FLAC files, minus 3 (leaves a gap and the gives room for the
-	# ellipsis (…) and cursor)
-	MAX_FILENAME_LENGTH="$(( ${COLUMNS} - 28 - ${#CURRENT_FLAC_TOTAL} ))"
+	# This is the maximum length of a string to be displayed based on column width,
+	# obtained via the number of columns minus the length of displayed characters:
+	#
+	#             ${columns}:  Width of terminal
+	#          ${#iteration}:  Length of the # of FLACs processed
+	#  ${total_flacs_length}:  Length of the total # of FLAC files
+	#                     26:  Length of:
+	#                            [ Analyzing Tags ] (18)
+	#                            3 Spaces
+	#                            3 Characters: [/]
+	#                            2 Gap and ellipsis (…)
+	max_filename_length="$(( ${columns} - ${#iteration} - ${total_flacs_length} - 26 ))"
 
-	FILENAME="${i##*/}"
+	filename="${i##*/}"
 	# Replace possible newlines in filename with '?' (like 'ls' output)
-	FILENAME="${FILENAME//$'\n'/?}"
+	filename="${filename//$'\n'/?}"
 
-	FILENAME_LENGTH="${#FILENAME}"
-
-	if [[ "${FILENAME_LENGTH}" -gt "${MAX_FILENAME_LENGTH}" ]] ; then
-		FILENAME="${FILENAME::$MAX_FILENAME_LENGTH}…"
+	# Cull filename and add an ellipsis if the filename is too long
+	if [[ "${#filename}" -gt "${max_filename_length}" ]] ; then
+		filename="${filename::${max_filename_length}}…"
 	fi
 
-	# 19 is the length of the printed message plus 1 for the gap at the end
-	printf "\r${NORMAL}%$(( ${COLUMNS} - 19 ))s${BOLD_BLUE}%s${NORMAL}%s${YELLOW}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}\r${CYAN}%s${NORMAL}%s${MAGENTA}%s${NORMAL}%s" \
-	"" "[" " " "Analyzing Tags" " " "]" "${PERCENT_DISPLAY}" " " "${CURRENT_FLAC_TOTAL}" " ${FILENAME}"
+	# The current length is obtained via the length of what's printed now minus
+	# the length of the filename and gaps:
+	#
+	#  [1234/123456] 07 - Some_FLAC_Filename.flac <- ${current_length} -> [ Operation Message ]
+	#                                             ^^^^^^^^^^^^^^^^^^^^^^^
+	#                ${#filename}:  Length of the current filaname
+	#  ${max_filename_length} + 1:  Total length of what's printed minus the operation
+	#                               message plus one because we do not want the ellipsis
+	#                               from ${max_filename_length}, just the space/gap
+	current_length="$(( ${max_filename_length} - ${#filename} + 1 ))"
+
+	printf "\r${normal}%s${magenta}%s${normal}%s%${current_length}s${blue}%s${normal}%s${yellow}%s${normal}%s${blue}%s${normal}%s" \
+	" " "[${iteration}/${#total_flacs_array[@]}]" " ${filename} " "" "[" " " "Analyzing Tags" " " "]" " "
 }
 __print_setting_tags () {
-	# Obtain percentage of completed files
-	# (stored in: ${PERCENT_DISPLAY} variable)
-	__find_percentage
-
-	# Obtain current flac (stored in:
-	# ${CURRENT_FLAC_TOTAL} variable)
-	__current_flac
-
 	# Grab the first line of 'stty -a' output
 	# Redirecting '/dev/stderr' to 'stty' allows valid arguments
-	read -r COLUMNS < <(stty -a < /dev/stderr)
+	read -r columns < <(stty -a < /dev/stderr)
 
 	# Remove superflous information from 'stty -a'
-	# Ends up with number of ${COLUMNS}
-	COLUMNS="${COLUMNS/#*columns }"
-	COLUMNS="${COLUMNS/%;*}"
+	# Ends up with the width of terminal
+	columns="${columns/#*columns }"
+	columns="${columns/%;*}"
 
-	# This is the number of ${COLUMNS} minus the length of the percent (4), minus the length
-	# of the printed message, '[ Setting Tags ]' (16), minus three gaps (3), minus the
-	# length of processed FLAC files, minus 3 (leaves a gap and the gives room for the
-	# ellipsis (…) and cursor)
-	MAX_FILENAME_LENGTH="$(( ${COLUMNS} - 26 - ${#CURRENT_FLAC_TOTAL} ))"
+	# This is the maximum length of a string to be displayed based on column width,
+	# obtained via the number of columns minus the length of displayed characters:
+	#
+	#             ${columns}:  Width of terminal
+	#          ${#iteration}:  Length of the # of FLACs processed
+	#  ${total_flacs_length}:  Length of the total # of FLAC files
+	#                     24:  Length of:
+	#                            [ Setting Tags ] (16)
+	#                            3 Spaces
+	#                            3 Characters: [/]
+	#                            2 Gap and ellipsis (…)
+	max_filename_length="$(( ${columns} - ${#iteration} - ${total_flacs_length} - 24 ))"
 
-	FILENAME="${i##*/}"
+	filename="${i##*/}"
 	# Replace possible newlines in filename with '?' (like 'ls' output)
-	FILENAME="${FILENAME//$'\n'/?}"
+	filename="${filename//$'\n'/?}"
 
-	FILENAME_LENGTH="${#FILENAME}"
-
-	if [[ "${FILENAME_LENGTH}" -gt "${MAX_FILENAME_LENGTH}" ]] ; then
-		FILENAME="${FILENAME::$MAX_FILENAME_LENGTH}…"
+	# Cull filename and add an ellipsis if the filename is too long
+	if [[ "${#filename}" -gt "${max_filename_length}" ]] ; then
+		filename="${filename::${max_filename_length}}…"
 	fi
 
-	# 17 is the length of the printed message plus 1 for the gap at the end
-	printf "\r${NORMAL}%$(( ${COLUMNS} - 17 ))s${BOLD_BLUE}%s${NORMAL}%s${YELLOW}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}\r${CYAN}%s${NORMAL}%s${MAGENTA}%s${NORMAL}%s" \
-	"" "[" " " "Setting Tags" " " "]" "${PERCENT_DISPLAY}" " " "${CURRENT_FLAC_TOTAL}" " ${FILENAME}"
+	# The current length is obtained via the length of what's printed now minus
+	# the length of the filename and gaps:
+	#
+	#  [1234/123456] 07 - Some_FLAC_Filename.flac <- ${current_length} -> [ Operation Message ]
+	#                                             ^^^^^^^^^^^^^^^^^^^^^^^
+	#                ${#filename}:  Length of the current filaname
+	#  ${max_filename_length} + 1:  Total length of what's printed minus the operation
+	#                               message plus one because we do not want the ellipsis
+	#                               from ${max_filename_length}, just the space/gap
+	current_length="$(( ${max_filename_length} - ${#filename} + 1 ))"
+
+	printf "\r${normal}%s${magenta}%s${normal}%s%${current_length}s${blue}%s${normal}%s${yellow}%s${normal}%s${blue}%s${normal}%s" \
+	" " "[${iteration}/${#total_flacs_array[@]}]" " ${filename} " "" "[" " " "Setting Tags" " " "]" " "
 }
 __print_prune_flac () {
-	# Obtain percentage of completed files
-	# (stored in: ${PERCENT_DISPLAY} variable)
-	__find_percentage
-
-	# Obtain current flac (stored in:
-	# ${CURRENT_FLAC_TOTAL} variable)
-	__current_flac
-
 	# Grab the first line of 'stty -a' output
 	# Redirecting '/dev/stderr' to 'stty' allows valid arguments
-	read -r COLUMNS < <(stty -a < /dev/stderr)
+	read -r columns < <(stty -a < /dev/stderr)
 
 	# Remove superflous information from 'stty -a'
-	# Ends up with number of ${COLUMNS}
-	COLUMNS="${COLUMNS/#*columns }"
-	COLUMNS="${COLUMNS/%;*}"
+	# Ends up with the width of terminal
+	columns="${columns/#*columns }"
+	columns="${columns/%;*}"
 
-	# This is the number of ${COLUMNS} minus the length of the percent (4), minus the length
-	# of the printed message, '[ Pruning Metadata ]' (20), minus three gaps (3), minus the
-	# length of processed FLAC files, minus 3 (leaves a gap and the gives room for the
-	# ellipsis (…) and cursor)
-	MAX_FILENAME_LENGTH="$(( ${COLUMNS} - 30 - ${#CURRENT_FLAC_TOTAL} ))"
+	# This is the maximum length of a string to be displayed based on column width,
+	# obtained via the number of columns minus the length of displayed characters:
+	#
+	#             ${columns}:  Width of terminal
+	#          ${#iteration}:  Length of the # of FLACs processed
+	#  ${total_flacs_length}:  Length of the total # of FLAC files
+	#                     28:  Length of:
+	#                            [ Pruning Metadata ] (20)
+	#                            3 Spaces
+	#                            3 Characters: [/]
+	#                            2 Gap and ellipsis (…)
+	max_filename_length="$(( ${columns} - ${#iteration} - ${total_flacs_length} - 28 ))"
 
-	FILENAME="${i##*/}"
+	filename="${i##*/}"
 	# Replace possible newlines in filename with '?' (like 'ls' output)
-	FILENAME="${FILENAME//$'\n'/?}"
+	filename="${filename//$'\n'/?}"
 
-	FILENAME_LENGTH="${#FILENAME}"
-
-	if [[ "${FILENAME_LENGTH}" -gt "${MAX_FILENAME_LENGTH}" ]] ; then
-		FILENAME="${FILENAME::$MAX_FILENAME_LENGTH}…"
+	# Cull filename and add an ellipsis if the filename is too long
+	if [[ "${#filename}" -gt "${max_filename_length}" ]] ; then
+		filename="${filename::${max_filename_length}}…"
 	fi
 
-	# 21 is the length of the printed message plus 1 for the gap at the end
-	printf "\r${NORMAL}%$(( ${COLUMNS} - 21 ))s${BOLD_BLUE}%s${NORMAL}%s${YELLOW}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}\r${CYAN}%s${NORMAL}%s${MAGENTA}%s${NORMAL}%s" \
-	"" "[" " " "Pruning Metadata" " " "]" "${PERCENT_DISPLAY}" " " "${CURRENT_FLAC_TOTAL}" " ${FILENAME}"
+	# The current length is obtained via the length of what's printed now minus
+	# the length of the filename and gaps:
+	#
+	#  [1234/123456] 07 - Some_FLAC_Filename.flac <- ${current_length} -> [ Operation Message ]
+	#                                             ^^^^^^^^^^^^^^^^^^^^^^^
+	#                ${#filename}:  Length of the current filaname
+	#  ${max_filename_length} + 1:  Total length of what's printed minus the operation
+	#                               message plus one because we do not want the ellipsis
+	#                               from ${max_filename_length}, just the space/gap
+	current_length="$(( ${max_filename_length} - ${#filename} + 1 ))"
+
+	printf "\r${normal}%s${magenta}%s${normal}%s%${current_length}s${blue}%s${normal}%s${yellow}%s${normal}%s${blue}%s${normal}%s" \
+	" " "[${iteration}/${#total_flacs_array[@]}]" " ${filename} " "" "[" " " "Pruning Metadata" " " "]" " "
 }
-
 __print_interrupt () {
-	# Obtain percentage of completed files
-	# (stored in: ${PERCENT_DISPLAY} variable)
-	__find_percentage
-
-	# Obtain current flac (stored in:
-	# ${CURRENT_FLAC_TOTAL} variable)
-	__current_flac
-
 	# Grab the first line of 'stty -a' output
 	# Redirecting '/dev/stderr' to 'stty' allows valid arguments
-	read -r COLUMNS < <(stty -a < /dev/stderr)
+	read -r columns < <(stty -a < /dev/stderr)
 
 	# Remove superflous information from 'stty -a'
-	# Ends up with number of ${COLUMNS}
-	COLUMNS="${COLUMNS/#*columns }"
-	COLUMNS="${COLUMNS/%;*}"
+	# Ends up with the width of terminal
+	columns="${columns/#*columns }"
+	columns="${columns/%;*}"
 
-	# This is the number of ${COLUMNS} minus the length of the percent (4), minus the length
-	# of the printed message, '[ Interrupted ]' (15), minus three gaps (3), minus the
-	# length of processed FLAC files, minus 2 (leaves a gap and the gives room for the
-	# ellipsis (…))
-	MAX_FILENAME_LENGTH="$(( ${COLUMNS} - 24 - ${#CURRENT_FLAC_TOTAL} ))"
+	# This is the maximum length of a string to be displayed based on column width,
+	# obtained via the number of columns minus the length of displayed characters:
+	#
+	#             ${columns}:  Width of terminal
+	#          ${#iteration}:  Length of the # of FLACs processed
+	#  ${total_flacs_length}:  Length of the total # of FLAC files
+	#                     23:  Length of:
+	#                            [ Interrupted ] (15)
+	#                            3 Spaces
+	#                            3 Characters: [/]
+	#                            2 Gap and ellipsis (…)
+	max_filename_length="$(( ${columns} - ${#iteration} - ${total_flacs_length} - 23 ))"
 
-	FILENAME="${i##*/}"
+	filename="${i##*/}"
 	# Replace possible newlines in filename with '?' (like 'ls' output)
-	FILENAME="${FILENAME//$'\n'/?}"
+	filename="${filename//$'\n'/?}"
 
-	FILENAME_LENGTH="${#FILENAME}"
-
-	if [[ "${FILENAME_LENGTH}" -gt "${MAX_FILENAME_LENGTH}" ]] ; then
-		FILENAME="${FILENAME::$MAX_FILENAME_LENGTH}…"
+	# Cull filename and add an ellipsis if the filename is too long
+	if [[ "${#filename}" -gt "${max_filename_length}" ]] ; then
+		filename="${filename::${max_filename_length}}…"
 	fi
 
-	# 16 is the length of the printed message plus 1 for the gap at the end
-	printf "\r${NORMAL}%$(( ${COLUMNS} - 16 ))s${BOLD_BLUE}%s${NORMAL}%s${YELLOW}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}\r${CYAN}%s${NORMAL}%s${MAGENTA}%s${NORMAL}%s" \
-	"" "[" " " "Interrupted" " " "]" "${PERCENT_DISPLAY}" " " "${CURRENT_FLAC_TOTAL}" " ${FILENAME}"
+	# The current length is obtained via the length of what's printed now minus
+	# the length of the filename and gaps:
+	#
+	#  [1234/123456] 07 - Some_FLAC_Filename.flac <- ${current_length} -> [ Operation Message ]
+	#                                             ^^^^^^^^^^^^^^^^^^^^^^^
+	#                ${#filename}:  Length of the current filaname
+	#  ${max_filename_length} + 1:  Total length of what's printed minus the operation
+	#                               message plus one because we do not want the ellipsis
+	#                               from ${max_filename_length}, just the space/gap
+	current_length="$(( ${max_filename_length} - ${#filename} + 1 ))"
+
+	printf "\r${normal}%s${magenta}%s${normal}%s%${current_length}s${blue}%s${normal}%s${yellow}%s${normal}%s${blue}%s${normal}%s" \
+	" " "[${iteration}/${#total_flacs_array[@]}]" " ${filename} " "" "[" " " "Interrupted" " " "]" " "
 }
 __print_interrupt_replaygain () {
-	# Obtain percentage of completed directories
-	# (stored in: ${PERCENT_DISPLAY} variable)
-	__find_percentage_directories
-
-	# Obtain current directory (stored in:
-	# ${CURRENT_DIRECTORY_TOTAL} variable)
-	__current_directory
-
 	# Grab the first line of 'stty -a' output
 	# Redirecting '/dev/stderr' to 'stty' allows valid arguments
-	read -r COLUMNS < <(stty -a < /dev/stderr)
+	read -r columns < <(stty -a < /dev/stderr)
 
 	# Remove superflous information from 'stty -a'
-	# Ends up with number of ${COLUMNS}
-	COLUMNS="${COLUMNS/#*columns }"
-	COLUMNS="${COLUMNS/%;*}"
+	# Ends up with the width of terminal
+	columns="${columns/#*columns }"
+	columns="${columns/%;*}"
 
-	# This is the number of ${COLUMNS} minus the length of the percent (4), minus the length
-	# of the printed message, '[ Interrupted ]' (15), minus three gaps (3), minus the
-	# length of processed directories, minus 2 (leaves a gap and the gives room for the
-	# ellipsis (…))
-	MAX_FILENAME_LENGTH="$(( ${COLUMNS} - 24 - ${#CURRENT_DIRECTORY_TOTAL} ))"
+	# This is the maximum length of a string to be displayed based on column width,
+	# obtained via the number of columns minus the length of displayed characters:
+	#
+	#             ${columns}:  Width of terminal
+	#          ${#iteration}:  Length of the # processed directories
+	#  ${#total_directories}:  Length of the total # of directories
+	#                     23:  Length of:
+	#                            [ Interrupted ] (15)
+	#                            3 Spaces
+	#                            3 Characters: [/]
+	#                            2 Gap and ellipsis (…)
+	max_filename_length="$(( ${columns} - ${#iteration} - ${#total_directories} - 23 ))"
 
-	FILENAME="${i##*/}"
+	filename="${i##*/}"
 	# Replace possible newlines in filename with '?' (like 'ls' output)
-	FILENAME="${FILENAME//$'\n'/?}"
+	filename="${filename//$'\n'/?}"
 
-	FILENAME_LENGTH="${#FILENAME}"
-
-	if [[ "${FILENAME_LENGTH}" -gt "${MAX_FILENAME_LENGTH}" ]] ; then
-		FILENAME="${FILENAME::$MAX_FILENAME_LENGTH}…"
+	# Cull filename and add an ellipsis if the filename is too long
+	if [[ "${#filename}" -gt "${max_filename_length}" ]] ; then
+		filename="${filename::${max_filename_length}}…"
 	fi
 
-	# 16 is the length of the printed message plus 1 for the gap at the end
-	printf "\r${NORMAL}%$(( ${COLUMNS} - 16 ))s${BOLD_BLUE}%s${NORMAL}%s${YELLOW}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}\r${CYAN}%s${NORMAL}%s${MAGENTA}%s${NORMAL}%s" \
-	"" "[" " " "Interrupted" " " "]" "${PERCENT_DISPLAY}" " " "${CURRENT_DIRECTORY_TOTAL}" " ${FILENAME}"
+	# The current length is obtained via the length of what's printed now minus
+	# the length of the filename and gaps:
+	#
+	#  [1234/123456] 07 - Some_FLAC_Filename.flac <- ${current_length} -> [ Operation Message ]
+	#                                             ^^^^^^^^^^^^^^^^^^^^^^^
+	#                ${#filename}:  Length of the current filaname
+	#  ${max_filename_length} + 1:  Total length of what's printed minus the operation
+	#                               message plus one because we do not want the ellipsis
+	#                               from ${max_filename_length}, just the space/gap
+	current_length="$(( ${max_filename_length} - ${#filename} + 1 ))"
+
+	printf "\r${normal}%s${magenta}%s${normal}%s%${current_length}s${blue}%s${normal}%s${yellow}%s${normal}%s${blue}%s${normal}%s" \
+	" " "[${iteration}/${#flac_directories_array[@]}]" " ${filename} " "" "[" " " "Interrupted" " " "]" " "
 }
 
 ######################################
@@ -974,29 +1146,29 @@ __print_interrupt_replaygain () {
 # Top banner displaying invocation settings
 __top_banner () {
 	# If Redo Tags is called, create the necessary spacing
-	if [[ "${REDO}" == "true" ]] ; then
+	if [[ "${redo_flac}" == "true" ]] ; then
 		__newline 2
 	fi
 
 	# Title
-	printf "${NORMAL}%s" \
+	printf "${normal}%s" \
 	"                Runtime Information" ; __newline
 
 	# Title Line
-	printf "${NORMAL}%s${BOLD_BLUE}%s${NORMAL}" \
+	printf "${normal}%s${blue}%s${normal}" \
 	" " "─────────────────────────┬─────────────────────────" ; __newline
 
 	# Script Version
-	printf "${NORMAL}%s${BOLD_BLUE}%s${NORMAL}%s${CYAN}%s${NORMAL}" \
-	"                  Version " "│" " " "${VERSION}" ; __newline
+	printf "${normal}%s${blue}%s${normal}%s${cyan}%s${normal}" \
+	"                  Version " "│" " " "${version}" ; __newline
 
 	# Processes to be used
-	printf "${NORMAL}%s${BOLD_BLUE}%s${NORMAL}%s${CYAN}%s${NORMAL}%s${CYAN}%s${NORMAL}" \
+	printf "${normal}%s${blue}%s${normal}%s${cyan}%s${normal}%s${cyan}%s${normal}" \
 	"            Parallel Jobs " "│" " " "${jobs}" " " "${jobs_display}" ; __newline
 
 	# Log directory
-	printf "${NORMAL}%s${BOLD_BLUE}%s${NORMAL}%s${CYAN}%s${NORMAL}" \
-	"            Log Directory " "│" " " "${ERROR_LOG}" ; __newline 2
+	printf "${normal}%s${blue}%s${normal}%s${cyan}%s${normal}" \
+	"            Log Directory " "│" " " "${error_log}" ; __newline 2
 
 	# Message indicating the searching of FLAC files
 	__info "Finding FLAC files to process..."
@@ -1012,7 +1184,7 @@ __countdown_metadata () {
 
 		# Restore old stty settings, make stty happy
 		# by redirecting /dev/stderr
-		stty ${OLD_STTY} < /dev/stderr
+		stty ${old_stty} < /dev/stderr
 
 		# Restore the cursor
 		printf "\033[?25h"
@@ -1029,15 +1201,15 @@ __countdown_metadata () {
 
 	# Creates the 10 second countdown
 	__countdown_10 () {
-		COUNT=10
-		while [[ ${COUNT} -gt 1 ]] ; do
-			printf "${BOLD_RED}%s${NORMAL}%s" "$COUNT" " "
+		count=10
+		while [[ ${count} -gt 1 ]] ; do
+			printf "${red}%s${normal}%s" "$count" " "
 			sleep 1
-			((COUNT--))
+			((count--))
 		done
 		# Below is the last second of the countdown
 		# Put here for UI refinement (No extra spacing after last second)
-		printf "${BOLD_RED}%s${NORMAL}" "1"
+		printf "${red}%s${normal}" "1"
 		sleep 1
 	}
 
@@ -1052,90 +1224,16 @@ __countdown_metadata () {
 	__newline
 	__error "By default, this script will REMOVE embedded coverart" ; __newline
 	__error "when re-tagging the files (that have the legacy COVERART" ; __newline
-	__error "tag).  Change the REMOVE_ARTWORK option under USER" ; __newline
+	__error "tag).  Change the remove_artwork option under USER" ; __newline
 	__error "CONFIGURATION to \"false\" to keep embedded artwork." ; __newline 2
 
 	__warn "Waiting 10 seconds before starting script..." ; __newline
 	__warn "Ctrl+C (Control-C) to abort..." ; __newline
 
-	printf "%s${BOLD_GREEN}%s${NORMAL}%s" \
+	printf "%s${green}%s${normal}%s" \
 	" " "*" " Starting in: "
 
 	__countdown_10
-}
-
-##############################################
-#  INCREMENT FLACS PROCESSED OR DIRECTORIES  #
-##############################################
-__increment_count () {
-	# Add counter to temporary file (used for number of flacs processed/percentage)
-	printf "%s\n" '.' >> "${PROCESSED_TMP_FILE}"
-}
-
-##################################
-#  FIND CURRENT NUMBER OF FLACS  #
-##################################
-__current_flac () {
-	# Obtain current number of processed FLAC files
-	mapfile -n0 processed_array < "${PROCESSED_TMP_FILE}"
-	CURRENT_FLAC="${#processed_array[@]}"
-
-	# Store current FLAC out of total for display
-	CURRENT_FLAC_TOTAL="[${CURRENT_FLAC}/${TOTAL_FLACS}]"
-}
-
-########################################
-#  FIND CURRENT NUMBER OF DIRECTORIES  #
-########################################
-__current_directory () {
-	# Obtain current number of processed directories
-	mapfile -n0 processed_array < "${PROCESSED_TMP_FILE}"
-	CURRENT_DIRECTORY="${#processed_array[@]}"
-
-	# Store current directories out of total for display
-	CURRENT_DIRECTORY_TOTAL="[${CURRENT_DIRECTORY}/${TOTAL_DIRECTORIES}]"
-}
-
-#######################
-#  CREATE PERCENTAGE  #
-#######################
-__find_percentage () {
-	# Obtain current number of processed FLAC files and create a percentage
-	mapfile -n0 processed_array < "${PROCESSED_TMP_FILE}"
-	PERCENT_DISPLAY="$(( ${#processed_array[@]} * 100 / ${TOTAL_FLACS} ))"
-
-	case "${#PERCENT_DISPLAY}" in
-		1)
-			PERCENT_DISPLAY="  ${PERCENT_DISPLAY}%"
-		;;
-		2)
-			PERCENT_DISPLAY=" ${PERCENT_DISPLAY}%"
-		;;
-		3)
-			PERCENT_DISPLAY="${PERCENT_DISPLAY}%"
-		;;
-	esac	
-}
-
-######################################
-#  CREATE PERCENTAGE OF DIRECTORIES  #
-######################################
-__find_percentage_directories () {
-	# Obtain current number of processed directories and create a percentage
-	mapfile -n0 processed_array < "${PROCESSED_TMP_FILE}"
-	PERCENT_DISPLAY="$(( ${#processed_array[@]} * 100 / ${TOTAL_DIRECTORIES} ))"
-
-	case "${#PERCENT_DISPLAY}" in
-		1)
-			PERCENT_DISPLAY="  ${PERCENT_DISPLAY}%"
-		;;
-		2)
-			PERCENT_DISPLAY=" ${PERCENT_DISPLAY}%"
-		;;
-		3)
-			PERCENT_DISPLAY="${PERCENT_DISPLAY}%"
-		;;
-	esac	
 }
 
 ###############################################
@@ -1146,24 +1244,14 @@ __total_directories () {
 	# multithreading when applying the ReplayGain tags without fear of race
 	# conditions
 	for i in "${total_flacs_array[@]}" ; do
-		if [[ "${PROCESSED_DIRECTORY}" != "${i%/*}" ]] ; then
+		if [[ "${processed_directory}" != "${i%/*}" ]] ; then
 			flac_directories_array+=( "${i%/*}" )
 		fi
-		local PROCESSED_DIRECTORY="${i%/*}"
+		local processed_directory="${i%/*}"
 	done
 
-	# Grab the total number of indices of above array
-	TOTAL_DIRECTORIES_INDICES="$(( ${#flac_directories_array[@]} - 1 ))"
-
 	# The total number of directories in a string variable
-	TOTAL_DIRECTORIES="${#flac_directories_array[@]}"
-}
-
-####################################
-#  CLEAR PROCESSED FLACS TMP FILE  #
-####################################
-__clear_processed_tmp_file () {
-	> "${PROCESSED_TMP_FILE}"
+	total_directories="${#flac_directories_array[@]}"
 }
 
 ##########################
@@ -1171,14 +1259,14 @@ __clear_processed_tmp_file () {
 ##########################
 __clear_tmp_fd () {
 	# Create temporary FIFO
-	mkfifo "${TMP_FIFO}"
+	mkfifo "${tmp_fifo}"
 
 	# Open FIFO for reading and writing on file descriptor '3'
-	exec 3<>"${TMP_FIFO}"
+	exec 3<>"${tmp_fifo}"
 
 	# Remove temporary FIFO and leave just the file
 	# descriptor available
-	rm -f "${TMP_FIFO}"
+	rm -f "${tmp_fifo}"
 }
 
 ####################################################
@@ -1186,16 +1274,16 @@ __clear_tmp_fd () {
 ####################################################
 __create_aucdtect_fd () {
 	# Set up a temporary FIFO location
-	TMP_AUCDTECT_FIFO="/tmp/redoflacs_aucdtect_fifo_$$"
+	tmp_aucdtect_fifo="/tmp/redoflacs_aucdtect_fifo_$$"
 
 	# Create the temporary FIFO
-	mkfifo "${TMP_AUCDTECT_FIFO}"
+	mkfifo "${tmp_aucdtect_fifo}"
 
 	# Open FIFO for reading and writing on file descriptor '4'
-	exec 4<>"${TMP_AUCDTECT_FIFO}"
+	exec 4<>"${tmp_aucdtect_fifo}"
 
 	# Remove FIFO and leave just the file descriptor available
-	rm "${TMP_AUCDTECT_FIFO}"
+	rm "${tmp_aucdtect_fifo}"
 }
 
 ###############
@@ -1216,6 +1304,7 @@ __replaygain () {
 	#####################
 	#  TEST REPLAYGAIN  #
 	#####################
+	iteration=0
 
 	__title_test_replaygain
 
@@ -1229,14 +1318,14 @@ __replaygain () {
 		__newline
 		__info "Control-C received, generating summary. Please wait..."
 
-		if [[ -f "${REPLAY_TEST_ERRORS}" ]] ; then
+		if [[ -f "${replay_test_errors}" ]] ; then
 			__newline >&2
 			{ __error "There were issues with some of the FLAC files," ; __newline ;} >&2
 			{ __error "please check:" ; __newline ;} >&2
-			{ __error "\"${REPLAY_TEST_ERRORS}\" for details." ; __newline ;} >&2
+			{ __error "\"${replay_test_errors}\" for details." ; __newline ;} >&2
 		fi
 
-		REPLAYGAIN_COMPLETE="interrupt"
+		replaygain_complete="interrupt"
 		__operation_summary
 
 		exit 1
@@ -1250,9 +1339,6 @@ __replaygain () {
 		# function was aborted via SIGINT.  This function
 		# will receive SIGTERM from the kill in previous trap.
 		trap '__kill_jobs ; exit 1' SIGTERM
-
-		# Increment number of FLACs processed
-		__increment_count
 
 		__print_test_replaygain
 
@@ -1272,9 +1358,10 @@ __replaygain () {
 				   "FLAC:  ${i}" \
 				   "ERROR: Not a FLAC file" \
 				   "------------------------------------------------------------------" \
-				   >> "${REPLAY_TEST_ERRORS}"
-		else
-			# File is a FLAC file, display ok
+				   >> "${replay_test_errors}"
+
+		elif [[ "${last_file}" == "true" ]] ; then
+			# FLAC is okay, so print only if it's the last file
 			__print_ok_flac
 		fi
 
@@ -1282,56 +1369,52 @@ __replaygain () {
 		__newline >&3
 	}
 
-	# Make sure the temporary file is cleared before proceeding
-	__clear_processed_tmp_file
-
 	# Make sure to clear file descriptor '3' before proceeding
 	__clear_tmp_fd
 
 	# Start as many processes as determined by ${jobs}
 	for i in "${total_flacs_array[@]:0:${jobs}}" ; do
+		((iteration++))
 		__test_replaygain &
 	done
 
-	# Add the number of processes started above to count
-	ITERATION="${jobs}"
-
 	# If the FLAC files to process are greater than the # of ${jobs}
 	# available, continue processing them, else quit
-	if [[ "${TOTAL_FLACS}" -gt "${jobs}" ]] ; then
+	if [[ "${#total_flacs_array[@]}" -gt "${jobs}" ]] ; then
 
 		# After each newline is read from FIFO, start a new process
 		while read ; do
+
 			# If current number of FLACs to process is less than total FLACs
 			# found, add another FLAC to process
-			if [[ "${ITERATION}" -lt "${TOTAL_FLACS_INDICES}" ]] ; then
-				# Set ${i} to current FLAC to process
-				i="${total_flacs_array[${ITERATION}]}"
-				((ITERATION++))
+			if [[ "${iteration}" -lt "$(( ${#total_flacs_array[@]} - 1 ))" ]] ; then
+				i="${total_flacs_array[${iteration}]}"
+				((iteration++))
 				__test_replaygain &
 
-			# If current number of FLACs to process is the last FLAC file, continue
-			# processing it and break out of loop (to prevent hanging FIFO)
-			elif [[ "${ITERATION}" -eq "${TOTAL_FLACS_INDICES}" ]] ; then
-				# Set ${i} to current FLAC to process
-				i="${total_flacs_array[${ITERATION}]}"
+			# Below is processed only if the current directory
+			# is equal to the last ${flac_directories_array[@]} index
+			else
+				last_file="true"
+				i="${total_flacs_array[${iteration}]}"
+				((iteration++))
 				__test_replaygain &
+				# Break out of loop to prevent hanging FIFO
 				break
 			fi
 		done <&3
-
 	fi
 
     # Wait for children processes
     wait
 
-	if [[ -f "${REPLAY_TEST_ERRORS}" ]] ; then
+	if [[ -f "${replay_test_errors}" ]] ; then
 		__newline >&2
 		{ __error "There were issues with some of the FLAC files," ; __newline ;} >&2
 		{ __error "please check:" ; __newline ;} >&2
-		{ __error "\"${REPLAY_TEST_ERRORS}\" for details." ; __newline ;} >&2
+		{ __error "\"${replay_test_errors}\" for details." ; __newline ;} >&2
 
-		REPLAYGAIN_COMPLETE="false"
+		replaygain_complete="false"
 		__operation_summary
 
 		exit 1
@@ -1340,14 +1423,15 @@ __replaygain () {
 	########################
 	#  PROCESS REPLAYGAIN  #
 	########################
+	iteration=0
 
-	# Make printing pretty if specified DIRECTORY is '.'
-	if [[ "${DIRECTORY}" == "." ]] ; then
-		DIRECTORY="${PWD}"
+	# Make printing pretty if specified directory is '.'
+	if [[ "${directory}" == "." ]] ; then
+		directory="${PWD}"
 	fi
 
 	# Grab number of directories to process provided as
-	# TOTAL_DIRECTORIES variable
+	# ${total_directories}
 	__total_directories
 
 	__title_add_replaygain
@@ -1365,21 +1449,21 @@ __replaygain () {
 		__newline
 		__info "Control-C received, generating summary. Please wait..." ; __newline
 
-		if [[ -f "${REPLAY_ADD_ERRORS}" ]] ; then
+		if [[ -f "${replay_add_errors}" ]] ; then
 			__newline >&2
 			{ __error "There were issues adding ReplayGain values," ; __newline ;} >&2
 			{ __error "please check:" ; __newline ;} >&2
-			{ __error "\"${REPLAY_ADD_ERRORS}\" for details." ; __newline ;} >&2
+			{ __error "\"${replay_add_errors}\" for details." ; __newline ;} >&2
 		fi
 
-		REPLAYGAIN_COMPLETE="interrupt"
+		replaygain_complete="interrupt"
 		__operation_summary
 
 		exit 1
 	}
 
 	# Check if "-G, --replaygain-noforce" was called
-	if [[ "${REPLAYGAIN_NOFORCE}" == "true" ]] ; then
+	if [[ "${replaygain_noforce}" == "true" ]] ; then
 		# Above option was called, skip FLAC files if all ReplayGain
 		# tracks can be accounted for
 		__process_replaygain () {
@@ -1388,13 +1472,11 @@ __replaygain () {
 			# will receive SIGTERM from the kill in previous trap
 			trap '__kill_jobs ; exit 1' SIGTERM
 
-			# Increment number of directories processed and create percentage
-			# of total processed out of the total directories
-			__increment_count
+			__print_add_replaygain
 
 			# ${i} is the parent directory to the FLAC files
 			# ${j} is a FLAC file -> under ${i}
-			for j in "${i}"/*${FLAC_EXTENSION} ; do
+			for j in "${i}"/*${flac_extension} ; do
 				# Grab all of the ReplayGain tags
 				mapfile -n0 -t replaygain_array < \
 				<(\
@@ -1415,13 +1497,12 @@ __replaygain () {
 				if [[ "${#replaygain_array[@]}" -lt 5 ]] ; then
 					# At _least_ one tag is missing from current file, so
 					# apply new ReplayGain values
-					__print_add_replaygain
-
+					#
 					# Add ReplayGain to FLAC files under directory and send
 					# to background to allow killing on SIGTERM.  Metaflac
 					# automatically removes old ReplayGain values (if any)
 					# before proceeding
-					metaflac --add-replay-gain "${i}"/*${FLAC_EXTENSION} >/dev/null 2>&1 &
+					metaflac --add-replay-gain "${i}"/*${flac_extension} >/dev/null 2>&1 &
 
 					# Wait on background process and return exit code of
 					# said process
@@ -1435,20 +1516,11 @@ __replaygain () {
 							   "ERROR:     There was an issue with some FLAC files in this directory." \
 							   "           Check that the sample rate is the same for all FLAC files." \
 							   "------------------------------------------------------------------" \
-							   >> "${REPLAY_ADD_ERRORS}"
+							   >> "${replay_add_errors}"
 
 						# Placeholder variable tested after this loop
 						# if the loop completes with 'break'
-						BROKE_OUT_OF_LOOP="true"
-
-						# Break out of loop and on to next directory
-						break
-					else
-						__print_ok_replaygain
-
-						# Placeholder variable tested after this loop
-						# if the loop completes with 'break'
-						BROKE_OUT_OF_LOOP="true"
+						broke_out_of_loop="true"
 
 						# Break out of loop and on to next directory
 						break
@@ -1458,7 +1530,7 @@ __replaygain () {
 
 			# If processed directory did not have missing ReplayGain
 			# tags, print ok (skipped adding ReplayGain tags)
-			if [[ "${BROKE_OUT_OF_LOOP}" != "true" ]] ; then
+			if [[ "${broke_out_of_loop}" != "true" && "${last_directory}" == "true" ]] ; then
 				__print_ok_replaygain
 			fi
 
@@ -1473,14 +1545,11 @@ __replaygain () {
 			# will receive SIGTERM from the kill in previous trap
 			trap '__kill_jobs ; exit 1' SIGTERM
 
-			# Increment number of directories processed
-			__increment_count
-
 			__print_add_replaygain
 
 			# Add ReplayGain to FLAC files under directory and send
 			# to background to allow killing on SIGTERM
-			metaflac --add-replay-gain "${i}"/*${FLAC_EXTENSION} >/dev/null 2>&1 &
+			metaflac --add-replay-gain "${i}"/*${flac_extension} >/dev/null 2>&1 &
 
 			# Wait on background process and return exit code of
 			# said process
@@ -1494,8 +1563,11 @@ __replaygain () {
 					   "ERROR:     There was an issue with some FLAC files in this directory." \
 					   "           Check that the sample rate is the same for all FLAC files." \
 					   "------------------------------------------------------------------" \
-					   >> "${REPLAY_ADD_ERRORS}"
-			else
+					   >> "${replay_add_errors}"
+
+			# Directory was processed successfully, so print ok only
+			# if it's the last directory
+			elif [[ "${last_directory}" == "true" ]] ; then
 				__print_ok_replaygain
 			fi
 
@@ -1504,63 +1576,59 @@ __replaygain () {
 		}
 	fi
 
-	# Make sure the temporary file is cleared before proceeding
-	__clear_processed_tmp_file
-
 	# Make sure to clear file descriptor '3' before proceeding
 	__clear_tmp_fd
 
 	# Start as many processes as determined by ${jobs}
 	for i in "${flac_directories_array[@]:0:${jobs}}" ; do
+		((iteration++))
 		__process_replaygain &
 	done
 
-	# Add the number of processes started above to count
-	ITERATION="${jobs}"
-
 	# If the directories to process are greater than the # of ${jobs}
 	# available, continue processing them, else quit
-	if [[ "${TOTAL_DIRECTORIES}" -gt "${jobs}" ]] ; then
+	if [[ "${#flac_directories_array[@]}" -gt "${jobs}" ]] ; then
 
 		# After each newline is read from FIFO, start a new process
 		while read ; do
-			# If current number of directories to process is less than total directories
-			# found, add another directory to process
-			if [[ "${ITERATION}" -lt "${TOTAL_DIRECTORIES_INDICES}" ]] ; then
-				# Set ${i} to current directory to process
-				i="${flac_directories_array[${ITERATION}]}"
-				((ITERATION++))
+
+			# If current number of directories to process is less than total
+			# directories found, add another directory to process
+			if [[ "${iteration}" -lt "$(( ${#flac_directories_array[@]} - 1 ))" ]] ; then
+				i="${flac_directories_array[${iteration}]}"
+				((iteration++))
 				__process_replaygain &
 
-			# If current directory to process is the last directory, continue
-			# processing it and break out of loop (to prevent hanging FIFO)
-			elif [[ "${ITERATION}" -eq "${TOTAL_DIRECTORIES_INDICES}" ]] ; then
-				# Set ${i} to current directory to process
-				i="${flac_directories_array[${ITERATION}]}"
+			# Below is processed only if the current directory
+			# is equal to the last ${flac_directories_array[@]} index
+			else
+				last_directory="true"
+				i="${flac_directories_array[${iteration}]}"
+				((iteration++))
 				__process_replaygain &
+				# Break out of loop to prevent hanging FIFO
 				break
 			fi
 		done <&3
-
 	fi
 
 	# Wait for children processes
 	wait
 
-	if [[ -f "${REPLAY_ADD_ERRORS}" ]] ; then
+	if [[ -f "${replay_add_errors}" ]] ; then
 		__newline >&2
 		{ __error "There were issues with some of the FLAC files," ; __newline ;} >&2
 		{ __error "please check:" ; __newline ;} >&2
-		{ __error "\"${REPLAY_ADD_ERRORS}\" for details." ; __newline ;} >&2
+		{ __error "\"${replay_add_errors}\" for details." ; __newline ;} >&2
 
-		REPLAYGAIN_COMPLETE="false"
+		replaygain_complete="false"
 		__operation_summary
 
 		exit 1
 	fi
 
 	# ReplayGain completed successfully
-	REPLAYGAIN_COMPLETE="true"
+	replaygain_complete="true"
 }
 
 #############################
@@ -1568,9 +1636,11 @@ __replaygain () {
 #############################
 # Compress FLAC files and verify output
 __compress_flacs () {
+	iteration=0
+
 	# If '-C, --compress-notest' was called, print the
 	# correct title
-	if [[ "${SKIP_TEST}" == "true" ]] ; then
+	if [[ "${skip_test}" == "true" ]] ; then
 		__title_compress_notest_flac
 	else
 		__title_compress_flac
@@ -1589,15 +1659,15 @@ __compress_flacs () {
 		__info "generating summary. Please wait..." ; __newline
 
 		# Remove temporarily encoded FLAC files
-		rm -f "${DIRECTORY}"/**/*.tmp,fl-ac+en\'c
+		rm -f "${directory}"/**/*.tmp,fl-ac+en\'c
 
-		if [[ -f "${VERIFY_ERRORS}" ]] ; then
+		if [[ -f "${verify_errors}" ]] ; then
 			__newline >&2
 			{ __error "Errors found in some FLAC files, please check:" ; __newline ;} >&2
-			{ __error "\"${VERIFY_ERRORS}\" for errors" ; __newline ;} >&2
+			{ __error "\"${verify_errors}\" for errors" ; __newline ;} >&2
 		fi
 
-		COMPRESS_COMPLETE="interrupt"
+		compress_complete="interrupt"
 		__operation_summary
 
 		exit 1
@@ -1612,20 +1682,17 @@ __compress_flacs () {
 		# will receive SIGTERM from the kill in previous trap
 		trap '__kill_jobs ; exit 1' SIGTERM
 
-		# Increment number of FLACs processed
-		__increment_count
-
 		# Test for COMPRESSION level in FLAC file. Hide error output since
 		# we'll be verifying the FLAC file later
 		COMPRESSION="$(metaflac --show-tag=COMPRESSION "${i}" 2> /dev/null)"
-		COMPRESSION="${COMPRESSION/#*=}"
+		COMPRESSION="${COMPRESSION#*=}"
 
-		if [[ "${COMPRESSION}" != "${COMPRESSION_LEVEL}" ]] ; then
+		if [[ "${COMPRESSION}" != "${compression_level}" ]] ; then
 			__print_compressing_flac
 
 			# Compress FLAC file with user defined COMPRESSION and send to
 			# background to allow killing on SIGTERM
-			flac -f -${COMPRESSION_LEVEL} -V --totally-silent "${i}" &
+			flac -f -${compression_level} -V --totally-silent "${i}" &
 
 			# Wait on background process and return exit code of
 			# said process
@@ -1638,20 +1705,19 @@ __compress_flacs () {
 					   "FLAC:  ${i}" \
 					   "ERROR: Not a FLAC file or failed verification." \
 					   "------------------------------------------------------------------" \
-					   >> "${VERIFY_ERRORS}"
+					   >> "${verify_errors}"
 			else
 				metaflac \
 					--remove-tag=COMPRESSION \
-					--set-tag=COMPRESSION=${COMPRESSION_LEVEL} "${i}"
-				__print_ok_flac
+					--set-tag=COMPRESSION=${compression_level} "${i}"
 			fi
 
-		# If already at COMPRESSION_LEVEL, test the FLAC file instead
+		# If already at compression_level, test the FLAC file instead
 		# or skip the file if '-C, --compress-notest' was specified
 		else
 			__print_level_same_compression
 
-			if [[ "${SKIP_TEST}" != "true" ]] ; then
+			if [[ "${skip_test}" != "true" ]] ; then
 				__print_testing_flac
 
 				# Test FLAC file and send to background to allow
@@ -1669,71 +1735,73 @@ __compress_flacs () {
 						   "FLAC:  ${i}" \
 						   "ERROR: Not a FLAC file or failed testing." \
 						   "------------------------------------------------------------------" \
-						   >> "${VERIFY_ERRORS}"
-				else
-					__print_ok_flac
+						   >> "${verify_errors}"
 				fi
 			fi
 
+		fi
+
+		if [[ "${last_file}" == "true" ]] ; then
+			# FLAC is okay, so print only if it's the last file
+			__print_ok_flac
 		fi
 
 		# Print newline into FIFO after completion
 		__newline >&3
 	}
 
-	# Make sure the temporary file is cleared before proceeding
-	__clear_processed_tmp_file
-
 	# Make sure to clear file descriptor '3' before proceeding
 	__clear_tmp_fd
 
 	# Start as many processes as determined by ${jobs}
 	for i in "${total_flacs_array[@]:0:${jobs}}" ; do
+		((iteration++))
 		__compress_f &
 	done
 
-	# Add the number of processes started above to count
-	ITERATION="${jobs}"
-
 	# If the FLAC files to process are greater than the # of ${jobs}
 	# available, continue processing them, else quit
-	if [[ "${TOTAL_FLACS}" -gt "${jobs}" ]] ; then
+	if [[ "${#total_flacs_array[@]}" -gt "${jobs}" ]] ; then
 
 		# After each newline is read from FIFO, start a new process
 		while read ; do
+
 			# If current number of FLACs to process is less than total FLACs
 			# found, add another FLAC to process
-			if [[ "${ITERATION}" -lt "${TOTAL_FLACS_INDICES}" ]] ; then
-				# Set ${i} to current FLAC to process
-				i="${total_flacs_array[${ITERATION}]}"
-				((ITERATION++))
+			if [[ "${iteration}" -lt "$(( ${#total_flacs_array[@]} - 1 ))" ]] ; then
+				i="${total_flacs_array[${iteration}]}"
+				((iteration++))
 				__compress_f &
+
+			# Below is processed only if the current FLAC file
+			# is equal to the last ${total_flacs_array[@]} index
 			else
-				# Set ${i} to current FLAC to process
-				i="${total_flacs_array[${ITERATION}]}"
+				last_file="true"
+				i="${total_flacs_array[${iteration}]}"
+				((iteration++))
 				__compress_f &
+				# Break out of loop to prevent hanging FIFO
 				break
 			fi
 		done <&3
-
 	fi
 
 	# Wait for children processes
 	wait
 
-	if [[ -f "${VERIFY_ERRORS}" ]] ; then
+	if [[ -f "${verify_errors}" ]] ; then
 		__newline >&2
 		{ __error "Errors found in some FLAC files, please check:" ; __newline ;} >&2
-		{ __error "\"${VERIFY_ERRORS}\" for errors" ; __newline ;} >&2
+		{ __error "\"${verify_errors}\" for errors" ; __newline ;} >&2
 
-		COMPRESS_COMPLETE="false"
+		compress_complete="false"
 		__operation_summary
 
 		exit 1
 	fi
 
 	# Compress FLACS completed successfully
-	COMPRESS_COMPLETE="true"
+	compress_complete="true"
 }
 
 ################
@@ -1741,6 +1809,8 @@ __compress_flacs () {
 ################
 # Test FLAC files
 __test_flacs () {
+	iteration=0
+
 	__title_testing_flac
 
 	# Abort script and check for any errors thus far
@@ -1753,13 +1823,13 @@ __test_flacs () {
 		__newline
 		__info "Control-C received, generating summary. Please wait..." ; __newline
 
-		if [[ -f "${TEST_ERRORS}" ]] ; then
+		if [[ -f "${test_errors}" ]] ; then
 			__newline >&2
 			{ __error "Errors found in some FLAC files, please check:" ; __newline ;} >&2
-			{ __error "\"${TEST_ERRORS}\" for errors" ; __newline ;} >&2
+			{ __error "\"${test_errors}\" for errors" ; __newline ;} >&2
 		fi
 
-		TEST_COMPLETE="interrupt"
+		test_complete="interrupt"
 		__operation_summary
 
 		exit 1
@@ -1773,9 +1843,6 @@ __test_flacs () {
 		# function was aborted via SIGINT.  This function
 		# will receive SIGTERM from the kill in previous trap
 		trap '__kill_jobs ; exit 1' SIGTERM
-
-		# Increment number of FLACs processed
-		__increment_count
 
 		__print_testing_flac
 
@@ -1794,8 +1861,8 @@ __test_flacs () {
 				   "FLAC:  ${i}" \
 				   "ERROR: Not a FLAC file or failed testing." \
 				   "------------------------------------------------------------------" \
-				   >> "${TEST_ERRORS}"
-		else
+				   >> "${test_errors}"
+		elif [[ "${last_file}" == "true" ]] ; then
 			__print_ok_flac
 		fi
 
@@ -1803,63 +1870,58 @@ __test_flacs () {
 		__newline >&3
 	}
 
-	# Make sure the temporary file is cleared before proceeding
-	__clear_processed_tmp_file
-
 	# Make sure to clear file descriptor '3' before proceeding
 	__clear_tmp_fd
 
 	# Start as many processes as determined by ${jobs}
 	for i in "${total_flacs_array[@]:0:${jobs}}" ; do
+		((iteration++))
 		__test_f &
 	done
 
-	# Add the number of processes started above to count
-	ITERATION="${jobs}"
-
 	# If the FLAC files to process are greater than the # of ${jobs}
 	# available, continue processing them, else quit
-	if [[ "${TOTAL_FLACS}" -gt "${jobs}" ]] ; then
+	if [[ "${#total_flacs_array[@]}" -gt "${jobs}" ]] ; then
 
 		# After each newline is read from FIFO, start a new process
 		while read ; do
 
 			# If current number of FLACs to process is less than total FLACs
 			# found, add another FLAC to process
-			if [[ "${ITERATION}" -lt "${TOTAL_FLACS_INDICES}" ]] ; then
-				# Set ${i} to current FLAC to process
-				i="${total_flacs_array[${ITERATION}]}"
-				((ITERATION++))
+			if [[ "${iteration}" -lt "$(( ${#total_flacs_array[@]} - 1 ))" ]] ; then
+				i="${total_flacs_array[${iteration}]}"
+				((iteration++))
 				__test_f &
 
-			# If current number of FLACs to process is the last FLAC file, continue
-			# processing it and break out of loop (to prevent hanging FIFO)
-			elif [[ "${ITERATION}" -eq "${TOTAL_FLACS_INDICES}" ]] ; then
-				# Set ${i} to current FLAC to process
-				i="${total_flacs_array[${ITERATION}]}"
+			# Below is processed only if the current FLAC file
+			# is equal to the last ${total_flacs_array[@]} index
+			else
+				last_file="true"
+				i="${total_flacs_array[${iteration}]}"
+				((iteration++))
 				__test_f &
+				# Break out of loop to prevent hanging FIFO
 				break
 			fi
 		done <&3
-
 	fi
 
 	# Wait for children processes
 	wait
 
-	if [[ -f "${TEST_ERRORS}" ]] ; then
+	if [[ -f "${test_errors}" ]] ; then
 		__newline >&2
 		{ __error "Errors found in some FLAC files, please check:" ; __newline ;} >&2
-		{ __error "\"${TEST_ERRORS}\" for errors" ; __newline ;} >&2
+		{ __error "\"${test_errors}\" for errors" ; __newline ;} >&2
 
-		TEST_COMPLETE="false"
+		test_complete="false"
 		__operation_summary
 
 		exit 1
 	fi
 
 	# Test FLACS completed successfully
-	TEST_COMPLETE="true"
+	test_complete="true"
 }
 
 #######################################
@@ -1867,12 +1929,14 @@ __test_flacs () {
 #######################################
 # Use auCDtect to check FLAC validity
 __aucdtect () {
-	# Check if SPECTROGRAM_LOCATION is user-defined
-	if [[ "${SPECTROGRAM_LOCATION}" != "default" ]] ; then
+	iteration=0
+
+	# Check if spectrogram_location is user-defined
+	if [[ "${spectrogram_location}" != "default" ]] ; then
 		# Put spectrograms in user-defined location
 		# Test to make sure directory exists
-		if [[ ! -d "${SPECTROGRAM_LOCATION}" ]] ; then
-			{ __error "\"${SPECTROGRAM_LOCATION}\" doesn't exist!" ; __newline ;} >&2
+		if [[ ! -d "${spectrogram_location}" ]] ; then
+			{ __error "\"${spectrogram_location}\" doesn't exist!" ; __newline ;} >&2
 			{ __error "Please choose a valid directory under USER CONFIGURATION!" ; __newline ;} >&2
 
 			exit 1
@@ -1893,15 +1957,15 @@ __aucdtect () {
 		__info "generating summary. Please wait..." ; __newline
 
 		# Remove temporarily created WAV files (if any)
-		rm -f "${DIRECTORY}"/**/*_redoflacs_"$$".wav
+		rm -f "${directory}"/**/*_redoflacs_"$$".wav
 
-		if [[ -f "${AUCDTECT_ERRORS}" ]] ; then
+		if [[ -f "${aucdtect_errors}" ]] ; then
 			__newline >&2
 			{ __error "Some FLAC files may be lossy sourced, please check:" ; __newline ;} >&2
-			{ __error "\"${AUCDTECT_ERRORS}\" for details" ; __newline ;} >&2
+			{ __error "\"${aucdtect_errors}\" for details" ; __newline ;} >&2
 		fi
 
-		AUCDTECT_COMPLETE="interrupt"
+		aucdtect_complete="interrupt"
 		__operation_summary
 
 		exit 1
@@ -1916,14 +1980,11 @@ __aucdtect () {
 		# will receive SIGTERM from the kill in previous trap
 		trap '__kill_jobs ; exit 1' SIGTERM
 
-		# Increment number of FLACs processed
-		__increment_count
-
 		__print_aucdtect_flac
 
 		# Get the bit depth of a FLAC file, also used to check
 		# if FLAC file is real.  Hide stderr output
-		BITS="$(metaflac --show-bps "${i}" 2> /dev/null)"
+		bits="$(metaflac --show-bps "${i}" 2> /dev/null)"
 
 		# Exit code 130 is SIGINT so only check for exit code '1'
 		if [[ "${?}" -eq "1" ]] ; then
@@ -1933,27 +1994,27 @@ __aucdtect () {
 				   "FLAC:  ${i}" \
 				   "ERROR: Not a FLAC file" \
 				   "------------------------------------------------------------------" \
-				   >> "${AUCDTECT_ERRORS}"
+				   >> "${aucdtect_errors}"
 
 		# Skip the FLAC file if it has a bit depth greater
 		# than 16 since auCDtect doesn't support audio
 		# files with a higher resolution than a CD.
-		elif [[ "${BITS}" -gt "16" ]] ; then
+		elif [[ "${bits}" -gt "16" ]] ; then
 			__print_aucdtect_skip
 			printf "%s\n%s\n%s\n" \
 				   "FLAC:  ${i}" \
 				   "ERROR: The above file has a bit depth greater than 16 and was skipped" \
 				   "------------------------------------------------------------------" \
-				   >> "${AUCDTECT_ERRORS}"
+				   >> "${aucdtect_errors}"
 
 		# FLAC checks out, continue processing
 		else
 			# The WAV file to be created from current FLAC file
-			DECODED_WAV="${i%${FLAC_EXTENSION}}_redoflacs_"$$".wav"
+			decoded_wav="${i%${flac_extension}}_redoflacs_"$$".wav"
 
 			# Decompress FLAC to WAV so auCDtect can read the audio file
 			# and send to background to allow killing on SIGTERM
-			flac --totally-silent -d "${i}" -o "${DECODED_WAV}" &
+			flac --totally-silent -d "${i}" -o "${decoded_wav}" &
 
 			# Wait on background process and return exit code of
 			# said process
@@ -1968,7 +2029,7 @@ __aucdtect () {
 					   "FLAC:  ${i}" \
 					   "ERROR: Failed decoding FLAC file to WAV (most likely corrupt)" \
 					   "------------------------------------------------------------------" \
-					   >> "${AUCDTECT_ERRORS}"
+					   >> "${aucdtect_errors}"
 			else
 				# 'export MALLOC_CHECK_' allows the dynamic linked version of auCDtect
 				# to run without throwing errors
@@ -1978,7 +2039,7 @@ __aucdtect () {
 				# 2> hides the displayed progress to /dev/null disabling the progress percentage
 				# STDOUT is sent to file descriptor '4' and the prcess sent to the background to allow
 				# killing via SIGTERM
-				"${AUCDTECT_COMMAND}" -m0 "${DECODED_WAV}" 2>/dev/null >&4 &
+				"${aucdtect_command}" -m0 "${decoded_wav}" 2>/dev/null >&4 &
 
 				# Wait on background process and return exit code of
 				# said process
@@ -1990,12 +2051,12 @@ __aucdtect () {
 					__print_failed_flac
 					printf "%s\n%s\n%s\n%s\n%s\n%s\n" \
 						   "FLAC:  ${i}" \
-						   "WAV:   ${DECODED_WAV}" \
+						   "WAV:   ${decoded_wav}" \
 						   "ERROR: auCDtect failed to analyze the decoded WAV file." \
 						   "       Something may have happened when decoding the above FLAC" \
 						   "       file.  Please verify the FLAC file is not corrupt." \
 						   "------------------------------------------------------------------" \
-						   >> "${AUCDTECT_ERRORS}"
+						   >> "${aucdtect_errors}"
 				else
 					# Grab the conclusion of auCDtect's command
 					# Below options prevents hanging FIFO by only reading
@@ -2011,35 +2072,35 @@ __aucdtect () {
 					if [[ "${aucdtect_check_array[0]}" != "This track looks like CDDA with probability 100%" ]] ; then
 						# If user specified '-A, --aucdtect-spectrogram', then
 						# create a spectrogram with SoX and change logging accordingly
-						if [[ "${CREATE_SPECTROGRAM}" == "true" ]] ; then
+						if [[ "${create_spectrogram}" == "true" ]] ; then
 							# Check whether to place spectrogram images in user-defined location
-							if [[ "${SPECTROGRAM_LOCATION}" == "default" ]] ; then
+							if [[ "${spectrogram_location}" == "default" ]] ; then
 								# Place images in same directory as the FLAC files
 								# Make sure we don't clobber any picture files
-								if [[ -f "${i%${FLAC_EXTENSION}}.png" ]] ; then
+								if [[ -f "${i%${flac_extension}}.png" ]] ; then
 									# File exists so prepend "spectrogram" before ".png"
-									SPECTROGRAM_PICTURE="${i%${FLAC_EXTENSION}}.spectrogram.png"
+									spectrogram_picture="${i%${flac_extension}}.spectrogram.png"
 								else
 									# File doesn't exist, so create the spectrogram with the basename of "$i"
 									# with ".png" as the extension
-									SPECTROGRAM_PICTURE="${i%${FLAC_EXTENSION}}.png"
+									spectrogram_picture="${i%${flac_extension}}.png"
 								fi
 							else
 								# Place images in user-defined location
-								FLAC_FILE="${i##*/}"
-								SPECTROGRAM_PICTURE="${SPECTROGRAM_LOCATION}/${FLAC_FILE%${FLAC_EXTENSION}}.png"
+								flac_file="${i##*/}"
+								spectrogram_picture="${spectrogram_location}/${flac_file%${flac_extension}}.png"
 							fi
 
 							# Let's create the spectrogram for the failed FLAC file
 							# and output progress
 							__print_aucdtect_spectrogram
 
-							# SoX command to create the spectrogram and place it in SPECTROGRAM_PICTURE,
+							# SoX command to create the spectrogram and place it in spectrogram_picture,
 							# sent to the background to allow killing via SIGTERM
-							"${SOX_COMMAND}" "${i}" -n spectrogram -c '' -t "${i}" -p1 -z90 -Z0 -q249 -wHann -x1800 -y513 -o "${SPECTROGRAM_PICTURE}" &
+							"${sox_command}" "${i}" -n spectrogram -c '' -t "${i}" -p1 -z90 -Z0 -q249 -wHann -x1800 -y513 -o "${spectrogram_picture}" &
 
 							# Use the below version of the command to create hi-res spectrograms
-							#"${SOX_COMMAND}" "${i}" -n spectrogram -c '' -t "${i}" -p1 -z90 -Z0 -q249 -wHann -x5000 -y1025 -o "${SPECTROGRAM_PICTURE}"
+							#"${sox_command}" "${i}" -n spectrogram -c '' -t "${i}" -p1 -z90 -Z0 -q249 -wHann -x5000 -y1025 -o "${spectrogram_picture}"
 
 							# Wait on background process and return exit code of
 							# said process
@@ -2051,9 +2112,9 @@ __aucdtect () {
 							printf "%s\n%s\n%s\n%s\n" \
 								   "FLAC:        ${i}" \
 								   "ERROR:       ${aucdtect_check_array[0]}" \
-								   "SPECTROGRAM: ${SPECTROGRAM_PICTURE}" \
+								   "SPECTROGRAM: ${spectrogram_picture}" \
 								   "------------------------------------------------------------------" \
-								   >> "${AUCDTECT_ERRORS}"
+								   >> "${aucdtect_errors}"
 						else
 							# Print ISSUE and log error
 							__print_aucdtect_issue
@@ -2061,25 +2122,24 @@ __aucdtect () {
 								   "FLAC:  ${i}" \
 								   "ERROR: ${aucdtect_check_array[0]}" \
 								   "------------------------------------------------------------------" \
-								   >> "${AUCDTECT_ERRORS}"
+								   >> "${aucdtect_errors}"
 						fi
-					# The processed FLAC file is OK
-					else
-						__print_ok_flac
 					fi
 
 					# Remove temporary WAV file
-					rm "${DECODED_WAV}"
+					rm "${decoded_wav}"
 				fi
 			fi
+		fi
+
+		if [[ "${last_file}" == "true" ]] ; then
+			# FLAC is okay, so print only if it's the last file
+			__print_ok_flac
 		fi
 
 		# Print newline into FIFO after completion
 		__newline >&3
 	}
-
-	# Make sure the temporary file is cleared before proceeding
-	__clear_processed_tmp_file
 
 	# Make sure to clear file descriptor '3' before proceeding
 	__clear_tmp_fd
@@ -2090,54 +2150,52 @@ __aucdtect () {
 
 	# Start as many processes as determined by ${jobs}
 	for i in "${total_flacs_array[@]:0:${jobs}}" ; do
+		((iteration++))
 		__aucdtect_f &
 	done
 
-	# Add the number of processes started above to count
-	ITERATION="${jobs}"
-
 	# If the FLAC files to process are greater than the # of ${jobs}
 	# available, continue processing them, else quit
-	if [[ "${TOTAL_FLACS}" -gt "${jobs}" ]] ; then
+	if [[ "${#total_flacs_array[@]}" -gt "${jobs}" ]] ; then
 
 		# After each newline is read from FIFO, start a new process
 		while read ; do
+
 			# If current number of FLACs to process is less than total FLACs
 			# found, add another FLAC to process
-			if [[ "${ITERATION}" -lt "${TOTAL_FLACS_INDICES}" ]] ; then
-				# Set ${i} to current FLAC to process
-				i="${total_flacs_array[${ITERATION}]}"
-				((ITERATION++))
+			if [[ "${iteration}" -lt "$(( ${#total_flacs_array[@]} - 1 ))" ]] ; then
+				i="${total_flacs_array[${iteration}]}"
+				((iteration++))
 				__aucdtect_f &
 
-			# If current number of FLACs to process is the last FLAC file, continue
-			# processing it and break out of loop (to prevent hanging FIFO)
-			elif [[ "${ITERATION}" -eq "${TOTAL_FLACS_INDICES}" ]] ; then
-				# Set ${i} to current FLAC to process
-				i="${total_flacs_array[${ITERATION}]}"
+			# Below is processed only if the current FLAC file
+			# is equal to the last ${total_flacs_array[@]} index
+			else
+				i="${total_flacs_array[${iteration}]}"
+				((iteration++))
 				__aucdtect_f &
+				# Break out of loop to prevent hanging FIFO
 				break
 			fi
 		done <&3
-
 	fi
 
 	# Wait for children processes
 	wait
 
-	if [[ -f "${AUCDTECT_ERRORS}" ]] ; then
+	if [[ -f "${aucdtect_errors}" ]] ; then
 		__newline >&2
 		{ __error "Some FLAC files may be lossy sourced, please check:" ; __newline ;} >&2
-		{ __error "\"${AUCDTECT_ERRORS}\" for details" ; __newline ;} >&2
+		{ __error "\"${aucdtect_errors}\" for details" ; __newline ;} >&2
 
-		AUCDTECT_COMPLETE="false"
+		aucdtect_complete="false"
 		__operation_summary
 
 		exit 1
 	fi
 
 	# auCDtect completed successfully
-	AUCDTECT_COMPLETE="true"
+	aucdtect_complete="true"
 }
 
 #########################
@@ -2145,6 +2203,8 @@ __aucdtect () {
 #########################
 # Check for unset MD5 Signatures in FLAC files
 __md5_check () {
+	iteration=0
+
 	__title_md5check_flac
 
 	# Abort script and check for any errors thus far
@@ -2157,14 +2217,14 @@ __md5_check () {
 		__newline
 		__info "Control-C received, generating summary. Please wait..." ; __newline
 
-		if [[ -f "${MD5_ERRORS}" ]] ; then
+		if [[ -f "${md5_errors}" ]] ; then
 			__newline >&2
 			{ __error "The MD5 Signature is unset for some FLAC files or there were" ; __newline ;} >&2
 			{ __error "issues with some of the FLAC files, please check:" ; __newline ;} >&2
-			{ __error "\"${MD5_ERRORS}\" for details" ; __newline ;} >&2
+			{ __error "\"${md5_errors}\" for details" ; __newline ;} >&2
 		fi
 
-		MD5CHECK_COMPLETE="interrupt"
+		md5check_complete="interrupt"
 		__operation_summary
 
 		exit 130
@@ -2179,14 +2239,11 @@ __md5_check () {
 		# will receive SIGTERM from the kill in previous trap
 		trap '__kill_jobs ; exit 130' SIGTERM
 
-		# Increment number of FLACs processed
-		__increment_count
-
 		__print_checking_md5
 
 		# Get the MD5 checksum (hide stderr output).  Also
 		# used to check if FLAC file is real
-		MD5_SUM="$(metaflac --show-md5sum "${i}" 2> /dev/null)"
+		md5_sum="$(metaflac --show-md5sum "${i}" 2> /dev/null)"
 
 		# Exit code 130 is SIGINT so only check for exit code '1'
 		if [[ "${?}" -eq "1" ]] ; then
@@ -2196,17 +2253,19 @@ __md5_check () {
 				   "FLAC:  ${i}" \
 				   "ERROR: Not a FLAC file" \
 				   "------------------------------------------------------------------" \
-				   >> "${MD5_ERRORS}"
+				   >> "${md5_errors}"
 
 		# FLAC file is real, check for unset MD5 checksum
-		elif [[ "${MD5_SUM}" == "00000000000000000000000000000000" ]] ; then
+		elif [[ "${md5_sum}" == "00000000000000000000000000000000" ]] ; then
 			__print_failed_flac
 			printf "%s\n%s\n%s\n" \
 				   "FLAC:  ${i}" \
-				   "ERROR: MD5 Signature unset: (${MD5_SUM})" \
+				   "ERROR: MD5 Signature unset: (${md5_sum})" \
 				   "------------------------------------------------------------------" \
-				   >> "${MD5_ERRORS}"
-		else
+				   >> "${md5_errors}"
+
+		# FLAC is okay, so print ok only if it's the last file
+		elif [[ "${last_file}" == "true" ]] ; then
 				__print_ok_flac
 		fi
 
@@ -2214,70 +2273,65 @@ __md5_check () {
 		__newline >&3
 	}
 
-	# Make sure the temporary file is cleared before proceeding
-	__clear_processed_tmp_file
-
 	# Make sure to clear file descriptor '3' before proceeding
 	__clear_tmp_fd
 
 	# Start as many processes as determined by ${jobs}
 	for i in "${total_flacs_array[@]:0:${jobs}}" ; do
+		((iteration++))
 		__md5_c &
 	done
 
-	# Add the number of processes started above to count
-	ITERATION="${jobs}"
-
 	# If the FLAC files to process are greater than the # of ${jobs}
 	# available, continue processing them, else quit
-	if [[ "${TOTAL_FLACS}" -gt "${jobs}" ]] ; then
+	if [[ "${#total_flacs_array[@]}" -gt "${jobs}" ]] ; then
 
 		# After each newline is read from FIFO, start a new process
 		while read ; do
 
 			# If current number of FLACs to process is less than total FLACs
 			# found, add another FLAC to process
-			if [[ "${ITERATION}" -lt "${TOTAL_FLACS_INDICES}" ]] ; then
-				# Set ${i} to current FLAC to process
-				i="${total_flacs_array[${ITERATION}]}"
-				((ITERATION++))
+			if [[ "${iteration}" -lt "$(( ${#total_flacs_array[@]} - 1))" ]] ; then
+				i="${total_flacs_array[${iteration}]}"
+				((iteration++))
 				__md5_c &
 
-			# If current number of FLACs to process is the last FLAC file, continue
-			# processing it and break out of loop (to prevent hanging FIFO)
-			elif [[ "${ITERATION}" -eq "${TOTAL_FLACS_INDICES}" ]] ; then
-				# Set ${i} to current FLAC to process
-				i="${total_flacs_array[${ITERATION}]}"
+			# Below is processed only if the current FLAC file
+			# is equal to the last ${total_flacs_array[@]} index
+			else
+				last_file="true"
+				i="${total_flacs_array[${iteration}]}"
+				((iteration++))
 				__md5_c &
+				# Break out of loop to prevent hanging FIFO
 				break
 			fi
 		done <&3
-
 	fi
 
 	# Wait for children processes
 	wait
 
-	if [[ -f "${MD5_ERRORS}" ]] ; then
+	if [[ -f "${md5_errors}" ]] ; then
 		__newline >&2
 		{ __error "The MD5 Signature is unset for some FLAC files or there were" ; __newline ;} >&2
 		{ __error "issues with some of the FLAC files, please check:" ; __newline ;} >&2
-		{ __error "\"${MD5_ERRORS}\" for details" ; __newline ;} >&2
+		{ __error "\"${md5_errors}\" for details" ; __newline ;} >&2
 
-		MD5CHECK_COMPLETE="false"
+		md5check_complete="false"
 		__operation_summary
 
 		exit 1
 	fi
 
 	# MD5 Check completed successfully
-	MD5CHECK_COMPLETE="true"
+	md5check_complete="true"
 }
 
 ###############
 #  REDO TAGS  #
 ###############
-# If COVERART tag is kept and REMOVE_ARTWORK is set to 'true'
+# If COVERART tag is kept and remove_artwork is set to 'true'
 # display conflict and exit
 __coverart_remove_conflict () {
 	# Check if COVERART exists in the tag array.  Notify user
@@ -2285,34 +2339,31 @@ __coverart_remove_conflict () {
 	# METADATA_BLOCK_PICTURE
 	for j in "${tags[@]}" ; do
 		if [[ "${j}" == "COVERART" ]] ; then
-			# If REMOVE_ARTWORK is "true" (remove the artwork), then
+			# If remove_artwork is "true" (remove the artwork), then
 			# exit and warn the user you can't specify whether you want to
 			# remove artwork, yet keep the COVERART tag in USER CONFIGURATION
-			if [[ "${REMOVE_ARTWORK}" == "true" ]] ; then
+			if [[ "${remove_artwork}" == "true" ]] ; then
 
 				# Display COVERART tag warning
 				__coverart_warning
 
 				__newline >&2
-				{ __error "It appears you have REMOVE_ARTWORK set to \"true\" under" ; __newline ;} >&2
+				{ __error "It appears you have remove_artwork set to \"true\" under" ; __newline ;} >&2
 				{ __error "USER CONFIGURATION, yet COVERART is specified as one" ; __newline ;} >&2
 				{ __error "(or more) of the FLAC tags to be kept. Please choose either" ; __newline ;} >&2
-				{ __error "to keep album artwork (ie REMOVE_ARTWORK=\"false\") or remove" ; __newline ;} >&2
+				{ __error "to keep album artwork (ie remove_artwork=\"false\") or remove" ; __newline ;} >&2
 				{ __error "the COVERART tag under the USER CONFIGURATION portion of this" ; __newline ;} >&2
 				{ __error "script." ; __newline ;} >&2
-
-				# Remove temporary file
-				rm -f "${PROCESSED_TMP_FILE}"
 
 				exit 1
 			# COVERART was found, but artwork is to be removed,
 			# so warn user
 			else
-				# Create COVERART_WARNING variable, so script can append
+				# Create coverart_warning variable, so script can append
 				# the coverart_warning function after completion as well as
 				# determine the correct tag array to use (whether we should
 				# add COVERART or not)
-				COVERART_WARNING="true"
+				coverart_warning="true"
 
 				# Display tag field warning
 				__countdown_metadata
@@ -2320,8 +2371,8 @@ __coverart_remove_conflict () {
 		fi
 	done
 
-	# COVERART wasn't found and REMOVE_ARTWORK is set to 'true'
-	if [[ "${COVERART_WARNING}" != "true" ]] ; then
+	# COVERART wasn't found and remove_artwork is set to 'true'
+	if [[ "${coverart_warning}" != "true" ]] ; then
 		__countdown_metadata
 	fi
 }
@@ -2350,20 +2401,20 @@ __redo_tags () {
 		__info "Control-C received, generating summary. Please wait..." ; __newline
 
 		# Test for DEPRECATED tag, COVERART in METADATA_ERROR log.  If it
-		# exists, set COVERART_WARNING variable to make script output
+		# exists, set coverart_warning variable to make script output
 		# warning upon completion
-		if [[ -f "${METADATA_ERRORS}" ]] ; then
+		if [[ -f "${metadata_errors}" ]] ; then
 			while read -r i ; do
 				# Indentation is culled from reading in "${i}"
 				# To change this, set IFS to '\n'
 				if [[ "${i}" == "the new format: METADATA_BLOCK_PICTURE." ]] ; then
-					COVERART_WARNING="true"
+					coverart_warning="true"
 					break
 				fi
-			done < "${METADATA_ERRORS}"
+			done < "${metadata_errors}"
 		fi
 
-		if [[ -f "${METADATA_ERRORS}"  && "${COVERART_WARNING}" == "true" ]] ; then
+		if [[ -f "${metadata_errors}"  && "${coverart_warning}" == "true" ]] ; then
 			# Display COVERART warning function and metadata issues
 			__newline >&2
 
@@ -2373,29 +2424,29 @@ __redo_tags () {
 			__newline >&2
 			{ __error "Some FLAC files have missing tags or there were" ; __newline ;} >&2
 			{ __error "issues with some of the FLAC files, please check:" ; __newline ;} >&2
-			{ __error "\"${METADATA_ERRORS}\" for details." ; __newline ;} >&2
+			{ __error "\"${metadata_errors}\" for details." ; __newline ;} >&2
 			{ __error "Not Re-Tagging files." ; __newline ;} >&2
 
-			REDO_COMPLETE="interrupt"
+			redo_complete="interrupt"
 			__operation_summary
 
 			exit 1
 
-		elif [[ -f "${METADATA_ERRORS}" ]] ; then
+		elif [[ -f "${metadata_errors}" ]] ; then
 			# Just display metadata issues
 			__newline >&2
 			{ __error "Some FLAC files have missing tags or there were" ; __newline ;} >&2
 			{ __error "issues with some of the FLAC files, please check:" ; __newline ;} >&2
-			{ __error "\"${METADATA_ERRORS}\" for details." ; __newline ;} >&2
+			{ __error "\"${metadata_errors}\" for details." ; __newline ;} >&2
 			{ __error "Not Re-Tagging files." ; __newline ;} >&2
 
-			REDO_COMPLETE="interrupt"
+			redo_complete="interrupt"
 			__operation_summary
 
 			exit 1
 		fi
 
-		REDO_COMPLETE="interrupt"
+		redo_complete="interrupt"
 		__operation_summary
 
 		exit 1
@@ -2407,10 +2458,11 @@ __redo_tags () {
 	################
 	# ANALYZE TAGS #
 	################
+	iteration=0
 
 	__analyze_tags () {
 		# Check if file is a FLAC file (variable hides output)
-		CHECK_FLAC="$(metaflac --show-md5sum "${i}" 2>&1)"
+		check_flac="$(metaflac --show-md5sum "${i}" 2>&1)"
 
 		# If above command return anything other than '0', log output
 		if [[ "${?}" -ne "0" ]] ; then
@@ -2418,7 +2470,7 @@ __redo_tags () {
 				  "FLAC:  ${i}" \
 				  "ERROR: The above file does not appear to be a FLAC file" \
 				  "------------------------------------------------------------------" \
-				  >> "${METADATA_ERRORS}"
+				  >> "${metadata_errors}"
 			# File is not a FLAC file, display failed
 			__print_failed_flac
 		else
@@ -2491,13 +2543,13 @@ __redo_tags () {
 						if [[ "${j}" == "${temp_tag_field}" ]] ; then
 							# Check if tag value is null, logging missing tags if so
 							if [[ -z "${temp_tag_array[${temp_tag_field}]}" ]] ; then
-								if [[ "${FILE_PRINTED}" != "true" ]] ; then
+								if [[ "${file_printed}" != "true" ]] ; then
 									# First instance of missing tag for current file
 									missing_tags_array+=(
 										"FLAC:  ${i}"
 										"ERROR: ${j} tag not found"
 									)
-									FILE_PRINTED="true"
+									file_printed="true"
 								else
 									# If more than one missing tag in current file,
 									# don't print out filename, just the missing tag
@@ -2525,13 +2577,13 @@ __redo_tags () {
 					# must have a missing tag, so log it by throwing the missing tag
 					# into the missing tags array
 					if [[ "${tag_match}" != "true" ]] ; then
-						if [[ "${FILE_PRINTED}" != "true" ]] ; then
+						if [[ "${file_printed}" != "true" ]] ; then
 							# First instance of missing tag for current file
 							missing_tags_array+=(
 								"FLAC:  ${i}"
 								"ERROR: ${j} tag not found"
 							)
-							FILE_PRINTED="true"
+							file_printed="true"
 						else
 							# If more than one missing tag in current file,
 							# don't print out filename, just the missing tag
@@ -2547,21 +2599,19 @@ __redo_tags () {
 				# whatever is left in ${tags[@]} represented by ${j} is logged
 				# as missing
 				else
-					if [[ "${FILE_PRINTED}" != "true" ]] ; then
+					if [[ "${file_printed}" != "true" ]] ; then
 						# First instance of missing tag for current file
 						missing_tags_array+=(
 							"FLAC:  ${i}"
 							"ERROR: ${j} tag not found"
 						)
-						FILE_PRINTED="true"
+						file_printed="true"
 					else
 						# If more than one missing tag in current file,
 						# don't print out filename, just the missing tag
 						missing_tags_array+=( "       ${j} tag not found" )
 					fi
-
 				fi
-
 			done
 
 			# If missing_tags_array is not empty, there are missing
@@ -2570,17 +2620,19 @@ __redo_tags () {
 				# Add separator to log for each file
 				missing_tags_array+=( "------------------------------------------------------------------" )
 				# Print array into log file
-				printf "%s\n" "${missing_tags_array[@]}" >> "${METADATA_ERRORS}"
+				printf "%s\n" "${missing_tags_array[@]}" >> "${metadata_errors}"
 			fi
+		fi
 
-		# Done analyzing FLAC file tags
-		__print_done_flac
+		# FLAC is okay, so print ok only if it's the last file
+		if [[ "${last_file}" == "true" ]] ; then
+			__print_done_flac
 		fi
 	}
 
 	__analyze_tags_dont_log_coverart () {
 		# Check if file is a FLAC file (variable hides output)
-		CHECK_FLAC="$(metaflac --show-md5sum "${i}" 2>&1)"
+		check_flac="$(metaflac --show-md5sum "${i}" 2>&1)"
 
 		# If above command return anything other than '0', log output
 		if [[ "${?}" -ne "0" ]] ; then
@@ -2588,7 +2640,7 @@ __redo_tags () {
 				   "FLAC:  ${i}" \
 				   "ERROR: The above file does not appear to be a FLAC file" \
 				   "------------------------------------------------------------------" \
-				   >> "${METADATA_ERRORS}"
+				   >> "${metadata_errors}"
 			# File is not a FLAC file, display failed
 			__print_failed_flac
 		else
@@ -2634,7 +2686,7 @@ __redo_tags () {
 							   "ERROR: \"${j}\" tag is DEPRECATED in above file. Consider migrating to" \
 							   "       the new format: METADATA_BLOCK_PICTURE." \
 							   "------------------------------------------------------------------" \
-							   >> "${METADATA_ERRORS}"
+							   >> "${metadata_errors}"
 					fi
 				fi
 			done
@@ -2685,13 +2737,13 @@ __redo_tags () {
 						if [[ "${j}" == "${temp_tag_field}" && "${j}" != "COVERART" ]] ; then
 							# Check if tag value is null, logging missing tags if so
 							if [[ -z "${temp_tag_array[${temp_tag_field}]}" ]] ; then
-								if [[ "${FILE_PRINTED}" != "true" ]] ; then
+								if [[ "${file_printed}" != "true" ]] ; then
 									# First instance of missing tag for current file
 									missing_tags_array+=(
 										"FLAC:  ${i}"
 										"ERROR: ${j} tag not found"
 									)
-									FILE_PRINTED="true"
+									file_printed="true"
 								else
 									# If more than one missing tag in current file,
 									# don't print out filename, just the missing tag
@@ -2719,13 +2771,13 @@ __redo_tags () {
 					# must have a missing tag, so log it by throwing the missing tag
 					# into the missing tags array.  Also skip logging of COVERART tag
 					if [[ "${tag_match}" != "true" && "${j}" != "COVERART" ]] ; then
-						if [[ "${FILE_PRINTED}" != "true" ]] ; then
+						if [[ "${file_printed}" != "true" ]] ; then
 							# First instance of missing tag for current file
 							missing_tags_array+=(
 								"FLAC:  ${i}"
 								"ERROR: ${j} tag not found"
 							)
-							FILE_PRINTED="true"
+							file_printed="true"
 						else
 							# If more than one missing tag in current file,
 							# don't print out filename, just the missing tag
@@ -2741,21 +2793,19 @@ __redo_tags () {
 				# whatever is left in ${tags[@]} represented by ${j} is logged
 				# as missing.  Also skip logging of COVERART tag
 				elif [[ "${j}" != "COVERART" ]] ; then
-					if [[ "${FILE_PRINTED}" != "true" ]] ; then
+					if [[ "${file_printed}" != "true" ]] ; then
 						# First instance of missing tag for current file
 						missing_tags_array+=(
 							"FLAC:  ${i}"
 							"ERROR: ${j} tag not found"
 						)
-						FILE_PRINTED="true"
+						file_printed="true"
 					else
 						# If more than one missing tag in current file,
 						# don't print out filename, just the missing tag
 						missing_tags_array+=( "       ${j} tag not found" )
 					fi
-
 				fi
-
 			done
 
 			# If missing_tags_array is not empty, there are missing
@@ -2764,18 +2814,20 @@ __redo_tags () {
 				# Add separator to log for each file
 				missing_tags_array+=( "------------------------------------------------------------------" )
 				# Print array into log file
-				printf "%s\n" "${missing_tags_array[@]}" >> "${METADATA_ERRORS}"
+				printf "%s\n" "${missing_tags_array[@]}" >> "${metadata_errors}"
 			fi
+		fi
 
-		# Done analyzing FLAC file tags
-		__print_done_flac
+		# FLAC is okay, so print ok only if it's the last file
+		if [[ "${last_file}" == "true" ]] ; then
+			__print_done_flac
 		fi
 	}
 
 	# If COVERART was specified under USER CONFIGURATION
 	# set the tag array accordingly and test whether there
 	# are missing tags in each FLAC file
-	if [[ "${COVERART_WARNING}" == "true" ]] ; then
+	if [[ "${coverart_warning}" == "true" ]] ; then
 		__title_analyze_tags
 
 		# COVERART is already in the tag array. Implies album
@@ -2785,9 +2837,6 @@ __redo_tags () {
 			# function was aborted via SIGINT.  This function
 			# will receive SIGTERM from the kill in previous trap
 			trap '__kill_jobs ; exit 1' SIGTERM
-
-			# Increment number of FLACs processed
-			__increment_count
 
 			# Print script operation title
 			__print_analyzing_tags
@@ -2801,7 +2850,7 @@ __redo_tags () {
 	else
 		# COVERART is not in the tag array, so add it if album artwork
 		# is to be kept
-		if [[ "${REMOVE_ARTWORK}" == "false" ]] ; then
+		if [[ "${remove_artwork}" == "false" ]] ; then
 			__title_analyze_tags
 
 			# Analyze tags but don't log COVERART is missing tag
@@ -2810,9 +2859,6 @@ __redo_tags () {
 				# function was aborted via SIGINT.  This function
 				# will receive SIGTERM from the kill in previous trap
 				trap '__kill_jobs ; exit 1' SIGTERM
-
-				# Increment number of FLACs processed
-				__increment_count
 
 				# Print script operation title
 				__print_analyzing_tags
@@ -2834,9 +2880,6 @@ __redo_tags () {
 				# will receive SIGTERM from the kill in previous trap
 				trap '__kill_jobs ; exit 1' SIGTERM
 
-				# Increment number of FLACs processed
-				__increment_count
-
 				# Print script operation title
 				__print_analyzing_tags
 
@@ -2849,64 +2892,60 @@ __redo_tags () {
 		fi
 	fi
 
-	# Make sure the temporary file is cleared before proceeding
-	__clear_processed_tmp_file
-
 	# Make sure to clear file descriptor '3' before proceeding
 	__clear_tmp_fd
 
 	# Start as many processes as determined by ${jobs}
 	for i in "${total_flacs_array[@]:0:${jobs}}" ; do
+		((iteration++))
 		__check_tags &
 	done
 
-	# Add the number of processes started above to count
-	ITERATION="${jobs}"
-
 	# If the FLAC files to process are greater than the # of ${jobs}
 	# available, continue processing them, else quit
-	if [[ "${TOTAL_FLACS}" -gt "${jobs}" ]] ; then
+	if [[ "${#flac_directories_array[@]}" -gt "${jobs}" ]] ; then
 
 		# After each newline is read from FIFO, start a new process
 		while read ; do
+
 			# If current number of FLACs to process is less than total FLACs
 			# found, add another FLAC to process
-			if [[ "${ITERATION}" -lt "${TOTAL_FLACS_INDICES}" ]] ; then
-				# Set ${i} to current FLAC to process
-				i="${total_flacs_array[${ITERATION}]}"
-				((ITERATION++))
+			if [[ "${iteration}" -lt "$(( ${#flac_directories_array[@]} - 1 ))" ]] ; then
+				i="${total_flacs_array[${iteration}]}"
+				((iteration++))
 				__check_tags &
 
-			# If current number of FLACs to process is the last FLAC file, continue
-			# processing it and break out of loop (to prevent hanging FIFO)
-			elif [[ "${ITERATION}" -eq "${TOTAL_FLACS_INDICES}" ]] ; then
-				# Set ${i} to current FLAC to process
-				i="${total_flacs_array[${ITERATION}]}"
+			# Below is processed only if the current FLAC file
+			# is equal to the last ${total_flacs_array[@]} index
+			else
+				last_file="true"
+				i="${total_flacs_array[${iteration}]}"
+				((iteration++))
 				__check_tags &
+				# Break out of loop to prevent hanging FIFO
 				break
 			fi
 		done <&3
-
 	fi
 
 	# Wait for children processes
 	wait
 
 	# Test for DEPRECATED tag, COVERART in METADATA_ERROR log.  If it
-	# exists, set COVERART_WARNING variable to make script output
+	# exists, set coverart_warning variable to make script output
 	# warning upon completion
-	if [[ -f "${METADATA_ERRORS}" ]] ; then
+	if [[ -f "${metadata_errors}" ]] ; then
 		while read -r i ; do
 			# Indentation is culled from reading in "${i}"
 			# To change this, set IFS to '\n'
 			if [[ "${i}" == "the new format: METADATA_BLOCK_PICTURE." ]] ; then
-				COVERART_WARNING="true"
+				coverart_warning="true"
 				break
 			fi
-		done < "${METADATA_ERRORS}"
+		done < "${metadata_errors}"
 	fi
 
-	if [[ -f "${METADATA_ERRORS}"  && "${COVERART_WARNING}" == "true" ]] ; then
+	if [[ -f "${metadata_errors}"  && "${coverart_warning}" == "true" ]] ; then
 		# Display COVERART warning function and metadata issues
 		__newline >&2
 
@@ -2916,22 +2955,22 @@ __redo_tags () {
 		__newline >&2
 		{ __error "Some FLAC files have missing tags or there were" ; __newline ;} >&2
 		{ __error "issues with some of the FLAC files, please check:" ; __newline ;} >&2
-		{ __error "\"${METADATA_ERRORS}\" for details." ; __newline ;} >&2
+		{ __error "\"${metadata_errors}\" for details." ; __newline ;} >&2
 		{ __error "Not Re-Tagging files." ; __newline ;} >&2
 
-		REDO_COMPLETE="false"
+		redo_complete="false"
 		__operation_summary
 
 		exit 1
-	elif [[ -f "${METADATA_ERRORS}" ]] ; then
+	elif [[ -f "${metadata_errors}" ]] ; then
 		# Just display metadata issues
 		__newline >&2
 		{ __error "Some FLAC files have missing tags or there were" ; __newline ;} >&2
 		{ __error "issues with some of the FLAC files, please check:" ; __newline ;} >&2
-		{ __error "\"${METADATA_ERRORS}\" for details." ; __newline ;} >&2
+		{ __error "\"${metadata_errors}\" for details." ; __newline ;} >&2
 		{ __error "Not Re-Tagging files." ; __newline ;} >&2
 
-		REDO_COMPLETE="false"
+		redo_complete="false"
 		__operation_summary
 
 		exit 1
@@ -2940,6 +2979,7 @@ __redo_tags () {
 	############
 	# SET TAGS #
 	############
+	iteration=0
 
 	# Restore the original tags array as it _may_ have added the
 	# COVERART tag.  This way, we ensure that the COVERART
@@ -3002,66 +3042,61 @@ __redo_tags () {
 		# will receive SIGTERM from the kill in previous trap
 		trap '__kill_jobs ; exit 1' SIGTERM
 
-		# Increment number of FLACs processed
-		__increment_count
-
 		__print_setting_tags
 
 		# Remove and set new tags
 		__remove_set_tags
 
-		__print_ok_flac
+		# Only print ok if it's the last file
+		if [[ "${last_file}" == "true" ]] ; then
+			__print_done_flac
+		fi
 
 		# Print newline into FIFO after completion
 		__newline >&3
 	}
-
-	# Make sure the temporary file is cleared before proceeding
-	__clear_processed_tmp_file
 
 	# Make sure to clear file descriptor '3' before proceeding
 	__clear_tmp_fd
 
 	# Start as many processes as determined by ${jobs}
 	for i in "${total_flacs_array[@]:0:${jobs}}" ; do
+		((iteration++))
 		__retag_flacs &
 	done
 
-	# Add the number of processes started above to count
-	ITERATION="${jobs}"
-
 	# If the FLAC files to process are greater than the # of ${jobs}
 	# available, continue processing them, else quit
-	if [[ "${TOTAL_FLACS}" -gt "${jobs}" ]] ; then
+	if [[ "${#flac_directories_array[@]}" -gt "${jobs}" ]] ; then
 
 		# After each newline is read from FIFO, start a new process
 		while read ; do
 
 			# If current number of FLACs to process is less than total FLACs
 			# found, add another FLAC to process
-			if [[ "${ITERATION}" -lt "${TOTAL_FLACS_INDICES}" ]] ; then
-				# Set ${i} to current FLAC to process
-				i="${total_flacs_array[${ITERATION}]}"
-				((ITERATION++))
+			if [[ "${iteration}" -lt "$(( ${#flac_directories_array[@]} - 1 ))" ]] ; then
+				i="${total_flacs_array[${iteration}]}"
+				((iteration++))
 				__retag_flacs &
 
-			# If current number of FLACs to process is the last FLAC file, continue
-			# processing it and break out of loop (to prevent hanging FIFO)
-			elif [[ "${ITERATION}" -eq "${TOTAL_FLACS_INDICES}" ]] ; then
-				# Set ${i} to current FLAC to process
-				i="${total_flacs_array[${ITERATION}]}"
+			# Below is processed only if the current FLAC file
+			# is equal to the last ${total_flacs_array[@]} index
+			else
+				last_file="true"
+				i="${total_flacs_array[${iteration}]}"
+				((iteration++))
 				__retag_flacs &
+				# Break out of loop to prevent hanging FIFO
 				break
 			fi
 		done <&3
-
 	fi
 
 	# Wait for children processes
 	wait
 
 	# Redo Tags completed successfully
-	REDO_COMPLETE="true"
+	redo_complete="true"
 }
 
 #################
@@ -3069,6 +3104,8 @@ __redo_tags () {
 #################
 # Clear excess FLAC metadata from each FLAC file
 __prune_flacs () {
+	iteration=0
+
 	__title_prune_flac
 
 	# Abort script and check for any errors thus far
@@ -3081,14 +3118,14 @@ __prune_flacs () {
 		__newline
 		__info "Control-C received, generating summary. Please wait..." ; __newline
 
-		if [[ -f "${PRUNE_ERRORS}" ]] ; then
+		if [[ -f "${prune_errors}" ]] ; then
 			__newline >&2
 			{ __error "There were issues with some of the FLAC files," ; __newline ;} >&2
 			{ __error "please check:" ; __newline ;} >&2
-			{ __error "\"${PRUNE_ERRORS}\" for details." ; __newline ;} >&2
+			{ __error "\"${prune_errors}\" for details." ; __newline ;} >&2
 		fi
 
-		PRUNE_COMPLETE="interrupt"
+		prune_complete="interrupt"
 		__operation_summary
 
 		exit 1
@@ -3102,9 +3139,6 @@ __prune_flacs () {
 		# function was aborted via SIGINT.  This function
 		# will receive SIGTERM from the kill in previous trap
 		trap '__kill_jobs ; exit 1' SIGTERM
-
-		# Increment number of FLACs processed
-		__increment_count
 
 		__print_prune_flac
 
@@ -3124,12 +3158,14 @@ __prune_flacs () {
 				   "FLAC:  ${i}" \
 				   "ERROR: The above file does not appear to be a FLAC file" \
 				   "------------------------------------------------------------------" \
-				   >> "${PRUNE_ERRORS}"
+				   >> "${prune_errors}"
 		else
 			# Remove all information but STREAMINFO,VORBIS_COMMENTs, and
 			# possibly METADATA_BLOCK_PICTURE
-			metaflac --remove --dont-use-padding --except-block-type="${DONT_PRUNE_FLAC_METADATA}" "${i}"
+			metaflac --remove --dont-use-padding --except-block-type="${dont_prune_flac_metadata}" "${i}"
+		fi
 
+		if [[ "${last_file}" == "true" ]] ; then
 			# File is a FLAC file, display ok
 			__print_ok_flac
 		fi
@@ -3140,66 +3176,62 @@ __prune_flacs () {
 	
 	# Don't remove artwork if user wants it kept.  We don't have to check
 	# for the legacy COVERART tag as we are NOT removing any VORBIS_COMMENTs.
-	if [[ "${REMOVE_ARTWORK}" == "true" ]] ; then
+	if [[ "${remove_artwork}" == "true" ]] ; then
 		# Remove artwork
-		DONT_PRUNE_FLAC_METADATA="STREAMINFO,VORBIS_COMMENT"
+		dont_prune_flac_metadata="STREAMINFO,VORBIS_COMMENT"
 	else
 		# Don't remove artwork
-		DONT_PRUNE_FLAC_METADATA="STREAMINFO,PICTURE,VORBIS_COMMENT"
+		dont_prune_flac_metadata="STREAMINFO,PICTURE,VORBIS_COMMENT"
 	fi
-
-	# Make sure the temporary file is cleared before proceeding
-	__clear_processed_tmp_file
 
 	# Make sure to clear file descriptor '3' before proceeding
 	__clear_tmp_fd
 
 	# Start as many processes as determined by ${jobs}
 	for i in "${total_flacs_array[@]:0:${jobs}}" ; do
+		((iteration++))
 		__prune_f &
 	done
 
-	# Add the number of processes started above to count
-	ITERATION="${jobs}"
-
 	# If the FLAC files to process are greater than the # of ${jobs}
 	# available, continue processing them, else quit
-	if [[ "${TOTAL_FLACS}" -gt "${jobs}" ]] ; then
+	if [[ "${#total_flacs_array[@]}" -gt "${jobs}" ]] ; then
 
 		# After each newline is read from FIFO, start a new process
 		while read ; do
+
 			# If current number of FLACs to process is less than total FLACs
 			# found, add another FLAC to process
-			if [[ "${ITERATION}" -lt "${TOTAL_FLACS_INDICES}" ]] ; then
-				# Set ${i} to current FLAC to process
-				i="${total_flacs_array[${ITERATION}]}"
-				((ITERATION++))
+			if [[ "${iteration}" -lt "$(( ${#total_flacs_array[@]} - 1 ))" ]] ; then
+				i="${total_flacs_array[${iteration}]}"
+				((iteration++))
 				__prune_f &
 
-			# If current number of FLACs to process is the last FLAC file, continue
-			# processing it and break out of loop (to prevent hanging FIFO)
-			elif [[ "${ITERATION}" -eq "${TOTAL_FLACS_INDICES}" ]] ; then
-				# Set ${i} to current FLAC to process
-				i="${total_flacs_array[${ITERATION}]}"
+			# Below is processed only if the current FLAC file
+			# is equal to the last ${total_flacs_array[@]} index
+			else
+				last_file="true"
+				i="${total_flacs_array[${iteration}]}"
+				((iteration++))
 				__prune_f &
+				# Break out of loop to prevent hanging FIFO
 				break
 			fi
 		done <&3
-
 	fi
 
 	# Wait for children processes
 	wait
 
-	if [[ -f "${PRUNE_ERRORS}" ]] ; then
+	if [[ -f "${prune_errors}" ]] ; then
 		__newline >&2
 		{ __error "There were issues with some of the FLAC files," ; __newline ;} >&2
 		{ __error "please check:" ; __newline ;} >&2
-		{ __error "\"${PRUNE_ERRORS}\" for details." ; __newline ;} >&2
+		{ __error "\"${prune_errors}\" for details." ; __newline ;} >&2
 	fi
 
 	# Prune FLACS completed successfully
-	PRUNE_COMPLETE="true"
+	prune_complete="true"
 }
 
 #######################
@@ -3207,11 +3239,11 @@ __prune_flacs () {
 #######################
 # Display a lot of help
 __long_help () {
-LONG_HELP="  Usage: ${0} [operations] [options] [target] ...
+long_help="  Usage: ${0} [operations] [options] [target] ...
   Operations:
     -c, --compress
            Compress the FLAC files with the user-specified level of compression
-           defined under USER CONFIGURATION (as the variable COMPRESSION_LEVEL)
+           defined under USER CONFIGURATION (as the variable compression_level)
            and verify the resultant files.
 
            The default is 8, with the range of values starting from 1 to 8 with
@@ -3222,7 +3254,7 @@ LONG_HELP="  Usage: ${0} [operations] [options] [target] ...
 
                        COMPRESSION=8
 
-           If any FLAC files already have the defined COMPRESSION_LEVEL tag (a
+           If any FLAC files already have the defined compression_level tag (a
            good indicator the files are already compressed at that level), the
            script will instead test the FLAC files for any errors.  This is useful
            to check your entire music library to make sure all the FLAC files are
@@ -3234,7 +3266,7 @@ LONG_HELP="  Usage: ${0} [operations] [options] [target] ...
 
     -C, --compress-notest
            Same as the '--compress' option, but if any FLAC files already have the
-           defined COMPRESSION_LEVEL tag, the script will skip the file and continue
+           defined compression_level tag, the script will skip the file and continue
            on to the next without test the FLAC file's integrity.  Useful for
            checking all your FLAC files are compressed at the level specified.
 
@@ -3280,7 +3312,7 @@ LONG_HELP="  Usage: ${0} [operations] [options] [target] ...
                03 - Some FLAC File.flac --> 03 - Some FLAC File.spectrogram.png
 
            The user can change the location of where to store the created
-           spectrogram images by changing the value of SPECTROGRAM_LOCATION under
+           spectrogram images by changing the value of spectrogram_location under
            the USER CONFIGURATION section of this script.  The location defined by
            the user will be tested to see if it exists before starting the script.
            If the location does NOT exist, the script will warn the user and exit.
@@ -3300,7 +3332,7 @@ LONG_HELP="  Usage: ${0} [operations] [options] [target] ...
 
     -p, --prune
            Delete every METADATA block in each FLAC file except the STREAMINFO and
-           VORBIS_COMMENT block.  If REMOVE_ARTWORK is set to 'false', then the
+           VORBIS_COMMENT block.  If remove_artwork is set to 'false', then the
            PICTURE block will NOT be removed.
 
     -g, --replaygain
@@ -3429,7 +3461,7 @@ LONG_HELP="  Usage: ${0} [operations] [options] [target] ...
 # End of long help
 
 # Print out help (will be piped to ${PAGER} elsewhere)
-printf "%s\n" "${LONG_HELP}"
+printf "%s\n" "${long_help}"
 }
 
 ########################
@@ -3471,7 +3503,7 @@ __usage () {
 ############################
 # Display script version
 __print_version () {
-	printf "%s\n" "Version ${VERSION}"
+	printf "%s\n" "Version ${version}"
 }
 
 #####################################
@@ -3518,113 +3550,107 @@ __find_cores () {
 #  DISPLAY COMPLETED OPERATIONS  #
 ##################################
 __operation_summary () {
-	# Grab the number of processed FLAC files
-	mapfile -n0 processed_flacs_array < "${PROCESSED_TMP_FILE}"
-
-	# Change the number of elements from above array to a variable
-	PROCESSED_FLACS_DIGITS="${#processed_flacs_array[@]}"
-
 	# Find the percentage of Processed Flacs / Total Flacs
-	PERCENTAGE_DIGITS="$(( ${PROCESSED_FLACS_DIGITS} * 100 / ${TOTAL_FLACS} ))"
+	percentage_digits="$(( ${iteration} * 100 / ${#total_flacs_array[@]} ))"
 
 	# Set up spacing for Processed Flacs
-	case "${#PROCESSED_FLACS_DIGITS}" in
+	case "${#iteration}" in
 		1)
-			PROCESSED_FLAC_SPACING="     "
+			processed_flac_spacing="     "
 		;;
 		2)
-			PROCESSED_FLAC_SPACING="    "
+			processed_flac_spacing="    "
 		;;
 		3)
-			PROCESSED_FLAC_SPACING="   "
+			processed_flac_spacing="   "
 		;;
 		4)
-			PROCESSED_FLAC_SPACING="  "
+			processed_flac_spacing="  "
 		;;
 		5)
-			PROCESSED_FLAC_SPACING=" "
+			processed_flac_spacing=" "
 		;;
 		6)
-			PROCESSED_FLAC_SPACING=""
+			processed_flac_spacing=""
 		;;
 	esac
 
 	# Set up spacing for Total Flacs
-	case "${#TOTAL_FLACS}" in
+	case "${total_flacs_length}" in
 		1)
-			TOTAL_FLAC_SPACING="     "
+			total_flac_spacing="     "
 		;;
 		2)
-			TOTAL_FLAC_SPACING="    "
+			total_flac_spacing="    "
 		;;
 		3)
-			TOTAL_FLAC_SPACING="   "
+			total_flac_spacing="   "
 		;;
 		4)
-			TOTAL_FLAC_SPACING="  "
+			total_flac_spacing="  "
 		;;
 		5)
-			TOTAL_FLAC_SPACING=" "
+			total_flac_spacing=" "
 		;;
 		6)
-			TOTAL_FLAC_SPACING=""
+			total_flac_spacing=""
 		;;
 	esac
 
 
 	# Set up spacing for Percentage
-	case "${#PERCENTAGE_DIGITS}" in
+	case "${#percentage_digits}" in
 		1)
-			PERCENTAGE_SPACING="   "
+			percentage_spacing="   "
 		;;
 		2)
-			PERCENTAGE_SPACING="  "
+			percentage_spacing="  "
 		;;
 		3)
-			PERCENTAGE_SPACING=" "
+			percentage_spacing=" "
 		;;
 	esac
 
 	# Build the operation line in the Summary Of Operations
 	__summary_line () {
 		# Set up spacing for Operation
-		case "${OPERATION}" in
+		case "${operation}" in
 			"auCDtect")
-				OPERATION_SPACING="    "
+				operation_spacing="    "
 			;;
 			"Compress")
-				OPERATION_SPACING="    "
+				operation_spacing="    "
 			;;
 			"Test Flacs")
-				OPERATION_SPACING="  "
+				operation_spacing="  "
 			;;
 			"MD5 Check")
-				OPERATION_SPACING="   "
+				operation_spacing="   "
 			;;
 			"ReplayGain")
-				OPERATION_SPACING="  "
+				operation_spacing="  "
 			;;
 			"Redo Tags")
-				OPERATION_SPACING="   "
+				operation_spacing="   "
 			;;
 			"Prune Flacs")
-				OPERATION_SPACING=" "
+				operation_spacing=" "
 			;;
 		esac
 
-		case "${OPERATION_SUMMARY}" in
+		case "${operation_summary}" in
 			"complete")
 				# Example of printed string below:
 				# '   │ MD5 Check   │  Completed  │   104 / 104   │ 100% │'
 
 				# Set up the printed string with colors
-				printf "%s${BOLD_BLUE}%s${NORMAL}%s${YELLOW}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}%s${BOLD_GREEN}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}%s${BOLD_GREEN}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}%s${BOLD_GREEN}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}%s${BOLD_GREEN}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}\n" \
+				printf "%s${blue}%s${normal}%s${yellow}%s${normal}%s${blue}%s${normal}%s${green}%s${normal}%s${blue}%s${normal}%s${green}%s${normal}%s${blue}%s${normal}%s${green}%s${normal}%s${blue}%s${normal}%s${green}%s${normal}%s${blue}%s${normal}\n" \
 				\
-				" " "│" " " "${OPERATION}" "${OPERATION_SPACING}" "│" \
+				" " "│" " " "${operation}" "${operation_spacing}" "│" \
 				"  " "Completed" "  " "│" \
-				"${TOTAL_FLAC_SPACING}" "${TOTAL_FLACS}" \
+				"${total_flac_spacing}" "${#total_flacs_array[@]}" \
 				" " "/" " " \
-				"${TOTAL_FLACS}" "${TOTAL_FLAC_SPACING}" \
+				"${#total_flacs_array[@]}" "${total_flac_spacing}" \
 				"│" " " "100%" " " "│"
 			;;
 
@@ -3633,13 +3659,13 @@ __operation_summary () {
 				# '   │ MD5 Check   │   Failed    │   104 / 104   │ 100% │'
 
 				# Set up the printed string with colors
-				printf "%s${BOLD_BLUE}%s${NORMAL}%s${YELLOW}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}%s${BOLD_RED}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}%s${BOLD_RED}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}%s${BOLD_GREEN}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}%s${BOLD_GREEN}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}\n" \
+				printf "%s${blue}%s${normal}%s${yellow}%s${normal}%s${blue}%s${normal}%s${red}%s${normal}%s${blue}%s${normal}%s${red}%s${normal}%s${blue}%s${normal}%s${green}%s${normal}%s${blue}%s${normal}%s${green}%s${normal}%s${blue}%s${normal}\n" \
 				\
-				" " "│" " " "${OPERATION}" "${OPERATION_SPACING}" "│" \
+				" " "│" " " "${operation}" "${operation_spacing}" "│" \
 				"   " "Failed" "    " "│" \
-				"${TOTAL_FLAC_SPACING}" "${TOTAL_FLACS}" \
+				"${total_flac_spacing}" "${#total_flacs_array[@]}" \
 				" " "/" " " \
-				"${TOTAL_FLACS}" "${TOTAL_FLAC_SPACING}" \
+				"${#total_flacs_array[@]}" "${total_flac_spacing}" \
 				"│" " " "100%" " " "│"
 			;;
 
@@ -3648,14 +3674,14 @@ __operation_summary () {
 				# '   │ MD5 Check   │ Interrupted │    24 / 104   │  23% │'
 
 				# Set up the printed string with colors
-				printf "%s${BOLD_BLUE}%s${NORMAL}%s${YELLOW}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}%s${CYAN}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}%s${YELLOW}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}%s${BOLD_GREEN}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}%s${YELLOW}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}\n" \
+				printf "%s${blue}%s${normal}%s${yellow}%s${normal}%s${blue}%s${normal}%s${cyan}%s${normal}%s${blue}%s${normal}%s${yellow}%s${normal}%s${blue}%s${normal}%s${green}%s${normal}%s${blue}%s${normal}%s${yellow}%s${normal}%s${blue}%s${normal}\n" \
 				\
-				" " "│" " " "${OPERATION}" "${OPERATION_SPACING}" "│" \
+				" " "│" " " "${operation}" "${operation_spacing}" "│" \
 				" " "Interrupted" " " "│" \
-				"${PROCESSED_FLAC_SPACING}" "${PROCESSED_FLACS_DIGITS}" \
+				"${processed_flac_spacing}" "${iteration}" \
 				" " "/" " " \
-				"${TOTAL_FLACS}" "${TOTAL_FLAC_SPACING}" \
-				"│" "${PERCENTAGE_SPACING}" "${PERCENTAGE_DIGITS}%" " " "│"
+				"${#total_flacs_array[@]}" "${total_flac_spacing}" \
+				"│" "${percentage_spacing}" "${percentage_digits}%" " " "│"
 			;;
 
 			"did not run")
@@ -3663,13 +3689,13 @@ __operation_summary () {
 				# '   │ MD5 Check   │ Did Not Run │     0 / 104   │   0% │'
 
 				# Set up the printed string with colors
-				printf "%s${BOLD_BLUE}%s${NORMAL}%s${YELLOW}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}%s${MAGENTA}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}%s${BOLD_RED}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}%s${BOLD_GREEN}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}%s${BOLD_RED}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}\n" \
+				printf "%s${blue}%s${normal}%s${yellow}%s${normal}%s${blue}%s${normal}%s${magenta}%s${normal}%s${blue}%s${normal}%s${red}%s${normal}%s${blue}%s${normal}%s${green}%s${normal}%s${blue}%s${normal}%s${red}%s${normal}%s${blue}%s${normal}\n" \
 				\
-				" " "│" " " "${OPERATION}" "${OPERATION_SPACING}" "│" \
+				" " "│" " " "${operation}" "${operation_spacing}" "│" \
 				" " "Did Not Run" " " "│" \
 				"     " "0" \
 				" " "/" " " \
-				"${TOTAL_FLACS}" "${TOTAL_FLAC_SPACING}" \
+				"${#total_flacs_array[@]}" "${total_flac_spacing}" \
 				"│" "   " "0%" " " "│"
 			;;
 
@@ -3680,187 +3706,185 @@ __operation_summary () {
 	}
 
 	# Begin printing the table
-	printf "\n%s${BOLD_BLUE}%s${NORMAL}\n" \
+	printf "\n%s${blue}%s${normal}\n" \
 	" " "┌───────────────────────────┬──────────────────────┐"
-	printf "%s${BOLD_BLUE}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}\n" \
+	printf "%s${blue}%s${normal}%s${blue}%s${normal}%s${blue}%s${normal}\n" \
 	" " "│" "   Summary Of Operations   " "│" " # Of Processed Flacs " "│"
-	printf "%s${BOLD_BLUE}%s${NORMAL}\n" \
+	printf "%s${blue}%s${normal}\n" \
 	" " "├─────────────┬─────────────┼───────────────┬──────┤"
 
 	# auCDtect operations
-	if [[ "${AUCDTECT}" == "true" && "${AUCDTECT_COMPLETE}" == "true" ]] ; then
-		OPERATION="auCDtect"
-		OPERATION_SUMMARY="complete"
+	if [[ "${aucdtect_flac}" == "true" && "${aucdtect_complete}" == "true" ]] ; then
+		operation="auCDtect"
+		operation_summary="complete"
 		__summary_line
-	elif [[ "${AUCDTECT}" == "true" && "${AUCDTECT_COMPLETE}" == "false" ]] ; then
-		OPERATION="auCDtect"
-		OPERATION_SUMMARY="failed"
+	elif [[ "${aucdtect_flac}" == "true" && "${aucdtect_complete}" == "false" ]] ; then
+		operation="auCDtect"
+		operation_summary="failed"
 		__summary_line
-	elif [[ "${AUCDTECT}" == "true" && "${AUCDTECT_COMPLETE}" == "interrupt" ]] ; then
-		OPERATION="auCDtect"
-		OPERATION_SUMMARY="interrupted"
+	elif [[ "${aucdtect_flac}" == "true" && "${aucdtect_complete}" == "interrupt" ]] ; then
+		operation="auCDtect"
+		operation_summary="interrupted"
 		__summary_line
-	elif [[ "${AUCDTECT}" == "true" ]] ; then
-		OPERATION="auCDtect"
-		OPERATION_SUMMARY="did not run"
+	elif [[ "${aucdtect_flac}" == "true" ]] ; then
+		operation="auCDtect"
+		operation_summary="did not run"
 		__summary_line
 	fi
 
 	# Compress Flacs operations
-	if [[ "${COMPRESS}" == "true" && "${COMPRESS_COMPLETE}" == "true" ]] ; then
-		OPERATION="Compress"
-		OPERATION_SUMMARY="complete"
+	if [[ "${compress_flac}" == "true" && "${compress_complete}" == "true" ]] ; then
+		operation="Compress"
+		operation_summary="complete"
 		__summary_line
-	elif [[ "${COMPRESS}" == "true" && "${COMPRESS_COMPLETE}" == "false" ]] ; then
-		OPERATION="Compress"
-		OPERATION_SUMMARY="failed"
+	elif [[ "${compress_flac}" == "true" && "${compress_complete}" == "false" ]] ; then
+		operation="Compress"
+		operation_summary="failed"
 		__summary_line
-	elif [[ "${COMPRESS}" == "true" && "${COMPRESS_COMPLETE}" == "interrupt" ]] ; then
-		OPERATION="Compress"
-		OPERATION_SUMMARY="interrupted"
+	elif [[ "${compress_flac}" == "true" && "${compress_complete}" == "interrupt" ]] ; then
+		operation="Compress"
+		operation_summary="interrupted"
 		__summary_line
-	elif [[ "${COMPRESS}" == "true" ]] ; then
-		OPERATION="Compress"
-		OPERATION_SUMMARY="did not run"
+	elif [[ "${compress_flac}" == "true" ]] ; then
+		operation="Compress"
+		operation_summary="did not run"
 		__summary_line
 	fi
 
 	# Test Flacs operations
-	if [[ "${TEST}" == "true" && "${TEST_COMPLETE}" == "true" ]] ; then
-		OPERATION="Test Flacs"
-		OPERATION_SUMMARY="complete"
+	if [[ "${test_flac}" == "true" && "${test_complete}" == "true" ]] ; then
+		operation="Test Flacs"
+		operation_summary="complete"
 		__summary_line
-	elif [[ "${TEST}" == "true" && "${TEST_COMPLETE}" == "false" ]] ; then
-		OPERATION="Test Flacs"
-		OPERATION_SUMMARY="failed"
+	elif [[ "${test_flac}" == "true" && "${test_complete}" == "false" ]] ; then
+		operation="Test Flacs"
+		operation_summary="failed"
 		__summary_line
-	elif [[ "${TEST}" == "true" && "${TEST_COMPLETE}" == "interrupt" ]] ; then
-		OPERATION="Test Flacs"
-		OPERATION_SUMMARY="interrupted"
+	elif [[ "${test_flac}" == "true" && "${test_complete}" == "interrupt" ]] ; then
+		operation="Test Flacs"
+		operation_summary="interrupted"
 		__summary_line
-	elif [[ "${TEST}" == "true" ]] ; then
-		OPERATION="Test Flacs"
-		OPERATION_SUMMARY="did not run"
+	elif [[ "${test_flac}" == "true" ]] ; then
+		operation="Test Flacs"
+		operation_summary="did not run"
 		__summary_line
 	fi
 
 	# MD5 Check operations
-	if [[ "${MD5CHECK}" == "true" && "${MD5CHECK_COMPLETE}" == "true" ]] ; then
-		OPERATION="MD5 Check"
-		OPERATION_SUMMARY="complete"
+	if [[ "${md5check_flac}" == "true" && "${md5check_complete}" == "true" ]] ; then
+		operation="MD5 Check"
+		operation_summary="complete"
 		__summary_line
-	elif [[ "${MD5CHECK}" == "true" && "${MD5CHECK_COMPLETE}" == "false" ]] ; then
-		OPERATION="MD5 Check"
-		OPERATION_SUMMARY="failed"
+	elif [[ "${md5check_flac}" == "true" && "${md5check_complete}" == "false" ]] ; then
+		operation="MD5 Check"
+		operation_summary="failed"
 		__summary_line
-	elif [[ "${MD5CHECK}" == "true" && "${MD5CHECK_COMPLETE}" == "interrupt" ]] ; then
-		OPERATION="MD5 Check"
-		OPERATION_SUMMARY="interrupted"
+	elif [[ "${md5check_flac}" == "true" && "${md5check_complete}" == "interrupt" ]] ; then
+		operation="MD5 Check"
+		operation_summary="interrupted"
 		__summary_line
-	elif [[ "${MD5CHECK}" == "true" ]] ; then
-		OPERATION="MD5 Check"
-		OPERATION_SUMMARY="did not run"
+	elif [[ "${md5check_flac}" == "true" ]] ; then
+		operation="MD5 Check"
+		operation_summary="did not run"
 		__summary_line
 	fi
 
 	# ReplayGain operations
-	if [[ "${REPLAYGAIN}" == "true" && "${REPLAYGAIN_COMPLETE}" == "true" ]] ; then
-		OPERATION="ReplayGain"
-		OPERATION_SUMMARY="complete"
+	if [[ "${replaygain_flac}" == "true" && "${replaygain_complete}" == "true" ]] ; then
+		operation="ReplayGain"
+		operation_summary="complete"
 		__summary_line
-	elif [[ "${REPLAYGAIN}" == "true" && "${REPLAYGAIN_COMPLETE}" == "false" ]] ; then
-		OPERATION="ReplayGain"
-		OPERATION_SUMMARY="failed"
+	elif [[ "${replaygain_flac}" == "true" && "${replaygain_complete}" == "false" ]] ; then
+		operation="ReplayGain"
+		operation_summary="failed"
 		__summary_line
-	elif [[ "${REPLAYGAIN}" == "true" && "${REPLAYGAIN_COMPLETE}" == "interrupt" ]] ; then
-		OPERATION="ReplayGain"
-		OPERATION_SUMMARY="interrupted"
+	elif [[ "${replaygain_flac}" == "true" && "${replaygain_complete}" == "interrupt" ]] ; then
+		operation="ReplayGain"
+		operation_summary="interrupted"
 		__summary_line
-	elif [[ "${REPLAYGAIN}" == "true" ]] ; then
-		OPERATION="ReplayGain"
-		OPERATION_SUMMARY="did not run"
+	elif [[ "${replaygain_flac}" == "true" ]] ; then
+		operation="ReplayGain"
+		operation_summary="did not run"
 		__summary_line
 	fi
 
 	# Redo Tags operations
-	if [[ "${REDO}" == "true" && "${REDO_COMPLETE}" == "true" ]] ; then
-		OPERATION="Redo Tags"
-		OPERATION_SUMMARY="complete"
+	if [[ "${redo_flac}" == "true" && "${redo_complete}" == "true" ]] ; then
+		operation="Redo Tags"
+		operation_summary="complete"
 		__summary_line
-	elif [[ "${REDO}" == "true" && "${REDO_COMPLETE}" == "false" ]] ; then
-		OPERATION="Redo Tags"
-		OPERATION_SUMMARY="failed"
+	elif [[ "${redo_flac}" == "true" && "${redo_complete}" == "false" ]] ; then
+		operation="Redo Tags"
+		operation_summary="failed"
 		__summary_line
-	elif [[ "${REDO}" == "true" && "${REDO_COMPLETE}" == "interrupt" ]] ; then
-		OPERATION="Redo Tags"
-		OPERATION_SUMMARY="interrupted"
+	elif [[ "${redo_flac}" == "true" && "${redo_complete}" == "interrupt" ]] ; then
+		operation="Redo Tags"
+		operation_summary="interrupted"
 		__summary_line
-	elif [[ "${REDO}" == "true" ]] ; then
-		OPERATION="Redo Tags"
-		OPERATION_SUMMARY="did not run"
+	elif [[ "${redo_flac}" == "true" ]] ; then
+		operation="Redo Tags"
+		operation_summary="did not run"
 		__summary_line
 	fi
 
 	# Prune Flacs operations
-	if [[ "${PRUNE}" == "true" && "${PRUNE_COMPLETE}" == "true" ]] ; then
-		OPERATION="Prune Flacs"
-		OPERATION_SUMMARY="complete"
+	if [[ "${prune_flac}" == "true" && "${prune_complete}" == "true" ]] ; then
+		operation="Prune Flacs"
+		operation_summary="complete"
 		__summary_line
-	elif [[ "${PRUNE}" == "true" && "${PRUNE_COMPLETE}" == "false" ]] ; then
-		OPERATION="Prune Flacs"
-		OPERATION_SUMMARY="failed"
+	elif [[ "${prune_flac}" == "true" && "${prune_complete}" == "false" ]] ; then
+		operation="Prune Flacs"
+		operation_summary="failed"
 		__summary_line
-	elif [[ "${PRUNE}" == "true" && "${PRUNE_COMPLETE}" == "interrupt" ]] ; then
-		OPERATION="Prune Flacs"
-		OPERATION_SUMMARY="interrupted"
+	elif [[ "${prune_flac}" == "true" && "${prune_complete}" == "interrupt" ]] ; then
+		operation="Prune Flacs"
+		operation_summary="interrupted"
 		__summary_line
-	elif [[ "${PRUNE}" == "true" ]] ; then
-		OPERATION="Prune Flacs"
-		OPERATION_SUMMARY="did not run"
+	elif [[ "${prune_flac}" == "true" ]] ; then
+		operation="Prune Flacs"
+		operation_summary="did not run"
 		__summary_line
 	fi
 
 	# Below creates the legend
-	printf "%s${BOLD_BLUE}%s${NORMAL}\n" \
+	printf "%s${blue}%s${normal}\n" \
 	" " "├─────────────┴─────────────┴───────────────┴──────┤"
-	printf "%s${BOLD_BLUE}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}\n" \
+	printf "%s${blue}%s${normal}%s${blue}%s${normal}\n" \
 	" " "│" "                      Legend                      " "│"
-	printf "%s${BOLD_BLUE}%s${NORMAL}\n" \
+	printf "%s${blue}%s${normal}\n" \
 	" " "├──────────────────────────────────────────────────┤"
-	printf "%s${BOLD_BLUE}%s${NORMAL}%s${BOLD_GREEN}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}%s\n" \
+	printf "%s${blue}%s${normal}%s${green}%s${normal}%s${blue}%s${normal}%s${blue}%s${normal}%s\n" \
 	" " "│" "   " "Completed" " " ":" " Entire operation completed without " "│"
-	printf "%s${BOLD_BLUE}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}\n" \
+	printf "%s${blue}%s${normal}%s${blue}%s${normal}\n" \
 	" " "│" "               any issues.                        " "│"
-	printf "%s${BOLD_BLUE}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}\n" \
+	printf "%s${blue}%s${normal}%s${blue}%s${normal}\n" \
 	" " "│" "                                                  " "│"
-	printf "%s${BOLD_BLUE}%s${NORMAL}%s${BOLD_RED}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}%s\n" \
+	printf "%s${blue}%s${normal}%s${red}%s${normal}%s${blue}%s${normal}%s${blue}%s${normal}%s\n" \
 	" " "│" "      " "Failed" " " ":" " Entire operation completed, but    " "│"
-	printf "%s${BOLD_BLUE}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}\n" \
+	printf "%s${blue}%s${normal}%s${blue}%s${normal}\n" \
 	" " "│" "               some files have issues.            " "│"
-	printf "%s${BOLD_BLUE}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}\n" \
+	printf "%s${blue}%s${normal}%s${blue}%s${normal}\n" \
 	" " "│" "                                                  " "│"
-	printf "%s${BOLD_BLUE}%s${NORMAL}%s${CYAN}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}%s\n" \
+	printf "%s${blue}%s${normal}%s${cyan}%s${normal}%s${blue}%s${normal}%s${blue}%s${normal}%s\n" \
 	" " "│" " " "Interrupted" " " ":" " Operation halted by user via the   " "│"
-	printf "%s${BOLD_BLUE}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}\n" \
+	printf "%s${blue}%s${normal}%s${blue}%s${normal}\n" \
 	" " "│" "               SIGINT signal (Control-C).         " "│"
-	printf "%s${BOLD_BLUE}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}\n" \
+	printf "%s${blue}%s${normal}%s${blue}%s${normal}\n" \
 	" " "│" "                                                  " "│"
-	printf "%s${BOLD_BLUE}%s${NORMAL}%s${MAGENTA}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}%s\n" \
+	printf "%s${blue}%s${normal}%s${magenta}%s${normal}%s${blue}%s${normal}%s${blue}%s${normal}%s\n" \
 	" " "│" " " "Did Not Run" " " ":" " Operation did not run due to       " "│"
-	printf "%s${BOLD_BLUE}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}\n" \
+	printf "%s${blue}%s${normal}%s${blue}%s${normal}\n" \
 	" " "│" "               interruption from user or failure  " "│"
-	printf "%s${BOLD_BLUE}%s${NORMAL}%s${BOLD_BLUE}%s${NORMAL}\n" \
+	printf "%s${blue}%s${normal}%s${blue}%s${normal}\n" \
 	" " "│" "               of the previous operation.         " "│"
-	printf "%s${BOLD_BLUE}%s${NORMAL}\n" \
+	printf "%s${blue}%s${normal}\n" \
 	" " "└──────────────────────────────────────────────────┘"
 
 	## CLEANUP SECTION ##
-	# Remove temporary file
-	rm -f "${PROCESSED_TMP_FILE}"
 
 	# Restore old stty settings, make stty happy
 	# by redirecting /dev/stderr
-	stty ${OLD_STTY} < /dev/stderr
+	stty ${old_stty} < /dev/stderr
 
 	# Restore the cursor
 	printf "\033[?25h"
@@ -3871,8 +3895,8 @@ __operation_summary () {
 #  PRE-SCRIPT CHECKS  #
 #######################
 # Make sure we are running BASH 4 or greater
-BASH_VERSION_CHECK="${BASH_VERSION%%.*}"
-if [[ "${BASH_VERSION_CHECK}" < 4 ]] ; then
+bash_version_check="${BASH_VERSION%%.*}"
+if [[ "${bash_version_check}" < 4 ]] ; then
 	{ __error "You must be running BASH version 4 or greater to use" ; __newline ;} >&2
 	{ __error "this program!" ; __newline ;} >&2
 	exit 1
@@ -4026,8 +4050,8 @@ fi
 # them, adding the valid arguments to the "converted_arguments"
 # array and adding invalid arguments to it's own array
 if [[ -n "${short_style_arguments_array[@]}" ]] ; then
-	while getopts ":LlcCtgGaAmprnj:hv" ARGUMENTS "${short_style_arguments_array[@]}" ; do
-		case "${ARGUMENTS}" in
+	while getopts ":LlcCtgGaAmprnj:hv" arguments "${short_style_arguments_array[@]}" ; do
+		case "${arguments}" in
 			l)
 				converted_arguments_array+=( -l )
 			;;
@@ -4126,51 +4150,51 @@ fi
 for i in "${converted_arguments_array[@]}" ; do
 	case "${i}" in
 		-l)
-			ALL="true"
+			all="true"
 		;;
 		-L)
-			REALLYALL="true"
+			reallyall="true"
 		;;
 		-c)
-			COMPRESS="true"
-			COMPRESS_TEST="true"
+			compress_flac="true"
+			compress_test="true"
 		;;
 		-C)
-			COMPRESS="true"
-			SKIP_TEST="true"
+			compress_flac="true"
+			skip_test="true"
 		;;
 		-t)
-			TEST="true"
+			test_flac="true"
 		;;
 		-g)
-			REPLAYGAIN="true"
+			replaygain_flac="true"
 			# Below used only once to test for
 			# command compatibility
-			REPLAYGAIN_FORCE="true"
+			replaygain_force="true"
 		;;
 		-G)
-			REPLAYGAIN="true"
-			REPLAYGAIN_NOFORCE="true"
+			replaygain_flac="true"
+			replaygain_noforce="true"
 		;;
 		-a)
-			AUCDTECT="true"
-			NO_SPECTROGRAM="true"
+			aucdtect_flac="true"
+			no_spectrogram="true"
 		;;
 		-A)
-			AUCDTECT="true"
-			CREATE_SPECTROGRAM="true"
+			aucdtect_flac="true"
+			create_spectrogram="true"
 		;;
 		-m)
-			MD5CHECK="true"
+			md5check_flac="true"
 		;;
 		-p)
-			PRUNE="true"
+			prune_flac="true"
 		;;
 		-r)
-			REDO="true"
+			redo_flac="true"
 		;;
 		-n)
-			NO_COLOR="true"
+			no_color="true"
 		;;
 		-j)
 			# Do nothing, ${jobs} has already been stored
@@ -4207,8 +4231,8 @@ called_arguments_array=( "${@}" )
 #
 # BASH 4.2 allows negative indices (ie):
 #
-# DIRECTORY="${called_arguments_array[-1]%/}"
-DIRECTORY="${called_arguments_array[$(( ${#called_arguments_array[@]} - 1 ))]%/}"
+# directory="${called_arguments_array[-1]%/}"
+directory="${called_arguments_array[$(( ${#called_arguments_array[@]} - 1 ))]%/}"
 
 	###############################
 	#  END POSITIONAL PARAMETERS  #
@@ -4216,18 +4240,18 @@ DIRECTORY="${called_arguments_array[$(( ${#called_arguments_array[@]} - 1 ))]%/}
 
 # This must come before the other options in
 # order for it to take effect
-if [[ "${NO_COLOR}" == "true" ]] ; then
-	BOLD_BLUE=""
-	BOLD_GREEN=""
-	BOLD_RED=""
-	CYAN=""
-	MAGENTA=""
-	YELLOW=""
-	NORMAL=""
+if [[ "${no_color}" == "true" ]] ; then
+	blue=""
+	green=""
+	red=""
+	cyan=""
+	magenta=""
+	yellow=""
+	normal=""
 fi
 
-# Check whether DIRECTORY exists
-if [[ ! -d "${DIRECTORY}" ]] ; then
+# Check whether directory exists
+if [[ ! -d "${directory}" ]] ; then
 	{ printf "%s\n" "  Usage: ${0} [OPTION] [PATH_TO_FLAC(s)]..." ;} >&2
 	{ __error "Please specify a directory!" ; __newline ;} >&2
 
@@ -4237,36 +4261,36 @@ fi
 # Check to make sure script has all the dependencies
 # necessary to complete script succesfully
 # Check if each command can be found in $PATH
-SLEEP_EXISTS="$(command -v sleep)"
-STTY_EXISTS="$(command -v stty)"
-STAT_EXISTS="$(command -v stat)"
-MKFIFO_EXISTS="$(command -v mkfifo)"
-METAFLAC_EXISTS="$(command -v metaflac)"
-FLAC_EXISTS="$(command -v flac)"
+sleep_exists="$(command -v sleep)"
+stty_exists="$(command -v stty)"
+stat_exists="$(command -v stat)"
+mkfifo_exists="$(command -v mkfifo)"
+metaflac_exists="$(command -v metaflac)"
+flac_exists="$(command -v flac)"
 
 # Go through and test if each command was found (by displaying its $PATH).  If
 # it's empty, add where you can find the package to an array to be displayed.
-if [[ -z "${SLEEP_EXISTS}" ]] ; then
+if [[ -z "${sleep_exists}" ]] ; then
 	command_exists_array+=( "You can generally install \"sleep\" with the \"coreutils\" package." )
 fi
 
-if [[ -z "${STTY_EXISTS}" ]] ; then
+if [[ -z "${stty_exists}" ]] ; then
 	command_exists_array+=( "You can generally install \"stty\" with the \"coreutils\" package." )
 fi
 
-if [[ -z "${STAT_EXISTS}" ]] ; then
+if [[ -z "${stat_exists}" ]] ; then
 	command_exists_array+=( "You can generally install \"stat\" with the \"coreutils\" package." )
 fi
 
-if [[ -z "${MKFIFO_EXISTS}" ]] ; then
+if [[ -z "${mkfifo_exists}" ]] ; then
 	command_exists_array+=( "You can generally install \"mkfifo\" with the \"coreutils\" package." )
 fi
 
-if [[ -z "${METAFLAC_EXISTS}" ]] ; then
+if [[ -z "${metaflac_exists}" ]] ; then
 	command_exists_array+=( "You can generally install \"metaflac\" with the \"flac\" package." )
 fi
 
-if [[ -z "${FLAC_EXISTS}" ]] ; then
+if [[ -z "${flac_exists}" ]] ; then
 	command_exists_array+=( "You can generally install \"flac\" with the \"flac\" package." )
 fi
 
@@ -4290,7 +4314,7 @@ if [[ -n "${command_exists_array[@]}" ]] ; then
 fi
 
 # If "-l, --all" and "-L, --reallyall" are both called, warn and exit
-if [[ "${ALL}" == "true" && "${REALLYALL}" == "true" ]] ; then
+if [[ "${all}" == "true" && "${reallyall}" == "true" ]] ; then
 	{ __error "Running both \"-l, --all\" and \"-L, --reallyall\" conflict!" ; __newline ;} >&2
 	{ __error "Please choose one or the other." ; __newline ;} >&2
 
@@ -4300,50 +4324,50 @@ fi
 # If "-l, --all" or "-L, --reallyall" was called, check if arguments
 # were called that already will be performed by the above argument(s).
 # If any were called, display a warning and exit the script
-if [[ "${ALL}" == "true" || "${REALLYALL}" == "true" ]] ; then
+if [[ "${all}" == "true" || "${reallyall}" == "true" ]] ; then
 
 	# Check for "-c, --compress".  If used add it to array
-	if [[ "${COMPRESS}" == "true" && "${SKIP_TEST}" == "false" ]] ; then
+	if [[ "${compress_flac}" == "true" && "${skip_test}" == "false" ]] ; then
 		argument_conflict_array+=( "-c, --compress" )
 	# Check for "-C, --compress-notest".  If used add it to array
-	elif [[ "${COMPRESS}" == "true" && "${SKIP_TEST}" == "true" ]] ; then
+	elif [[ "${compress_flac}" == "true" && "${skip_test}" == "true" ]] ; then
 		argument_conflict_array+=( "-C, --compress-notest" )
 	fi
 
 	# Check for "-t, --test".  If used add it to array
-	if [[ "${TEST}" == "true" ]] ; then
+	if [[ "${test_flac}" == "true" ]] ; then
 		argument_conflict_array+=( "-t, --test" )
 	fi
 
 	# Check for "-m, --md5check".  If used add it to array
-	if [[ "${MD5CHECK}" == "true" ]] ; then
+	if [[ "${md5check_flac}" == "true" ]] ; then
 		argument_conflict_array+=( "-m, --md5check" )
 	fi
 
 	# Check for "-p, --prune".  If used add it to array
-	if [[ "${PRUNE}" == "true" ]] ; then
+	if [[ "${prune_flac}" == "true" ]] ; then
 		argument_conflict_array+=( "-p, --prune" )
 	fi
 
 	# Check for "-g, --replaygain".  If used add it to array
-	if [[ "${REPLAYGAIN}" == "true" && "${REPLAYGAIN_NOFORCE}" != "true" ]] ; then
+	if [[ "${replaygain_flac}" == "true" && "${replaygain_noforce}" != "true" ]] ; then
 		argument_conflict_array+=( "-g, --replaygain" )
 	# Check for "-G, --replaygain-noforce".  If used add it to array
-	elif [[ "${REPLAYGAIN}" == "true" && "${REPLAYGAIN_NOFORCE}" == "true" ]] ; then
+	elif [[ "${replaygain_flac}" == "true" && "${replaygain_noforce}" == "true" ]] ; then
 		argument_conflict_array+=( "-G, --replaygain-noforce" )
 	fi
 
 	# Check for "-r, --redo".  If used add it to array
-	if [[ "${REDO}" == "true" ]] ; then
+	if [[ "${redo_flac}" == "true" ]] ; then
 		argument_conflict_array+=( "-r, --redo" )
 	fi
 
 	# If "-L, --reallyall" was called, check for the various forms of calling
 	# auCDtect.  If it was called, add it to array
-	if [[ "${REALLYALL}" == "true" ]] ; then
-		if [[ "${AUCDTECT}" == "true" && "${CREATE_SPECTROGRAM}" == "true" ]] ; then
+	if [[ "${reallyall}" == "true" ]] ; then
+		if [[ "${aucdtect_flac}" == "true" && "${create_spectrogram}" == "true" ]] ; then
 			argument_conflict_array+=( "-A, --aucdtect-spectrogram" )
-		elif [[ "${AUCDTECT}" == "true" && "${CREATE_SPECTROGRAM}" != "true" ]] ; then
+		elif [[ "${aucdtect_flac}" == "true" && "${create_spectrogram}" != "true" ]] ; then
 			argument_conflict_array+=( "-a, --aucdtect" )
 		fi
 	fi
@@ -4353,10 +4377,10 @@ if [[ "${ALL}" == "true" || "${REALLYALL}" == "true" ]] ; then
 	# are incompatible and exit script
 	if [[ -n "${argument_conflict_array[@]}" ]] ; then
 		# "-l, --all"
-		if [[ "${ALL}" == "true" ]] ; then
+		if [[ "${all}" == "true" ]] ; then
 			{ __error "The below options conflict with \"-l, --all\"" ; __newline ;} >&2
 		# "-L, --reallyall"
-		elif [[ "${REALLYALL}" == "true" ]] ; then
+		elif [[ "${reallyall}" == "true" ]] ; then
 			{ __error "The below options conflict with \"-L, --reallyall\"" ; __newline ;} >&2
 		fi
 
@@ -4372,28 +4396,28 @@ if [[ "${ALL}" == "true" || "${REALLYALL}" == "true" ]] ; then
 fi
 
 # If "-C, --compress-notest" and "-c, --compress" are both called, warn and exit
-if [[ "${SKIP_TEST}" == "true" && "${COMPRESS_TEST}" == "true" ]] ; then
+if [[ "${skip_test}" == "true" && "${compress_test}" == "true" ]] ; then
 	{ __error "Running both \"-c, --compress\" and \"-C, --compress-notest\" conflict!" ; __newline ;} >&2
 	{ __error "Please choose one or the other." ; __newline ;} >&2
 	exit 1
 fi
 
 # If "-c, --compress" and "-t, --test" are both called, warn and exit
-if [[ "${COMPRESS_TEST}" == "true" && "${TEST}" == "true" ]] ; then
+if [[ "${compress_test}" == "true" && "${test_flac}" == "true" ]] ; then
 	{ __error "Running both \"-c, --compress\" and \"-t, --test\" conflict!" ; __newline ;} >&2
 	{ __error "Please choose one or the other." ; __newline ;} >&2
 	exit 1
 fi
 
 # If "-g, --replaygain" and "-G, --replaygain-noforce" are both called, warn and exit
-if [[ "${REPLAYGAIN_FORCE}" == "true" && "${REPLAYGAIN_NOFORCE}" == "true" ]] ; then
+if [[ "${replaygain_force}" == "true" && "${replaygain_noforce}" == "true" ]] ; then
 	{ __error "Running both \"-g, --replaygain\" and \"-G, --replaygain-noforce\" conflict!" ; __newline ;} >&2
 	{ __error "Please choose one or the other." ; __newline ;} >&2
 	exit 1
 fi
 
 # If "-a, --aucdtect" and "-A, --aucdtect-spectrogram" are both called, warn and exit
-if [[ "${NO_SPECTROGRAM}" == "true"  && "${CREATE_SPECTROGRAM}" == "true" ]] ; then
+if [[ "${no_spectrogram}" == "true"  && "${create_spectrogram}" == "true" ]] ; then
 	{ __error "Running both \"-a, --aucdtect\" and \"-A, --aucdtect-spectrogram\" conflict!" ; __newline ;} >&2
 	{ __error "Please choose one or the other." ; __newline ;} >&2
 	exit 1
@@ -4403,28 +4427,28 @@ fi
 # enable the various arguments to allow script to
 # run them
 if [[ "${ALL}" == "true" ]] ; then
-	COMPRESS="true"
-	MD5CHECK="true"
-	PRUNE="true"
-	REPLAYGAIN="true"
-	REDO="true"
+	compress_flac="true"
+	md5check_flac="true"
+	prune_flac="true"
+	replaygain_flac="true"
+	redo_flac="true"
 elif [[ "${REALLYALL}" == "true" ]] ; then
-	COMPRESS="true"
-	MD5CHECK="true"
-	PRUNE="true"
-	REPLAYGAIN="true"
-	REDO="true"
-	AUCDTECT="true"
+	compress_flac="true"
+	md5check_flac="true"
+	prune_flac="true"
+	replaygain_flac="true"
+	redo_flac="true"
+	aucdtect_flac="true"
 	# This is needed to let script know that we want auCDtect
 	# to create a spectrogram (ie "-A, --aucdtect-spectrogram")
-	CREATE_SPECTROGRAM="true"
+	create_spectrogram="true"
 fi
 
 # Check for at least 1 FLAC file
-read -r FIND_FLACS < <( printf "%s\n" "${DIRECTORY}"/**/*${FLAC_EXTENSION} )
+read -r find_flacs < <( printf "%s\n" "${directory}"/**/*${flac_extension} )
 
 # No FLAC files found
-if [[ ! -f "${FIND_FLACS}" ]] ; then
+if [[ ! -f "${find_flacs}" ]] ; then
 	__no_flacs
 	exit 1
 fi
@@ -4445,7 +4469,7 @@ fi
 #  BEGIN SCRIPT  #
 ##################
 # Store current stty settings
-OLD_STTY="$(stty -g)"
+old_stty="$(stty -g)"
 
 # Prevent Control-C from displaying '^C'.  May already be set
 stty -ctlecho 2> /dev/null
@@ -4454,10 +4478,7 @@ stty -ctlecho 2> /dev/null
 printf "\033[?25l"
 
 # Temporary FIFO location
-TMP_FIFO="/tmp/redoflacs_fifo_$$"
-
-# Temporary processed files location
-PROCESSED_TMP_FILE="/tmp/redoflacs_tmpfile_$$"
+tmp_fifo="/tmp/redoflacs_fifo_$$"
 
 # Force all the tag fields to be uppercase
 tags=( "${tags[@]^^}" )
@@ -4468,7 +4489,7 @@ tags=( "${tags[@]^^}" )
 old_tags=( "${tags[@]}" )
 
 # Display the top banner
-if [[ "${REDO}" != "true" ]] ; then
+if [[ "${redo_flac}" != "true" ]] ; then
 	# Display top banner (in background to allow
 	# the script to continue processing
 	__top_banner
@@ -4480,34 +4501,29 @@ else
 fi
 
 # Grab the total flacs to process
-total_flacs_array=( "${DIRECTORY}"/**/*${FLAC_EXTENSION} )
+total_flacs_array=( "${directory}"/**/*${flac_extension} )
 
-# Grab the total number of FLACs found
-TOTAL_FLACS="${#total_flacs_array[@]}"
-
-# Grab the total number of indices of above array
-TOTAL_FLACS_INDICES="$(( ${#total_flacs_array[@]} - 1 ))"
-
-# Initialize / Clear the temporary file
-> "${PROCESSED_TMP_FILE}"
+# String length of total number of flacs
+total_flacs_length="${#total_flacs_array[@]}"
+total_flacs_length="${#total_flacs_length}"
 
 # The below order is probably the best bet in ensuring time
 # isn't wasted on doing unnecessary operations if the
 # FLAC files are corrupt or have metadata issues
-if [[ "${AUCDTECT}" == "true" ]] ; then
+if [[ "${aucdtect_flac}" == "true" ]] ; then
 	# Check if auCDtect is found/installed
-	AUCDTECT_COMMAND="$(command -v auCDtect)"
-	if [[ -z "${AUCDTECT_COMMAND}" ]] ; then
+	aucdtect_command="$(command -v auCDtect)"
+	if [[ -z "${aucdtect_command}" ]] ; then
 		# Check alternate spelling
-		AUCDTECT_COMMAND="$(command -v aucdtect)"
+		aucdtect_command="$(command -v aucdtect)"
 	fi
 
-	if [[ -n "${AUCDTECT_COMMAND}" ]] ; then
+	if [[ -n "${aucdtect_command}" ]] ; then
 		# If "-A, --aucdtect-spectrogram" was called
 		# make sure SoX is installed before starting
-		if [[ "${CREATE_SPECTROGRAM}" == "true" ]] ; then
-			SOX_COMMAND="$(command -v sox)"
-			if [[ -z "${SOX_COMMAND}" ]] ; then
+		if [[ "${create_spectrogram}" == "true" ]] ; then
+			sox_command="$(command -v sox)"
+			if [[ -z "${sox_command}" ]] ; then
 				# SoX can't be found, exit
 				{ __error "It appears SoX is not installed. Please verify you" ; __newline ;} >&2
 				{ __error "have this program installed and can be found in \$PATH" ; __newline ;} >&2
@@ -4527,32 +4543,32 @@ if [[ "${AUCDTECT}" == "true" ]] ; then
 	fi
 fi
 
-if [[ "${COMPRESS}" == "true" ]] ; then
+if [[ "${compress_flac}" == "true" ]] ; then
 	__compress_flacs
 fi
 
-if [[ "${TEST}" == "true" ]] ; then
+if [[ "${test_flac}" == "true" ]] ; then
 	__test_flacs
 fi
 
-if [[ "${MD5CHECK}" == "true" ]] ; then
+if [[ "${md5check_flac}" == "true" ]] ; then
 	__md5_check
 fi
 
-if [[ "${REPLAYGAIN}" == "true" ]] ; then
+if [[ "${replaygain_flac}" == "true" ]] ; then
 	__replaygain
 fi
 
-if [[ "${REDO}" == "true" ]] ; then
+if [[ "${redo_flac}" == "true" ]] ; then
 	__redo_tags
 fi
 
-if [[ "${PRUNE}" == "true" ]] ; then
+if [[ "${prune_flac}" == "true" ]] ; then
 	__prune_flacs
 fi
 
 # Display warning about legacy COVERART tag, if applicable
-if [[ "${COVERART_WARNING}" == "true" ]] ; then
+if [[ "${coverart_warning}" == "true" ]] ; then
 	printf ''
 	__coverart_warning
 fi
@@ -4560,7 +4576,6 @@ fi
 # Display summary of completed tasks
 __operation_summary
 
-exit 0
 ################
 #  END SCRIPT  #
 ################
