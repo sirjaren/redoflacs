@@ -3,4 +3,4 @@
 
 ## [Screenshots](/sirjaren/repository-images/tree/master/redoflacs)
 
-![redoflacs_0.17_all](/sirjaren/repository-images/master/redoflacs/redoflacs_0.17_all.png)
+![redoflacs_0.17_all](https://raw.github.com/sirjaren/repository-images/master/redoflacs/redoflacs_0.17_all.png)
