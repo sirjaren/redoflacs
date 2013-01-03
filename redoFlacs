@@ -15,8 +15,6 @@
 #
 # Please submit requests/changes/patches and/or comments
 #-------------------------------------------------------------------------------
-# TODO: Find a general format for logs and stick with it!
-# TODO: Colorize filename and commands in STDERR
 # TODO: Create a check on ReplayGain if using non git FLAC
 #       and trying to create ReplayGain values on FLAC files
 #       whos sample rate is higher than 48kHz
@@ -145,14 +143,14 @@ yellow="\033[33m"
 normal="\033[0m"
 
 # Log files with timestamp
-verify_errors="${error_log}/FLAC_Verify_Errors_$(date "+%Y%m%d-%H.%M.%S").log"
-test_errors="${error_log}/FLAC_Test_Errors_$(date "+%Y%m%d-%H.%M.%S").log"
-md5_errors="${error_log}/MD5_Signature_Errors_$(date "+%Y%m%d-%H.%M.%S").log"
-metadata_errors="${error_log}/FLAC_Metadata_Errors_$(date "+%Y%m%d-%H.%M.%S").log"
-replay_test_errors="${error_log}/ReplayGain_Test_Errors_$(date "+%Y%m%d-%H.%M.%S").log"
-replay_add_errors="${error_log}/ReplayGain_Add_Errors_$(date "+%Y%m%d-%H.%M.%S").log"
-aucdtect_errors="${error_log}/auCDtect_Errors_$(date "+%Y%m%d-%H.%M.%S").log"
-prune_errors="${error_log}/FLAC_Prune_Errors_$(date "+%Y%m%d-%H.%M.%S").log"
+verify_errors="${error_log}/FLAC_Verify_Errors_$$.log"
+test_errors="${error_log}/FLAC_Test_Errors_$$.log"
+md5_errors="${error_log}/MD5_Signature_Errors_$$.log"
+metadata_errors="${error_log}/FLAC_Metadata_Errors_$$.log"
+replay_test_errors="${error_log}/ReplayGain_Test_Errors_$$.log"
+replay_add_errors="${error_log}/ReplayGain_Add_Errors_$$.log"
+aucdtect_errors="${error_log}/auCDtect_Errors_$$.log"
+prune_errors="${error_log}/FLAC_Prune_Errors_$$.log"
 
 # Set arguments to null
 # If enabled they will be changed to true
@@ -3547,7 +3545,7 @@ __operation_aucdtect () {
 			# 2> hides the displayed progress to /dev/null disabling the progress percentage
 			# STDOUT is sent to file descriptor '4' and the prcess sent to the background to allow
 			# killing via SIGTERM
-			"${aucdtect_command}" -m40 "${decoded_wav}" 2>/dev/null >&4 &
+			"${aucdtect_command}" -m0 "${decoded_wav}" 2>/dev/null >&4 &
 
 			# Wait on background process and return exit code of
 			# said process
