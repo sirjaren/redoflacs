@@ -26,5 +26,5 @@ Below are the various options available in `redoflacs`:
 
 ## [Screenshot](/sirjaren/repository-images/tree/master/redoflacs)
 <p align="center">
-	<img src="https://raw.github.com/sirjaren/repository-images/master/redoflacs/redoflacs_0.17_all.png" alt="redoflacs 0.17: all options"/>
+	<img src="https://raw.github.com/sirjaren/repository-images/master/redoflacs/redoflacs_0.18_all.png" alt="redoflacs 0.18: all options"/>
 </p>
