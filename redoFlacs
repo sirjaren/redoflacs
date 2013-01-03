@@ -17,8 +17,6 @@
 #-------------------------------------------------------------------------------
 # TODO: Find a general format for logs and stick with it!
 # TODO: Colorize filename and commands in STDERR
-# TODO: Consider creating a fallback to using box drawing
-#       characters (ascii output?)
 # TODO: Create a check on ReplayGain if using non git FLAC
 #       and trying to create ReplayGain values on FLAC files
 #       whos sample rate is higher than 48kHz
@@ -2110,7 +2108,7 @@ __top_banner () {
 
 	# Top title line
 	printf "${normal}%s${blue}%s${normal}\n" \
-	" " "───────────────────────────────────────────────────"
+	" " "---------------------------------------------------"
 
 	# Title
 	printf "${normal}%s\n" \
@@ -2118,23 +2116,23 @@ __top_banner () {
 
 	# Bottom title line
 	printf "${normal}%s${blue}%s${normal}\n" \
-	" " "─────────────────────────┬─────────────────────────"
+	" " "-------------------------+-------------------------"
 
 	# Script version
 	printf "${normal}%s${blue}%s${normal}%s${cyan}%s${normal}\n" \
-	"                  Version " "│" " " "${version}"
+	"                  Version " "|" " " "${version}"
 
 	# Processes to be used
 	printf "${normal}%s${blue}%s${normal}%s${cyan}%s${normal}%s${cyan}%s${normal}\n" \
-	"            Parallel Jobs " "│" " " "${jobs}" " " "${jobs_display}"
+	"            Parallel Jobs " "|" " " "${jobs}" " " "${jobs_display}"
 
 	# Log directory
 	printf "${normal}%s${blue}%s${normal}%s${cyan}%s${normal}\n" \
-	"            Log Directory " "│" " " "${error_log}"
+	"            Log Directory " "|" " " "${error_log}"
 
 	# Bottom banner line
 	printf "${normal}%s${blue}%s${normal}\n\n" \
-	" " "─────────────────────────┴─────────────────────────"
+	" " "-------------------------+-------------------------"
 
 	# Message indicating the searching of FLAC files
 	__info "Finding FLAC files to process..."
@@ -2814,16 +2812,20 @@ __operation_summary () {
 				# Print the outer operation, with the sub operations
 				# to follow (from the below case statement)
 				printf "%s${yellow}%s${normal}%s${blue}%s${normal}\n" \
-				"      " "Applying ReplayGain" " " "│"
+				"      " "Applying ReplayGain" " " "│" 
 
 				# Change yellow color to cyan, but leave the yellow
 				# name to keep the below case statement sane
-				yellow="${cyan}"
+				if [[ "${no_color}" != "true" ]] ; then
+					yellow="${magenta}"
+				fi
 
-				operation_spacing="       "
+				operation="> Testing"
+				operation_spacing="                "
 			;;
 			"Adding ReplayGain")
-				operation_spacing="        "
+				operation="> Adding"
+				operation_spacing="                 "
 			;;
 			"Analyzing Tags")
 				# Print the outer operation, with the sub operations
@@ -2833,12 +2835,16 @@ __operation_summary () {
 
 				# Change yellow color to cyan, but leave the yellow
 				# name to keep the below case statement sane
-				yellow="${cyan}"
+				if [[ "${no_color}" != "true" ]] ; then
+					yellow="${magenta}"
+				fi
 
-				operation_spacing="           "
+				operation="> Analyzing"
+				operation_spacing="              "
 			;;
 			"Applying Tags")
-				operation_spacing="            "
+				operation="> Applying"
+				operation_spacing="               "
 			;;
 			"Prune METADATA Blocks")
 				operation_spacing="    "
@@ -2849,7 +2855,7 @@ __operation_summary () {
 			"complete")
 				# Set up the printed string with colors
 				printf "%s${yellow}%s${normal}%s${blue}%s${normal}%s${green}%s${normal}\n" \
-				"${operation_spacing}" "${operation}" " " "│" " " "Operation Completed"
+				"${operation_spacing}" "${operation}" " " "|" " " "Operation Completed"
 			;;
 
 			"failed")
@@ -2873,19 +2879,19 @@ __operation_summary () {
 
 				# Set up the printed string with colors
 				printf "%s${yellow}%s${normal}%s${blue}%s${normal}%s${red}%s${normal}\n" \
-				"${operation_spacing}" "${operation}" " " "│" " " "${fail_count_message}"
+				"${operation_spacing}" "${operation}" " " "|" " " "${fail_count_message}"
 			;;
 
 			"interrupted")
 				# Set up the printed string with colors
 				printf "%s${yellow}%s${normal}%s${blue}%s${normal}%s${cyan}%s${normal}\n" \
-				"${operation_spacing}" "${operation}" " " "│" " " "Operation Interrupted"
+				"${operation_spacing}" "${operation}" " " "|" " " "Operation Interrupted"
 			;;
 
 			"did not run")
 				# Set up the printed string with colors
 				printf "%s${yellow}%s${normal}%s${blue}%s${normal}%s${magenta}%s${normal}\n" \
-				"${operation_spacing}" "${operation}" " " "│" " " "Operation Did Not Run"
+				"${operation_spacing}" "${operation}" " " "|" " " "Operation Did Not Run"
 			;;
 
 			*)
@@ -2898,11 +2904,11 @@ __operation_summary () {
 
 	# Title
 	printf "\n${normal}%s${blue}%s${normal}\n" \
-	" " "───────────────────────────────────────────────────"
+	" " "---------------------------------------------------"
 	printf "${normal}%s\n" \
 	"                Summary Of Operations"
 	printf "${normal}%s${blue}%s${normal}\n" \
-	" " "─────────────────────────┬─────────────────────────"
+	" " "-------------------------+-------------------------"
 
 	# auCDtect operations
 	if [[ "${aucdtect_flac}" == "true" && "${aucdtect_complete}" == "true" ]] ; then
@@ -3020,7 +3026,9 @@ __operation_summary () {
 
 	# Change ${yellow} color back to yellow (could have been
 	# changed in ReplayGain operations above)
-	yellow="\033[33m"
+	if [[ "${no_color}" != "true" ]] ; then
+		yellow="\033[33m"
+	fi
 
 	# Retag analyze operations
 	if [[ "${retag_flac}" == "true" && "${analyzing_retag_complete}" == "true" ]] ; then
@@ -3062,7 +3070,9 @@ __operation_summary () {
 
 	# Change ${yellow} color back to yellow (could have been
 	# changed in Retag operations above)
-	yellow="\033[33m"
+	if [[ "${no_color}" != "true" ]] ; then
+		yellow="\033[33m"
+	fi
 
 	# Prune Flacs operations
 	if [[ "${prune_flac}" == "true" && "${prune_complete}" == "true" ]] ; then
@@ -3084,7 +3094,7 @@ __operation_summary () {
 	fi
 
 	printf "${normal}%s${blue}%s${normal}\n" \
-	" " "─────────────────────────┴─────────────────────────"
+	" " "-------------------------+-------------------------"
 
 	## CLEANUP SECTION ##
 
@@ -3537,7 +3547,7 @@ __operation_aucdtect () {
 			# 2> hides the displayed progress to /dev/null disabling the progress percentage
 			# STDOUT is sent to file descriptor '4' and the prcess sent to the background to allow
 			# killing via SIGTERM
-			"${aucdtect_command}" -m0 "${decoded_wav}" 2>/dev/null >&4 &
+			"${aucdtect_command}" -m40 "${decoded_wav}" 2>/dev/null >&4 &
 
 			# Wait on background process and return exit code of
 			# said process
