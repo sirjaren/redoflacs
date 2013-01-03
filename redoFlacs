@@ -545,21 +545,21 @@ __log_prune () {
 # Compress FLACS & verify
 __title_compress_flac () {
 	__newline
-	__info "Compress & Verify :: "
+	__info "Compressing & Verifying FLAC Files :: "
 	printf "${cyan}%s${normal}\n" "[Compression: ${compression_level}]"
 }
 
 # Compress FLACS & no verify
 __title_compress_notest_flac () {
 	__newline
-	__info "Compress Only :: "
+	__info "Compressing FLAC Files :: "
 	printf "${cyan}%s${normal}\n" "[Compression: ${compression_level}]"
 }
 
 # Apply ReplayGain to FLACS
 __title_replaygain () {
 	__newline
-	__info "Apply ReplayGain" ; __newline
+	__info "Generating & Applying ReplayGain" ; __newline
 }
 
 # Retag FLACS
@@ -577,13 +577,13 @@ __title_testing_flac () {
 # Validating FLACS with auCDtect
 __title_aucdtect_flac () {
 	__newline
-	__info "Validating FLAC Files" ; __newline
+	__info "Validating FLAC Files with auCDtect" ; __newline
 }
 
 # Checking MD5 of FLACS
 __title_md5check_flac () {
 	__newline
-	__info "Checking MD5" ; __newline
+	__info "Checking MD5 Signature" ; __newline
 }
 
 # Pruning FLACS
@@ -623,7 +623,6 @@ __sub_analyze_tags () {
 	printf "%s${green}%s${normal}%s${normal}%s${normal}\n" \
 	"   " ">" " " "Analyze Tags"
 }
-
 
 # Applying new tags
 __sub_applying_tags () {
@@ -674,7 +673,7 @@ __print_compressing_flac () {
 	#
 	#  [1234/123456] 07 - Some_FLAC_Filename.flac <- ${current_length} -> [ Operation Message ]
 	#                                             ^^^^^^^^^^^^^^^^^^^^^^^
-	#                ${#filename}:  Length of the current filaname
+	#                ${#filename}:  Length of the current filename
 	#  ${max_filename_length} + 1:  Total length of what's printed minus the operation
 	#                               message plus one because we do not want the ellipsis
 	#                               from ${max_filename_length}, just the space/gap
@@ -722,7 +721,7 @@ __print_test_replaygain () {
 	#
 	#  [1234/123456] 07 - Some_FLAC_Filename.flac <- ${current_length} -> [ Operation Message ]
 	#                                             ^^^^^^^^^^^^^^^^^^^^^^^
-	#                ${#filename}:  Length of the current filaname
+	#                ${#filename}:  Length of the current filename
 	#  ${max_filename_length} + 1:  Total length of what's printed minus the operation
 	#                               message plus one because we do not want the ellipsis
 	#                               from ${max_filename_length}, just the space/gap
@@ -770,7 +769,7 @@ __print_add_replaygain () {
 	#
 	#  [1234/123456] 07 - Some_FLAC_Filename.flac <- ${current_length} -> [ Operation Message ]
 	#                                             ^^^^^^^^^^^^^^^^^^^^^^^
-	#                ${#filename}:  Length of the current filaname
+	#                ${#filename}:  Length of the current filename
 	#  ${max_filename_length} + 1:  Total length of what's printed minus the operation
 	#                               message plus one because we do not want the ellipsis
 	#                               from ${max_filename_length}, just the space/gap
@@ -818,7 +817,7 @@ __print_testing_flac () {
 	#
 	#  [1234/123456] 07 - Some_FLAC_Filename.flac <- ${current_length} -> [ Operation Message ]
 	#                                             ^^^^^^^^^^^^^^^^^^^^^^^
-	#                ${#filename}:  Length of the current filaname
+	#                ${#filename}:  Length of the current filename
 	#  ${max_filename_length} + 1:  Total length of what's printed minus the operation
 	#                               message plus one because we do not want the ellipsis
 	#                               from ${max_filename_length}, just the space/gap
@@ -866,7 +865,7 @@ __print_failed_flac () {
 	#
 	#  [1234/123456] 07 - Some_FLAC_Filename.flac <- ${current_length} -> [ Operation Message ]
 	#                                             ^^^^^^^^^^^^^^^^^^^^^^^
-	#                ${#filename}:  Length of the current filaname
+	#                ${#filename}:  Length of the current filename
 	#  ${max_filename_length} + 1:  Total length of what's printed minus the operation
 	#                               message plus one because we do not want the ellipsis
 	#                               from ${max_filename_length}, just the space/gap
@@ -914,7 +913,7 @@ __print_checking_md5 () {
 	#
 	#  [1234/123456] 07 - Some_FLAC_Filename.flac <- ${current_length} -> [ Operation Message ]
 	#                                             ^^^^^^^^^^^^^^^^^^^^^^^
-	#                ${#filename}:  Length of the current filaname
+	#                ${#filename}:  Length of the current filename
 	#  ${max_filename_length} + 1:  Total length of what's printed minus the operation
 	#                               message plus one because we do not want the ellipsis
 	#                               from ${max_filename_length}, just the space/gap
@@ -962,7 +961,7 @@ __print_ok_flac () {
 	#
 	#  [1234/123456] 07 - Some_FLAC_Filename.flac <- ${current_length} -> [ Operation Message ]
 	#                                             ^^^^^^^^^^^^^^^^^^^^^^^
-	#                ${#filename}:  Length of the current filaname
+	#                ${#filename}:  Length of the current filename
 	#  ${max_filename_length} + 1:  Total length of what's printed minus the operation
 	#                               message plus one because we do not want the ellipsis
 	#                               from ${max_filename_length}, just the space/gap
@@ -1010,7 +1009,7 @@ __print_ok_replaygain_file () {
 	#
 	#  [1234/123456] 07 - Some_FLAC_Filename.flac <- ${current_length} -> [ Operation Message ]
 	#                                             ^^^^^^^^^^^^^^^^^^^^^^^
-	#                ${#filename}:  Length of the current filaname
+	#                ${#filename}:  Length of the current filename
 	#  ${max_filename_length} + 1:  Total length of what's printed minus the operation
 	#                               message plus one because we do not want the ellipsis
 	#                               from ${max_filename_length}, just the space/gap
@@ -1058,7 +1057,7 @@ __print_ok_replaygain_dir () {
 	#
 	#  [1234/123456] 07 - Some_FLAC_Filename.flac <- ${current_length} -> [ Operation Message ]
 	#                                             ^^^^^^^^^^^^^^^^^^^^^^^
-	#                ${#filename}:  Length of the current filaname
+	#                ${#filename}:  Length of the current filename
 	#  ${max_filename_length} + 1:  Total length of what's printed minus the operation
 	#                               message plus one because we do not want the ellipsis
 	#                               from ${max_filename_length}, just the space/gap
@@ -1106,7 +1105,7 @@ __print_aucdtect_flac () {
 	#
 	#  [1234/123456] 07 - Some_FLAC_Filename.flac <- ${current_length} -> [ Operation Message ]
 	#                                             ^^^^^^^^^^^^^^^^^^^^^^^
-	#                ${#filename}:  Length of the current filaname
+	#                ${#filename}:  Length of the current filename
 	#  ${max_filename_length} + 1:  Total length of what's printed minus the operation
 	#                               message plus one because we do not want the ellipsis
 	#                               from ${max_filename_length}, just the space/gap
@@ -1154,7 +1153,7 @@ __print_aucdtect_issue () {
 	#
 	#  [1234/123456] 07 - Some_FLAC_Filename.flac <- ${current_length} -> [ Operation Message ]
 	#                                             ^^^^^^^^^^^^^^^^^^^^^^^
-	#                ${#filename}:  Length of the current filaname
+	#                ${#filename}:  Length of the current filename
 	#  ${max_filename_length} + 1:  Total length of what's printed minus the operation
 	#                               message plus one because we do not want the ellipsis
 	#                               from ${max_filename_length}, just the space/gap
@@ -1202,7 +1201,7 @@ __print_aucdtect_spectrogram () {
 	#
 	#  [1234/123456] 07 - Some_FLAC_Filename.flac <- ${current_length} -> [ Operation Message ]
 	#                                             ^^^^^^^^^^^^^^^^^^^^^^^
-	#                ${#filename}:  Length of the current filaname
+	#                ${#filename}:  Length of the current filename
 	#  ${max_filename_length} + 1:  Total length of what's printed minus the operation
 	#                               message plus one because we do not want the ellipsis
 	#                               from ${max_filename_length}, just the space/gap
@@ -1250,7 +1249,7 @@ __print_aucdtect_skip () {
 	#
 	#  [1234/123456] 07 - Some_FLAC_Filename.flac <- ${current_length} -> [ Operation Message ]
 	#                                             ^^^^^^^^^^^^^^^^^^^^^^^
-	#                ${#filename}:  Length of the current filaname
+	#                ${#filename}:  Length of the current filename
 	#  ${max_filename_length} + 1:  Total length of what's printed minus the operation
 	#                               message plus one because we do not want the ellipsis
 	#                               from ${max_filename_length}, just the space/gap
@@ -1298,7 +1297,7 @@ __print_ok_tag () {
 	#
 	#  [1234/123456] 07 - Some_FLAC_Filename.flac <- ${current_length} -> [ Operation Message ]
 	#                                             ^^^^^^^^^^^^^^^^^^^^^^^
-	#                ${#filename}:  Length of the current filaname
+	#                ${#filename}:  Length of the current filename
 	#  ${max_filename_length} + 1:  Total length of what's printed minus the operation
 	#                               message plus one because we do not want the ellipsis
 	#                               from ${max_filename_length}, just the space/gap
@@ -1346,7 +1345,7 @@ __print_level_same_compression () {
 	#
 	#  [1234/123456] 07 - Some_FLAC_Filename.flac <- ${current_length} -> [ Operation Message ]
 	#                                             ^^^^^^^^^^^^^^^^^^^^^^^
-	#                ${#filename}:  Length of the current filaname
+	#                ${#filename}:  Length of the current filename
 	#  ${max_filename_length} + 1:  Total length of what's printed minus the operation
 	#                               message plus one because we do not want the ellipsis
 	#                               from ${max_filename_length}, just the space/gap
@@ -1394,7 +1393,7 @@ __print_analyzing_tags () {
 	#
 	#  [1234/123456] 07 - Some_FLAC_Filename.flac <- ${current_length} -> [ Operation Message ]
 	#                                             ^^^^^^^^^^^^^^^^^^^^^^^
-	#                ${#filename}:  Length of the current filaname
+	#                ${#filename}:  Length of the current filename
 	#  ${max_filename_length} + 1:  Total length of what's printed minus the operation
 	#                               message plus one because we do not want the ellipsis
 	#                               from ${max_filename_length}, just the space/gap
@@ -1442,7 +1441,7 @@ __print_applying_tags () {
 	#
 	#  [1234/123456] 07 - Some_FLAC_Filename.flac <- ${current_length} -> [ Operation Message ]
 	#                                             ^^^^^^^^^^^^^^^^^^^^^^^
-	#                ${#filename}:  Length of the current filaname
+	#                ${#filename}:  Length of the current filename
 	#  ${max_filename_length} + 1:  Total length of what's printed minus the operation
 	#                               message plus one because we do not want the ellipsis
 	#                               from ${max_filename_length}, just the space/gap
@@ -1490,7 +1489,7 @@ __print_prune_flac () {
 	#
 	#  [1234/123456] 07 - Some_FLAC_Filename.flac <- ${current_length} -> [ Operation Message ]
 	#                                             ^^^^^^^^^^^^^^^^^^^^^^^
-	#                ${#filename}:  Length of the current filaname
+	#                ${#filename}:  Length of the current filename
 	#  ${max_filename_length} + 1:  Total length of what's printed minus the operation
 	#                               message plus one because we do not want the ellipsis
 	#                               from ${max_filename_length}, just the space/gap
@@ -1538,7 +1537,7 @@ __print_interrupt () {
 	#
 	#  [1234/123456] 07 - Some_FLAC_Filename.flac <- ${current_length} -> [ Operation Message ]
 	#                                             ^^^^^^^^^^^^^^^^^^^^^^^
-	#                ${#filename}:  Length of the current filaname
+	#                ${#filename}:  Length of the current filename
 	#  ${max_filename_length} + 1:  Total length of what's printed minus the operation
 	#                               message plus one because we do not want the ellipsis
 	#                               from ${max_filename_length}, just the space/gap
@@ -1586,7 +1585,7 @@ __print_interrupt_replaygain () {
 	#
 	#  [1234/123456] 07 - Some_FLAC_Filename.flac <- ${current_length} -> [ Operation Message ]
 	#                                             ^^^^^^^^^^^^^^^^^^^^^^^
-	#                ${#filename}:  Length of the current filaname
+	#                ${#filename}:  Length of the current filename
 	#  ${max_filename_length} + 1:  Total length of what's printed minus the operation
 	#                               message plus one because we do not want the ellipsis
 	#                               from ${max_filename_length}, just the space/gap
@@ -2070,6 +2069,9 @@ __create_aucdtect_fd () {
 
 # Create a new file descriptor (5) via a FIFO
 __set_error_fd () {
+	# Error FIFO location
+	error_fifo="/tmp/redoflacs_error_fifo_$$"
+
 	# Create temporary FIFO
 	mkfifo "${error_fifo}"
 
@@ -2611,34 +2613,34 @@ __operation_summary () {
 	__summary_line () {
 		# Set up spacing for Operation
 		case "${operation}" in
-			"auCDtect")
-				operation_spacing="                 "
+			"Validate with auCDtect")
+				operation_spacing="   "
 			;;
-			"Compress")
-				operation_spacing="                 "
+			"Compress FLACS")
+				operation_spacing="           "
 			;;
 			"Test Flacs")
 				operation_spacing="               "
 			;;
-			"MD5 Check")
-				operation_spacing="                "
+			"Check MD5 Signature")
+				operation_spacing="      "
 			;;
-			"ReplayGain")
-				operation_spacing="               "
+			"Apply ReplayGain")
+				operation_spacing="         "
 			;;
-			"Retagging")
-				operation_spacing="                "
-			;;
-			"Prune Flacs")
+			"Retag Files")
 				operation_spacing="              "
+			;;
+			"Prune METADATA Blocks")
+				operation_spacing="    "
 			;;
 		esac
 
 		case "${operation_summary}" in
 			"complete")
 				# Set up the printed string with colors
-				printf "%s${blue}%s${normal}%s${green}%s${normal}\n" \
-				"${operation_spacing}${operation} " "│" " " "Operation Completed"
+				printf "%s${yellow}%s${normal}%s${blue}%s${normal}%s${green}%s${normal}\n" \
+				"${operation_spacing}" "${operation}" " " "│" " " "Operation Completed"
 			;;
 
 			"failed")
@@ -2649,8 +2651,8 @@ __operation_summary () {
 				# line
 				mapfile -n1 -t -u5 fail_count
 
-				# Separate each period into it's own index
-				fail_count=( ${fail_count[@]///./. } )
+				# Store array into a string
+				fail_count="${fail_count[@]}"
 
 				# If ${#fail_count} is one, change the message
 				# to singular
@@ -2661,20 +2663,20 @@ __operation_summary () {
 				fi
 
 				# Set up the printed string with colors
-				printf "%s${blue}%s${normal}%s${red}%s${normal}\n" \
-				"${operation_spacing}${operation} " "│" " " "${fail_count_message}"
+				printf "%s${yellow}%s${normal}%s${blue}%s${normal}%s${red}%s${normal}\n" \
+				"${operation_spacing}" "${operation}" " " "│" " " "${fail_count_message}"
 			;;
 
 			"interrupted")
 				# Set up the printed string with colors
-				printf "%s${blue}%s${normal}%s${cyan}%s${normal}\n" \
-				"${operation_spacing}${operation} " "│" " " "Operation Interrupted"
+				printf "%s${yellow}%s${normal}%s${blue}%s${normal}%s${cyan}%s${normal}\n" \
+				"${operation_spacing}" "${operation}" " " "│" " " "Operation Interrupted"
 			;;
 
 			"did not run")
 				# Set up the printed string with colors
-				printf "%s${blue}%s${normal}%s${magenta}%s${normal}\n" \
-				"${operation_spacing}${operation} " "│" " " "Operation Did Not Run"
+				printf "%s${yellow}%s${normal}%s${blue}%s${normal}%s${magenta}%s${normal}\n" \
+				"${operation_spacing}" "${operation}" " " "│" " " "Operation Did Not Run"
 			;;
 
 			*)
@@ -2695,38 +2697,38 @@ __operation_summary () {
 
 	# auCDtect operations
 	if [[ "${aucdtect_flac}" == "true" && "${aucdtect_complete}" == "true" ]] ; then
-		operation="auCDtect"
+		operation="Validate with auCDtect"
 		operation_summary="complete"
 		__summary_line
 	elif [[ "${aucdtect_flac}" == "true" && "${aucdtect_complete}" == "false" ]] ; then
-		operation="auCDtect"
+		operation="Validate with auCDtect"
 		operation_summary="failed"
 		__summary_line
 	elif [[ "${aucdtect_flac}" == "true" && "${aucdtect_complete}" == "interrupt" ]] ; then
-		operation="auCDtect"
+		operation="Validate with auCDtect"
 		operation_summary="interrupted"
 		__summary_line
 	elif [[ "${aucdtect_flac}" == "true" ]] ; then
-		operation="auCDtect"
+		operation="Validate with auCDtect"
 		operation_summary="did not run"
 		__summary_line
 	fi
 
 	# Compress Flacs operations
 	if [[ "${compress_flac}" == "true" && "${compress_complete}" == "true" ]] ; then
-		operation="Compress"
+		operation="Compress FLACS"
 		operation_summary="complete"
 		__summary_line
 	elif [[ "${compress_flac}" == "true" && "${compress_complete}" == "false" ]] ; then
-		operation="Compress"
+		operation="Compress FLACS"
 		operation_summary="failed"
 		__summary_line
 	elif [[ "${compress_flac}" == "true" && "${compress_complete}" == "interrupt" ]] ; then
-		operation="Compress"
+		operation="Compress FLACS"
 		operation_summary="interrupted"
 		__summary_line
 	elif [[ "${compress_flac}" == "true" ]] ; then
-		operation="Compress"
+		operation="Compress FLACS"
 		operation_summary="did not run"
 		__summary_line
 	fi
@@ -2752,76 +2754,76 @@ __operation_summary () {
 
 	# MD5 Check operations
 	if [[ "${md5check_flac}" == "true" && "${md5check_complete}" == "true" ]] ; then
-		operation="MD5 Check"
+		operation="Check MD5 Signature"
 		operation_summary="complete"
 		__summary_line
 	elif [[ "${md5check_flac}" == "true" && "${md5check_complete}" == "false" ]] ; then
-		operation="MD5 Check"
+		operation="Check MD5 Signature"
 		operation_summary="failed"
 		__summary_line
 	elif [[ "${md5check_flac}" == "true" && "${md5check_complete}" == "interrupt" ]] ; then
-		operation="MD5 Check"
+		operation="Check MD5 Signature"
 		operation_summary="interrupted"
 		__summary_line
 	elif [[ "${md5check_flac}" == "true" ]] ; then
-		operation="MD5 Check"
+		operation="Check MD5 Signature"
 		operation_summary="did not run"
 		__summary_line
 	fi
 
 	# ReplayGain operations
 	if [[ "${replaygain_flac}" == "true" && "${replaygain_complete}" == "true" ]] ; then
-		operation="ReplayGain"
+		operation="Apply ReplayGain"
 		operation_summary="complete"
 		__summary_line
 	elif [[ "${replaygain_flac}" == "true" && "${replaygain_complete}" == "false" ]] ; then
-		operation="ReplayGain"
+		operation="Apply ReplayGain"
 		operation_summary="failed"
 		__summary_line
 	elif [[ "${replaygain_flac}" == "true" && "${replaygain_complete}" == "interrupt" ]] ; then
-		operation="ReplayGain"
+		operation="Apply ReplayGain"
 		operation_summary="interrupted"
 		__summary_line
 	elif [[ "${replaygain_flac}" == "true" ]] ; then
-		operation="ReplayGain"
+		operation="Apply ReplayGain"
 		operation_summary="did not run"
 		__summary_line
 	fi
 
 	# Redo Tags operations
 	if [[ "${redo_flac}" == "true" && "${redo_complete}" == "true" ]] ; then
-		operation="Retagging"
+		operation="Retag Files"
 		operation_summary="complete"
 		__summary_line
 	elif [[ "${redo_flac}" == "true" && "${redo_complete}" == "false" ]] ; then
-		operation="Retagging"
+		operation="Retag Files"
 		operation_summary="failed"
 		__summary_line
 	elif [[ "${redo_flac}" == "true" && "${redo_complete}" == "interrupt" ]] ; then
-		operation="Retagging"
+		operation="Retag Files"
 		operation_summary="interrupted"
 		__summary_line
 	elif [[ "${redo_flac}" == "true" ]] ; then
-		operation="Retagging"
+		operation="Retag Files"
 		operation_summary="did not run"
 		__summary_line
 	fi
 
 	# Prune Flacs operations
 	if [[ "${prune_flac}" == "true" && "${prune_complete}" == "true" ]] ; then
-		operation="Prune Flacs"
+		operation="Prune METADATA Blocks"
 		operation_summary="complete"
 		__summary_line
 	elif [[ "${prune_flac}" == "true" && "${prune_complete}" == "false" ]] ; then
-		operation="Prune Flacs"
+		operation="Prune METADATA Blocks"
 		operation_summary="failed"
 		__summary_line
 	elif [[ "${prune_flac}" == "true" && "${prune_complete}" == "interrupt" ]] ; then
-		operation="Prune Flacs"
+		operation="Prune METADATA Blocks"
 		operation_summary="interrupted"
 		__summary_line
 	elif [[ "${prune_flac}" == "true" ]] ; then
-		operation="Prune Flacs"
+		operation="Prune METADATA Blocks"
 		operation_summary="did not run"
 		__summary_line
 	fi
@@ -4008,9 +4010,6 @@ tmp_fifo="/tmp/redoflacs_fifo_$$"
 
 # Set up error file descriptor '5'
 __set_error_fd
-
-# Error FIFO location
-error_fifo="/tmp/redoflacs_error_fifo_$$"
 
 # Display the top banner
 if [[ "${redo_flac}" != "true" ]] ; then
