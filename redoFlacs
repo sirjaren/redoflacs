@@ -15,12 +15,8 @@
 #
 # Please submit requests/changes/patches and/or comments
 #-------------------------------------------------------------------------------
-# TODO: Rework the Summary Of Operations to show sub processes (aka
-#       Analyze Tags & Setting Tags)
 # TODO: Find a general format for logs and stick with it!
 # TODO: Colorize filename and commands in STDERR
-# TODO: Make it more clear on the Summary Of Operations
-#       what it means when an operation has failed
 # TODO: Consider creating a fallback to using box drawing
 #       characters (ascii output?)
 # TODO: Create a check on ReplayGain if using non git FLAC
@@ -167,7 +163,7 @@ test_flac=""
 aucdtect_flac=""
 md5check_flac=""
 replaygain_flac=""
-redo_flac=""
+retag_flac=""
 prune_flac=""
 #== END STATIC VARIABLES =======================================================
 
@@ -1019,6 +1015,54 @@ __print_ok_replaygain_file () {
 	"     " "[${iteration}/${#total_flacs_array[@]}]" " ${filename} " "" "[" " " "ok" " " "]" " "
 }
 
+# ReplayGain file interrupted
+__print_interrupt_replaygain_file () {
+	# Grab the first line of 'stty -a' output
+	# Redirecting '/dev/stderr' to 'stty' allows valid arguments
+	read -r columns < <(stty -a < /dev/stderr)
+
+	# Remove superflous information from 'stty -a'
+	# Ends up with the width of terminal
+	columns="${columns/#*columns }"
+	columns="${columns/%;*}"
+
+	# This is the maximum length of a string to be displayed based on column width,
+	# obtained via the number of columns minus the length of displayed characters:
+	#
+	#             ${columns}:  Width of terminal
+	#          ${#iteration}:  Length of the # of FLACs processed
+	#  ${total_flacs_length}:  Length of the total # of FLAC files
+	#                     27:  Length of:
+	#                            [ Interrupted ] (15)
+	#                            7 Spaces
+	#                            3 Characters: [/]
+	#                            2 Gap and ellipsis (…)
+	max_filename_length="$(( ${columns} - ${#iteration} - ${total_flacs_length} - 27 ))"
+
+	filename="${i##*/}"
+	# Replace possible newlines in filename with '?' (like 'ls' output)
+	filename="${filename//$'\n'/?}"
+
+	# Cull filename and add an ellipsis if the filename is too long
+	if [[ "${#filename}" -gt "${max_filename_length}" ]] ; then
+		filename="${filename::${max_filename_length}}…"
+	fi
+
+	# The current length is obtained via the length of what's printed now minus
+	# the length of the filename and gaps:
+	#
+	#  [1234/123456] 07 - Some_FLAC_Filename.flac <- ${current_length} -> [ Operation Message ]
+	#                                             ^^^^^^^^^^^^^^^^^^^^^^^
+	#                ${#filename}:  Length of the current filename
+	#  ${max_filename_length} + 1:  Total length of what's printed minus the operation
+	#                               message plus one because we do not want the ellipsis
+	#                               from ${max_filename_length}, just the space/gap
+	current_length="$(( ${max_filename_length} - ${#filename} + 1 ))"
+
+	printf "\r${normal}%s${magenta}%s${normal}%s%${current_length}s${blue}%s${normal}%s${yellow}%s${normal}%s${blue}%s${normal}%s" \
+	"     " "[${iteration}/${#total_flacs_array[@]}]" " ${filename} " "" "[" " " "Interrupted" " " "]" " "
+}
+
 # ReplayGain directory ok
 __print_ok_replaygain_dir () {
 	# Grab the first line of 'stty -a' output
@@ -1065,6 +1109,54 @@ __print_ok_replaygain_dir () {
 
 	printf "\r${normal}%s${magenta}%s${normal}%s%${current_length}s${blue}%s${normal}%s${green}%s${normal}%s${blue}%s${normal}%s" \
 	"     " "[${iteration}/${#flac_directories_array[@]}]" " ${filename} " "" "[" " " "ok" " " "]" " "
+}
+
+# ReplayGain directory interrupted
+__print_interrupt_replaygain_dir () {
+	# Grab the first line of 'stty -a' output
+	# Redirecting '/dev/stderr' to 'stty' allows valid arguments
+	read -r columns < <(stty -a < /dev/stderr)
+
+	# Remove superflous information from 'stty -a'
+	# Ends up with the width of terminal
+	columns="${columns/#*columns }"
+	columns="${columns/%;*}"
+
+	# This is the maximum length of a string to be displayed based on column width,
+	# obtained via the number of columns minus the length of displayed characters:
+	#
+	#             ${columns}:  Width of terminal
+	#          ${#iteration}:  Length of the # processed directories
+	#  ${#total_directories}:  Length of the total # of directories
+	#                     27:  Length of:
+	#                            [ Interrupted ] (15)
+	#                            7 Spaces
+	#                            3 Characters: [/]
+	#                            2 Gap and ellipsis (…)
+	max_filename_length="$(( ${columns} - ${#iteration} - ${#total_directories} - 27 ))"
+
+	filename="${i##*/}"
+	# Replace possible newlines in filename with '?' (like 'ls' output)
+	filename="${filename//$'\n'/?}"
+
+	# Cull filename and add an ellipsis if the filename is too long
+	if [[ "${#filename}" -gt "${max_filename_length}" ]] ; then
+		filename="${filename::${max_filename_length}}…"
+	fi
+
+	# The current length is obtained via the length of what's printed now minus
+	# the length of the filename and gaps:
+	#
+	#  [1234/123456] 07 - Some_FLAC_Filename.flac <- ${current_length} -> [ Operation Message ]
+	#                                             ^^^^^^^^^^^^^^^^^^^^^^^
+	#                ${#filename}:  Length of the current filename
+	#  ${max_filename_length} + 1:  Total length of what's printed minus the operation
+	#                               message plus one because we do not want the ellipsis
+	#                               from ${max_filename_length}, just the space/gap
+	current_length="$(( ${max_filename_length} - ${#filename} + 1 ))"
+
+	printf "\r${normal}%s${magenta}%s${normal}%s%${current_length}s${blue}%s${normal}%s${yellow}%s${normal}%s${blue}%s${normal}%s" \
+	"     " "[${iteration}/${#flac_directories_array[@]}]" " ${filename} " "" "[" " " "Interrupted" " " "]" " "
 }
 
 # Validating with auCDtect
@@ -1499,6 +1591,102 @@ __print_prune_flac () {
 	"   " "[${iteration}/${#total_flacs_array[@]}]" " ${filename} " "" "[" " " "Pruning Metadata" " " "]" " "
 }
 
+# Retag analyze interrupted
+__print_retag_analyze_interrupt () {
+	# Grab the first line of 'stty -a' output
+	# Redirecting '/dev/stderr' to 'stty' allows valid arguments
+	read -r columns < <(stty -a < /dev/stderr)
+
+	# Remove superflous information from 'stty -a'
+	# Ends up with the width of terminal
+	columns="${columns/#*columns }"
+	columns="${columns/%;*}"
+
+	# This is the maximum length of a string to be displayed based on column width,
+	# obtained via the number of columns minus the length of displayed characters:
+	#
+	#             ${columns}:  Width of terminal
+	#          ${#iteration}:  Length of the # of FLACs processed
+	#  ${total_flacs_length}:  Length of the total # of FLAC files
+	#                     27:  Length of:
+	#                            [ Interrupted ] (15)
+	#                            7 Spaces
+	#                            3 Characters: [/]
+	#                            2 Gap and ellipsis (…)
+	max_filename_length="$(( ${columns} - ${#iteration} - ${total_flacs_length} - 27 ))"
+
+	filename="${i##*/}"
+	# Replace possible newlines in filename with '?' (like 'ls' output)
+	filename="${filename//$'\n'/?}"
+
+	# Cull filename and add an ellipsis if the filename is too long
+	if [[ "${#filename}" -gt "${max_filename_length}" ]] ; then
+		filename="${filename::${max_filename_length}}…"
+	fi
+
+	# The current length is obtained via the length of what's printed now minus
+	# the length of the filename and gaps:
+	#
+	#  [1234/123456] 07 - Some_FLAC_Filename.flac <- ${current_length} -> [ Operation Message ]
+	#                                             ^^^^^^^^^^^^^^^^^^^^^^^
+	#                ${#filename}:  Length of the current filename
+	#  ${max_filename_length} + 1:  Total length of what's printed minus the operation
+	#                               message plus one because we do not want the ellipsis
+	#                               from ${max_filename_length}, just the space/gap
+	current_length="$(( ${max_filename_length} - ${#filename} + 1 ))"
+
+	printf "\r${normal}%s${magenta}%s${normal}%s%${current_length}s${blue}%s${normal}%s${yellow}%s${normal}%s${blue}%s${normal}%s" \
+	"     " "[${iteration}/${#total_flacs_array[@]}]" " ${filename} " "" "[" " " "Interrupted" " " "]" " "
+}
+
+# Retag apply interrupted
+__print_retag_apply_interrupt () {
+	# Grab the first line of 'stty -a' output
+	# Redirecting '/dev/stderr' to 'stty' allows valid arguments
+	read -r columns < <(stty -a < /dev/stderr)
+
+	# Remove superflous information from 'stty -a'
+	# Ends up with the width of terminal
+	columns="${columns/#*columns }"
+	columns="${columns/%;*}"
+
+	# This is the maximum length of a string to be displayed based on column width,
+	# obtained via the number of columns minus the length of displayed characters:
+	#
+	#             ${columns}:  Width of terminal
+	#          ${#iteration}:  Length of the # of FLACs processed
+	#  ${total_flacs_length}:  Length of the total # of FLAC files
+	#                     27:  Length of:
+	#                            [ Interrupted ] (15)
+	#                            7 Spaces
+	#                            3 Characters: [/]
+	#                            2 Gap and ellipsis (…)
+	max_filename_length="$(( ${columns} - ${#iteration} - ${total_flacs_length} - 27 ))"
+
+	filename="${i##*/}"
+	# Replace possible newlines in filename with '?' (like 'ls' output)
+	filename="${filename//$'\n'/?}"
+
+	# Cull filename and add an ellipsis if the filename is too long
+	if [[ "${#filename}" -gt "${max_filename_length}" ]] ; then
+		filename="${filename::${max_filename_length}}…"
+	fi
+
+	# The current length is obtained via the length of what's printed now minus
+	# the length of the filename and gaps:
+	#
+	#  [1234/123456] 07 - Some_FLAC_Filename.flac <- ${current_length} -> [ Operation Message ]
+	#                                             ^^^^^^^^^^^^^^^^^^^^^^^
+	#                ${#filename}:  Length of the current filename
+	#  ${max_filename_length} + 1:  Total length of what's printed minus the operation
+	#                               message plus one because we do not want the ellipsis
+	#                               from ${max_filename_length}, just the space/gap
+	current_length="$(( ${max_filename_length} - ${#filename} + 1 ))"
+
+	printf "\r${normal}%s${magenta}%s${normal}%s%${current_length}s${blue}%s${normal}%s${yellow}%s${normal}%s${blue}%s${normal}%s" \
+	"     " "[${iteration}/${#total_flacs_array[@]}]" " ${filename} " "" "[" " " "Interrupted" " " "]" " "
+}
+
 # Interrupted file
 __print_interrupt () {
 	# Grab the first line of 'stty -a' output
@@ -1546,54 +1734,6 @@ __print_interrupt () {
 	printf "\r${normal}%s${magenta}%s${normal}%s%${current_length}s${blue}%s${normal}%s${yellow}%s${normal}%s${blue}%s${normal}%s" \
 	"   " "[${iteration}/${#total_flacs_array[@]}]" " ${filename} " "" "[" " " "Interrupted" " " "]" " "
 }
-
-# Interrupted directory
-__print_interrupt_replaygain () {
-	# Grab the first line of 'stty -a' output
-	# Redirecting '/dev/stderr' to 'stty' allows valid arguments
-	read -r columns < <(stty -a < /dev/stderr)
-
-	# Remove superflous information from 'stty -a'
-	# Ends up with the width of terminal
-	columns="${columns/#*columns }"
-	columns="${columns/%;*}"
-
-	# This is the maximum length of a string to be displayed based on column width,
-	# obtained via the number of columns minus the length of displayed characters:
-	#
-	#             ${columns}:  Width of terminal
-	#          ${#iteration}:  Length of the # processed directories
-	#  ${#total_directories}:  Length of the total # of directories
-	#                     25:  Length of:
-	#                            [ Interrupted ] (15)
-	#                            5 Spaces
-	#                            3 Characters: [/]
-	#                            2 Gap and ellipsis (…)
-	max_filename_length="$(( ${columns} - ${#iteration} - ${#total_directories} - 25 ))"
-
-	filename="${i##*/}"
-	# Replace possible newlines in filename with '?' (like 'ls' output)
-	filename="${filename//$'\n'/?}"
-
-	# Cull filename and add an ellipsis if the filename is too long
-	if [[ "${#filename}" -gt "${max_filename_length}" ]] ; then
-		filename="${filename::${max_filename_length}}…"
-	fi
-
-	# The current length is obtained via the length of what's printed now minus
-	# the length of the filename and gaps:
-	#
-	#  [1234/123456] 07 - Some_FLAC_Filename.flac <- ${current_length} -> [ Operation Message ]
-	#                                             ^^^^^^^^^^^^^^^^^^^^^^^
-	#                ${#filename}:  Length of the current filename
-	#  ${max_filename_length} + 1:  Total length of what's printed minus the operation
-	#                               message plus one because we do not want the ellipsis
-	#                               from ${max_filename_length}, just the space/gap
-	current_length="$(( ${max_filename_length} - ${#filename} + 1 ))"
-
-	printf "\r${normal}%s${magenta}%s${normal}%s%${current_length}s${blue}%s${normal}%s${yellow}%s${normal}%s${blue}%s${normal}%s" \
-	"   " "[${iteration}/${#flac_directories_array[@]}]" " ${filename} " "" "[" " " "Interrupted" " " "]" " "
-}
 #== PROCESSED FILE/DIRECTORY MESSAGES ==========================================
 
 
@@ -1617,7 +1757,7 @@ __countdown_abort () {
 
 # ReplayGain test abort
 __replaygain_test_abort () {
-	__print_interrupt
+	__print_interrupt_replaygain_file
 
 	# Kill running children
 	__kill_jobs
@@ -1629,7 +1769,7 @@ __replaygain_test_abort () {
 		__log_replaygain_test
 	fi
 
-	replaygain_complete="interrupt"
+	testing_replaygain_complete="interrupt"
 	__operation_summary
 
 	exit 1
@@ -1637,7 +1777,7 @@ __replaygain_test_abort () {
 
 # ReplayGain process abort
 __replaygain_process_abort () {
-	__print_interrupt_replaygain
+	__print_interrupt_replaygain_dir
 
 	# Kill running children
 	__kill_jobs
@@ -1649,7 +1789,7 @@ __replaygain_process_abort () {
 		__log_replaygain_process
 	fi
 
-	replaygain_complete="interrupt"
+	adding_replaygain_complete="interrupt"
 	__operation_summary
 
 	exit 1
@@ -1743,9 +1883,9 @@ __md5_check_abort () {
 	exit 130
 }
 
-# Redo tags abort
-__redo_tags_abort () {
-	__print_interrupt
+# Analyzing tags abort
+__analyzing_tags_abort () {
+	__print_retag_analyze_interrupt
 
 	# Kill running children
 	__kill_jobs
@@ -1782,7 +1922,52 @@ __redo_tags_abort () {
 		__log_missing_tags
 	fi
 
-	redo_complete="interrupt"
+	analyzing_retag_complete="interrupt"
+	__operation_summary
+
+	exit 1
+}
+
+# Applying tags abort
+__applying_tags_abort () {
+	__print_retag_apply_interrupt
+
+	# Kill running children
+	__kill_jobs
+
+	__newline
+	__info "Control-C received, generating summary. Please wait..." ; __newline
+
+	# Test for DEPRECATED tag, COVERART in METADATA_ERROR log.  If it
+	# exists, set coverart_warning variable to make script output
+	# warning upon completion
+	if [[ -f "${metadata_errors}" ]] ; then
+		while read -r i ; do
+			# Indentation is culled from reading in "${i}"
+			# To change this, set IFS to '\n'
+			if [[ "${i}" == "the new format: METADATA_BLOCK_PICTURE." ]] ; then
+				coverart_warning="true"
+				break
+			fi
+		done < "${metadata_errors}"
+	fi
+
+	if [[ -f "${metadata_errors}"  && "${coverart_warning}" == "true" ]] ; then
+		# Display COVERART warning function and metadata issues
+		__newline >&2
+
+		# Below is already redirected to STDERR
+		__coverart_warning
+
+		# Display metadata issue
+		__log_missing_tags
+
+	elif [[ -f "${metadata_errors}" ]] ; then
+		# Display metadata issue
+		__log_missing_tags
+	fi
+
+	applying_retag_complete="interrupt"
 	__operation_summary
 
 	exit 1
@@ -1919,7 +2104,7 @@ __coverart_remove_conflict () {
 # Top banner displaying invocation settings
 __top_banner () {
 	# If Redo Tags is called, create the necessary spacing
-	if [[ "${redo_flac}" == "true" ]] ; then
+	if [[ "${retag_flac}" == "true" ]] ; then
 		__newline 2
 	fi
 
@@ -2378,7 +2563,7 @@ __process_positional_parameters () {
 				prune_flac="true"
 			;;
 			-r)
-				redo_flac="true"
+				retag_flac="true"
 			;;
 			-n)
 				no_color="true"
@@ -2520,7 +2705,7 @@ __check_conflicting_operations () {
 		fi
 
 		# Check for "-r, --redo".  If used add it to array
-		if [[ "${redo_flac}" == "true" ]] ; then
+		if [[ "${retag_flac}" == "true" ]] ; then
 			argument_conflict_array+=( "-r, --redo" )
 		fi
 
@@ -2593,13 +2778,13 @@ __check_conflicting_operations () {
 		md5check_flac="true"
 		prune_flac="true"
 		replaygain_flac="true"
-		redo_flac="true"
+		retag_flac="true"
 	elif [[ "${reallyall}" == "true" ]] ; then
 		compress_flac="true"
 		md5check_flac="true"
 		prune_flac="true"
 		replaygain_flac="true"
-		redo_flac="true"
+		retag_flac="true"
 		aucdtect_flac="true"
 		# This is needed to let script know that we want auCDtect
 		# to create a spectrogram (ie "-A, --aucdtect-spectrogram")
@@ -2625,11 +2810,35 @@ __operation_summary () {
 			"Check MD5 Signature")
 				operation_spacing="      "
 			;;
-			"Apply ReplayGain")
-				operation_spacing="         "
+			"Testing ReplayGain")
+				# Print the outer operation, with the sub operations
+				# to follow (from the below case statement)
+				printf "%s${yellow}%s${normal}%s${blue}%s${normal}\n" \
+				"      " "Applying ReplayGain" " " "│"
+
+				# Change yellow color to cyan, but leave the yellow
+				# name to keep the below case statement sane
+				yellow="${cyan}"
+
+				operation_spacing="       "
 			;;
-			"Retag Files")
-				operation_spacing="              "
+			"Adding ReplayGain")
+				operation_spacing="        "
+			;;
+			"Analyzing Tags")
+				# Print the outer operation, with the sub operations
+				# to follow (from the below case statement)
+				printf "%s${yellow}%s${normal}%s${blue}%s${normal}\n" \
+				"          " "Retagging Files" " " "│"
+
+				# Change yellow color to cyan, but leave the yellow
+				# name to keep the below case statement sane
+				yellow="${cyan}"
+
+				operation_spacing="           "
+			;;
+			"Applying Tags")
+				operation_spacing="            "
 			;;
 			"Prune METADATA Blocks")
 				operation_spacing="    "
@@ -2771,43 +2980,89 @@ __operation_summary () {
 		__summary_line
 	fi
 
-	# ReplayGain operations
-	if [[ "${replaygain_flac}" == "true" && "${replaygain_complete}" == "true" ]] ; then
-		operation="Apply ReplayGain"
+	# ReplayGain test operations
+	if [[ "${replaygain_flac}" == "true" && "${testing_replaygain_complete}" == "true" ]] ; then
+		operation="Testing ReplayGain"
 		operation_summary="complete"
 		__summary_line
-	elif [[ "${replaygain_flac}" == "true" && "${replaygain_complete}" == "false" ]] ; then
-		operation="Apply ReplayGain"
+	elif [[ "${replaygain_flac}" == "true" && "${testing_replaygain_complete}" == "false" ]] ; then
+		operation="Testing ReplayGain"
 		operation_summary="failed"
 		__summary_line
-	elif [[ "${replaygain_flac}" == "true" && "${replaygain_complete}" == "interrupt" ]] ; then
-		operation="Apply ReplayGain"
+	elif [[ "${replaygain_flac}" == "true" && "${testing_replaygain_complete}" == "interrupt" ]] ; then
+		operation="Testing ReplayGain"
 		operation_summary="interrupted"
 		__summary_line
 	elif [[ "${replaygain_flac}" == "true" ]] ; then
-		operation="Apply ReplayGain"
+		operation="Testing ReplayGain"
 		operation_summary="did not run"
 		__summary_line
 	fi
 
-	# Redo Tags operations
-	if [[ "${redo_flac}" == "true" && "${redo_complete}" == "true" ]] ; then
-		operation="Retag Files"
+	# ReplayGain apply operations
+	if [[ "${replaygain_flac}" == "true" && "${adding_replaygain_complete}" == "true" ]] ; then
+		operation="Adding ReplayGain"
 		operation_summary="complete"
 		__summary_line
-	elif [[ "${redo_flac}" == "true" && "${redo_complete}" == "false" ]] ; then
-		operation="Retag Files"
+	elif [[ "${replaygain_flac}" == "true" && "${adding_replaygain_complete}" == "false" ]] ; then
+		operation="Adding ReplayGain"
 		operation_summary="failed"
 		__summary_line
-	elif [[ "${redo_flac}" == "true" && "${redo_complete}" == "interrupt" ]] ; then
-		operation="Retag Files"
+	elif [[ "${replaygain_flac}" == "true" && "${adding_replaygain_complete}" == "interrupt" ]] ; then
+		operation="Adding ReplayGain"
 		operation_summary="interrupted"
 		__summary_line
-	elif [[ "${redo_flac}" == "true" ]] ; then
-		operation="Retag Files"
+	elif [[ "${replaygain_flac}" == "true" ]] ; then
+		operation="Adding ReplayGain"
 		operation_summary="did not run"
 		__summary_line
 	fi
+
+	# Change ${yellow} color back to yellow (could have been
+	# changed in ReplayGain operations above)
+	yellow="\033[33m"
+
+	# Retag analyze operations
+	if [[ "${retag_flac}" == "true" && "${analyzing_retag_complete}" == "true" ]] ; then
+		operation="Analyzing Tags"
+		operation_summary="complete"
+		__summary_line
+	elif [[ "${retag_flac}" == "true" && "${analyzing_retag_complete}" == "false" ]] ; then
+		operation="Analyzing Tags"
+		operation_summary="failed"
+		__summary_line
+	elif [[ "${retag_flac}" == "true" && "${analyzing_retag_complete}" == "interrupt" ]] ; then
+		operation="Analyzing Tags"
+		operation_summary="interrupted"
+		__summary_line
+	elif [[ "${retag_flac}" == "true" ]] ; then
+		operation="Analyzing Tags"
+		operation_summary="did not run"
+		__summary_line
+	fi
+
+	# Retag apply operations
+	if [[ "${retag_flac}" == "true" && "${applying_retag_complete}" == "true" ]] ; then
+		operation="Applying Tags"
+		operation_summary="complete"
+		__summary_line
+	elif [[ "${retag_flac}" == "true" && "${applying_retag_complete}" == "false" ]] ; then
+		operation="Applying Tags"
+		operation_summary="failed"
+		__summary_line
+	elif [[ "${retag_flac}" == "true" && "${applying_retag_complete}" == "interrupt" ]] ; then
+		operation="Applying Tags"
+		operation_summary="interrupted"
+		__summary_line
+	elif [[ "${retag_flac}" == "true" ]] ; then
+		operation="Applying Tags"
+		operation_summary="did not run"
+		__summary_line
+	fi
+
+	# Change ${yellow} color back to yellow (could have been
+	# changed in Retag operations above)
+	yellow="\033[33m"
 
 	# Prune Flacs operations
 	if [[ "${prune_flac}" == "true" && "${prune_complete}" == "true" ]] ; then
@@ -4012,7 +4267,7 @@ tmp_fifo="/tmp/redoflacs_fifo_$$"
 __set_error_fd
 
 # Display the top banner
-if [[ "${redo_flac}" != "true" ]] ; then
+if [[ "${retag_flac}" != "true" ]] ; then
 	# Display top banner
 	__top_banner
 else
@@ -4278,7 +4533,7 @@ if [[ "${replaygain_flac}" == "true" ]] ; then
 	if [[ -f "${replay_test_errors}" ]] ; then
 		__log_replaygain_test
 
-		replaygain_complete="false"
+		testing_replaygain_complete="false"
 		__operation_summary
 
 		exit 1
@@ -4287,6 +4542,7 @@ if [[ "${replaygain_flac}" == "true" ]] ; then
 	if [[ "${last_file}" == "true" ]] ; then
 		# FLAC is okay, so print only if it's the last file
 		__print_ok_replaygain_file
+		testing_replaygain_complete="true"
 	fi
 	#== END TEST REPLAYGAIN ====================================================
 
@@ -4318,7 +4574,7 @@ if [[ "${replaygain_flac}" == "true" ]] ; then
 	if [[ -f "${replay_add_errors}" ]] ; then
 		__log_replaygain_process
 
-		replaygain_complete="false"
+		adding_replaygain_complete="false"
 		__operation_summary
 
 		exit 1
@@ -4330,7 +4586,7 @@ if [[ "${replaygain_flac}" == "true" ]] ; then
 	fi
 
 	# ReplayGain completed successfully
-	replaygain_complete="true"
+	adding_replaygain_complete="true"
 	#== END PROCESS REPLAYGAIN =================================================
 fi
 #== END REPLAYGAIN =============================================================
@@ -4339,7 +4595,7 @@ fi
 #-------------------------------------------------------------------------------
 #  RETAG
 #-------------------------------------------------------------------------------
-if [[ "${redo_flac}" == "true" ]] ; then
+if [[ "${retag_flac}" == "true" ]] ; then
 
 	# If COVERART tag doesn't appear in any of the FLAC files'
 	# tags, and if the user wants artwork to be kept, don't log
@@ -4373,7 +4629,7 @@ if [[ "${redo_flac}" == "true" ]] ; then
 	# Analyze FLAC tags to ensure none are missing and/or empty
 	#
 	# Trap SIGINT (Control-C) to abort cleanly
-	trap __redo_tags_abort SIGINT
+	trap __analyzing_tags_abort SIGINT
 
 	# Prints sub message of current operation
 	__sub_analyze_tags
@@ -4407,7 +4663,7 @@ if [[ "${redo_flac}" == "true" ]] ; then
 
 		__log_missing_tags
 
-		redo_complete="false"
+		analyzing_retag_complete="false"
 		__operation_summary
 
 		exit 1
@@ -4415,7 +4671,7 @@ if [[ "${redo_flac}" == "true" ]] ; then
 		# Just display metadata issues
 		__log_missing_tags
 
-		redo_complete="false"
+		analyzing_retag_complete="false"
 		__operation_summary
 
 		exit 1
@@ -4424,6 +4680,7 @@ if [[ "${redo_flac}" == "true" ]] ; then
 	if [[ "${last_file}" == "true" ]] ; then
 		# FLAC is okay, so print only if it's the last file
 		__print_ok_tag
+		analyzing_retag_complete="true"
 	fi
 	#== END ANALYZE TAGS =======================================================
 
@@ -4434,7 +4691,7 @@ if [[ "${redo_flac}" == "true" ]] ; then
 	# Clear the old tags and re-tag with the kept tags
 	#
 	# Trap SIGINT (Control-C) to abort cleanly
-	trap __redo_tags_abort SIGINT
+	trap __applying_tags_abort SIGINT
 
 	# Restore the original tags array as the script _may_ have
 	# added the COVERART tag.  This way, we ensure that the
@@ -4453,10 +4710,8 @@ if [[ "${redo_flac}" == "true" ]] ; then
 	if [[ "${last_file}" == "true" ]] ; then
 		# FLAC is okay, so print only if it's the last file
 		__print_ok_tag ; __newline
+		applying_retag_complete="true"
 	fi
-
-	# Redo Tags completed successfully
-	redo_complete="true"
 	#== END SET TAGS ===========================================================
 fi
 #== END RETAG ==================================================================
