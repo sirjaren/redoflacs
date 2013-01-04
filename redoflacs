@@ -660,18 +660,7 @@ __print_compressing_flac () {
 		filename="${filename::${max_filename_length}}…"
 	fi
 
-	# The current length is obtained via the length of what's printed now minus
-	# the length of the filename and gaps:
-	#
-	#  [1234/123456] 07 - Some_FLAC_Filename.flac <- ${current_length} -> [ Operation Message ]
-	#                                             ^^^^^^^^^^^^^^^^^^^^^^^
-	#                ${#filename}:  Length of the current filename
-	#  ${max_filename_length} + 1:  Total length of what's printed minus the operation
-	#                               message plus one because we do not want the ellipsis
-	#                               from ${max_filename_length}, just the space/gap
-	current_length="$(( ${max_filename_length} - ${#filename} + 1 ))"
-
-	printf "\r${normal}%s${magenta}%s${normal}%s%${current_length}s${blue}%s${normal}%s${yellow}%s${normal}%s${blue}%s${normal}%s" \
+	printf "\r${normal}%s${magenta}%s${normal}%s%$(__current_length)s${blue}%s${normal}%s${yellow}%s${normal}%s${blue}%s${normal}%s" \
 	"   " "[${iteration}/${#total_flacs_array[@]}]" " ${filename} " "" "[" " " "Compressing FLAC" " " "]" " "
 }
 
@@ -708,18 +697,7 @@ __print_test_replaygain () {
 		filename="${filename::${max_filename_length}}…"
 	fi
 
-	# The current length is obtained via the length of what's printed now minus
-	# the length of the filename and gaps:
-	#
-	#  [1234/123456] 07 - Some_FLAC_Filename.flac <- ${current_length} -> [ Operation Message ]
-	#                                             ^^^^^^^^^^^^^^^^^^^^^^^
-	#                ${#filename}:  Length of the current filename
-	#  ${max_filename_length} + 1:  Total length of what's printed minus the operation
-	#                               message plus one because we do not want the ellipsis
-	#                               from ${max_filename_length}, just the space/gap
-	current_length="$(( ${max_filename_length} - ${#filename} + 1 ))"
-
-	printf "\r${normal}%s${magenta}%s${normal}%s%${current_length}s${blue}%s${normal}%s${yellow}%s${normal}%s${blue}%s${normal}%s" \
+	printf "\r${normal}%s${magenta}%s${normal}%s%$(__current_length)s${blue}%s${normal}%s${yellow}%s${normal}%s${blue}%s${normal}%s" \
 	"     " "[${iteration}/${#total_flacs_array[@]}]" " ${filename} " "" "[" " " "Testing ReplayGain" " " "]" " "
 }
 
@@ -756,18 +734,7 @@ __print_add_replaygain () {
 		filename="${filename::${max_filename_length}}…"
 	fi
 
-	# The current length is obtained via the length of what's printed now minus
-	# the length of the filename and gaps:
-	#
-	#  [1234/123456] 07 - Some_FLAC_Filename.flac <- ${current_length} -> [ Operation Message ]
-	#                                             ^^^^^^^^^^^^^^^^^^^^^^^
-	#                ${#filename}:  Length of the current filename
-	#  ${max_filename_length} + 1:  Total length of what's printed minus the operation
-	#                               message plus one because we do not want the ellipsis
-	#                               from ${max_filename_length}, just the space/gap
-	current_length="$(( ${max_filename_length} - ${#filename} + 1 ))"
-
-	printf "\r${normal}%s${magenta}%s${normal}%s%${current_length}s${blue}%s${normal}%s${yellow}%s${normal}%s${blue}%s${normal}%s" \
+	printf "\r${normal}%s${magenta}%s${normal}%s%$(__current_length)s${blue}%s${normal}%s${yellow}%s${normal}%s${blue}%s${normal}%s" \
 	"     " "[${iteration}/${#flac_directories_array[@]}]" " ${filename} " "" "[" " " "Adding ReplayGain" " " "]" " "
 }
 
@@ -804,18 +771,7 @@ __print_testing_flac () {
 		filename="${filename::${max_filename_length}}…"
 	fi
 
-	# The current length is obtained via the length of what's printed now minus
-	# the length of the filename and gaps:
-	#
-	#  [1234/123456] 07 - Some_FLAC_Filename.flac <- ${current_length} -> [ Operation Message ]
-	#                                             ^^^^^^^^^^^^^^^^^^^^^^^
-	#                ${#filename}:  Length of the current filename
-	#  ${max_filename_length} + 1:  Total length of what's printed minus the operation
-	#                               message plus one because we do not want the ellipsis
-	#                               from ${max_filename_length}, just the space/gap
-	current_length="$(( ${max_filename_length} - ${#filename} + 1 ))"
-
-	printf "\r${normal}%s${magenta}%s${normal}%s%${current_length}s${blue}%s${normal}%s${yellow}%s${normal}%s${blue}%s${normal}%s" \
+	printf "\r${normal}%s${magenta}%s${normal}%s%$(__current_length)s${blue}%s${normal}%s${yellow}%s${normal}%s${blue}%s${normal}%s" \
 	"   " "[${iteration}/${#total_flacs_array[@]}]" " ${filename} " "" "[" " " "Testing FLAC" " " "]" " "
 }
 
@@ -852,18 +808,7 @@ __print_failed_flac () {
 		filename="${filename::${max_filename_length}}…"
 	fi
 
-	# The current length is obtained via the length of what's printed now minus
-	# the length of the filename and gaps:
-	#
-	#  [1234/123456] 07 - Some_FLAC_Filename.flac <- ${current_length} -> [ Operation Message ]
-	#                                             ^^^^^^^^^^^^^^^^^^^^^^^
-	#                ${#filename}:  Length of the current filename
-	#  ${max_filename_length} + 1:  Total length of what's printed minus the operation
-	#                               message plus one because we do not want the ellipsis
-	#                               from ${max_filename_length}, just the space/gap
-	current_length="$(( ${max_filename_length} - ${#filename} + 1 ))"
-
-	printf "\r${normal}%s${red}%s${normal}%s%${current_length}s${blue}%s${normal}%s${red}%s${normal}%s${blue}%s${normal}%s\n" \
+	printf "\r${normal}%s${red}%s${normal}%s%$(__current_length)s${blue}%s${normal}%s${red}%s${normal}%s${blue}%s${normal}%s\n" \
 	"     " "*" " ${filename} " "" "[" " " "Failed" " " "]" " "
 }
 
@@ -900,18 +845,7 @@ __print_checking_md5 () {
 		filename="${filename::${max_filename_length}}…"
 	fi
 
-	# The current length is obtained via the length of what's printed now minus
-	# the length of the filename and gaps:
-	#
-	#  [1234/123456] 07 - Some_FLAC_Filename.flac <- ${current_length} -> [ Operation Message ]
-	#                                             ^^^^^^^^^^^^^^^^^^^^^^^
-	#                ${#filename}:  Length of the current filename
-	#  ${max_filename_length} + 1:  Total length of what's printed minus the operation
-	#                               message plus one because we do not want the ellipsis
-	#                               from ${max_filename_length}, just the space/gap
-	current_length="$(( ${max_filename_length} - ${#filename} + 1 ))"
-
-	printf "\r${normal}%s${magenta}%s${normal}%s%${current_length}s${blue}%s${normal}%s${yellow}%s${normal}%s${blue}%s${normal}%s" \
+	printf "\r${normal}%s${magenta}%s${normal}%s%$(__current_length)s${blue}%s${normal}%s${yellow}%s${normal}%s${blue}%s${normal}%s" \
 	"   " "[${iteration}/${#total_flacs_array[@]}]" " ${filename} " "" "[" " " "Checking MD5" " " "]" " "
 }
 
@@ -948,18 +882,7 @@ __print_ok_flac () {
 		filename="${filename::${max_filename_length}}…"
 	fi
 
-	# The current length is obtained via the length of what's printed now minus
-	# the length of the filename and gaps:
-	#
-	#  [1234/123456] 07 - Some_FLAC_Filename.flac <- ${current_length} -> [ Operation Message ]
-	#                                             ^^^^^^^^^^^^^^^^^^^^^^^
-	#                ${#filename}:  Length of the current filename
-	#  ${max_filename_length} + 1:  Total length of what's printed minus the operation
-	#                               message plus one because we do not want the ellipsis
-	#                               from ${max_filename_length}, just the space/gap
-	current_length="$(( ${max_filename_length} - ${#filename} + 1 ))"
-
-	printf "\r${normal}%s${magenta}%s${normal}%s%${current_length}s${blue}%s${normal}%s${green}%s${normal}%s${blue}%s${normal}%s" \
+	printf "\r${normal}%s${magenta}%s${normal}%s%$(__current_length)s${blue}%s${normal}%s${green}%s${normal}%s${blue}%s${normal}%s" \
 	"   " "[${iteration}/${#total_flacs_array[@]}]" " ${filename} " "" "[" " " "ok" " " "]" " "
 }
 
@@ -996,18 +919,7 @@ __print_ok_replaygain_file () {
 		filename="${filename::${max_filename_length}}…"
 	fi
 
-	# The current length is obtained via the length of what's printed now minus
-	# the length of the filename and gaps:
-	#
-	#  [1234/123456] 07 - Some_FLAC_Filename.flac <- ${current_length} -> [ Operation Message ]
-	#                                             ^^^^^^^^^^^^^^^^^^^^^^^
-	#                ${#filename}:  Length of the current filename
-	#  ${max_filename_length} + 1:  Total length of what's printed minus the operation
-	#                               message plus one because we do not want the ellipsis
-	#                               from ${max_filename_length}, just the space/gap
-	current_length="$(( ${max_filename_length} - ${#filename} + 1 ))"
-
-	printf "\r${normal}%s${magenta}%s${normal}%s%${current_length}s${blue}%s${normal}%s${green}%s${normal}%s${blue}%s${normal}%s" \
+	printf "\r${normal}%s${magenta}%s${normal}%s%$(__current_length)s${blue}%s${normal}%s${green}%s${normal}%s${blue}%s${normal}%s" \
 	"     " "[${iteration}/${#total_flacs_array[@]}]" " ${filename} " "" "[" " " "ok" " " "]" " "
 }
 
@@ -1044,18 +956,7 @@ __print_interrupt_replaygain_file () {
 		filename="${filename::${max_filename_length}}…"
 	fi
 
-	# The current length is obtained via the length of what's printed now minus
-	# the length of the filename and gaps:
-	#
-	#  [1234/123456] 07 - Some_FLAC_Filename.flac <- ${current_length} -> [ Operation Message ]
-	#                                             ^^^^^^^^^^^^^^^^^^^^^^^
-	#                ${#filename}:  Length of the current filename
-	#  ${max_filename_length} + 1:  Total length of what's printed minus the operation
-	#                               message plus one because we do not want the ellipsis
-	#                               from ${max_filename_length}, just the space/gap
-	current_length="$(( ${max_filename_length} - ${#filename} + 1 ))"
-
-	printf "\r${normal}%s${magenta}%s${normal}%s%${current_length}s${blue}%s${normal}%s${yellow}%s${normal}%s${blue}%s${normal}%s" \
+	printf "\r${normal}%s${magenta}%s${normal}%s%$(__current_length)s${blue}%s${normal}%s${yellow}%s${normal}%s${blue}%s${normal}%s" \
 	"     " "[${iteration}/${#total_flacs_array[@]}]" " ${filename} " "" "[" " " "Interrupted" " " "]" " "
 }
 
@@ -1092,18 +993,7 @@ __print_ok_replaygain_dir () {
 		filename="${filename::${max_filename_length}}…"
 	fi
 
-	# The current length is obtained via the length of what's printed now minus
-	# the length of the filename and gaps:
-	#
-	#  [1234/123456] 07 - Some_FLAC_Filename.flac <- ${current_length} -> [ Operation Message ]
-	#                                             ^^^^^^^^^^^^^^^^^^^^^^^
-	#                ${#filename}:  Length of the current filename
-	#  ${max_filename_length} + 1:  Total length of what's printed minus the operation
-	#                               message plus one because we do not want the ellipsis
-	#                               from ${max_filename_length}, just the space/gap
-	current_length="$(( ${max_filename_length} - ${#filename} + 1 ))"
-
-	printf "\r${normal}%s${magenta}%s${normal}%s%${current_length}s${blue}%s${normal}%s${green}%s${normal}%s${blue}%s${normal}%s" \
+	printf "\r${normal}%s${magenta}%s${normal}%s%$(__current_length)s${blue}%s${normal}%s${green}%s${normal}%s${blue}%s${normal}%s" \
 	"     " "[${iteration}/${#flac_directories_array[@]}]" " ${filename} " "" "[" " " "ok" " " "]" " "
 }
 
@@ -1140,18 +1030,7 @@ __print_interrupt_replaygain_dir () {
 		filename="${filename::${max_filename_length}}…"
 	fi
 
-	# The current length is obtained via the length of what's printed now minus
-	# the length of the filename and gaps:
-	#
-	#  [1234/123456] 07 - Some_FLAC_Filename.flac <- ${current_length} -> [ Operation Message ]
-	#                                             ^^^^^^^^^^^^^^^^^^^^^^^
-	#                ${#filename}:  Length of the current filename
-	#  ${max_filename_length} + 1:  Total length of what's printed minus the operation
-	#                               message plus one because we do not want the ellipsis
-	#                               from ${max_filename_length}, just the space/gap
-	current_length="$(( ${max_filename_length} - ${#filename} + 1 ))"
-
-	printf "\r${normal}%s${magenta}%s${normal}%s%${current_length}s${blue}%s${normal}%s${yellow}%s${normal}%s${blue}%s${normal}%s" \
+	printf "\r${normal}%s${magenta}%s${normal}%s%$(__current_length)s${blue}%s${normal}%s${yellow}%s${normal}%s${blue}%s${normal}%s" \
 	"     " "[${iteration}/${#flac_directories_array[@]}]" " ${filename} " "" "[" " " "Interrupted" " " "]" " "
 }
 
@@ -1188,18 +1067,7 @@ __print_aucdtect_flac () {
 		filename="${filename::${max_filename_length}}…"
 	fi
 
-	# The current length is obtained via the length of what's printed now minus
-	# the length of the filename and gaps:
-	#
-	#  [1234/123456] 07 - Some_FLAC_Filename.flac <- ${current_length} -> [ Operation Message ]
-	#                                             ^^^^^^^^^^^^^^^^^^^^^^^
-	#                ${#filename}:  Length of the current filename
-	#  ${max_filename_length} + 1:  Total length of what's printed minus the operation
-	#                               message plus one because we do not want the ellipsis
-	#                               from ${max_filename_length}, just the space/gap
-	current_length="$(( ${max_filename_length} - ${#filename} + 1 ))"
-
-	printf "\r${normal}%s${magenta}%s${normal}%s%${current_length}s${blue}%s${normal}%s${yellow}%s${normal}%s${blue}%s${normal}%s" \
+	printf "\r${normal}%s${magenta}%s${normal}%s%$(__current_length)s${blue}%s${normal}%s${yellow}%s${normal}%s${blue}%s${normal}%s" \
 	"   " "[${iteration}/${#total_flacs_array[@]}]" " ${filename} " "" "[" " " "Validating FLAC" " " "]" " "
 }
 
@@ -1236,18 +1104,7 @@ __print_aucdtect_issue () {
 		filename="${filename::${max_filename_length}}…"
 	fi
 
-	# The current length is obtained via the length of what's printed now minus
-	# the length of the filename and gaps:
-	#
-	#  [1234/123456] 07 - Some_FLAC_Filename.flac <- ${current_length} -> [ Operation Message ]
-	#                                             ^^^^^^^^^^^^^^^^^^^^^^^
-	#                ${#filename}:  Length of the current filename
-	#  ${max_filename_length} + 1:  Total length of what's printed minus the operation
-	#                               message plus one because we do not want the ellipsis
-	#                               from ${max_filename_length}, just the space/gap
-	current_length="$(( ${max_filename_length} - ${#filename} + 1 ))"
-
-	printf "\r${normal}%s${yellow}%s${normal}%s%${current_length}s${blue}%s${normal}%s${yellow}%s${normal}%s${blue}%s${normal}%s\n" \
+	printf "\r${normal}%s${yellow}%s${normal}%s%$(__current_length)s${blue}%s${normal}%s${yellow}%s${normal}%s${blue}%s${normal}%s\n" \
 	"     " "*" " ${filename} " "" "[" " " "Issue" " " "]" " "
 }
 
@@ -1284,18 +1141,7 @@ __print_aucdtect_spectrogram () {
 		filename="${filename::${max_filename_length}}…"
 	fi
 
-	# The current length is obtained via the length of what's printed now minus
-	# the length of the filename and gaps:
-	#
-	#  [1234/123456] 07 - Some_FLAC_Filename.flac <- ${current_length} -> [ Operation Message ]
-	#                                             ^^^^^^^^^^^^^^^^^^^^^^^
-	#                ${#filename}:  Length of the current filename
-	#  ${max_filename_length} + 1:  Total length of what's printed minus the operation
-	#                               message plus one because we do not want the ellipsis
-	#                               from ${max_filename_length}, just the space/gap
-	current_length="$(( ${max_filename_length} - ${#filename} + 1 ))"
-
-	printf "\r${normal}%s${magenta}%s${normal}%s%${current_length}s${blue}%s${normal}%s${yellow}%s${normal}%s${blue}%s${normal}%s" \
+	printf "\r${normal}%s${magenta}%s${normal}%s%$(__current_length)s${blue}%s${normal}%s${yellow}%s${normal}%s${blue}%s${normal}%s" \
 	"   " "[${iteration}/${#total_flacs_array[@]}]" " ${filename} " "" "[" " " "Creating Spectrogram" " " "]" " "
 }
 
@@ -1332,18 +1178,7 @@ __print_aucdtect_skip () {
 		filename="${filename::${max_filename_length}}…"
 	fi
 
-	# The current length is obtained via the length of what's printed now minus
-	# the length of the filename and gaps:
-	#
-	#  [1234/123456] 07 - Some_FLAC_Filename.flac <- ${current_length} -> [ Operation Message ]
-	#                                             ^^^^^^^^^^^^^^^^^^^^^^^
-	#                ${#filename}:  Length of the current filename
-	#  ${max_filename_length} + 1:  Total length of what's printed minus the operation
-	#                               message plus one because we do not want the ellipsis
-	#                               from ${max_filename_length}, just the space/gap
-	current_length="$(( ${max_filename_length} - ${#filename} + 1 ))"
-
-	printf "\r${normal}%s${red}%s${normal}%s%${current_length}s${blue}%s${normal}%s${yellow}%s${normal}%s${blue}%s${normal}%s\n" \
+	printf "\r${normal}%s${red}%s${normal}%s%$(__current_length)s${blue}%s${normal}%s${yellow}%s${normal}%s${blue}%s${normal}%s\n" \
 	"     " "*" " ${filename} " "" "[" " " "Skipped" " " "]" " "
 }
 
@@ -1380,18 +1215,7 @@ __print_ok_tag () {
 		filename="${filename::${max_filename_length}}…"
 	fi
 
-	# The current length is obtained via the length of what's printed now minus
-	# the length of the filename and gaps:
-	#
-	#  [1234/123456] 07 - Some_FLAC_Filename.flac <- ${current_length} -> [ Operation Message ]
-	#                                             ^^^^^^^^^^^^^^^^^^^^^^^
-	#                ${#filename}:  Length of the current filename
-	#  ${max_filename_length} + 1:  Total length of what's printed minus the operation
-	#                               message plus one because we do not want the ellipsis
-	#                               from ${max_filename_length}, just the space/gap
-	current_length="$(( ${max_filename_length} - ${#filename} + 1 ))"
-
-	printf "\r${normal}%s${magenta}%s${normal}%s%${current_length}s${blue}%s${normal}%s${green}%s${normal}%s${blue}%s${normal}%s" \
+	printf "\r${normal}%s${magenta}%s${normal}%s%$(__current_length)s${blue}%s${normal}%s${green}%s${normal}%s${blue}%s${normal}%s" \
 	"     " "[${iteration}/${#total_flacs_array[@]}]" " ${filename} " "" "[" " " "ok" " " "]" " "
 }
 
@@ -1428,18 +1252,7 @@ __print_level_same_compression () {
 		filename="${filename::${max_filename_length}}…"
 	fi
 
-	# The current length is obtained via the length of what's printed now minus
-	# the length of the filename and gaps:
-	#
-	#  [1234/123456] 07 - Some_FLAC_Filename.flac <- ${current_length} -> [ Operation Message ]
-	#                                             ^^^^^^^^^^^^^^^^^^^^^^^
-	#                ${#filename}:  Length of the current filename
-	#  ${max_filename_length} + 1:  Total length of what's printed minus the operation
-	#                               message plus one because we do not want the ellipsis
-	#                               from ${max_filename_length}, just the space/gap
-	current_length="$(( ${max_filename_length} - ${#filename} + 1 ))"
-
-	printf "\r${normal}%s${magenta}%s${normal}%s%${current_length}s${blue}%s${normal}%s${yellow}%s${normal}%s${blue}%s${normal}%s" \
+	printf "\r${normal}%s${magenta}%s${normal}%s%$(__current_length)s${blue}%s${normal}%s${yellow}%s${normal}%s${blue}%s${normal}%s" \
 	"   " "[${iteration}/${#total_flacs_array[@]}]" " ${filename} " "" "[" " " "Already At Level ${compression_level}" " " "]" " "
 }
 
@@ -1476,18 +1289,7 @@ __print_analyzing_tags () {
 		filename="${filename::${max_filename_length}}…"
 	fi
 
-	# The current length is obtained via the length of what's printed now minus
-	# the length of the filename and gaps:
-	#
-	#  [1234/123456] 07 - Some_FLAC_Filename.flac <- ${current_length} -> [ Operation Message ]
-	#                                             ^^^^^^^^^^^^^^^^^^^^^^^
-	#                ${#filename}:  Length of the current filename
-	#  ${max_filename_length} + 1:  Total length of what's printed minus the operation
-	#                               message plus one because we do not want the ellipsis
-	#                               from ${max_filename_length}, just the space/gap
-	current_length="$(( ${max_filename_length} - ${#filename} + 1 ))"
-
-	printf "\r${normal}%s${magenta}%s${normal}%s%${current_length}s${blue}%s${normal}%s${yellow}%s${normal}%s${blue}%s${normal}%s" \
+	printf "\r${normal}%s${magenta}%s${normal}%s%$(__current_length)s${blue}%s${normal}%s${yellow}%s${normal}%s${blue}%s${normal}%s" \
 	"     " "[${iteration}/${#total_flacs_array[@]}]" " ${filename} " "" "[" " " "Analyzing Tags" " " "]" " "
 }
 
@@ -1524,18 +1326,7 @@ __print_applying_tags () {
 		filename="${filename::${max_filename_length}}…"
 	fi
 
-	# The current length is obtained via the length of what's printed now minus
-	# the length of the filename and gaps:
-	#
-	#  [1234/123456] 07 - Some_FLAC_Filename.flac <- ${current_length} -> [ Operation Message ]
-	#                                             ^^^^^^^^^^^^^^^^^^^^^^^
-	#                ${#filename}:  Length of the current filename
-	#  ${max_filename_length} + 1:  Total length of what's printed minus the operation
-	#                               message plus one because we do not want the ellipsis
-	#                               from ${max_filename_length}, just the space/gap
-	current_length="$(( ${max_filename_length} - ${#filename} + 1 ))"
-
-	printf "\r${normal}%s${magenta}%s${normal}%s%${current_length}s${blue}%s${normal}%s${yellow}%s${normal}%s${blue}%s${normal}%s" \
+	printf "\r${normal}%s${magenta}%s${normal}%s%$(__current_length)s${blue}%s${normal}%s${yellow}%s${normal}%s${blue}%s${normal}%s" \
 	"     " "[${iteration}/${#total_flacs_array[@]}]" " ${filename} " "" "[" " " "Setting Tags" " " "]" " "
 }
 
@@ -1572,18 +1363,7 @@ __print_prune_flac () {
 		filename="${filename::${max_filename_length}}…"
 	fi
 
-	# The current length is obtained via the length of what's printed now minus
-	# the length of the filename and gaps:
-	#
-	#  [1234/123456] 07 - Some_FLAC_Filename.flac <- ${current_length} -> [ Operation Message ]
-	#                                             ^^^^^^^^^^^^^^^^^^^^^^^
-	#                ${#filename}:  Length of the current filename
-	#  ${max_filename_length} + 1:  Total length of what's printed minus the operation
-	#                               message plus one because we do not want the ellipsis
-	#                               from ${max_filename_length}, just the space/gap
-	current_length="$(( ${max_filename_length} - ${#filename} + 1 ))"
-
-	printf "\r${normal}%s${magenta}%s${normal}%s%${current_length}s${blue}%s${normal}%s${yellow}%s${normal}%s${blue}%s${normal}%s" \
+	printf "\r${normal}%s${magenta}%s${normal}%s%$(__current_length)s${blue}%s${normal}%s${yellow}%s${normal}%s${blue}%s${normal}%s" \
 	"   " "[${iteration}/${#total_flacs_array[@]}]" " ${filename} " "" "[" " " "Pruning Metadata" " " "]" " "
 }
 
@@ -1620,18 +1400,7 @@ __print_retag_analyze_interrupt () {
 		filename="${filename::${max_filename_length}}…"
 	fi
 
-	# The current length is obtained via the length of what's printed now minus
-	# the length of the filename and gaps:
-	#
-	#  [1234/123456] 07 - Some_FLAC_Filename.flac <- ${current_length} -> [ Operation Message ]
-	#                                             ^^^^^^^^^^^^^^^^^^^^^^^
-	#                ${#filename}:  Length of the current filename
-	#  ${max_filename_length} + 1:  Total length of what's printed minus the operation
-	#                               message plus one because we do not want the ellipsis
-	#                               from ${max_filename_length}, just the space/gap
-	current_length="$(( ${max_filename_length} - ${#filename} + 1 ))"
-
-	printf "\r${normal}%s${magenta}%s${normal}%s%${current_length}s${blue}%s${normal}%s${yellow}%s${normal}%s${blue}%s${normal}%s" \
+	printf "\r${normal}%s${magenta}%s${normal}%s%$(__current_length)s${blue}%s${normal}%s${yellow}%s${normal}%s${blue}%s${normal}%s" \
 	"     " "[${iteration}/${#total_flacs_array[@]}]" " ${filename} " "" "[" " " "Interrupted" " " "]" " "
 }
 
@@ -1668,18 +1437,7 @@ __print_retag_apply_interrupt () {
 		filename="${filename::${max_filename_length}}…"
 	fi
 
-	# The current length is obtained via the length of what's printed now minus
-	# the length of the filename and gaps:
-	#
-	#  [1234/123456] 07 - Some_FLAC_Filename.flac <- ${current_length} -> [ Operation Message ]
-	#                                             ^^^^^^^^^^^^^^^^^^^^^^^
-	#                ${#filename}:  Length of the current filename
-	#  ${max_filename_length} + 1:  Total length of what's printed minus the operation
-	#                               message plus one because we do not want the ellipsis
-	#                               from ${max_filename_length}, just the space/gap
-	current_length="$(( ${max_filename_length} - ${#filename} + 1 ))"
-
-	printf "\r${normal}%s${magenta}%s${normal}%s%${current_length}s${blue}%s${normal}%s${yellow}%s${normal}%s${blue}%s${normal}%s" \
+	printf "\r${normal}%s${magenta}%s${normal}%s%$(__current_length)s${blue}%s${normal}%s${yellow}%s${normal}%s${blue}%s${normal}%s" \
 	"     " "[${iteration}/${#total_flacs_array[@]}]" " ${filename} " "" "[" " " "Interrupted" " " "]" " "
 }
 
@@ -1716,18 +1474,7 @@ __print_interrupt () {
 		filename="${filename::${max_filename_length}}…"
 	fi
 
-	# The current length is obtained via the length of what's printed now minus
-	# the length of the filename and gaps:
-	#
-	#  [1234/123456] 07 - Some_FLAC_Filename.flac <- ${current_length} -> [ Operation Message ]
-	#                                             ^^^^^^^^^^^^^^^^^^^^^^^
-	#                ${#filename}:  Length of the current filename
-	#  ${max_filename_length} + 1:  Total length of what's printed minus the operation
-	#                               message plus one because we do not want the ellipsis
-	#                               from ${max_filename_length}, just the space/gap
-	current_length="$(( ${max_filename_length} - ${#filename} + 1 ))"
-
-	printf "\r${normal}%s${magenta}%s${normal}%s%${current_length}s${blue}%s${normal}%s${yellow}%s${normal}%s${blue}%s${normal}%s" \
+	printf "\r${normal}%s${magenta}%s${normal}%s%$(__current_length)s${blue}%s${normal}%s${yellow}%s${normal}%s${blue}%s${normal}%s" \
 	"   " "[${iteration}/${#total_flacs_array[@]}]" " ${filename} " "" "[" " " "Interrupted" " " "]" " "
 }
 #== PROCESSED FILE/DIRECTORY MESSAGES ==========================================
@@ -1997,6 +1744,20 @@ __prune_abort () {
 # Display script version
 __print_version () {
 	printf "%s\n" "Version ${version}"
+}
+
+# Display current length spacing between filename and operation message
+__current_length () {
+	# The current length is obtained via the length of what's printed now minus
+	# the length of the filename and gaps:
+	#
+	#  [1234/123456] 07 - Some_FLAC_Filename.flac <- ${current_length} -> [ Operation Message ]
+	#                                             ^^^^^^^^^^^^^^^^^^^^^^^
+	#                ${#filename}:  Length of the current filename
+	#  ${max_filename_length} + 1:  Total length of what's printed minus the operation
+	#                               message plus one because we do not want the ellipsis
+	#                               from ${max_filename_length}, just the space/gap
+	printf "%s" "$(( ${max_filename_length} - ${#filename} + 1 ))"
 }
 
 # Determine number of jobs to run via the number
@@ -2810,7 +2571,7 @@ __operation_summary () {
 				# Print the outer operation, with the sub operations
 				# to follow (from the below case statement)
 				printf "%s${yellow}%s${normal}%s${blue}%s${normal}\n" \
-				"      " "Applying ReplayGain" " " "│" 
+				"      " "Applying ReplayGain" " " "|" 
 
 				# Change yellow color to cyan, but leave the yellow
 				# name to keep the below case statement sane
@@ -2829,7 +2590,7 @@ __operation_summary () {
 				# Print the outer operation, with the sub operations
 				# to follow (from the below case statement)
 				printf "%s${yellow}%s${normal}%s${blue}%s${normal}\n" \
-				"          " "Retagging Files" " " "│"
+				"          " "Retagging Files" " " "|"
 
 				# Change yellow color to cyan, but leave the yellow
 				# name to keep the below case statement sane
