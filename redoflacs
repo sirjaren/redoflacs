@@ -629,36 +629,12 @@ __sub_applying_tags () {
 #-------------------------------------------------------------------------------
 # Compressing
 __print_compressing_flac () {
-	# Grab the first line of 'stty -a' output
-	# Redirecting '/dev/stderr' to 'stty' allows valid arguments
-	read -r columns < <(stty -a < /dev/stderr)
+	# Obtain the maximum length of the string to be displayed returned
+	# as ${max_filename_length}. ${1} is a variable length of characters
+	__max_filename_length 30
 
-	# Remove superflous information from 'stty -a'
-	# Ends up with the width of terminal
-	columns="${columns/#*columns }"
-	columns="${columns/%;*}"
-
-	# This is the maximum length of a string to be displayed based on column width,
-	# obtained via the number of columns minus the length of displayed characters:
-	#
-	#             ${columns}:  Width of terminal
-	#          ${#iteration}:  Length of the # of FLACs processed
-	#  ${total_flacs_length}:  Length of the total # of FLAC files
-	#                     30:  Length of:
-	#                            [ Compressing FLAC ] (20)
-	#                            5 Spaces
-	#                            3 Characters: [/]
-	#                            2 Gap and ellipsis (…)
-	max_filename_length="$(( ${columns} - ${#iteration} - ${total_flacs_length} - 30 ))"
-
-	filename="${i##*/}"
-	# Replace possible newlines in filename with '?' (like 'ls' output)
-	filename="${filename//$'\n'/?}"
-
-	# Cull filename and add an ellipsis if the filename is too long
-	if [[ "${#filename}" -gt "${max_filename_length}" ]] ; then
-		filename="${filename::${max_filename_length}}…"
-	fi
+	# Create and cull filename if needed returned as ${filename}
+	__filename
 
 	printf "\r${normal}%s${magenta}%s${normal}%s%$(__current_length)s${blue}%s${normal}%s${yellow}%s${normal}%s${blue}%s${normal}%s" \
 	"   " "[${iteration}/${#total_flacs_array[@]}]" " ${filename} " "" "[" " " "Compressing FLAC" " " "]" " "
@@ -666,36 +642,12 @@ __print_compressing_flac () {
 
 # Testing ReplayGain
 __print_test_replaygain () {
-	# Grab the first line of 'stty -a' output
-	# Redirecting '/dev/stderr' to 'stty' allows valid arguments
-	read -r columns < <(stty -a < /dev/stderr)
+	# Obtain the maximum length of the string to be displayed returned
+	# as ${max_filename_length}. ${1} is a variable length of characters
+	__max_filename_length 34
 
-	# Remove superflous information from 'stty -a'
-	# Ends up with the width of terminal
-	columns="${columns/#*columns }"
-	columns="${columns/%;*}"
-
-	# This is the maximum length of a string to be displayed based on column width,
-	# obtained via the number of columns minus the length of displayed characters:
-	#
-	#             ${columns}:  Width of terminal
-	#          ${#iteration}:  Length of the # of FLACs processed
-	#  ${total_flacs_length}:  Length of the total # of FLAC files
-	#                     34:  Length of:
-	#                            [ Testing ReplayGain ] (22)
-	#                            7 Spaces
-	#                            3 Characters: [/]
-	#                            2 Gap and ellipsis (…)
-	max_filename_length="$(( ${columns} - ${#iteration} - ${total_flacs_length} - 34 ))"
-
-	filename="${i##*/}"
-	# Replace possible newlines in filename with '?' (like 'ls' output)
-	filename="${filename//$'\n'/?}"
-
-	# Cull filename and add an ellipsis if the filename is too long
-	if [[ "${#filename}" -gt "${max_filename_length}" ]] ; then
-		filename="${filename::${max_filename_length}}…"
-	fi
+	# Create and cull filename if needed returned as ${filename}
+	__filename
 
 	printf "\r${normal}%s${magenta}%s${normal}%s%$(__current_length)s${blue}%s${normal}%s${yellow}%s${normal}%s${blue}%s${normal}%s" \
 	"     " "[${iteration}/${#total_flacs_array[@]}]" " ${filename} " "" "[" " " "Testing ReplayGain" " " "]" " "
@@ -703,36 +655,12 @@ __print_test_replaygain () {
 
 # Applying ReplayGain
 __print_add_replaygain () {
-	# Grab the first line of 'stty -a' output
-	# Redirecting '/dev/stderr' to 'stty' allows valid arguments
-	read -r columns < <(stty -a < /dev/stderr)
+	# Obtain the maximum length of the string to be displayed returned
+	# as ${max_filename_length}. ${1} is a variable length of characters
+	__max_filename_length 32
 
-	# Remove superflous information from 'stty -a'
-	# Ends up with the width of terminal
-	columns="${columns/#*columns }"
-	columns="${columns/%;*}"
-
-	# This is the maximum length of a string to be displayed based on column width,
-	# obtained via the number of columns minus the length of displayed characters:
-	#
-	#             ${columns}:  Width of terminal
-	#          ${#iteration}:  Length of the # processed directories
-	#  ${#total_directories}:  Length of the total # of directories
-	#                     33:  Length of:
-	#                            [ Adding ReplayGain ] (21)
-	#                            7 Spaces
-	#                            3 Characters: [/]
-	#                            2 Gap and ellipsis (…)
-	max_filename_length="$(( ${columns} - ${#iteration} - ${#total_directories} - 33 ))"
-
-	filename="${i##*/}"
-	# Replace possible newlines in filename with '?' (like 'ls' output)
-	filename="${filename//$'\n'/?}"
-
-	# Cull filename and add an ellipsis if the filename is too long
-	if [[ "${#filename}" -gt "${max_filename_length}" ]] ; then
-		filename="${filename::${max_filename_length}}…"
-	fi
+	# Create and cull filename if needed returned as ${filename}
+	__filename
 
 	printf "\r${normal}%s${magenta}%s${normal}%s%$(__current_length)s${blue}%s${normal}%s${yellow}%s${normal}%s${blue}%s${normal}%s" \
 	"     " "[${iteration}/${#flac_directories_array[@]}]" " ${filename} " "" "[" " " "Adding ReplayGain" " " "]" " "
@@ -740,36 +668,12 @@ __print_add_replaygain () {
 
 # Testing
 __print_testing_flac () {
-	# Grab the first line of 'stty -a' output
-	# Redirecting '/dev/stderr' to 'stty' allows valid arguments
-	read -r columns < <(stty -a < /dev/stderr)
+	# Obtain the maximum length of the string to be displayed returned
+	# as ${max_filename_length}. ${1} is a variable length of characters
+	__max_filename_length 26
 
-	# Remove superflous information from 'stty -a'
-	# Ends up with the width of terminal
-	columns="${columns/#*columns }"
-	columns="${columns/%;*}"
-
-	# This is the maximum length of a string to be displayed based on column width,
-	# obtained via the number of columns minus the length of displayed characters:
-	#
-	#             ${columns}:  Width of terminal
-	#          ${#iteration}:  Length of the # of FLACs processed
-	#  ${total_flacs_length}:  Length of the total # of FLAC files
-	#                     26:  Length of:
-	#                            [ Testing FLAC ] (16)
-	#                            5 Spaces
-	#                            3 Characters: [/]
-	#                            2 Gap and ellipsis (…)
-	max_filename_length="$(( ${columns} - ${#iteration} - ${total_flacs_length} - 26 ))"
-
-	filename="${i##*/}"
-	# Replace possible newlines in filename with '?' (like 'ls' output)
-	filename="${filename//$'\n'/?}"
-
-	# Cull filename and add an ellipsis if the filename is too long
-	if [[ "${#filename}" -gt "${max_filename_length}" ]] ; then
-		filename="${filename::${max_filename_length}}…"
-	fi
+	# Create and cull filename if needed returned as ${filename}
+	__filename
 
 	printf "\r${normal}%s${magenta}%s${normal}%s%$(__current_length)s${blue}%s${normal}%s${yellow}%s${normal}%s${blue}%s${normal}%s" \
 	"   " "[${iteration}/${#total_flacs_array[@]}]" " ${filename} " "" "[" " " "Testing FLAC" " " "]" " "
@@ -777,36 +681,12 @@ __print_testing_flac () {
 
 # Failed
 __print_failed_flac () {
-	# Grab the first line of 'stty -a' output
-	# Redirecting '/dev/stderr' to 'stty' allows valid arguments
-	read -r columns < <(stty -a < /dev/stderr)
+	# Obtain the maximum length of the string to be displayed returned
+	# as ${max_filename_length}. ${1} is a variable length of characters
+	__max_filename_length 20
 
-	# Remove superflous information from 'stty -a'
-	# Ends up with the width of terminal
-	columns="${columns/#*columns }"
-	columns="${columns/%;*}"
-
-	# This is the maximum length of a string to be displayed based on column width,
-	# obtained via the number of columns minus the length of displayed characters:
-	#
-	#             ${columns}:  Width of terminal
-	#          ${#iteration}:  Length of the # of FLACs processed
-	#  ${total_flacs_length}:  Length of the total # of FLAC files
-	#                     20:  Length of:
-	#                            [ Failed ] (10)
-	#                            7 Spaces
-	#                            1 Asterisk: *
-	#                            2 Gap and ellipsis (…)
-	max_filename_length="$(( ${columns} - 20 ))"
-
-	filename="${i##*/}"
-	# Replace possible newlines in filename with '?' (like 'ls' output)
-	filename="${filename//$'\n'/?}"
-
-	# Cull filename and add an ellipsis if the filename is too long
-	if [[ "${#filename}" -gt "${max_filename_length}" ]] ; then
-		filename="${filename::${max_filename_length}}…"
-	fi
+	# Create and cull filename if needed returned as ${filename}
+	__filename
 
 	printf "\r${normal}%s${red}%s${normal}%s%$(__current_length)s${blue}%s${normal}%s${red}%s${normal}%s${blue}%s${normal}%s\n" \
 	"     " "*" " ${filename} " "" "[" " " "Failed" " " "]" " "
@@ -814,36 +694,12 @@ __print_failed_flac () {
 
 # Checking MD5
 __print_checking_md5 () {
-	# Grab the first line of 'stty -a' output
-	# Redirecting '/dev/stderr' to 'stty' allows valid arguments
-	read -r columns < <(stty -a < /dev/stderr)
+	# Obtain the maximum length of the string to be displayed returned
+	# as ${max_filename_length}. ${1} is a variable length of characters
+	__max_filename_length 26
 
-	# Remove superflous information from 'stty -a'
-	# Ends up with the width of terminal
-	columns="${columns/#*columns }"
-	columns="${columns/%;*}"
-
-	# This is the maximum length of a string to be displayed based on column width,
-	# obtained via the number of columns minus the length of displayed characters:
-	#
-	#             ${columns}:  Width of terminal
-	#          ${#iteration}:  Length of the # of FLACs processed
-	#  ${total_flacs_length}:  Length of the total # of FLAC files
-	#                     26:  Length of:
-	#                            [ Checking MD5 ] (16)
-	#                            5 Spaces
-	#                            3 Characters: [/]
-	#                            2 Gap and ellipsis (…)
-	max_filename_length="$(( ${columns} - ${#iteration} - ${total_flacs_length} - 26 ))"
-
-	filename="${i##*/}"
-	# Replace possible newlines in filename with '?' (like 'ls' output)
-	filename="${filename//$'\n'/?}"
-
-	# Cull filename and add an ellipsis if the filename is too long
-	if [[ "${#filename}" -gt "${max_filename_length}" ]] ; then
-		filename="${filename::${max_filename_length}}…"
-	fi
+	# Create and cull filename if needed returned as ${filename}
+	__filename
 
 	printf "\r${normal}%s${magenta}%s${normal}%s%$(__current_length)s${blue}%s${normal}%s${yellow}%s${normal}%s${blue}%s${normal}%s" \
 	"   " "[${iteration}/${#total_flacs_array[@]}]" " ${filename} " "" "[" " " "Checking MD5" " " "]" " "
@@ -851,36 +707,12 @@ __print_checking_md5 () {
 
 # File ok
 __print_ok_flac () {
-	# Grab the first line of 'stty -a' output
-	# Redirecting '/dev/stderr' to 'stty' allows valid arguments
-	read -r columns < <(stty -a < /dev/stderr)
+	# Obtain the maximum length of the string to be displayed returned
+	# as ${max_filename_length}. ${1} is a variable length of characters
+	__max_filename_length 16
 
-	# Remove superflous information from 'stty -a'
-	# Ends up with the width of terminal
-	columns="${columns/#*columns }"
-	columns="${columns/%;*}"
-
-	# This is the maximum length of a string to be displayed based on column width,
-	# obtained via the number of columns minus the length of displayed characters:
-	#
-	#             ${columns}:  Width of terminal
-	#          ${#iteration}:  Length of the # of FLACs processed
-	#  ${total_flacs_length}:  Length of the total # of FLAC files
-	#                     16:  Length of:
-	#                            [ ok ] (6)
-	#                            5 Spaces
-	#                            3 Characters: [/]
-	#                            2 Gap and ellipsis (…)
-	max_filename_length="$(( ${columns} - ${#iteration} - ${total_flacs_length} - 16 ))"
-
-	filename="${i##*/}"
-	# Replace possible newlines in filename with '?' (like 'ls' output)
-	filename="${filename//$'\n'/?}"
-
-	# Cull filename and add an ellipsis if the filename is too long
-	if [[ "${#filename}" -gt "${max_filename_length}" ]] ; then
-		filename="${filename::${max_filename_length}}…"
-	fi
+	# Create and cull filename if needed returned as ${filename}
+	__filename
 
 	printf "\r${normal}%s${magenta}%s${normal}%s%$(__current_length)s${blue}%s${normal}%s${green}%s${normal}%s${blue}%s${normal}%s" \
 	"   " "[${iteration}/${#total_flacs_array[@]}]" " ${filename} " "" "[" " " "ok" " " "]" " "
@@ -888,36 +720,12 @@ __print_ok_flac () {
 
 # ReplayGain file ok
 __print_ok_replaygain_file () {
-	# Grab the first line of 'stty -a' output
-	# Redirecting '/dev/stderr' to 'stty' allows valid arguments
-	read -r columns < <(stty -a < /dev/stderr)
+	# Obtain the maximum length of the string to be displayed returned
+	# as ${max_filename_length}. ${1} is a variable length of characters
+	__max_filename_length 18
 
-	# Remove superflous information from 'stty -a'
-	# Ends up with the width of terminal
-	columns="${columns/#*columns }"
-	columns="${columns/%;*}"
-
-	# This is the maximum length of a string to be displayed based on column width,
-	# obtained via the number of columns minus the length of displayed characters:
-	#
-	#             ${columns}:  Width of terminal
-	#          ${#iteration}:  Length of the # of FLACs processed
-	#  ${total_flacs_length}:  Length of the total # of FLAC files
-	#                     18:  Length of:
-	#                            [ ok ] (6)
-	#                            7 Spaces
-	#                            3 Characters: [/]
-	#                            2 Gap and ellipsis (…)
-	max_filename_length="$(( ${columns} - ${#iteration} - ${total_flacs_length} - 18 ))"
-
-	filename="${i##*/}"
-	# Replace possible newlines in filename with '?' (like 'ls' output)
-	filename="${filename//$'\n'/?}"
-
-	# Cull filename and add an ellipsis if the filename is too long
-	if [[ "${#filename}" -gt "${max_filename_length}" ]] ; then
-		filename="${filename::${max_filename_length}}…"
-	fi
+	# Create and cull filename if needed returned as ${filename}
+	__filename
 
 	printf "\r${normal}%s${magenta}%s${normal}%s%$(__current_length)s${blue}%s${normal}%s${green}%s${normal}%s${blue}%s${normal}%s" \
 	"     " "[${iteration}/${#total_flacs_array[@]}]" " ${filename} " "" "[" " " "ok" " " "]" " "
@@ -925,36 +733,12 @@ __print_ok_replaygain_file () {
 
 # ReplayGain file interrupted
 __print_interrupt_replaygain_file () {
-	# Grab the first line of 'stty -a' output
-	# Redirecting '/dev/stderr' to 'stty' allows valid arguments
-	read -r columns < <(stty -a < /dev/stderr)
+	# Obtain the maximum length of the string to be displayed returned
+	# as ${max_filename_length}. ${1} is a variable length of characters
+	__max_filename_length 27
 
-	# Remove superflous information from 'stty -a'
-	# Ends up with the width of terminal
-	columns="${columns/#*columns }"
-	columns="${columns/%;*}"
-
-	# This is the maximum length of a string to be displayed based on column width,
-	# obtained via the number of columns minus the length of displayed characters:
-	#
-	#             ${columns}:  Width of terminal
-	#          ${#iteration}:  Length of the # of FLACs processed
-	#  ${total_flacs_length}:  Length of the total # of FLAC files
-	#                     27:  Length of:
-	#                            [ Interrupted ] (15)
-	#                            7 Spaces
-	#                            3 Characters: [/]
-	#                            2 Gap and ellipsis (…)
-	max_filename_length="$(( ${columns} - ${#iteration} - ${total_flacs_length} - 27 ))"
-
-	filename="${i##*/}"
-	# Replace possible newlines in filename with '?' (like 'ls' output)
-	filename="${filename//$'\n'/?}"
-
-	# Cull filename and add an ellipsis if the filename is too long
-	if [[ "${#filename}" -gt "${max_filename_length}" ]] ; then
-		filename="${filename::${max_filename_length}}…"
-	fi
+	# Create and cull filename if needed returned as ${filename}
+	__filename
 
 	printf "\r${normal}%s${magenta}%s${normal}%s%$(__current_length)s${blue}%s${normal}%s${yellow}%s${normal}%s${blue}%s${normal}%s" \
 	"     " "[${iteration}/${#total_flacs_array[@]}]" " ${filename} " "" "[" " " "Interrupted" " " "]" " "
@@ -962,36 +746,12 @@ __print_interrupt_replaygain_file () {
 
 # ReplayGain directory ok
 __print_ok_replaygain_dir () {
-	# Grab the first line of 'stty -a' output
-	# Redirecting '/dev/stderr' to 'stty' allows valid arguments
-	read -r columns < <(stty -a < /dev/stderr)
+	# Obtain the maximum length of the string to be displayed returned
+	# as ${max_filename_length}. ${1} is a variable length of characters
+	__max_filename_length 17
 
-	# Remove superflous information from 'stty -a'
-	# Ends up with the width of terminal
-	columns="${columns/#*columns }"
-	columns="${columns/%;*}"
-
-	# This is the maximum length of a string to be displayed based on column width,
-	# obtained via the number of columns minus the length of displayed characters:
-	#
-	#             ${columns}:  Width of terminal
-	#          ${#iteration}:  Length of the # of processed directories
-	#  ${#total_directories}:  Length of the total # of directories
-	#                     18:  Length of:
-	#                            [ ok ] (6)
-	#                            7 Spaces
-	#                            3 Characters: [/]
-	#                            2 Gap and ellipsis (…)
-	max_filename_length="$(( ${columns} - ${#iteration} - ${#total_directories} - 18 ))"
-
-	filename="${i##*/}"
-	# Replace possible newlines in filename with '?' (like 'ls' output)
-	filename="${filename//$'\n'/?}"
-
-	# Cull filename and add an ellipsis if the filename is too long
-	if [[ "${#filename}" -gt "${max_filename_length}" ]] ; then
-		filename="${filename::${max_filename_length}}…"
-	fi
+	# Create and cull filename if needed returned as ${filename}
+	__filename
 
 	printf "\r${normal}%s${magenta}%s${normal}%s%$(__current_length)s${blue}%s${normal}%s${green}%s${normal}%s${blue}%s${normal}%s" \
 	"     " "[${iteration}/${#flac_directories_array[@]}]" " ${filename} " "" "[" " " "ok" " " "]" " "
@@ -999,36 +759,12 @@ __print_ok_replaygain_dir () {
 
 # ReplayGain directory interrupted
 __print_interrupt_replaygain_dir () {
-	# Grab the first line of 'stty -a' output
-	# Redirecting '/dev/stderr' to 'stty' allows valid arguments
-	read -r columns < <(stty -a < /dev/stderr)
+	# Obtain the maximum length of the string to be displayed returned
+	# as ${max_filename_length}. ${1} is a variable length of characters
+	__max_filename_length 27
 
-	# Remove superflous information from 'stty -a'
-	# Ends up with the width of terminal
-	columns="${columns/#*columns }"
-	columns="${columns/%;*}"
-
-	# This is the maximum length of a string to be displayed based on column width,
-	# obtained via the number of columns minus the length of displayed characters:
-	#
-	#             ${columns}:  Width of terminal
-	#          ${#iteration}:  Length of the # processed directories
-	#  ${#total_directories}:  Length of the total # of directories
-	#                     27:  Length of:
-	#                            [ Interrupted ] (15)
-	#                            7 Spaces
-	#                            3 Characters: [/]
-	#                            2 Gap and ellipsis (…)
-	max_filename_length="$(( ${columns} - ${#iteration} - ${#total_directories} - 27 ))"
-
-	filename="${i##*/}"
-	# Replace possible newlines in filename with '?' (like 'ls' output)
-	filename="${filename//$'\n'/?}"
-
-	# Cull filename and add an ellipsis if the filename is too long
-	if [[ "${#filename}" -gt "${max_filename_length}" ]] ; then
-		filename="${filename::${max_filename_length}}…"
-	fi
+	# Create and cull filename if needed returned as ${filename}
+	__filename
 
 	printf "\r${normal}%s${magenta}%s${normal}%s%$(__current_length)s${blue}%s${normal}%s${yellow}%s${normal}%s${blue}%s${normal}%s" \
 	"     " "[${iteration}/${#flac_directories_array[@]}]" " ${filename} " "" "[" " " "Interrupted" " " "]" " "
@@ -1036,36 +772,12 @@ __print_interrupt_replaygain_dir () {
 
 # Validating with auCDtect
 __print_aucdtect_flac () {
-	# Grab the first line of 'stty -a' output
-	# Redirecting '/dev/stderr' to 'stty' allows valid arguments
-	read -r columns < <(stty -a < /dev/stderr)
+	# Obtain the maximum length of the string to be displayed returned
+	# as ${max_filename_length}. ${1} is a variable length of characters
+	__max_filename_length 29
 
-	# Remove superflous information from 'stty -a'
-	# Ends up with the width of terminal
-	columns="${columns/#*columns }"
-	columns="${columns/%;*}"
-
-	# This is the maximum length of a string to be displayed based on column width,
-	# obtained via the number of columns minus the length of displayed characters:
-	#
-	#             ${columns}:  Width of terminal
-	#          ${#iteration}:  Length of the # of FLACs processed
-	#  ${total_flacs_length}:  Length of the total # of FLAC files
-	#                     29:  Length of:
-	#                            [ Validating FLAC ] (19)
-	#                            5 Spaces
-	#                            3 Characters: [/]
-	#                            2 Gap and ellipsis (…)
-	max_filename_length="$(( ${columns} - ${#iteration} - ${total_flacs_length} - 29 ))"
-
-	filename="${i##*/}"
-	# Replace possible newlines in filename with '?' (like 'ls' output)
-	filename="${filename//$'\n'/?}"
-
-	# Cull filename and add an ellipsis if the filename is too long
-	if [[ "${#filename}" -gt "${max_filename_length}" ]] ; then
-		filename="${filename::${max_filename_length}}…"
-	fi
+	# Create and cull filename if needed returned as ${filename}
+	__filename
 
 	printf "\r${normal}%s${magenta}%s${normal}%s%$(__current_length)s${blue}%s${normal}%s${yellow}%s${normal}%s${blue}%s${normal}%s" \
 	"   " "[${iteration}/${#total_flacs_array[@]}]" " ${filename} " "" "[" " " "Validating FLAC" " " "]" " "
@@ -1073,36 +785,12 @@ __print_aucdtect_flac () {
 
 # auCDtect issue
 __print_aucdtect_issue () {
-	# Grab the first line of 'stty -a' output
-	# Redirecting '/dev/stderr' to 'stty' allows valid arguments
-	read -r columns < <(stty -a < /dev/stderr)
+	# Obtain the maximum length of the string to be displayed returned
+	# as ${max_filename_length}. ${1} is a variable length of characters
+	__max_filename_length 19
 
-	# Remove superflous information from 'stty -a'
-	# Ends up with the width of terminal
-	columns="${columns/#*columns }"
-	columns="${columns/%;*}"
-
-	# This is the maximum length of a string to be displayed based on column width,
-	# obtained via the number of columns minus the length of displayed characters:
-	#
-	#             ${columns}:  Width of terminal
-	#          ${#iteration}:  Length of the # of FLACs processed
-	#  ${total_flacs_length}:  Length of the total # of FLAC files
-	#                     19:  Length of:
-	#                            [ Issue ] (9)
-	#                            7 Spaces
-	#                            1 Asterisk: *
-	#                            2 Gap and ellipsis (…)
-	max_filename_length="$(( ${columns} - 19 ))"
-
-	filename="${i##*/}"
-	# Replace possible newlines in filename with '?' (like 'ls' output)
-	filename="${filename//$'\n'/?}"
-
-	# Cull filename and add an ellipsis if the filename is too long
-	if [[ "${#filename}" -gt "${max_filename_length}" ]] ; then
-		filename="${filename::${max_filename_length}}…"
-	fi
+	# Create and cull filename if needed returned as ${filename}
+	__filename
 
 	printf "\r${normal}%s${yellow}%s${normal}%s%$(__current_length)s${blue}%s${normal}%s${yellow}%s${normal}%s${blue}%s${normal}%s\n" \
 	"     " "*" " ${filename} " "" "[" " " "Issue" " " "]" " "
@@ -1110,36 +798,12 @@ __print_aucdtect_issue () {
 
 # auCDtect spectrogram
 __print_aucdtect_spectrogram () {
-	# Grab the first line of 'stty -a' output
-	# Redirecting '/dev/stderr' to 'stty' allows valid arguments
-	read -r columns < <(stty -a < /dev/stderr)
+	# Obtain the maximum length of the string to be displayed returned
+	# as ${max_filename_length}. ${1} is a variable length of characters
+	__max_filename_length 34
 
-	# Remove superflous information from 'stty -a'
-	# Ends up with the width of terminal
-	columns="${columns/#*columns }"
-	columns="${columns/%;*}"
-
-	# This is the maximum length of a string to be displayed based on column width,
-	# obtained via the number of columns minus the length of displayed characters:
-	#
-	#             ${columns}:  Width of terminal
-	#          ${#iteration}:  Length of the # of FLACs processed
-	#  ${total_flacs_length}:  Length of the total # of FLAC files
-	#                     34:  Length of:
-	#                            [ Creating Spectrogram ] (24)
-	#                            5 Spaces
-	#                            3 Characters: [/]
-	#                            2 Gap and ellipsis (…)
-	max_filename_length="$(( ${columns} - ${#iteration} - ${total_flacs_length} - 34 ))"
-
-	filename="${i##*/}"
-	# Replace possible newlines in filename with '?' (like 'ls' output)
-	filename="${filename//$'\n'/?}"
-
-	# Cull filename and add an ellipsis if the filename is too long
-	if [[ "${#filename}" -gt "${max_filename_length}" ]] ; then
-		filename="${filename::${max_filename_length}}…"
-	fi
+	# Create and cull filename if needed returned as ${filename}
+	__filename
 
 	printf "\r${normal}%s${magenta}%s${normal}%s%$(__current_length)s${blue}%s${normal}%s${yellow}%s${normal}%s${blue}%s${normal}%s" \
 	"   " "[${iteration}/${#total_flacs_array[@]}]" " ${filename} " "" "[" " " "Creating Spectrogram" " " "]" " "
@@ -1147,36 +811,12 @@ __print_aucdtect_spectrogram () {
 
 # auCDtect skip
 __print_aucdtect_skip () {
-	# Grab the first line of 'stty -a' output
-	# Redirecting '/dev/stderr' to 'stty' allows valid arguments
-	read -r columns < <(stty -a < /dev/stderr)
+	# Obtain the maximum length of the string to be displayed returned
+	# as ${max_filename_length}. ${1} is a variable length of characters
+	__max_filename_length 21
 
-	# Remove superflous information from 'stty -a'
-	# Ends up with the width of terminal
-	columns="${columns/#*columns }"
-	columns="${columns/%;*}"
-
-	# This is the maximum length of a string to be displayed based on column width,
-	# obtained via the number of columns minus the length of displayed characters:
-	#
-	#             ${columns}:  Width of terminal
-	#          ${#iteration}:  Length of the # of FLACs processed
-	#  ${total_flacs_length}:  Length of the total # of FLAC files
-	#                     21:  Length of:
-	#                            [ Skipped ] (11)
-	#                            7 Spaces
-	#                            1 Asterisk: *
-	#                            2 Gap and ellipsis (…)
-	max_filename_length="$(( ${columns} - 21 ))"
-
-	filename="${i##*/}"
-	# Replace possible newlines in filename with '?' (like 'ls' output)
-	filename="${filename//$'\n'/?}"
-
-	# Cull filename and add an ellipsis if the filename is too long
-	if [[ "${#filename}" -gt "${max_filename_length}" ]] ; then
-		filename="${filename::${max_filename_length}}…"
-	fi
+	# Create and cull filename if needed returned as ${filename}
+	__filename
 
 	printf "\r${normal}%s${red}%s${normal}%s%$(__current_length)s${blue}%s${normal}%s${yellow}%s${normal}%s${blue}%s${normal}%s\n" \
 	"     " "*" " ${filename} " "" "[" " " "Skipped" " " "]" " "
@@ -1184,36 +824,12 @@ __print_aucdtect_skip () {
 
 # Tag ok
 __print_ok_tag () {
-	# Grab the first line of 'stty -a' output
-	# Redirecting '/dev/stderr' to 'stty' allows valid arguments
-	read -r columns < <(stty -a < /dev/stderr)
+	# Obtain the maximum length of the string to be displayed returned
+	# as ${max_filename_length}. ${1} is a variable length of characters
+	__max_filename_length 18
 
-	# Remove superflous information from 'stty -a'
-	# Ends up with the width of terminal
-	columns="${columns/#*columns }"
-	columns="${columns/%;*}"
-
-	# This is the maximum length of a string to be displayed based on column width,
-	# obtained via the number of columns minus the length of displayed characters:
-	#
-	#             ${columns}:  Width of terminal
-	#          ${#iteration}:  Length of the # of FLACs processed
-	#  ${total_flacs_length}:  Length of the total # of FLAC files
-	#                     18:  Length of:
-	#                            [ ok ] (6)
-	#                            7 Spaces
-	#                            3 Characters: [/]
-	#                            2 Gap and ellipsis (…)
-	max_filename_length="$(( ${columns} - ${#iteration} - ${total_flacs_length} - 18 ))"
-
-	filename="${i##*/}"
-	# Replace possible newlines in filename with '?' (like 'ls' output)
-	filename="${filename//$'\n'/?}"
-
-	# Cull filename and add an ellipsis if the filename is too long
-	if [[ "${#filename}" -gt "${max_filename_length}" ]] ; then
-		filename="${filename::${max_filename_length}}…"
-	fi
+	# Create and cull filename if needed returned as ${filename}
+	__filename
 
 	printf "\r${normal}%s${magenta}%s${normal}%s%$(__current_length)s${blue}%s${normal}%s${green}%s${normal}%s${blue}%s${normal}%s" \
 	"     " "[${iteration}/${#total_flacs_array[@]}]" " ${filename} " "" "[" " " "ok" " " "]" " "
@@ -1221,36 +837,12 @@ __print_ok_tag () {
 
 # Compression level the same
 __print_level_same_compression () {
-	# Grab the first line of 'stty -a' output
-	# Redirecting '/dev/stderr' to 'stty' allows valid arguments
-	read -r columns < <(stty -a < /dev/stderr)
+	# Obtain the maximum length of the string to be displayed returned
+	# as ${max_filename_length}. ${1} is a variable length of characters
+	__max_filename_length 32
 
-	# Remove superflous information from 'stty -a'
-	# Ends up with the width of terminal
-	columns="${columns/#*columns }"
-	columns="${columns/%;*}"
-
-	# This is the maximum length of a string to be displayed based on column width,
-	# obtained via the number of columns minus the length of displayed characters:
-	#
-	#             ${columns}:  Width of terminal
-	#          ${#iteration}:  Length of the # of FLACs processed
-	#  ${total_flacs_length}:  Length of the total # of FLAC files
-	#                     32:  Length of:
-	#                            [ Already At Level ${compression_level} ] (22)
-	#                            5 Spaces
-	#                            3 Characters: [/]
-	#                            2 Gap and ellipsis (…)
-	max_filename_length="$(( ${columns} - ${#iteration} - ${total_flacs_length} - 32 ))"
-
-	filename="${i##*/}"
-	# Replace possible newlines in filename with '?' (like 'ls' output)
-	filename="${filename//$'\n'/?}"
-
-	# Cull filename and add an ellipsis if the filename is too long
-	if [[ "${#filename}" -gt "${max_filename_length}" ]] ; then
-		filename="${filename::${max_filename_length}}…"
-	fi
+	# Create and cull filename if needed returned as ${filename}
+	__filename
 
 	printf "\r${normal}%s${magenta}%s${normal}%s%$(__current_length)s${blue}%s${normal}%s${yellow}%s${normal}%s${blue}%s${normal}%s" \
 	"   " "[${iteration}/${#total_flacs_array[@]}]" " ${filename} " "" "[" " " "Already At Level ${compression_level}" " " "]" " "
@@ -1258,36 +850,12 @@ __print_level_same_compression () {
 
 # Analyzing tags
 __print_analyzing_tags () {
-	# Grab the first line of 'stty -a' output
-	# Redirecting '/dev/stderr' to 'stty' allows valid arguments
-	read -r columns < <(stty -a < /dev/stderr)
+	# Obtain the maximum length of the string to be displayed returned
+	# as ${max_filename_length}. ${1} is a variable length of characters
+	__max_filename_length 30
 
-	# Remove superflous information from 'stty -a'
-	# Ends up with the width of terminal
-	columns="${columns/#*columns }"
-	columns="${columns/%;*}"
-
-	# This is the maximum length of a string to be displayed based on column width,
-	# obtained via the number of columns minus the length of displayed characters:
-	#
-	#             ${columns}:  Width of terminal
-	#          ${#iteration}:  Length of the # of FLACs processed
-	#  ${total_flacs_length}:  Length of the total # of FLAC files
-	#                     30:  Length of:
-	#                            [ Analyzing Tags ] (18)
-	#                            7 Spaces
-	#                            3 Characters: [/]
-	#                            2 Gap and ellipsis (…)
-	max_filename_length="$(( ${columns} - ${#iteration} - ${total_flacs_length} - 30 ))"
-
-	filename="${i##*/}"
-	# Replace possible newlines in filename with '?' (like 'ls' output)
-	filename="${filename//$'\n'/?}"
-
-	# Cull filename and add an ellipsis if the filename is too long
-	if [[ "${#filename}" -gt "${max_filename_length}" ]] ; then
-		filename="${filename::${max_filename_length}}…"
-	fi
+	# Create and cull filename if needed returned as ${filename}
+	__filename
 
 	printf "\r${normal}%s${magenta}%s${normal}%s%$(__current_length)s${blue}%s${normal}%s${yellow}%s${normal}%s${blue}%s${normal}%s" \
 	"     " "[${iteration}/${#total_flacs_array[@]}]" " ${filename} " "" "[" " " "Analyzing Tags" " " "]" " "
@@ -1295,36 +863,12 @@ __print_analyzing_tags () {
 
 # Applying tags
 __print_applying_tags () {
-	# Grab the first line of 'stty -a' output
-	# Redirecting '/dev/stderr' to 'stty' allows valid arguments
-	read -r columns < <(stty -a < /dev/stderr)
+	# Obtain the maximum length of the string to be displayed returned
+	# as ${max_filename_length}. ${1} is a variable length of characters
+	__max_filename_length 28
 
-	# Remove superflous information from 'stty -a'
-	# Ends up with the width of terminal
-	columns="${columns/#*columns }"
-	columns="${columns/%;*}"
-
-	# This is the maximum length of a string to be displayed based on column width,
-	# obtained via the number of columns minus the length of displayed characters:
-	#
-	#             ${columns}:  Width of terminal
-	#          ${#iteration}:  Length of the # of FLACs processed
-	#  ${total_flacs_length}:  Length of the total # of FLAC files
-	#                     28:  Length of:
-	#                            [ Setting Tags ] (16)
-	#                            7 Spaces
-	#                            3 Characters: [/]
-	#                            2 Gap and ellipsis (…)
-	max_filename_length="$(( ${columns} - ${#iteration} - ${total_flacs_length} - 28 ))"
-
-	filename="${i##*/}"
-	# Replace possible newlines in filename with '?' (like 'ls' output)
-	filename="${filename//$'\n'/?}"
-
-	# Cull filename and add an ellipsis if the filename is too long
-	if [[ "${#filename}" -gt "${max_filename_length}" ]] ; then
-		filename="${filename::${max_filename_length}}…"
-	fi
+	# Create and cull filename if needed returned as ${filename}
+	__filename
 
 	printf "\r${normal}%s${magenta}%s${normal}%s%$(__current_length)s${blue}%s${normal}%s${yellow}%s${normal}%s${blue}%s${normal}%s" \
 	"     " "[${iteration}/${#total_flacs_array[@]}]" " ${filename} " "" "[" " " "Setting Tags" " " "]" " "
@@ -1332,36 +876,12 @@ __print_applying_tags () {
 
 # Pruning
 __print_prune_flac () {
-	# Grab the first line of 'stty -a' output
-	# Redirecting '/dev/stderr' to 'stty' allows valid arguments
-	read -r columns < <(stty -a < /dev/stderr)
+	# Obtain the maximum length of the string to be displayed returned
+	# as ${max_filename_length}. ${1} is a variable length of characters
+	__max_filename_length 30
 
-	# Remove superflous information from 'stty -a'
-	# Ends up with the width of terminal
-	columns="${columns/#*columns }"
-	columns="${columns/%;*}"
-
-	# This is the maximum length of a string to be displayed based on column width,
-	# obtained via the number of columns minus the length of displayed characters:
-	#
-	#             ${columns}:  Width of terminal
-	#          ${#iteration}:  Length of the # of FLACs processed
-	#  ${total_flacs_length}:  Length of the total # of FLAC files
-	#                     30:  Length of:
-	#                            [ Pruning Metadata ] (20)
-	#                            5 Spaces
-	#                            3 Characters: [/]
-	#                            2 Gap and ellipsis (…)
-	max_filename_length="$(( ${columns} - ${#iteration} - ${total_flacs_length} - 30 ))"
-
-	filename="${i##*/}"
-	# Replace possible newlines in filename with '?' (like 'ls' output)
-	filename="${filename//$'\n'/?}"
-
-	# Cull filename and add an ellipsis if the filename is too long
-	if [[ "${#filename}" -gt "${max_filename_length}" ]] ; then
-		filename="${filename::${max_filename_length}}…"
-	fi
+	# Create and cull filename if needed returned as ${filename}
+	__filename
 
 	printf "\r${normal}%s${magenta}%s${normal}%s%$(__current_length)s${blue}%s${normal}%s${yellow}%s${normal}%s${blue}%s${normal}%s" \
 	"   " "[${iteration}/${#total_flacs_array[@]}]" " ${filename} " "" "[" " " "Pruning Metadata" " " "]" " "
@@ -1369,36 +889,12 @@ __print_prune_flac () {
 
 # Retag analyze interrupted
 __print_retag_analyze_interrupt () {
-	# Grab the first line of 'stty -a' output
-	# Redirecting '/dev/stderr' to 'stty' allows valid arguments
-	read -r columns < <(stty -a < /dev/stderr)
+	# Obtain the maximum length of the string to be displayed returned
+	# as ${max_filename_length}. ${1} is a variable length of characters
+	__max_filename_length 27
 
-	# Remove superflous information from 'stty -a'
-	# Ends up with the width of terminal
-	columns="${columns/#*columns }"
-	columns="${columns/%;*}"
-
-	# This is the maximum length of a string to be displayed based on column width,
-	# obtained via the number of columns minus the length of displayed characters:
-	#
-	#             ${columns}:  Width of terminal
-	#          ${#iteration}:  Length of the # of FLACs processed
-	#  ${total_flacs_length}:  Length of the total # of FLAC files
-	#                     27:  Length of:
-	#                            [ Interrupted ] (15)
-	#                            7 Spaces
-	#                            3 Characters: [/]
-	#                            2 Gap and ellipsis (…)
-	max_filename_length="$(( ${columns} - ${#iteration} - ${total_flacs_length} - 27 ))"
-
-	filename="${i##*/}"
-	# Replace possible newlines in filename with '?' (like 'ls' output)
-	filename="${filename//$'\n'/?}"
-
-	# Cull filename and add an ellipsis if the filename is too long
-	if [[ "${#filename}" -gt "${max_filename_length}" ]] ; then
-		filename="${filename::${max_filename_length}}…"
-	fi
+	# Create and cull filename if needed returned as ${filename}
+	__filename
 
 	printf "\r${normal}%s${magenta}%s${normal}%s%$(__current_length)s${blue}%s${normal}%s${yellow}%s${normal}%s${blue}%s${normal}%s" \
 	"     " "[${iteration}/${#total_flacs_array[@]}]" " ${filename} " "" "[" " " "Interrupted" " " "]" " "
@@ -1406,36 +902,12 @@ __print_retag_analyze_interrupt () {
 
 # Retag apply interrupted
 __print_retag_apply_interrupt () {
-	# Grab the first line of 'stty -a' output
-	# Redirecting '/dev/stderr' to 'stty' allows valid arguments
-	read -r columns < <(stty -a < /dev/stderr)
+	# Obtain the maximum length of the string to be displayed returned
+	# as ${max_filename_length}. ${1} is a variable length of characters
+	__max_filename_length 27
 
-	# Remove superflous information from 'stty -a'
-	# Ends up with the width of terminal
-	columns="${columns/#*columns }"
-	columns="${columns/%;*}"
-
-	# This is the maximum length of a string to be displayed based on column width,
-	# obtained via the number of columns minus the length of displayed characters:
-	#
-	#             ${columns}:  Width of terminal
-	#          ${#iteration}:  Length of the # of FLACs processed
-	#  ${total_flacs_length}:  Length of the total # of FLAC files
-	#                     27:  Length of:
-	#                            [ Interrupted ] (15)
-	#                            7 Spaces
-	#                            3 Characters: [/]
-	#                            2 Gap and ellipsis (…)
-	max_filename_length="$(( ${columns} - ${#iteration} - ${total_flacs_length} - 27 ))"
-
-	filename="${i##*/}"
-	# Replace possible newlines in filename with '?' (like 'ls' output)
-	filename="${filename//$'\n'/?}"
-
-	# Cull filename and add an ellipsis if the filename is too long
-	if [[ "${#filename}" -gt "${max_filename_length}" ]] ; then
-		filename="${filename::${max_filename_length}}…"
-	fi
+	# Create and cull filename if needed returned as ${filename}
+	__filename
 
 	printf "\r${normal}%s${magenta}%s${normal}%s%$(__current_length)s${blue}%s${normal}%s${yellow}%s${normal}%s${blue}%s${normal}%s" \
 	"     " "[${iteration}/${#total_flacs_array[@]}]" " ${filename} " "" "[" " " "Interrupted" " " "]" " "
@@ -1443,36 +915,12 @@ __print_retag_apply_interrupt () {
 
 # Interrupted file
 __print_interrupt () {
-	# Grab the first line of 'stty -a' output
-	# Redirecting '/dev/stderr' to 'stty' allows valid arguments
-	read -r columns < <(stty -a < /dev/stderr)
+	# Obtain the maximum length of the string to be displayed returned
+	# as ${max_filename_length}. ${1} is a variable length of characters
+	__max_filename_length 25
 
-	# Remove superflous information from 'stty -a'
-	# Ends up with the width of terminal
-	columns="${columns/#*columns }"
-	columns="${columns/%;*}"
-
-	# This is the maximum length of a string to be displayed based on column width,
-	# obtained via the number of columns minus the length of displayed characters:
-	#
-	#             ${columns}:  Width of terminal
-	#          ${#iteration}:  Length of the # of FLACs processed
-	#  ${total_flacs_length}:  Length of the total # of FLAC files
-	#                     25:  Length of:
-	#                            [ Interrupted ] (15)
-	#                            5 Spaces
-	#                            3 Characters: [/]
-	#                            2 Gap and ellipsis (…)
-	max_filename_length="$(( ${columns} - ${#iteration} - ${total_flacs_length} - 25 ))"
-
-	filename="${i##*/}"
-	# Replace possible newlines in filename with '?' (like 'ls' output)
-	filename="${filename//$'\n'/?}"
-
-	# Cull filename and add an ellipsis if the filename is too long
-	if [[ "${#filename}" -gt "${max_filename_length}" ]] ; then
-		filename="${filename::${max_filename_length}}…"
-	fi
+	# Create and cull filename if needed returned as ${filename}
+	__filename
 
 	printf "\r${normal}%s${magenta}%s${normal}%s%$(__current_length)s${blue}%s${normal}%s${yellow}%s${normal}%s${blue}%s${normal}%s" \
 	"   " "[${iteration}/${#total_flacs_array[@]}]" " ${filename} " "" "[" " " "Interrupted" " " "]" " "
@@ -1744,6 +1192,50 @@ __prune_abort () {
 # Display script version
 __print_version () {
 	printf "%s\n" "Version ${version}"
+}
+
+# Determine the width of the terminal in columns
+__columns () {
+	# Grab the first line of 'stty -a' output
+	# Redirecting '/dev/stderr' to 'stty' allows valid arguments
+	read -r columns < <(stty -a < /dev/stderr)
+
+	# Remove superflous information from 'stty -a'
+	# Ends up with the width of terminal
+	columns="${columns/#*columns }"
+
+	# Prints out total columns of terminal
+	printf "%s" "${columns/%;*}"
+}
+
+# Determine the max filename length that can be used.
+# This will be used by __filename
+__max_filename_length () {
+	# This is the maximum length of a string to be displayed based on column width,
+	# obtained via the number of columns minus the length of displayed characters:
+	#
+	#             ${columns}:  Width of terminal
+	#          ${#iteration}:  Length of the # of FLACs processed
+	#  ${total_flacs_length}:  Length of the total # of FLAC files
+	#                   ${1}:  Length of:
+	#                            Printed Message (variable)
+	#                            Spaces (variable)
+	#                            3 Characters: [/]
+	#                            2 Gap and ellipsis (…)
+	max_filename_length="$(( $(__columns) - ${#iteration} - ${total_flacs_length} - ${1} ))"
+}
+
+# Creates filename of current FLAC and culls it if the length
+# is bigger than then width of the terminal
+__filename () {
+	filename="${i##*/}"
+	# Replace possible newlines in filename with '?' (like 'ls' output)
+	filename="${filename//$'\n'/?}"
+
+	# Cull filename and add an ellipsis if the filename is too long
+	if [[ "${#filename}" -gt "${max_filename_length}" ]] ; then
+		filename="${filename::${max_filename_length}}…"
+	fi
 }
 
 # Display current length spacing between filename and operation message
