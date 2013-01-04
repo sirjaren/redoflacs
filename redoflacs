@@ -3521,11 +3521,13 @@ __operation_analyze_tags () {
 
 		# Run through the tag array from above and store
 		# the values into a temporary tag array
-		for tag_field in "${metaflac_tag_array[@]}" ; do
+		for tag_field_value in "${metaflac_tag_array[@]}" ; do
 			# This is the tag field (eg. TITLE)
-			tag_field="${tag_field%%=*}"
+			tag_field="${tag_field_value%%=*}"
+
 			# Enforce the tag field to be uppercase
-			temp_tag_array+=( ["${tag_field^^}"]="${tag_field#*=}" )
+			# ${tag_field_value} below is the tag value
+			temp_tag_array+=( ["${tag_field^^}"]="${tag_field_value#*=}" )
 		done
 
 		# Run through the tags array (from USER CONFIGURATION) and test
@@ -3728,11 +3730,13 @@ __operation_analyze_tags_dont_log_coverart () {
 
 		# Run through the tag array from above and store
 		# the values into a temporary tag array
-		for tag_field in "${metaflac_tag_array[@]}" ; do
+		for tag_field_value in "${metaflac_tag_array[@]}" ; do
 			# This is the tag field (eg. TITLE)
-			tag_field="${tag_field%%=*}"
+			tag_field="${tag_field_value%%=*}"
+
 			# Enforce the tag field to be uppercase
-			temp_tag_array+=( ["${tag_field^^}"]="${tag_field#*=}" )
+			# ${tag_field_value} below is the tag value
+			temp_tag_array+=( ["${tag_field^^}"]="${tag_field_value#*=}" )
 		done
 
 		# Run through the tags array (from USER CONFIGURATION) and test
