@@ -2076,6 +2076,7 @@ __process_positional_parameters () {
 # Check for missing programs vital to this script
 __check_missing_programs () {
 	# Check if each command can be found in $PATH
+	rm_exists="$(command -v rm)"
 	sleep_exists="$(command -v sleep)"
 	stty_exists="$(command -v stty)"
 	stat_exists="$(command -v stat)"
@@ -2085,6 +2086,10 @@ __check_missing_programs () {
 
 	# Go through and test if each command was found (by displaying its $PATH).  If
 	# it's empty, add where you can find the package to an array to be displayed.
+	if [[ -z "${rm_exists}" ]] ; then
+		command_exists_array+=( "You can generally install \"rm\" with the \"coreutils\" package." )
+	fi
+
 	if [[ -z "${sleep_exists}" ]] ; then
 		command_exists_array+=( "You can generally install \"sleep\" with the \"coreutils\" package." )
 	fi
