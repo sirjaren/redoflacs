@@ -1058,7 +1058,7 @@ __print_applying_tags () {
 	#                            7 Spaces
 	#                            3 Characters: [/]
 	#                            2 Gap and ellipsis (…)
-	max_filename_length="$(( ${columns} - ${#iteration} - ${total_flacs_length} - 28 ))"
+	max_filename_length="$(( ${columns} - ${#iteration} - ${total_flacs_length} - 29 ))"
 
 	# Create and cull filename if needed returned as ${filename}
 	__filename
