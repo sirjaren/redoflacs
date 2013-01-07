@@ -23,9 +23,7 @@
 #    0: STDIN
 #    1: STDOUT
 #    2: STDERR
-#    3: FIFO process manager
 #    4: auCDtect's (STDOUT) output
-#    5: Number of FLAC files that failed
 #===============================================================================
 # // THIS IS THE CYGWIN VERSION OF REDOFLACS \\
 #===============================================================================
@@ -660,6 +658,9 @@ export -f __sub_applying_tags
 #-------------------------------------------------------------------------------
 # Compressing
 __print_compressing_flac () {
+	# Obtain the number of columns returned as ${columns}
+	__columns
+
 	# This is the maximum length of a string to be displayed based on column width,
 	# obtained via the number of columns minus the length of displayed characters:
 	#
@@ -683,6 +684,9 @@ export -f __print_compressing_flac
 
 # Testing ReplayGain
 __print_test_replaygain () {
+	# Obtain the number of columns returned as ${columns}
+	__columns
+
 	# This is the maximum length of a string to be displayed based on column width,
 	# obtained via the number of columns minus the length of displayed characters:
 	#
@@ -700,12 +704,15 @@ __print_test_replaygain () {
 	__filename
 
 	printf "\r${normal}%s${magenta}%s${normal}%s%$(__current_length)s${blue}%s${normal}%s${yellow}%s${normal}%s${blue}%s${normal}%s" \
-	"     " "[${iteration}/${#total_flacs_array[@]}]" " ${filename} " "" "[" " " "Testing ReplayGain" " " "]" " "
+	"     " "[${iteration}/${total_flacs}]" " ${filename} " "" "[" " " "Testing ReplayGain" " " "]" " "
 }
 export -f __print_test_replaygain
 
 # Applying ReplayGain
 __print_add_replaygain () {
+	# Obtain the number of columns returned as ${columns}
+	__columns
+
 	# This is the maximum length of a string to be displayed based on column width,
 	# obtained via the number of columns minus the length of displayed characters:
 	#
@@ -723,12 +730,15 @@ __print_add_replaygain () {
 	__filename
 
 	printf "\r${normal}%s${magenta}%s${normal}%s%$(__current_length)s${blue}%s${normal}%s${yellow}%s${normal}%s${blue}%s${normal}%s" \
-	"     " "[${iteration}/${#flac_directories_array[@]}]" " ${filename} " "" "[" " " "Adding ReplayGain" " " "]" " "
+	"     " "[${iteration}/${total_directories}]" " ${filename} " "" "[" " " "Adding ReplayGain" " " "]" " "
 }
 export -f __print_add_replaygain
 
 # Testing
 __print_testing_flac () {
+	# Obtain the number of columns returned as ${columns}
+	__columns
+
 	# This is the maximum length of a string to be displayed based on column width,
 	# obtained via the number of columns minus the length of displayed characters:
 	#
@@ -752,6 +762,9 @@ export -f __print_testing_flac
 
 # Failed
 __print_failed_flac () {
+	# Obtain the number of columns returned as ${columns}
+	__columns
+
 	# This is the maximum length of a string to be displayed based on column width,
 	# obtained via the number of columns minus the length of displayed characters:
 	#
@@ -775,6 +788,9 @@ export -f __print_failed_flac
 
 # Checking MD5
 __print_checking_md5 () {
+	# Obtain the number of columns returned as ${columns}
+	__columns
+
 	# This is the maximum length of a string to be displayed based on column width,
 	# obtained via the number of columns minus the length of displayed characters:
 	#
@@ -798,6 +814,9 @@ export -f __print_checking_md5
 
 # File ok
 __print_ok_flac () {
+	# Obtain the number of columns returned as ${columns}
+	__columns
+
 	# This is the maximum length of a string to be displayed based on column width,
 	# obtained via the number of columns minus the length of displayed characters:
 	#
@@ -821,6 +840,9 @@ export -f __print_ok_flac
 
 # ReplayGain file ok
 __print_ok_replaygain_file () {
+	# Obtain the number of columns returned as ${columns}
+	__columns
+
 	# This is the maximum length of a string to be displayed based on column width,
 	# obtained via the number of columns minus the length of displayed characters:
 	#
@@ -844,6 +866,9 @@ export -f __print_ok_replaygain_file
 
 # ReplayGain file interrupted
 __print_interrupt_replaygain_file () {
+	# Obtain the number of columns returned as ${columns}
+	__columns
+
 	# This is the maximum length of a string to be displayed based on column width,
 	# obtained via the number of columns minus the length of displayed characters:
 	#
@@ -861,12 +886,15 @@ __print_interrupt_replaygain_file () {
 	__filename
 
 	printf "\r${normal}%s${magenta}%s${normal}%s%$(__current_length)s${blue}%s${normal}%s${yellow}%s${normal}%s${blue}%s${normal}%s" \
-	"     " "[${iteration}/${#total_flacs_array[@]}]" " ${filename} " "" "[" " " "Interrupted" " " "]" " "
+	"     " "[${iteration}/${total_flacs}]" " ${filename} " "" "[" " " "Interrupted" " " "]" " "
 }
 export -f __print_interrupt_replaygain_file
 
 # ReplayGain directory ok
 __print_ok_replaygain_dir () {
+	# Obtain the number of columns returned as ${columns}
+	__columns
+
 	# This is the maximum length of a string to be displayed based on column width,
 	# obtained via the number of columns minus the length of displayed characters:
 	#
@@ -884,12 +912,15 @@ __print_ok_replaygain_dir () {
 	__filename
 
 	printf "\r${normal}%s${magenta}%s${normal}%s%$(__current_length)s${blue}%s${normal}%s${green}%s${normal}%s${blue}%s${normal}%s" \
-	"     " "[${iteration}/${#flac_directories_array[@]}]" " ${filename} " "" "[" " " "ok" " " "]" " "
+	"     " "[${iteration}/${total_directories}]" " ${filename} " "" "[" " " "ok" " " "]" " "
 }
 export -f __print_ok_replaygain_dir
 
 # ReplayGain directory interrupted
 __print_interrupt_replaygain_dir () {
+	# Obtain the number of columns returned as ${columns}
+	__columns
+
 	# This is the maximum length of a string to be displayed based on column width,
 	# obtained via the number of columns minus the length of displayed characters:
 	#
@@ -913,6 +944,9 @@ export -f __print_interrupt_replaygain_dir
 
 # ReplayGain directory failed
 __print_failed_replaygain () {
+	# Obtain the number of columns returned as ${columns}
+	__columns
+
 	# This is the maximum length of a string to be displayed based on column width,
 	# obtained via the number of columns minus the length of displayed characters:
 	#
@@ -936,6 +970,9 @@ export -f __print_failed_replaygain
 
 # Validating with auCDtect
 __print_aucdtect_flac () {
+	# Obtain the number of columns returned as ${columns}
+	__columns
+
 	# This is the maximum length of a string to be displayed based on column width,
 	# obtained via the number of columns minus the length of displayed characters:
 	#
@@ -959,6 +996,9 @@ export -f __print_aucdtect_flac
 
 # auCDtect issue
 __print_aucdtect_issue () {
+	# Obtain the number of columns returned as ${columns}
+	__columns
+
 	# This is the maximum length of a string to be displayed based on column width,
 	# obtained via the number of columns minus the length of displayed characters:
 	#
@@ -982,6 +1022,9 @@ export -f __print_aucdtect_issue
 
 # auCDtect spectrogram
 __print_aucdtect_spectrogram () {
+	# Obtain the number of columns returned as ${columns}
+	__columns
+
 	# This is the maximum length of a string to be displayed based on column width,
 	# obtained via the number of columns minus the length of displayed characters:
 	#
@@ -1005,6 +1048,9 @@ export -f __print_aucdtect_spectrogram
 
 # auCDtect skip
 __print_aucdtect_skip () {
+	# Obtain the number of columns returned as ${columns}
+	__columns
+
 	# This is the maximum length of a string to be displayed based on column width,
 	# obtained via the number of columns minus the length of displayed characters:
 	#
@@ -1028,6 +1074,9 @@ export -f __print_aucdtect_skip
 
 # Tag ok
 __print_ok_tag () {
+	# Obtain the number of columns returned as ${columns}
+	__columns
+
 	# This is the maximum length of a string to be displayed based on column width,
 	# obtained via the number of columns minus the length of displayed characters:
 	#
@@ -1051,6 +1100,9 @@ export -f __print_ok_tag
 
 # Compression level the same
 __print_level_same_compression () {
+	# Obtain the number of columns returned as ${columns}
+	__columns
+
 	# This is the maximum length of a string to be displayed based on column width,
 	# obtained via the number of columns minus the length of displayed characters:
 	#
@@ -1074,6 +1126,9 @@ export -f __print_level_same_compression
 
 # Analyzing tags
 __print_analyzing_tags () {
+	# Obtain the number of columns returned as ${columns}
+	__columns
+
 	# This is the maximum length of a string to be displayed based on column width,
 	# obtained via the number of columns minus the length of displayed characters:
 	#
@@ -1097,6 +1152,9 @@ export -f __print_analyzing_tags
 
 # Applying tags
 __print_applying_tags () {
+	# Obtain the number of columns returned as ${columns}
+	__columns
+
 	# This is the maximum length of a string to be displayed based on column width,
 	# obtained via the number of columns minus the length of displayed characters:
 	#
@@ -1120,6 +1178,9 @@ export -f __print_applying_tags
 
 # Pruning
 __print_prune_flac () {
+	# Obtain the number of columns returned as ${columns}
+	__columns
+
 	# This is the maximum length of a string to be displayed based on column width,
 	# obtained via the number of columns minus the length of displayed characters:
 	#
@@ -1143,6 +1204,9 @@ export -f __print_prune_flac
 
 # Retag analyze interrupted
 __print_retag_analyze_interrupt () {
+	# Obtain the number of columns returned as ${columns}
+	__columns
+
 	# This is the maximum length of a string to be displayed based on column width,
 	# obtained via the number of columns minus the length of displayed characters:
 	#
@@ -1166,6 +1230,9 @@ export -f __print_retag_analyze_interrupt
 
 # Retag apply interrupted
 __print_retag_apply_interrupt () {
+	# Obtain the number of columns returned as ${columns}
+	__columns
+
 	# This is the maximum length of a string to be displayed based on column width,
 	# obtained via the number of columns minus the length of displayed characters:
 	#
@@ -1189,6 +1256,9 @@ export -f __print_retag_apply_interrupt
 
 # Interrupted file
 __print_interrupt () {
+	# Obtain the number of columns returned as ${columns}
+	__columns
+
 	# This is the maximum length of a string to be displayed based on column width,
 	# obtained via the number of columns minus the length of displayed characters:
 	#
@@ -1233,10 +1303,11 @@ export -f __countdown_abort
 
 # ReplayGain test abort
 __replaygain_test_abort () {
-	__print_interrupt_replaygain_file
+	# Obtain iteration and filename
+	# for the displayed message below
+	__obtain_count_filename
 
-	# Kill running children
-	__kill_jobs
+	__print_interrupt_replaygain_file
 
 	__newline
 	__info "Control-C received, generating summary. Please wait..."
@@ -1254,10 +1325,11 @@ export -f __replaygain_test_abort
 
 # ReplayGain process abort
 __replaygain_process_abort () {
-	__print_interrupt_replaygain_dir
+	# Obtain iteration and filename
+	# for the displayed message below
+	__obtain_count_filename
 
-	# Kill running children
-	__kill_jobs
+	__print_interrupt_replaygain_dir
 
 	__newline
 	__info "Control-C received, generating summary. Please wait..." ; __newline
@@ -1275,10 +1347,11 @@ export -f __replaygain_process_abort
 
 # FLAC compress abort and remove temporarily encoded files (if any)
 __compress_abort () {
-	__print_interrupt
+	# Obtain iteration and filename
+	# for the displayed message below
+	__obtain_count_filename
 
-	# Kill running children
-	__kill_jobs
+	__print_interrupt
 
 	__newline
 	__info "Control-C received, removing temporary files and" ; __newline
@@ -1300,10 +1373,11 @@ export -f __compress_abort
 
 # FLAC test abort
 __test_abort () {
-	__print_interrupt
+	# Obtain iteration and filename
+	# for the displayed message below
+	__obtain_count_filename
 
-	# Kill running children
-	__kill_jobs
+	__print_interrupt
 
 	__newline
 	__info "Control-C received, generating summary. Please wait..." ; __newline
@@ -1321,10 +1395,11 @@ export -f __test_abort
 
 # auCDtect abort.  Removes temporary WAV files (if any)
 __aucdtect_abort () {
-	__print_interrupt
+	# Obtain iteration and filename
+	# for the displayed message below
+	__obtain_count_filename
 
-	# Kill running children
-	__kill_jobs
+	__print_interrupt
 
 	__newline
 	__info "Control-C received, removing temporary files and" ; __newline
@@ -1346,10 +1421,11 @@ export -f __aucdtect_abort
 
 # MD5 check abort
 __md5_check_abort () {
-	__print_interrupt
+	# Obtain iteration and filename
+	# for the displayed message below
+	__obtain_count_filename
 
-	# Kill running children
-	__kill_jobs
+	__print_interrupt
 
 	__newline
 	__info "Control-C received, generating summary. Please wait..." ; __newline
@@ -1367,10 +1443,11 @@ export -f __md5_check_abort
 
 # Analyzing tags abort
 __analyzing_tags_abort () {
-	__print_retag_analyze_interrupt
+	# Obtain iteration and filename
+	# for the displayed message below
+	__obtain_count_filename
 
-	# Kill running children
-	__kill_jobs
+	__print_retag_analyze_interrupt
 
 	__newline
 	__info "Control-C received, generating summary. Please wait..." ; __newline
@@ -1413,10 +1490,11 @@ export -f __analyzing_tags_abort
 
 # Applying tags abort
 __applying_tags_abort () {
-	__print_retag_apply_interrupt
+	# Obtain iteration and filename
+	# for the displayed message below
+	__obtain_count_filename
 
-	# Kill running children
-	__kill_jobs
+	__print_retag_apply_interrupt
 
 	__newline
 	__info "Control-C received, generating summary. Please wait..." ; __newline
@@ -1459,10 +1537,11 @@ export -f __applying_tags_abort
 
 # Prune FLACS abort
 __prune_abort () {
-	__print_interrupt
+	# Obtain iteration and filename
+	# for the displayed message below
+	__obtain_count_filename
 
-	# Kill running children
-	__kill_jobs
+	__print_interrupt
 
 	__newline
 	__info "Control-C received, generating summary. Please wait..." ; __newline
@@ -1498,8 +1577,8 @@ __columns () {
 	# Ends up with the width of terminal
 	columns="${columns/#*columns }"
 
-	# Prints out total columns of terminal
-	printf "%s" "${columns/%;*}"
+	# Stores total columns of terminal
+	export columns="${columns/%;*}"
 }
 export -f __columns
 
@@ -1508,11 +1587,11 @@ export -f __columns
 __filename () {
 	filename="${i##*/}"
 	# Replace possible newlines in filename with '?' (like 'ls' output)
-	filename="${filename//$'\n'/?}"
+	export filename="${filename//$'\n'/?}"
 
 	# Cull filename and add an ellipsis if the filename is too long
 	if [[ "${#filename}" -gt "${max_filename_length}" ]] ; then
-		filename="${filename::${max_filename_length}}…"
+		export filename="${filename::${max_filename_length}}…"
 	fi
 }
 export -f __filename
@@ -1677,17 +1756,18 @@ export -f __top_banner
 # line above.  This will be displayed when all the FLAC files
 # have been mapped to an array
 __processed_flacs_ok () {
+	__columns
 	# ${flacs_ok_spacing} is the spacing from the number of
-	# $(__columns) minus the number of printed characters:
+	# ${columns} minus the number of printed characters:
 	#
 	#  * Finding FLAC files to process... <- ${flacs_ok_spacing} -> [ ok ]
 	#                                     ^^^^^^^^^^^^^^^^^^^^^^^^^
 	# 42 is the number of printed characters printed and is what is subtracted
-	# from $(__columns) to get ${flacs_ok_spacing}:
+	# from ${columns) to get ${flacs_ok_spacing}:
 	#
 	#  ' * Finding FLAC files to process...'  (35 characters)
 	#                              '[ ok ] '  ( 7 characters)
-	printf "${normal}%$(( $(__columns) - 42 ))s${blue}%s${normal}%s${green}%s${normal}%s${blue}%s${normal}" \
+	printf "${normal}%$(( ${columns} - 42 ))s${blue}%s${normal}%s${green}%s${normal}%s${blue}%s${normal}" \
 	"" "[" " " "ok" " " "]"
 }
 export -f __processed_flacs_ok
@@ -1742,24 +1822,58 @@ __total_directories () {
 	done
 
 	# The total number of directories in a string variable
-	total_directories="${#flac_directories_array[@]}"
+	export total_directories="${#flac_directories_array[@]}"
 }
 export -f __total_directories
 
-# Clear old file descriptor (3) and create a new
-# FIFO that's tied to file discriptor 3, removing
-# the FIFO upon completion
-__clear_tmp_fd () {
-	# Create temporary FIFO
-	mkfifo "${tmp_fifo}"
+# This adds one to current iteration and returns the
+# current number processed represented as ${iteration}
+# Also adds the currently processed filename to a
+# temporary file to be retrieved by abort functions
+__iterate_count () {
+	# Add one to iteration count file
+	printf '.' >> "${tmp_count_file}"
 
-	# Open FIFO for reading and writing on file descriptor '3'
-	exec 3<>"${tmp_fifo}"
+	# Add current filename to tmp file
+	printf "${i}" > "${tmp_filename}"
 
-	# Remove temporary FIFO and leave just the file
-	# descriptor available
-	rm -f "${tmp_fifo}"
+	# Load ${tmp_count_file} into array
+	mapfile -n0 -t iteration_array < "${tmp_count_file}"
+
+	# Store array into string
+	iteration="${iteration_array}"
+
+	# Count length of iteration string
+	iteration="${#iteration}"
 }
+export -f __iterate_count
+
+# Obtain count and file (used for abort functions)
+__obtain_count_filename () {
+	### Obtain iteration count ###
+
+	# Load ${tmp_count_file} into array
+	mapfile -n0 -t iteration_array < "${tmp_count_file}"
+
+	# Store array into string
+	iteration="${iteration_array}"
+
+	# Count length of iteration string
+	iteration="${#iteration}"
+
+	### Obtain filename ###
+
+	# Load ${tmp_filename} into ${i}
+	read -r i < "${tmp_filename}"
+}
+export -f __obtain_count_filename
+
+# Add one to fail count
+__fail_count () {
+	# Add one to fail count 
+	printf '.' >> "${tmp_fail_count}"
+}
+export -f __fail_count
 
 # Clear old file descriptor (4) and create a new
 # FIFO that's tied to file discriptor 4, removing
@@ -1781,22 +1895,6 @@ __create_aucdtect_fd () {
 	# Remove temporary FIFO and leave just the file
 	# descriptor available
 	rm -f "${tmp_aucdtect_fd}"
-}
-
-# Create a new file descriptor (5) via a FIFO
-__set_error_fd () {
-	# Error FIFO location
-	error_fifo="/tmp/redoflacs_error_fifo_$$"
-
-	# Create temporary FIFO
-	mkfifo "${error_fifo}"
-
-	# Open FIFO for reading and writing on file descriptor '5'
-	exec 5<>"${error_fifo}"
-
-	# Remove temporary FIFO and leave just the file
-	# descriptor available
-	rm -f "${error_fifo}"
 }
 
 # Obtain and process the positional parameters invoked
@@ -2391,15 +2489,10 @@ __operation_summary () {
 			;;
 
 			"failed")
-				# Add a newline into file descriptor 5 (makes one line total)
-				__newline >&5
+				# Store everything from ${tmp_fail_count} into an array
+				mapfile -n0 -t fail_count_array < "${tmp_fail_count}"
 
-				# Store everything in fd 5 into an array.  We only grab one
-				# line
-				mapfile -n1 -t -u5 fail_count
-
-				# Store array into a string
-				fail_count="${fail_count[@]}"
+				fail_count="${fail_count_array[@]}"
 
 				# If ${#fail_count} is one, change the message
 				# to singular
@@ -2634,6 +2727,15 @@ __operation_summary () {
 	# by redirecting /dev/stderr
 	stty ${old_stty} < /dev/stderr
 
+	# Remove temporary iteration file
+	rm -f "${tmp_count_file}"
+
+	# Remove the failed count file
+	rm -f "${tmp_fail_count}"
+
+	# Remove the temporary filename file
+	rm -f "${tmp_filename}"
+
 	# Restore the cursor
 	printf "\033[?25h"
 }
@@ -2647,21 +2749,14 @@ export -f __operation_summary
 # Test ReplayGain
 __operation_test_replaygain () {
 	for i ; do
-		# Let's make sure to kill running children if this
-		# function was aborted via SIGINT.  This function
-		# will receive SIGTERM from the kill in previous trap.
-		trap '__kill_jobs ; exit 1' SIGTERM
+		# Add one (iteration)
+		__iterate_count
 
 		# Prints current file and operation
 		__print_test_replaygain
 
-		# Check if file is a FLAC file (hide output) and send to
-		# background to allow killing on SIGTERM
-		metaflac --show-md5sum "${i}" >/dev/null 2>&1 &
-
-		# Wait on background process and return exit code of
-		# said process
-		wait "${!}"
+		# Check if file is a FLAC file (hide output)
+		metaflac --show-md5sum "${i}" >/dev/null 2>&1
 
 		# Exit code 130 is SIGINT so only check for exit code '1'
 		if [[ "${?}" -eq "1" ]] ; then
@@ -2673,132 +2768,108 @@ __operation_test_replaygain () {
 				   "------------------------------------------------------------------" \
 				   >> "${replay_test_errors}"
 
-			# Add one to fail fd
-			printf '.' >&5
+			# Add one to fail count
+			__fail_count
 		fi
-
-		# Print newline into FIFO after completion
-		__newline >&3
 	done
 }
 export -f __operation_test_replaygain
 
 # Process Replaygain (only add values if missing)
 __operation_replaygain_noforce () {
-	# Let's make sure to kill running children if this
-	# function was aborted via SIGINT.  This function
-	# will receive SIGTERM from the kill in previous trap
-	trap '__kill_jobs ; exit 1' SIGTERM
+	for i ; do
+		# Add one (iteration)
+		__iterate_count
 
-	# Prints current file and operation
-	__print_add_replaygain
+		# Prints current file and operation
+		__print_add_replaygain
 
-	# ${i} is the parent directory to the FLAC files
-	# ${j} is a FLAC file -> under ${i}
-	for j in "${i}"/*${flac_extension} ; do
-		# Grab all of the ReplayGain tags
-		mapfile -n0 -t replaygain_array < \
-		<(
-			metaflac \
-				--show-tag=REPLAYGAIN_REFERENCE_LOUDNESS \
-				--show-tag=REPLAYGAIN_TRACK_GAIN \
-				--show-tag=REPLAYGAIN_TRACK_PEAK \
-				--show-tag=REPLAYGAIN_ALBUM_GAIN \
-				--show-tag=REPLAYGAIN_ALBUM_PEAK \
-				"${j}"
-		)
+		# ${i} is the parent directory to the FLAC files
+		# ${j} is a FLAC file -> under ${i}
+		for j in "${i}"/*${flac_extension} ; do
+			# Grab all of the ReplayGain tags
+			mapfile -n0 -t replaygain_array < \
+			<(
+				metaflac \
+					--show-tag=REPLAYGAIN_REFERENCE_LOUDNESS \
+					--show-tag=REPLAYGAIN_TRACK_GAIN \
+					--show-tag=REPLAYGAIN_TRACK_PEAK \
+					--show-tag=REPLAYGAIN_ALBUM_GAIN \
+					--show-tag=REPLAYGAIN_ALBUM_PEAK \
+					"${j}"
+			)
 
-		# Strip out the tag fields (eg. REPLAYGAIN_TRACK_GAIN=)
-		replaygain_array="${replaygain_array[@]#*=}"
+			# Strip out the tag fields (eg. REPLAYGAIN_TRACK_GAIN=)
+			replaygain_array="${replaygain_array[@]#*=}"
 
-		# Test if any ReplayGain values are empty (if there are less
-		# than 5 values in the replaygain array)
-		if [[ "${#replaygain_array[@]}" -lt 5 ]] ; then
-			# At _least_ one tag is missing from current file, so
-			# apply new ReplayGain values
-			#
-			# Add ReplayGain to FLAC files under directory and send
-			# to background to allow killing on SIGTERM.  Metaflac
-			# automatically removes old ReplayGain values (if any)
-			# before proceeding
-			metaflac --add-replay-gain "${i}"/*${flac_extension} >/dev/null 2>&1 &
+			# Test if any ReplayGain values are empty (if there are less
+			# than 5 values in the replaygain array)
+			if [[ "${#replaygain_array[@]}" -lt 5 ]] ; then
+				# At _least_ one tag is missing from current file, so
+				# apply new ReplayGain values
+				#
+				# Add ReplayGain to FLAC files under directory.  Metaflac
+				# automatically removes old ReplayGain values (if any)
+				# before proceeding
+				metaflac --add-replay-gain "${i}"/*${flac_extension} >/dev/null 2>&1
 
-			# Wait on background process and return exit code of
-			# said process
-			wait "${!}"
+				# Exit code 130 is SIGINT so only check for exit code '1'
+				if [[ "${?}" -eq 1 ]] ; then
+					__print_failed_flac
+					printf "%s\n%s\n%s\n%s\n" \
+						   "Directory: ${i}" \
+						   "ERROR:     There was an issue with some FLAC files in this directory." \
+						   "           Check that the sample rate is the same for all FLAC files." \
+						   "------------------------------------------------------------------" \
+						   >> "${replay_add_errors}"
 
-			# Exit code 130 is SIGINT so only check for exit code '1'
-			if [[ "${?}" -eq 1 ]] ; then
-				__print_failed_flac
-				printf "%s\n%s\n%s\n%s\n" \
-					   "Directory: ${i}" \
-					   "ERROR:     There was an issue with some FLAC files in this directory." \
-					   "           Check that the sample rate is the same for all FLAC files." \
-					   "------------------------------------------------------------------" \
-					   >> "${replay_add_errors}"
+					# Add one to fail count
+					__fail_count
 
-				# Add one to fail fd
-				printf '.' >&5
+					# Placeholder variable tested after this loop
+					# if the loop completes with 'break'
+					broke_out_of_loop="true"
 
-				# Placeholder variable tested after this loop
-				# if the loop completes with 'break'
-				broke_out_of_loop="true"
-
-				# Break out of loop and on to next directory
-				break
+					# Break out of loop and on to next directory
+					break
+				fi
 			fi
-		fi
+		done
 	done
-
-	# Print newline into FIFO after completion
-	__newline >&3
 }
 export -f __operation_replaygain_noforce
 
 # Process ReplayGain (force new values)
 __operation_replaygain_force () {
-	# Let's make sure to kill running children if this
-	# function was aborted via SIGINT.  This function
-	# will receive SIGTERM from the kill in previous trap
-	trap '__kill_jobs ; exit 1' SIGTERM
+	for i ; do
+		# Add one (iteration)
+		__iterate_count
 
-	# Prints current file and operation
-	__print_add_replaygain
+		# Prints current file and operation
+		__print_add_replaygain
 
-	# Add ReplayGain to FLAC files under directory and send
-	# to background to allow killing on SIGTERM
-	metaflac --add-replay-gain "${i}"/*${flac_extension} >/dev/null 2>&1 &
+		# Add ReplayGain to FLAC files under directory 
+		metaflac --add-replay-gain "${i}"/*${flac_extension} >/dev/null 2>&1
 
-	# Wait on background process and return exit code of
-	# said process
-	wait "${!}"
+		# Exit code 130 is SIGINT so only check for exit code '1'
+		if [[ "${?}" -eq 1 ]] ; then
+			__print_failed_replaygain
+			printf "%s\n%s\n%s\n%s\n" \
+				   "Directory: ${i}" \
+				   "ERROR:     There was an issue with some FLAC files in this directory." \
+				   "           Check that the sample rate is the same for all FLAC files." \
+				   "------------------------------------------------------------------" \
+				   >> "${replay_add_errors}"
 
-	# Exit code 130 is SIGINT so only check for exit code '1'
-	if [[ "${?}" -eq 1 ]] ; then
-		__print_failed_replaygain
-		printf "%s\n%s\n%s\n%s\n" \
-			   "Directory: ${i}" \
-			   "ERROR:     There was an issue with some FLAC files in this directory." \
-			   "           Check that the sample rate is the same for all FLAC files." \
-			   "------------------------------------------------------------------" \
-			   >> "${replay_add_errors}"
-
-		# Add one to fail fd
-		printf '.' >&5
-	fi
-
-	# Print newline into FIFO after completion
-	__newline >&3
+			# Add one to fail count
+			__fail_count
+		fi
+	done
 }
 export -f __operation_replaygain_force
 
 # Compress FLAC files
 __operation_compress () {
-	# Let's make sure to kill running children if this
-	# function was aborted via SIGINT.  This function
-	# will receive SIGTERM from the kill in previous trap
-	trap '__kill_jobs ; exit 1' SIGTERM
-
 	# Test for COMPRESSION level in FLAC file. Hide error output since
 	# we'll be verifying the FLAC file later
 	COMPRESSION="$(metaflac --show-tag=COMPRESSION "${i}" 2> /dev/null)"
@@ -2871,11 +2942,6 @@ export -f __operation_compress
 
 # Test FLAC files
 __operation_test () {
-	# Let's make sure to kill running children if this
-	# function was aborted via SIGINT.  This function
-	# will receive SIGTERM from the kill in previous trap
-	trap '__kill_jobs ; exit 1' SIGTERM
-
 	__print_testing_flac
 
 	# Test FLAC file and send to background to
@@ -2906,11 +2972,6 @@ export -f __operation_test
 
 # Test FLAC validity with auCDtect
 __operation_aucdtect () {
-	# Let's make sure to kill running children if this
-	# function was aborted via SIGINT.  This function
-	# will receive SIGTERM from the kill in previous trap
-	trap '__kill_jobs ; exit 1' SIGTERM
-
 	__print_aucdtect_flac
 
 	# Get the bit depth of a FLAC file, also used to check
@@ -3091,11 +3152,6 @@ export -f __operation_aucdtect
 
 # Check MD5 in each FLAC file
 __operation_md5_check () {
-	# Let's make sure to kill running children if this
-	# function was aborted via SIGINT.  This function
-	# will receive SIGTERM from the kill in previous trap
-	trap '__kill_jobs ; exit 130' SIGTERM
-
 	__print_checking_md5
 
 	# Get the MD5 checksum (hide stderr output).  Also
@@ -3135,11 +3191,6 @@ export -f __operation_md5_check
 
 # Analyze FLAC tags
 __operation_analyze_tags () {
-	# Let's make sure to kill running children if this
-	# function was aborted via SIGINT.  This function
-	# will receive SIGTERM from the kill in previous trap
-	trap '__kill_jobs ; exit 1' SIGTERM
-
 	__print_analyzing_tags
 
 	# Check if file is a FLAC file (variable hides output)
@@ -3318,11 +3369,6 @@ export -f __operation_analyze_tags
 
 # Analyze FLAC tags (not logging missing COVERART tag)
 __operation_analyze_tags_dont_log_coverart () {
-	# Let's make sure to kill running children if this
-	# function was aborted via SIGINT.  This function
-	# will receive SIGTERM from the kill in previous trap
-	trap '__kill_jobs ; exit 1' SIGTERM
-
 	__print_analyzing_tags
 
 	# Check if file is a FLAC file (variable hides output)
@@ -3530,11 +3576,6 @@ export -f __operation_analyze_tags_dont_log_coverart
 
 # Re-tag FLAC files
 __operation_set_tags () {
-	# Let's make sure to kill running children if this
-	# function was aborted via SIGINT.  This function
-	# will receive SIGTERM from the kill in previous trap
-	trap '__kill_jobs ; exit 1' SIGTERM
-
 	__print_applying_tags
 
 	# Remove and set new tags
@@ -3590,11 +3631,6 @@ export -f __operation_set_tags
 
 # Prune FLACS
 __operation_prune () {
-	# Let's make sure to kill running children if this
-	# function was aborted via SIGINT.  This function
-	# will receive SIGTERM from the kill in previous trap
-	trap '__kill_jobs ; exit 1' SIGTERM
-
 	__print_prune_flac
 
 	# Check if file is a FLAC file (hide output) and send to
@@ -3714,10 +3750,16 @@ stty -ctlecho 2> /dev/null
 printf "\033[?25l"
 
 # Temporary FIFO location
-tmp_fifo="/tmp/redoflacs_fifo_$$"
+export tmp_fifo="/tmp/redoflacs_fifo_$$"
 
-# Set up error file descriptor '5'
-__set_error_fd
+# Temporary count file
+export tmp_count_file="/tmp/redoflacs_count_iteration_$$"
+
+# Temporary fail count
+export tmp_fail_count="/tmp/redoflacs_fail_count_$$"
+
+# Temporary filename
+export tmp_filename="/tmp/redoflacs_filename_$$"
 
 # Display the top banner
 if [[ "${retag_flac}" != "true" ]] ; then
@@ -3741,10 +3783,11 @@ fi
 
 # Grab the total flacs to process
 total_flacs_array=( "${directory}"/**/*${flac_extension} )
+export total_flacs="${#total_flacs_array[@]}"
 
 # String length of total number of flacs
 total_flacs_length="${#total_flacs_array[@]}"
-total_flacs_length="${#total_flacs_length}"
+export total_flacs_length="${#total_flacs_length}"
 
 # This displays '[ ok ]' after 'Finding FLAC files to process...'
 __processed_flacs_ok
@@ -3960,9 +4003,9 @@ if [[ "${replaygain_flac}" == "true" ]] ; then
 
 	# Check if "-G, --replaygain-noforce" was called
 	if [[ "${replaygain_noforce}" == "true" ]] ; then
-		process_replaygain="__operation_replaygain_noforce"
+		export process_replaygain="__operation_replaygain_noforce"
 	else
-		process_replaygain="__operation_replaygain_force"
+		export process_replaygain="__operation_replaygain_force"
 	fi
 
 	# Prints title message of current operation
@@ -3974,13 +4017,13 @@ if [[ "${replaygain_flac}" == "true" ]] ; then
 	# Trap SIGINT (Control-C) to abort cleanly
 	trap __replaygain_test_abort SIGINT
 
+	# Clear/initialize iteration
+	> "${tmp_count_file}"
+
 	# Prints sub message of current operation
 	__sub_test_replaygain
 
-	# Make sure to clear file descriptor '3' before proceeding
-	__clear_tmp_fd
-
-	# Run the above function with the configured threads (multithreaded)
+	# Run the above function with the configured jobs
 	find "${directory}" -name "*${flac_extension}" -print0 2> /dev/null | xargs -0 -n 1 -P "${jobs}" bash -c '__operation_test_replaygain "${@}"' --
 
 	if [[ -f "${replay_test_errors}" ]] ; then
@@ -3992,11 +4035,8 @@ if [[ "${replaygain_flac}" == "true" ]] ; then
 		exit 1
 	fi
 
-	if [[ "${last_file}" == "true" ]] ; then
-		# FLAC is okay, so print only if it's the last file
-		__print_ok_replaygain_file
-		testing_replaygain_complete="true"
-	fi
+	__print_ok_replaygain_file
+	testing_replaygain_complete="true"
 	#== END TEST REPLAYGAIN ====================================================
 
 
@@ -4005,6 +4045,9 @@ if [[ "${replaygain_flac}" == "true" ]] ; then
 	#---------------------------------------------------------------------------
 	# Trap SIGINT (Control-C) to abort cleanly
 	trap __replaygain_process_abort SIGINT
+
+	# Clear/initialize iteration
+	> "${tmp_count_file}"
 
 	# Make printing pretty if specified directory is '.'
 	if [[ "${directory}" == "." ]] ; then
@@ -4018,11 +4061,8 @@ if [[ "${replaygain_flac}" == "true" ]] ; then
 	# Prints sub message of current operation
 	__sub_add_replaygain
 
-	# Make sure to clear file descriptor '3' before proceeding
-	__clear_tmp_fd
-
-	# Run parallel operations, that which is specified as ${1}
-	__run_parallel_directories "${process_replaygain}"
+	# Run the above function with the configured jobs
+	printf "%s\0" "${flac_directories_array[@]}" | xargs -0 -n 1 -P "${jobs}" bash -c '${process_replaygain} "${@}"' --
 
 	if [[ -f "${replay_add_errors}" ]] ; then
 		__log_replaygain_process
