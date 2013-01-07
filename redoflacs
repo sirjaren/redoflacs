@@ -18,12 +18,6 @@
 # TODO: When flac releases a new version, create a check for
 #       ReplayGain values greater than 48kHz, and abort if flac
 #       is 1.2.1 or less
-#-------------------------------------------------------------------------------
-# File Descriptors used in this script
-#    0: STDIN
-#    1: STDOUT
-#    2: STDERR
-#    4: auCDtect's (STDOUT) output
 #===============================================================================
 # // THIS IS THE CYGWIN VERSION OF REDOFLACS \\
 #===============================================================================
@@ -162,6 +156,7 @@ export replaygain_flac=""
 export retag_flac=""
 export prune_flac=""
 
+# Export USER CONFIGURATION variables
 export remove_artwork
 export compression_level
 export error_log
@@ -678,7 +673,7 @@ __print_compressing_flac () {
 	__filename
 
 	printf "\r${normal}%s${magenta}%s${normal}%s%$(__current_length)s${blue}%s${normal}%s${yellow}%s${normal}%s${blue}%s${normal}%s" \
-	"   " "[${iteration}/${#total_flacs_array[@]}]" " ${filename} " "" "[" " " "Compressing FLAC" " " "]" " "
+	"   " "[${iteration}/${total_flacs}]" " ${filename} " "" "[" " " "Compressing FLAC" " " "]" " "
 }
 export -f __print_compressing_flac
 
@@ -756,7 +751,7 @@ __print_testing_flac () {
 	__filename
 
 	printf "\r${normal}%s${magenta}%s${normal}%s%$(__current_length)s${blue}%s${normal}%s${yellow}%s${normal}%s${blue}%s${normal}%s" \
-	"   " "[${iteration}/${#total_flacs_array[@]}]" " ${filename} " "" "[" " " "Testing FLAC" " " "]" " "
+	"   " "[${iteration}/${total_flacs}]" " ${filename} " "" "[" " " "Testing FLAC" " " "]" " "
 }
 export -f __print_testing_flac
 
@@ -808,7 +803,7 @@ __print_checking_md5 () {
 	__filename
 
 	printf "\r${normal}%s${magenta}%s${normal}%s%$(__current_length)s${blue}%s${normal}%s${yellow}%s${normal}%s${blue}%s${normal}%s" \
-	"   " "[${iteration}/${#total_flacs_array[@]}]" " ${filename} " "" "[" " " "Checking MD5" " " "]" " "
+	"   " "[${iteration}/${total_flacs}]" " ${filename} " "" "[" " " "Checking MD5" " " "]" " "
 }
 export -f __print_checking_md5
 
@@ -816,6 +811,10 @@ export -f __print_checking_md5
 __print_ok_flac () {
 	# Obtain the number of columns returned as ${columns}
 	__columns
+
+	# Obtain iteration and filename
+	# for the displayed message below
+	__obtain_count_filename
 
 	# This is the maximum length of a string to be displayed based on column width,
 	# obtained via the number of columns minus the length of displayed characters:
@@ -834,7 +833,7 @@ __print_ok_flac () {
 	__filename
 
 	printf "\r${normal}%s${magenta}%s${normal}%s%$(__current_length)s${blue}%s${normal}%s${green}%s${normal}%s${blue}%s${normal}%s" \
-	"   " "[${iteration}/${#total_flacs_array[@]}]" " ${filename} " "" "[" " " "ok" " " "]" " "
+	"   " "[${iteration}/${total_flacs}]" " ${filename} " "" "[" " " "ok" " " "]" " "
 }
 export -f __print_ok_flac
 
@@ -842,6 +841,10 @@ export -f __print_ok_flac
 __print_ok_replaygain_file () {
 	# Obtain the number of columns returned as ${columns}
 	__columns
+
+	# Obtain iteration and filename
+	# for the displayed message below
+	__obtain_count_filename
 
 	# This is the maximum length of a string to be displayed based on column width,
 	# obtained via the number of columns minus the length of displayed characters:
@@ -860,7 +863,7 @@ __print_ok_replaygain_file () {
 	__filename
 
 	printf "\r${normal}%s${magenta}%s${normal}%s%$(__current_length)s${blue}%s${normal}%s${green}%s${normal}%s${blue}%s${normal}%s" \
-	"     " "[${iteration}/${#total_flacs_array[@]}]" " ${filename} " "" "[" " " "ok" " " "]" " "
+	"     " "[${iteration}/${total_flacs}]" " ${filename} " "" "[" " " "ok" " " "]" " "
 }
 export -f __print_ok_replaygain_file
 
@@ -894,6 +897,10 @@ export -f __print_interrupt_replaygain_file
 __print_ok_replaygain_dir () {
 	# Obtain the number of columns returned as ${columns}
 	__columns
+
+	# Obtain iteration and filename
+	# for the displayed message below
+	__obtain_count_filename
 
 	# This is the maximum length of a string to be displayed based on column width,
 	# obtained via the number of columns minus the length of displayed characters:
@@ -938,7 +945,7 @@ __print_interrupt_replaygain_dir () {
 	__filename
 
 	printf "\r${normal}%s${magenta}%s${normal}%s%$(__current_length)s${blue}%s${normal}%s${yellow}%s${normal}%s${blue}%s${normal}%s" \
-	"     " "[${iteration}/${#flac_directories_array[@]}]" " ${filename} " "" "[" " " "Interrupted" " " "]" " "
+	"     " "[${iteration}/${flac_directories}]" " ${filename} " "" "[" " " "Interrupted" " " "]" " "
 }
 export -f __print_interrupt_replaygain_dir
 
@@ -990,7 +997,7 @@ __print_aucdtect_flac () {
 	__filename
 
 	printf "\r${normal}%s${magenta}%s${normal}%s%$(__current_length)s${blue}%s${normal}%s${yellow}%s${normal}%s${blue}%s${normal}%s" \
-	"   " "[${iteration}/${#total_flacs_array[@]}]" " ${filename} " "" "[" " " "Validating FLAC" " " "]" " "
+	"   " "[${iteration}/${total_flacs}]" " ${filename} " "" "[" " " "Validating FLAC" " " "]" " "
 }
 export -f __print_aucdtect_flac
 
@@ -1042,7 +1049,7 @@ __print_aucdtect_spectrogram () {
 	__filename
 
 	printf "\r${normal}%s${magenta}%s${normal}%s%$(__current_length)s${blue}%s${normal}%s${yellow}%s${normal}%s${blue}%s${normal}%s" \
-	"   " "[${iteration}/${#total_flacs_array[@]}]" " ${filename} " "" "[" " " "Creating Spectrogram" " " "]" " "
+	"   " "[${iteration}/${total_flacs}]" " ${filename} " "" "[" " " "Creating Spectrogram" " " "]" " "
 }
 export -f __print_aucdtect_spectrogram
 
@@ -1077,6 +1084,10 @@ __print_ok_tag () {
 	# Obtain the number of columns returned as ${columns}
 	__columns
 
+	# Obtain iteration and filename
+	# for the displayed message below
+	__obtain_count_filename
+
 	# This is the maximum length of a string to be displayed based on column width,
 	# obtained via the number of columns minus the length of displayed characters:
 	#
@@ -1094,7 +1105,7 @@ __print_ok_tag () {
 	__filename
 
 	printf "\r${normal}%s${magenta}%s${normal}%s%$(__current_length)s${blue}%s${normal}%s${green}%s${normal}%s${blue}%s${normal}%s" \
-	"     " "[${iteration}/${#total_flacs_array[@]}]" " ${filename} " "" "[" " " "ok" " " "]" " "
+	"     " "[${iteration}/${total_flacs}]" " ${filename} " "" "[" " " "ok" " " "]" " "
 }
 export -f __print_ok_tag
 
@@ -1120,7 +1131,7 @@ __print_level_same_compression () {
 	__filename
 
 	printf "\r${normal}%s${magenta}%s${normal}%s%$(__current_length)s${blue}%s${normal}%s${yellow}%s${normal}%s${blue}%s${normal}%s" \
-	"   " "[${iteration}/${#total_flacs_array[@]}]" " ${filename} " "" "[" " " "Already At Level ${compression_level}" " " "]" " "
+	"   " "[${iteration}/${total_flacs}]" " ${filename} " "" "[" " " "Already At Level ${compression_level}" " " "]" " "
 }
 export -f __print_level_same_compression
 
@@ -1146,7 +1157,7 @@ __print_analyzing_tags () {
 	__filename
 
 	printf "\r${normal}%s${magenta}%s${normal}%s%$(__current_length)s${blue}%s${normal}%s${yellow}%s${normal}%s${blue}%s${normal}%s" \
-	"     " "[${iteration}/${#total_flacs_array[@]}]" " ${filename} " "" "[" " " "Analyzing Tags" " " "]" " "
+	"     " "[${iteration}/${total_flacs}]" " ${filename} " "" "[" " " "Analyzing Tags" " " "]" " "
 }
 export -f __print_analyzing_tags
 
@@ -1166,13 +1177,13 @@ __print_applying_tags () {
 	#                            7 Spaces
 	#                            3 Characters: [/]
 	#                            2 Gap and ellipsis (…)
-	max_filename_length="$(( ${columns} - ${#iteration} - ${total_flacs_length} - 28 ))"
+	max_filename_length="$(( ${columns} - ${#iteration} - ${total_flacs_length} - 29 ))"
 
 	# Create and cull filename if needed returned as ${filename}
 	__filename
 
 	printf "\r${normal}%s${magenta}%s${normal}%s%$(__current_length)s${blue}%s${normal}%s${yellow}%s${normal}%s${blue}%s${normal}%s" \
-	"     " "[${iteration}/${#total_flacs_array[@]}]" " ${filename} " "" "[" " " "Applying Tags" " " "]" " "
+	"     " "[${iteration}/${total_flacs}]" " ${filename} " "" "[" " " "Applying Tags" " " "]" " "
 }
 export -f __print_applying_tags
 
@@ -1198,7 +1209,7 @@ __print_prune_flac () {
 	__filename
 
 	printf "\r${normal}%s${magenta}%s${normal}%s%$(__current_length)s${blue}%s${normal}%s${yellow}%s${normal}%s${blue}%s${normal}%s" \
-	"   " "[${iteration}/${#total_flacs_array[@]}]" " ${filename} " "" "[" " " "Pruning Metadata" " " "]" " "
+	"   " "[${iteration}/${total_flacs}]" " ${filename} " "" "[" " " "Pruning Metadata" " " "]" " "
 }
 export -f __print_prune_flac
 
@@ -1224,7 +1235,7 @@ __print_retag_analyze_interrupt () {
 	__filename
 
 	printf "\r${normal}%s${magenta}%s${normal}%s%$(__current_length)s${blue}%s${normal}%s${yellow}%s${normal}%s${blue}%s${normal}%s" \
-	"     " "[${iteration}/${#total_flacs_array[@]}]" " ${filename} " "" "[" " " "Interrupted" " " "]" " "
+	"     " "[${iteration}/${total_flacs}]" " ${filename} " "" "[" " " "Interrupted" " " "]" " "
 }
 export -f __print_retag_analyze_interrupt
 
@@ -1250,7 +1261,7 @@ __print_retag_apply_interrupt () {
 	__filename
 
 	printf "\r${normal}%s${magenta}%s${normal}%s%$(__current_length)s${blue}%s${normal}%s${yellow}%s${normal}%s${blue}%s${normal}%s" \
-	"     " "[${iteration}/${#total_flacs_array[@]}]" " ${filename} " "" "[" " " "Interrupted" " " "]" " "
+	"     " "[${iteration}/${total_flacs}]" " ${filename} " "" "[" " " "Interrupted" " " "]" " "
 }
 export -f __print_retag_apply_interrupt
 
@@ -1276,7 +1287,7 @@ __print_interrupt () {
 	__filename
 
 	printf "\r${normal}%s${magenta}%s${normal}%s%$(__current_length)s${blue}%s${normal}%s${yellow}%s${normal}%s${blue}%s${normal}%s" \
-	"   " "[${iteration}/${#total_flacs_array[@]}]" " ${filename} " "" "[" " " "Interrupted" " " "]" " "
+	"   " "[${iteration}/${total_flacs}]" " ${filename} " "" "[" " " "Interrupted" " " "]" " "
 }
 export -f __print_interrupt
 #== PROCESSED FILE/DIRECTORY MESSAGES ==========================================
@@ -1293,6 +1304,15 @@ __countdown_abort () {
 	# Restore old stty settings, make stty happy
 	# by redirecting /dev/stderr
 	stty ${old_stty} < /dev/stderr
+
+	# Remove temporary iteration file
+	rm -f "${tmp_count_file}"
+
+	# Remove the failed count file
+	rm -f "${tmp_fail_count}"
+
+	# Remove the temporary filename file
+	rm -f "${tmp_filename}"
 
 	# Restore the cursor
 	printf "\033[?25h"
@@ -1875,28 +1895,6 @@ __fail_count () {
 }
 export -f __fail_count
 
-# Clear old file descriptor (4) and create a new
-# FIFO that's tied to file discriptor 4, removing
-# the FIFO upon completion.  This is ONLY for auCDtect's
-# STDOUT
-__create_aucdtect_fd () {
-	# Set up a temporary FIFO location.  The variable
-	# is set up here, to prevent it from being called
-	# upon script invocation when auCDtect isn't going
-	# to be run
-	tmp_aucdtect_fd="/tmp/redoflacs_aucdtect_fifo_$$"
-
-	# Create the temporary FIFO
-	mkfifo "${tmp_aucdtect_fd}"
-
-	# Open FIFO for reading and writing on file descriptor '4'
-	exec 4<>"${tmp_aucdtect_fd}"
-
-	# Remove temporary FIFO and leave just the file
-	# descriptor available
-	rm -f "${tmp_aucdtect_fd}"
-}
-
 # Obtain and process the positional parameters invoked
 # with the script
 __process_positional_parameters () {
@@ -2156,7 +2154,7 @@ __process_positional_parameters () {
 			;;
 			-C)
 				compress_flac="true"
-				skip_test="true"
+				export skip_test="true"
 			;;
 			-t)
 				test_flac="true"
@@ -2177,7 +2175,7 @@ __process_positional_parameters () {
 			;;
 			-A)
 				aucdtect_flac="true"
-				create_spectrogram="true"
+				export create_spectrogram="true"
 			;;
 			-m)
 				md5check_flac="true"
@@ -2870,448 +2868,458 @@ export -f __operation_replaygain_force
 
 # Compress FLAC files
 __operation_compress () {
-	# Test for COMPRESSION level in FLAC file. Hide error output since
-	# we'll be verifying the FLAC file later
-	COMPRESSION="$(metaflac --show-tag=COMPRESSION "${i}" 2> /dev/null)"
-	COMPRESSION="${COMPRESSION#*=}"
+	for i ; do
+		# Add one (iteration)
+		__iterate_count
 
-	if [[ "${COMPRESSION}" != "${compression_level}" ]] ; then
-		__print_compressing_flac
+		# Prints current file and operation
+		__print_add_replaygain
 
-		# Compress FLAC file with user defined COMPRESSION and send to
-		# background to allow killing on SIGTERM
-		flac -f -${compression_level} -V --totally-silent "${i}" &
+		# Test for COMPRESSION level in FLAC file. Hide error output since
+		# we'll be verifying the FLAC file later
+		COMPRESSION="$(metaflac --show-tag=COMPRESSION "${i}" 2> /dev/null)"
+		COMPRESSION="${COMPRESSION#*=}"
 
-		# Wait on background process and return exit code of
-		# said process
-		wait "${!}"
+		if [[ "${COMPRESSION}" != "${compression_level}" ]] ; then
+			__print_compressing_flac
 
-		# Exit code 130 is SIGINT so only check for exit code '1'
-		if [[ "${?}" -eq 1 ]] ; then
-			__print_failed_flac
-			printf "%s\n%s\n%s\n" \
-				   "FLAC:  ${i}" \
-				   "ERROR: Not a FLAC file or failed verification." \
-				   "------------------------------------------------------------------" \
-				   >> "${verify_errors}"
-
-			# Add one to fail fd
-			printf '.' >&5
-		else
-			metaflac \
-				--remove-tag=COMPRESSION \
-				--set-tag=COMPRESSION=${compression_level} "${i}"
-		fi
-
-	# If already at compression_level, test the FLAC file instead
-	# or skip the file if '-C, --compress-notest' was specified
-	else
-		__print_level_same_compression
-
-		if [[ "${skip_test}" != "true" ]] ; then
-			__print_testing_flac
-
-			# Test FLAC file and send to background to allow
-			# killing on SIGTERM
-			flac -t --totally-silent "${i}" &
-
-			# Wait on background process and return exit code of
-			# said process
-			wait "${!}"
+			# Compress FLAC file with user defined COMPRESSION
+			flac -f -${compression_level} -V --totally-silent "${i}"
 
 			# Exit code 130 is SIGINT so only check for exit code '1'
 			if [[ "${?}" -eq 1 ]] ; then
 				__print_failed_flac
 				printf "%s\n%s\n%s\n" \
 					   "FLAC:  ${i}" \
-					   "ERROR: Not a FLAC file or failed testing." \
+					   "ERROR: Not a FLAC file or failed verification." \
 					   "------------------------------------------------------------------" \
 					   >> "${verify_errors}"
 
-				# Add one to fail fd
-				printf '.' >&5
+				# Add one to fail count
+				__fail_count
+			else
+				metaflac \
+					--remove-tag=COMPRESSION \
+					--set-tag=COMPRESSION=${compression_level} "${i}"
 			fi
+
+		# If already at compression_level, test the FLAC file instead
+		# or skip the file if '-C, --compress-notest' was specified
+		else
+			__print_level_same_compression
+
+			if [[ "${skip_test}" != "true" ]] ; then
+				__print_testing_flac
+
+				# Test FLAC file
+				flac -t --totally-silent "${i}"
+
+				# Exit code 130 is SIGINT so only check for exit code '1'
+				if [[ "${?}" -eq 1 ]] ; then
+					__print_failed_flac
+					printf "%s\n%s\n%s\n" \
+						   "FLAC:  ${i}" \
+						   "ERROR: Not a FLAC file or failed testing." \
+						   "------------------------------------------------------------------" \
+						   >> "${verify_errors}"
+
+					# Add one to fail count
+					__fail_count
+				fi
+			fi
+
 		fi
-
-	fi
-
-	# Print newline into FIFO after completion
-	__newline >&3
+	done
 }
 export -f __operation_compress
 
 # Test FLAC files
 __operation_test () {
-	__print_testing_flac
+	for i ; do
+		# Add one (iteration)
+		__iterate_count
 
-	# Test FLAC file and send to background to
-	# allow killing on SIGTERM
-	flac -t --totally-silent "${i}" &
+		__print_testing_flac
 
-	# Wait on background process and return exit code of
-	# said process
-	wait "${!}"
+		# Test FLAC file
+		flac -t --totally-silent "${i}"
 
-	# Exit code 130 is SIGINT so only check for exit code '1'
-	if [[ "${?}" -eq 1 ]] ; then
-		__print_failed_flac
-		printf "%s\n%s\n%s\n" \
-			   "FLAC:  ${i}" \
-			   "ERROR: Not a FLAC file or failed testing." \
-			   "------------------------------------------------------------------" \
-			   >> "${test_errors}"
+		# Exit code 130 is SIGINT so only check for exit code '1'
+		if [[ "${?}" -eq 1 ]] ; then
+			__print_failed_flac
+			printf "%s\n%s\n%s\n" \
+				   "FLAC:  ${i}" \
+				   "ERROR: Not a FLAC file or failed testing." \
+				   "------------------------------------------------------------------" \
+				   >> "${test_errors}"
 
-		# Add one to fail fd
-		printf '.' >&5
-	fi
-
-	# Print newline into FIFO after completion
-	__newline >&3
+			# Add one to fail count
+			__fail_count
+		fi
+	done
 }
 export -f __operation_test
 
 # Test FLAC validity with auCDtect
 __operation_aucdtect () {
-	__print_aucdtect_flac
+	for i ; do
+		# Add one (iteration)
+		__iterate_count
 
-	# Get the bit depth of a FLAC file, also used to check
-	# if FLAC file is real.  Hide stderr output
-	bits="$(metaflac --show-bps "${i}" 2> /dev/null)"
+		__print_aucdtect_flac
 
-	# Exit code 130 is SIGINT so only check for exit code '1'
-	if [[ "${?}" -eq "1" ]] ; then
-		# File is not a FLAC file, display failed
-		__print_failed_flac
-		printf "%s\n%s\n%s\n" \
-			   "FLAC:  ${i}" \
-			   "ERROR: Not a FLAC file" \
-			   "------------------------------------------------------------------" \
-			   >> "${aucdtect_errors}"
-
-		# Add one to fail fd
-		printf '.' >&5
-
-	# Skip the FLAC file if it has a bit depth greater
-	# than 16 since auCDtect doesn't support audio
-	# files with a higher resolution than a CD.
-	elif [[ "${bits}" -gt "16" ]] ; then
-		__print_aucdtect_skip
-		printf "%s\n%s\n%s\n" \
-			   "FLAC:  ${i}" \
-			   "ERROR: The above file has a bit depth greater than 16 and was skipped" \
-			   "------------------------------------------------------------------" \
-			   >> "${aucdtect_errors}"
-
-		# Add one to fail fd
-		printf '.' >&5
-
-	# FLAC checks out, continue processing
-	else
-		# The WAV file to be created from current FLAC file
-		decoded_wav="${i%${flac_extension}}_redoflacs_"$$".wav"
-
-		# Decompress FLAC to WAV so auCDtect can read the audio file
-		# and send to background to allow killing on SIGTERM
-		flac --totally-silent -d "${i}" -o "${decoded_wav}" &
-
-		# Wait on background process and return exit code of
-		# said process
-		wait "${!}"
+		# Get the bit depth of a FLAC file, also used to check
+		# if FLAC file is real.  Hide stderr output
+		bits="$(metaflac --show-bps "${i}" 2> /dev/null)"
 
 		# Exit code 130 is SIGINT so only check for exit code '1'
-		# If FLAC file failed decoding to WAV, log error, otherwise
-		# continue processing
 		if [[ "${?}" -eq "1" ]] ; then
+			# File is not a FLAC file, display failed
 			__print_failed_flac
 			printf "%s\n%s\n%s\n" \
 				   "FLAC:  ${i}" \
-				   "ERROR: Failed decoding FLAC file to WAV (most likely corrupt)" \
+				   "ERROR: Not a FLAC file" \
 				   "------------------------------------------------------------------" \
 				   >> "${aucdtect_errors}"
 
-			# Add one to fail fd
-			printf '.' >&5
+			# Add one to fail count
+			__fail_count
 
+		# Skip the FLAC file if it has a bit depth greater
+		# than 16 since auCDtect doesn't support audio
+		# files with a higher resolution than a CD.
+		elif [[ "${bits}" -gt "16" ]] ; then
+			__print_aucdtect_skip
+			printf "%s\n%s\n%s\n" \
+				   "FLAC:  ${i}" \
+				   "ERROR: The above file has a bit depth greater than 16 and was skipped" \
+				   "------------------------------------------------------------------" \
+				   >> "${aucdtect_errors}"
+
+			# Add one to fail count
+			__fail_count
+
+		# FLAC checks out, continue processing
 		else
-			# 'export MALLOC_CHECK_' allows the dynamic linked version of auCDtect
-			# to run without throwing errors
-			export MALLOC_CHECK_="0"
+			# The WAV file to be created from current FLAC file
+			decoded_wav="${i%${flac_extension}}_redoflacs_"$$".wav"
 
-			# The actual auCDtect command with highest accuracy setting
-			# 2> hides the displayed progress to /dev/null disabling the progress percentage
-			# STDOUT is sent to file descriptor '4' and the prcess sent to the background to allow
-			# killing via SIGTERM
-			"${aucdtect_command}" -m0 "${decoded_wav}" 2>/dev/null >&4 &
-
-			# Wait on background process and return exit code of
-			# said process
-			wait "${!}"
+			# Decompress FLAC to WAV so auCDtect can read the audio file
+			flac --totally-silent -d "${i}" -o "${decoded_wav}"
 
 			# Exit code 130 is SIGINT so only check for exit code '1'
-			# If auCDtect failed to 
+			# If FLAC file failed decoding to WAV, log error, otherwise
+			# continue processing
 			if [[ "${?}" -eq "1" ]] ; then
 				__print_failed_flac
-				printf "%s\n%s\n%s\n%s\n%s\n%s\n" \
+				printf "%s\n%s\n%s\n" \
 					   "FLAC:  ${i}" \
-					   "WAV:   ${decoded_wav}" \
-					   "ERROR: auCDtect failed to analyze the decoded WAV file." \
-					   "       Something may have happened when decoding the above FLAC" \
-					   "       file.  Please verify the FLAC file is not corrupt." \
+					   "ERROR: Failed decoding FLAC file to WAV (most likely corrupt)" \
 					   "------------------------------------------------------------------" \
 					   >> "${aucdtect_errors}"
 
-				# Add one to fail fd
-				printf '.' >&5
+				# Add one to fail count
+				__fail_count
 
 			else
-				# Grab the conclusion of auCDtect's command
-				# Below options prevents hanging FIFO by only reading
-				# what is necessary:
-				#    -s7:  Discard first seven lines from auCDtect's output
-				#    -n2:  Only grab 2 lines from auCDtect's output
-				#     -t:  Remove trailing newlines from auCDtect's output
-				#    -u4:  Obtain auCDtect's output from file descriptor '4'
-				#  array:  Store captured output into 'aucdtect_check_array'
-				mapfile -s7 -n2 -t -u4 aucdtect_check_array
+				# 'export MALLOC_CHECK_' allows the dynamic linked version of auCDtect
+				# to run without throwing errors
+				export MALLOC_CHECK_="0"
 
-				# There is an issue with the processed FLAC file
-				if [[ "${aucdtect_check_array[0]}" != "This track looks like CDDA with probability 100%" ]] ; then
-					# If user specified '-A, --aucdtect-spectrogram', then
-					# create a spectrogram with SoX and change logging accordingly
-					if [[ "${create_spectrogram}" == "true" ]] ; then
-						# Check whether to place spectrogram images in user-defined location
-						if [[ "${spectrogram_location}" == "default" ]] ; then
-							# Place images in same directory as the FLAC files
-							# Make sure we don't clobber any picture files
-							if [[ -f "${i%${flac_extension}}.png" ]] ; then
-								# File exists so prepend "spectrogram" before ".png"
-								spectrogram_picture="${i%${flac_extension}}.spectrogram.png"
+				# The actual auCDtect command with highest accuracy setting
+				# 2> hides the displayed progress to /dev/null disabling the progress percentage
+				aucdtect_output="$("${aucdtect_command}" -m0 "${decoded_wav}" 2>/dev/null)"
+
+				# Exit code 130 is SIGINT so only check for exit code '1'
+				# If auCDtect failed to 
+				if [[ "${?}" -eq "1" ]] ; then
+					__print_failed_flac
+					printf "%s\n%s\n%s\n%s\n%s\n%s\n" \
+						   "FLAC:  ${i}" \
+						   "WAV:   ${decoded_wav}" \
+						   "ERROR: auCDtect failed to analyze the decoded WAV file." \
+						   "       Something may have happened when decoding the above FLAC" \
+						   "       file.  Please verify the FLAC file is not corrupt." \
+						   "------------------------------------------------------------------" \
+						   >> "${aucdtect_errors}"
+
+					# Add one to fail count
+					__fail_count
+
+				else
+					# Grab the conclusion of auCDtect's command by only
+					# reading what is necessary:
+					#    -s7:  Discard first seven lines from auCDtect's output
+					#    -n1:  Only grab 1 line from auCDtect's output
+					#     -t:  Remove trailing newlines from auCDtect's output
+					#  array:  Store captured output into 'aucdtect_check_array'
+					mapfile -s7 -n1 -t aucdtect_check_array <<< "${aucdtect_output}"
+
+					# Remove the last line (blank line) from ${aucdtect_check_array[@]}
+					aucdtect_check_array=( "${aucdtect_check_array[@]%$'\n'}" )
+
+					# There is an issue with the processed FLAC file
+					if [[ "${aucdtect_check_array[0]}" != "This track looks like CDDA with probability 100%" ]] ; then
+						# If user specified '-A, --aucdtect-spectrogram', then
+						# create a spectrogram with SoX and change logging accordingly
+						if [[ "${create_spectrogram}" == "true" ]] ; then
+							# Check whether to place spectrogram images in user-defined location
+							if [[ "${spectrogram_location}" == "default" ]] ; then
+								# Place images in same directory as the FLAC files
+								# Make sure we don't clobber any picture files
+								if [[ -f "${i%${flac_extension}}.png" ]] ; then
+									# File exists so prepend "spectrogram" before ".png"
+									spectrogram_picture="${i%${flac_extension}}.spectrogram.png"
+								else
+									# File doesn't exist, so create the spectrogram with the basename of "$i"
+									# with ".png" as the extension
+									spectrogram_picture="${i%${flac_extension}}.png"
+								fi
 							else
-								# File doesn't exist, so create the spectrogram with the basename of "$i"
-								# with ".png" as the extension
-								spectrogram_picture="${i%${flac_extension}}.png"
+								# Place images in user-defined location
+								flac_file="${i##*/}"
+								spectrogram_picture="${spectrogram_location}/${flac_file%${flac_extension}}.png"
 							fi
+
+							# Let's create the spectrogram for the failed FLAC file
+							# and output progress
+							__print_aucdtect_spectrogram
+
+							# SoX command to create the spectrogram and place it in spectrogram_picture
+							"${sox_command}" "${i}" -n spectrogram -c '' -t "${i}" -p1 -z90 -Z0 -q249 -wHann -x1800 -y513 -o "${spectrogram_picture}"
+
+							# Use the below version of the command to create hi-res spectrograms
+							#"${sox_command}" "${i}" -n spectrogram -c '' -t "${i}" -p1 -z90 -Z0 -q249 -wHann -x5000 -y1025 -o "${spectrogram_picture}"
+
+							# Print ISSUE and log error, and show where to find
+							# the created spectrogram of the processed FLAC file
+							__print_aucdtect_issue
+							printf "%s\n%s\n%s\n%s\n" \
+								   "FLAC:        ${i}" \
+								   "ERROR:       ${aucdtect_check_array[0]}" \
+								   "SPECTROGRAM: ${spectrogram_picture}" \
+								   "------------------------------------------------------------------" \
+								   >> "${aucdtect_errors}"
+
+							# Add one to fail count
+							__fail_count
+
 						else
-							# Place images in user-defined location
-							flac_file="${i##*/}"
-							spectrogram_picture="${spectrogram_location}/${flac_file%${flac_extension}}.png"
+							# Print ISSUE and log error
+							__print_aucdtect_issue
+							printf "%s\n%s\n%s\n" \
+								   "FLAC:  ${i}" \
+								   "ERROR: ${aucdtect_check_array[0]}" \
+								   "------------------------------------------------------------------" \
+								   >> "${aucdtect_errors}"
+
+							# Add one to fail count
+							__fail_count
 						fi
-
-						# Let's create the spectrogram for the failed FLAC file
-						# and output progress
-						__print_aucdtect_spectrogram
-
-						# SoX command to create the spectrogram and place it in spectrogram_picture,
-						# sent to the background to allow killing via SIGTERM
-						"${sox_command}" "${i}" -n spectrogram -c '' -t "${i}" -p1 -z90 -Z0 -q249 -wHann -x1800 -y513 -o "${spectrogram_picture}" &
-
-						# Use the below version of the command to create hi-res spectrograms
-						#"${sox_command}" "${i}" -n spectrogram -c '' -t "${i}" -p1 -z90 -Z0 -q249 -wHann -x5000 -y1025 -o "${spectrogram_picture}"
-
-						# Wait on background process and return exit code of
-						# said process
-						wait "${!}"
-
-						# Print ISSUE and log error, and show where to find
-						# the created spectrogram of the processed FLAC file
-						__print_aucdtect_issue
-						printf "%s\n%s\n%s\n%s\n" \
-							   "FLAC:        ${i}" \
-							   "ERROR:       ${aucdtect_check_array[0]}" \
-							   "SPECTROGRAM: ${spectrogram_picture}" \
-							   "------------------------------------------------------------------" \
-							   >> "${aucdtect_errors}"
-
-						# Add one to fail fd
-						printf '.' >&5
-
-					else
-						# Print ISSUE and log error
-						__print_aucdtect_issue
-						printf "%s\n%s\n%s\n" \
-							   "FLAC:  ${i}" \
-							   "ERROR: ${aucdtect_check_array[0]}" \
-							   "------------------------------------------------------------------" \
-							   >> "${aucdtect_errors}"
-
-						# Add one to fail fd
-						printf '.' >&5
 					fi
-				fi
 
-				# Remove temporary WAV file
-				rm "${decoded_wav}"
+					# Remove temporary WAV file
+					rm "${decoded_wav}"
+				fi
 			fi
 		fi
-	fi
-
-	# Print newline into FIFO after completion
-	__newline >&3
+	done
 }
 export -f __operation_aucdtect
 
 # Check MD5 in each FLAC file
 __operation_md5_check () {
-	__print_checking_md5
+	for i ; do
+		# Add one (iteration)
+		__iterate_count
 
-	# Get the MD5 checksum (hide stderr output).  Also
-	# used to check if FLAC file is real
-	md5_sum="$(metaflac --show-md5sum "${i}" 2> /dev/null)"
+		__print_checking_md5
 
-	# Exit code 130 is SIGINT so only check for exit code '1'
-	if [[ "${?}" -eq "1" ]] ; then
-		# File is not a FLAC file, display failed
-		__print_failed_flac
-		printf "%s\n%s\n%s\n" \
-			   "FLAC:  ${i}" \
-			   "ERROR: Not a FLAC file" \
-			   "------------------------------------------------------------------" \
-			   >> "${md5_errors}"
+		# Get the MD5 checksum (hide stderr output).  Also
+		# used to check if FLAC file is real
+		md5_sum="$(metaflac --show-md5sum "${i}" 2> /dev/null)"
 
-		# Add one to fail fd
-		printf '.' >&5
+		# Exit code 130 is SIGINT so only check for exit code '1'
+		if [[ "${?}" -eq "1" ]] ; then
+			# File is not a FLAC file, display failed
+			__print_failed_flac
+			printf "%s\n%s\n%s\n" \
+				   "FLAC:  ${i}" \
+				   "ERROR: Not a FLAC file" \
+				   "------------------------------------------------------------------" \
+				   >> "${md5_errors}"
 
-	# FLAC file is real, check for unset MD5 checksum
-	elif [[ "${md5_sum}" == "00000000000000000000000000000000" ]] ; then
-		__print_failed_flac
-		printf "%s\n%s\n%s\n" \
-			   "FLAC:  ${i}" \
-			   "ERROR: MD5 Signature unset: (${md5_sum})" \
-			   "------------------------------------------------------------------" \
-			   >> "${md5_errors}"
+			# Add one to fail count
+			__fail_count
 
-		# Add one to fail fd
-		printf '.' >&5
-	fi
+		# FLAC file is real, check for unset MD5 checksum
+		elif [[ "${md5_sum}" == "00000000000000000000000000000000" ]] ; then
+			__print_failed_flac
+			printf "%s\n%s\n%s\n" \
+				   "FLAC:  ${i}" \
+				   "ERROR: MD5 Signature unset: (${md5_sum})" \
+				   "------------------------------------------------------------------" \
+				   >> "${md5_errors}"
 
-	# Print newline into FIFO after completion
-	__newline >&3
+			# Add one to fail count
+			__fail_count
+		fi
+	done
 }
 export -f __operation_md5_check
 
 # Analyze FLAC tags
 __operation_analyze_tags () {
-	__print_analyzing_tags
+	for i ; do
+		# Add one (iteration)
+		__iterate_count
 
-	# Check if file is a FLAC file (variable hides output)
-	check_flac="$(metaflac --show-md5sum "${i}" 2>&1)"
+		__print_analyzing_tags
 
-	# If above command return anything other than '0', log output
-	if [[ "${?}" -ne "0" ]] ; then
-		printf "%s\n%s\n%s\n" \
-			  "FLAC:  ${i}" \
-			  "ERROR: The above file does not appear to be a FLAC file" \
-			  "------------------------------------------------------------------" \
-			  >> "${metadata_errors}"
+		# Recreate the tags array so it can be parsed easily
+		eval "tags=(${exported_tags})"
 
-		# Add one to fail fd
-		printf '.' >&5
-	else
-		# Iterate through each tag field and check if tag is missing
-		for j in "${tags[@]}" ; do
-			# Check if ALBUMARTIST is in tag array and apply operations on
-			# the tag field if it exists
-			if [[ "${j}" == "ALBUMARTIST" ]] ; then
-				# ALBUMARTIST exists in tag array so allow script to check the
-				# various naming conventions within the FLAC files (ie,
-				# 'ALBUM ARTIST' or 'ALBUM_ARTIST')
+		# Check if file is a FLAC file (variable hides output)
+		check_flac="$(metaflac --show-md5sum "${i}" 2>&1)"
 
-				# "ALBUMARTIST" or "ALBUM ARTIST" or "ALBUM_ARTIST", case-insensitive
-				if [[ -n "$(metaflac --show-tag=ALBUMARTIST "${i}")" ]] ; then
-					show_tag_list+=( "--show-tag=ALBUMARTIST" )
+		# If above command return anything other than '0', log output
+		if [[ "${?}" -ne "0" ]] ; then
+			printf "%s\n%s\n%s\n" \
+				  "FLAC:  ${i}" \
+				  "ERROR: The above file does not appear to be a FLAC file" \
+				  "------------------------------------------------------------------" \
+				  >> "${metadata_errors}"
 
-				elif [[ -n "$(metaflac --show-tag="ALBUM ARTIST" "${i}")" ]] ; then
-					show_tag_list+=( "--show-tag='ALBUM ARTIST'" )
+			# Add one to fail count
+			__fail_count
+		else
+			# Iterate through each tag field and check if tag is missing
+			for j in "${tags[@]}" ; do
+				# Check if ALBUMARTIST is in tag array and apply operations on
+				# the tag field if it exists
+				if [[ "${j}" == "ALBUMARTIST" ]] ; then
+					# ALBUMARTIST exists in tag array so allow script to check the
+					# various naming conventions within the FLAC files (ie,
+					# 'ALBUM ARTIST' or 'ALBUM_ARTIST')
 
-				elif [[ -n "$(metaflac --show-tag="ALBUM_ARTIST" "${i}")" ]] ; then
-					show_tag_list+=( "--show-tag=ALBUM_ARTIST" )
-				fi
-			else
-				# Build up metaflac '--show-tag=' list
-				show_tag_list+=( "--show-tag=${j}" )
-			fi
-		done
+					# "ALBUMARTIST" or "ALBUM ARTIST" or "ALBUM_ARTIST", case-insensitive
+					if [[ -n "$(metaflac --show-tag=ALBUMARTIST "${i}")" ]] ; then
+						show_tag_list+=( "--show-tag=ALBUMARTIST" )
 
-		# Load up all the tag values for current file
-		mapfile -n0 -t metaflac_tag_array < \
-		<(
-			metaflac \
-				"${show_tag_list[@]}" \
-				"${i}"
-		)
+					elif [[ -n "$(metaflac --show-tag="ALBUM ARTIST" "${i}")" ]] ; then
+						show_tag_list+=( "--show-tag='ALBUM ARTIST'" )
 
-		# Take above tag values and create an associative
-		# array using TAG_FIELD=TAG_VALUE as the key/value pair
-		#
-		# Specifically declare an empty associative array
-		declare -A temp_tag_array
-
-		# Run through the tag array from above and store
-		# the values into a temporary tag array
-		for tag_field_value in "${metaflac_tag_array[@]}" ; do
-			# This is the tag field (eg. TITLE)
-			tag_field="${tag_field_value%%=*}"
-
-			# Enforce the tag field to be uppercase
-			# ${tag_field_value} below is the tag value
-			temp_tag_array+=( ["${tag_field^^}"]="${tag_field_value#*=}" )
-		done
-
-		# Run through the tags array (from USER CONFIGURATION) and test
-		# each tag value from ${temp_tag_array} with the currently
-		# processed tag in ${tag[@]}.  For each match found, test if the
-		# tag value is null, reporting any missing tags. Then remove the
-		# tag field (index) from the ${temp_tag_array}, so the next iteration
-		# is faster and we can check for missing tags (tag fields)
-		for j in "${tags[@]}" ; do
-
-			# If the total # of indices in the temporary tag array is above
-			# 0, continue testing, else store missing tag (${j}) into the
-			# missing tags array
-			if [[ "${#temp_tag_array[@]}" -gt 0 ]] ; then
-
-				# Compare each tag field from the temporary array to ${j},
-				# checking if they are equal and if so, check for missing
-				# tag values
-				for temp_tag_field in "${!temp_tag_array[@]}" ; do
-					# Both tag fields are equal
-					if [[ "${j}" == "${temp_tag_field}" ]] ; then
-						# Check if tag value is null, logging missing tags if so
-						if [[ -z "${temp_tag_array[${temp_tag_field}]}" ]] ; then
-							if [[ "${file_printed}" != "true" ]] ; then
-								# First instance of missing tag for current file
-								missing_tags_array+=(
-									"FLAC:  ${i}"
-									"ERROR: ${j} tag not found"
-								)
-								file_printed="true"
-							else
-								# If more than one missing tag in current file,
-								# don't print out filename, just the missing tag
-								missing_tags_array+=( "       ${j} tag not found" )
-							fi
-						fi
-
-						# Remove the current tag field from the temporary tag
-						# array since it's been matched already
-						unset -v temp_tag_array[${temp_tag_field}]
-
-						# This variable let's the script know that the current
-						# tag, ${j} has been matched up with a tag field in
-						# ${temp_tag_array[@]}
-						tag_match="true"
-
-						# Break out of loop since the tag fields have been
-						# matched, continuing on to the next iteration of ${j}
-						break
+					elif [[ -n "$(metaflac --show-tag="ALBUM_ARTIST" "${i}")" ]] ; then
+						show_tag_list+=( "--show-tag=ALBUM_ARTIST" )
 					fi
-				done
+				else
+					# Build up metaflac '--show-tag=' list
+					show_tag_list+=( "--show-tag=${j}" )
+				fi
+			done
 
-				# If there wasn't a tag field in the temporary tag array
-				# ( eg. ${temp_tag_array[@]} ) that matched ${j}, the FLAC file
-				# must have a missing tag, so log it by throwing the missing tag
-				# into the missing tags array
-				if [[ "${tag_match}" != "true" ]] ; then
+			# Load up all the tag values for current file
+			mapfile -n0 -t metaflac_tag_array < \
+			<(
+				metaflac \
+					"${show_tag_list[@]}" \
+					"${i}"
+			)
+
+			# Take above tag values and create an associative
+			# array using TAG_FIELD=TAG_VALUE as the key/value pair
+			#
+			# Specifically declare an empty associative array
+			declare -A temp_tag_array
+
+			# Run through the tag array from above and store
+			# the values into a temporary tag array
+			for tag_field_value in "${metaflac_tag_array[@]}" ; do
+				# This is the tag field (eg. TITLE)
+				tag_field="${tag_field_value%%=*}"
+
+				# Enforce the tag field to be uppercase
+				# ${tag_field_value} below is the tag value
+				temp_tag_array+=( ["${tag_field^^}"]="${tag_field_value#*=}" )
+			done
+
+			# Run through the tags array (from USER CONFIGURATION) and test
+			# each tag value from ${temp_tag_array} with the currently
+			# processed tag in ${tag[@]}.  For each match found, test if the
+			# tag value is null, reporting any missing tags. Then remove the
+			# tag field (index) from the ${temp_tag_array}, so the next iteration
+			# is faster and we can check for missing tags (tag fields)
+			for j in "${tags[@]}" ; do
+
+				# If the total # of indices in the temporary tag array is above
+				# 0, continue testing, else store missing tag (${j}) into the
+				# missing tags array
+				if [[ "${#temp_tag_array[@]}" -gt 0 ]] ; then
+
+					# Compare each tag field from the temporary array to ${j},
+					# checking if they are equal and if so, check for missing
+					# tag values
+					for temp_tag_field in "${!temp_tag_array[@]}" ; do
+						# Both tag fields are equal
+						if [[ "${j}" == "${temp_tag_field}" ]] ; then
+							# Check if tag value is null, logging missing tags if so
+							if [[ -z "${temp_tag_array[${temp_tag_field}]}" ]] ; then
+								if [[ "${file_printed}" != "true" ]] ; then
+									# First instance of missing tag for current file
+									missing_tags_array+=(
+										"FLAC:  ${i}"
+										"ERROR: ${j} tag not found"
+									)
+									file_printed="true"
+								else
+									# If more than one missing tag in current file,
+									# don't print out filename, just the missing tag
+									missing_tags_array+=( "       ${j} tag not found" )
+								fi
+							fi
+
+							# Remove the current tag field from the temporary tag
+							# array since it's been matched already
+							unset -v temp_tag_array[${temp_tag_field}]
+
+							# This variable let's the script know that the current
+							# tag, ${j} has been matched up with a tag field in
+							# ${temp_tag_array[@]}
+							tag_match="true"
+
+							# Break out of loop since the tag fields have been
+							# matched, continuing on to the next iteration of ${j}
+							break
+						fi
+					done
+
+					# If there wasn't a tag field in the temporary tag array
+					# ( eg. ${temp_tag_array[@]} ) that matched ${j}, the FLAC file
+					# must have a missing tag, so log it by throwing the missing tag
+					# into the missing tags array
+					if [[ "${tag_match}" != "true" ]] ; then
+						if [[ "${file_printed}" != "true" ]] ; then
+							# First instance of missing tag for current file
+							missing_tags_array+=(
+								"FLAC:  ${i}"
+								"ERROR: ${j} tag not found"
+							)
+							file_printed="true"
+						else
+							# If more than one missing tag in current file,
+							# don't print out filename, just the missing tag
+							missing_tags_array+=( "       ${j} tag not found" )
+						fi
+					fi
+
+					# Reset the value of tag match (if any) for the next iteration
+					# of ${j}
+					unset -v tag_match
+
+				# The total # of indices in the temporary tag array is 0, so
+				# whatever is left in ${tags[@]} represented by ${j} is logged
+				# as missing
+				else
 					if [[ "${file_printed}" != "true" ]] ; then
 						# First instance of missing tag for current file
 						missing_tags_array+=(
@@ -3325,200 +3333,205 @@ __operation_analyze_tags () {
 						missing_tags_array+=( "       ${j} tag not found" )
 					fi
 				fi
+			done
 
-				# Reset the value of tag match (if any) for the next iteration
-				# of ${j}
-				unset -v tag_match
+			# If missing_tags_array is not empty, there are missing
+			# tags in the current file so log output
+			if [[ -n "${missing_tags_array[@]}" ]] ; then
+				# Add separator to log for each file
+				missing_tags_array+=( "------------------------------------------------------------------" )
+				# Print array into log file
+				printf "%s\n" "${missing_tags_array[@]}" >> "${metadata_errors}"
 
-			# The total # of indices in the temporary tag array is 0, so
-			# whatever is left in ${tags[@]} represented by ${j} is logged
-			# as missing
-			else
-				if [[ "${file_printed}" != "true" ]] ; then
-					# First instance of missing tag for current file
-					missing_tags_array+=(
-						"FLAC:  ${i}"
-						"ERROR: ${j} tag not found"
-					)
-					file_printed="true"
-				else
-					# If more than one missing tag in current file,
-					# don't print out filename, just the missing tag
-					missing_tags_array+=( "       ${j} tag not found" )
-				fi
+				# Add one to fail count
+				__fail_count
 			fi
-		done
-
-		# If missing_tags_array is not empty, there are missing
-		# tags in the current file so log output
-		if [[ -n "${missing_tags_array[@]}" ]] ; then
-			# Add separator to log for each file
-			missing_tags_array+=( "------------------------------------------------------------------" )
-			# Print array into log file
-			printf "%s\n" "${missing_tags_array[@]}" >> "${metadata_errors}"
-
-			# Add one to fail fd
-			printf '.' >&5
 		fi
-	fi
-
-	# Print newline into FIFO after completion
-	__newline >&3
+	done
 }
 export -f __operation_analyze_tags
 
 # Analyze FLAC tags (not logging missing COVERART tag)
 __operation_analyze_tags_dont_log_coverart () {
-	__print_analyzing_tags
+	for i ; do
+		# Add one (iteration)
+		__iterate_count
 
-	# Check if file is a FLAC file (variable hides output)
-	check_flac="$(metaflac --show-md5sum "${i}" 2>&1)"
+		__print_analyzing_tags
 
-	# If above command return anything other than '0', log output
-	if [[ "${?}" -ne "0" ]] ; then
-		printf "$%s\n%s\n%s\n" \
-			   "FLAC:  ${i}" \
-			   "ERROR: The above file does not appear to be a FLAC file" \
-			   "------------------------------------------------------------------" \
-			   >> "${metadata_errors}"
-		# File is not a FLAC file, display failed
-		__print_failed_flac
+		# Recreate the tags array so it can be parsed easily
+		eval "tags=(${exported_tags})"
 
-		# Add one to fail fd
-		printf '.' >&5
-	else
-		# Album artwork is to be kept so preserve COVERART by adding
-		# it to the tag array (temporary)
-		tags+=( COVERART )
+		# Check if file is a FLAC file (variable hides output)
+		check_flac="$(metaflac --show-md5sum "${i}" 2>&1)"
 
-		# Iterate through each tag field and check if tag is missing (except
-		# for the COVERART tag)
-		for j in "${tags[@]}" ; do
-			# Check if ALBUMARTIST is in tag array and apply operations on
-			# the tag field if it exists
-			if [[ "${j}" == "ALBUMARTIST" ]] ; then
-				# ALBUMARTIST exists in tag array so allow script to check the
-				# various naming conventions within the FLAC files (ie,
-				# 'ALBUM ARTIST' or 'ALBUM_ARTIST')
+		# If above command return anything other than '0', log output
+		if [[ "${?}" -ne "0" ]] ; then
+			printf "$%s\n%s\n%s\n" \
+				   "FLAC:  ${i}" \
+				   "ERROR: The above file does not appear to be a FLAC file" \
+				   "------------------------------------------------------------------" \
+				   >> "${metadata_errors}"
+			# File is not a FLAC file, display failed
+			__print_failed_flac
 
-				# "ALBUMARTIST" or "ALBUM ARTIST" or "ALBUM_ARTIST", case-insensitive
-				if [[ -n "$(metaflac --show-tag=ALBUMARTIST "${i}")" ]] ; then
-					show_tag_list+=( "--show-tag=ALBUMARTIST" )
+			# Add one to fail count
+			__fail_count
+		else
+			# Album artwork is to be kept so preserve COVERART by adding
+			# it to the tag array (temporary)
+			tags+=( COVERART )
 
-				elif [[ -n "$(metaflac --show-tag="ALBUM ARTIST" "${i}")" ]] ; then
-					show_tag_list+=( "--show-tag='ALBUM ARTIST'" )
+			# Iterate through each tag field and check if tag is missing (except
+			# for the COVERART tag)
+			for j in "${tags[@]}" ; do
+				# Check if ALBUMARTIST is in tag array and apply operations on
+				# the tag field if it exists
+				if [[ "${j}" == "ALBUMARTIST" ]] ; then
+					# ALBUMARTIST exists in tag array so allow script to check the
+					# various naming conventions within the FLAC files (ie,
+					# 'ALBUM ARTIST' or 'ALBUM_ARTIST')
 
-				elif [[ -n "$(metaflac --show-tag="ALBUM_ARTIST" "${i}")" ]] ; then
-					show_tag_list+=( "--show-tag=ALBUM_ARTIST" )
-				fi
-			else
-				# Build up metaflac '--show-tag=' list
-				show_tag_list+=( "--show-tag=${j}" )
-			fi
+					# "ALBUMARTIST" or "ALBUM ARTIST" or "ALBUM_ARTIST", case-insensitive
+					if [[ -n "$(metaflac --show-tag=ALBUMARTIST "${i}")" ]] ; then
+						show_tag_list+=( "--show-tag=ALBUMARTIST" )
 
-			# Check if COVERART exists and is not null
-			if [[ "${j}" == "COVERART" ]] ; then
-				# Obtain COVERART value
-				coverart_value="$(metaflac --show-tag=COVERART "${i}")"
+					elif [[ -n "$(metaflac --show-tag="ALBUM ARTIST" "${i}")" ]] ; then
+						show_tag_list+=( "--show-tag='ALBUM ARTIST'" )
 
-				# If COVERART value is not null, so log it exists and that
-				# COVERART tag is depcrated
-				if [[ -n "${coverart_value#*=}" ]] ; then
-					printf "%s\n%s\n%s\n%s\n" \
-						   "FLAC:  ${i}" \
-						   "ERROR: \"${j}\" tag is DEPRECATED in above file. Consider migrating to" \
-						   "       the new format: METADATA_BLOCK_PICTURE." \
-						   "------------------------------------------------------------------" \
-						   >> "${metadata_errors}"
-
-					# Add one to fail fd
-					printf '.' >&5
-				fi
-			fi
-		done
-
-		# Load up all the tag values for current file
-		mapfile -n0 -t metaflac_tag_array < \
-		<(
-			metaflac \
-				"${show_tag_list[@]}" \
-				"${i}"
-		)
-
-		# Take above tag values and create an associative
-		# array using TAG_FIELD=TAG_VALUE as the key/value pair
-		#
-		# Specifically declare an empty associative array
-		declare -A temp_tag_array
-
-		# Run through the tag array from above and store
-		# the values into a temporary tag array
-		for tag_field_value in "${metaflac_tag_array[@]}" ; do
-			# This is the tag field (eg. TITLE)
-			tag_field="${tag_field_value%%=*}"
-
-			# Enforce the tag field to be uppercase
-			# ${tag_field_value} below is the tag value
-			temp_tag_array+=( ["${tag_field^^}"]="${tag_field_value#*=}" )
-		done
-
-		# Run through the tags array (from USER CONFIGURATION) and test
-		# each tag value from ${temp_tag_array} with the currently
-		# processed tag in ${tag[@]}.  For each match found, test if the
-		# tag value is null, reporting any missing tags. Then remove the
-		# tag field (index) from the ${temp_tag_array}, so the next iteration
-		# is faster and we can check for missing tags (tag fields)
-		for j in "${tags[@]}" ; do
-
-			# If the total # of indices in the temporary tag array is above
-			# 0, continue testing, else store missing tag (${j}) into the
-			# missing tags array
-			if [[ "${#temp_tag_array[@]}" -gt 0 ]] ; then
-
-				# Compare each tag field from the temporary array to ${j},
-				# checking if they are equal and if so, check for missing
-				# tag values.
-				# Skip output of COVERART tag as this is a temporary
-				# addition to the tag array (for processing legacy artwork)
-				for temp_tag_field in "${!temp_tag_array[@]}" ; do
-					# Both tag fields are equal
-					if [[ "${j}" == "${temp_tag_field}" && "${j}" != "COVERART" ]] ; then
-						# Check if tag value is null, logging missing tags if so
-						if [[ -z "${temp_tag_array[${temp_tag_field}]}" ]] ; then
-							if [[ "${file_printed}" != "true" ]] ; then
-								# First instance of missing tag for current file
-								missing_tags_array+=(
-									"FLAC:  ${i}"
-									"ERROR: ${j} tag not found"
-								)
-								file_printed="true"
-							else
-								# If more than one missing tag in current file,
-								# don't print out filename, just the missing tag
-								missing_tags_array+=( "       ${j} tag not found" )
-							fi
-						fi
-
-						# Remove the current tag field from the temporary tag
-						# array since it's been matched already
-						unset -v temp_tag_array[${temp_tag_field}]
-
-						# This variable let's the script know that the current
-						# tag, ${j} has been matched up with a tag field in
-						# ${temp_tag_array[@]}
-						tag_match="true"
-
-						# Break out of loop since the tag fields have been
-						# matched, continuing on to the next iteration of ${j}
-						break
+					elif [[ -n "$(metaflac --show-tag="ALBUM_ARTIST" "${i}")" ]] ; then
+						show_tag_list+=( "--show-tag=ALBUM_ARTIST" )
 					fi
-				done
+				else
+					# Build up metaflac '--show-tag=' list
+					show_tag_list+=( "--show-tag=${j}" )
+				fi
 
-				# If there wasn't a tag field in the temporary tag array
-				# ( eg. ${temp_tag_array[@]} ) that matched ${j}, the FLAC file
-				# must have a missing tag, so log it by throwing the missing tag
-				# into the missing tags array.  Also skip logging of COVERART tag
-				if [[ "${tag_match}" != "true" && "${j}" != "COVERART" ]] ; then
+				# Check if COVERART exists and is not null
+				if [[ "${j}" == "COVERART" ]] ; then
+					# Obtain COVERART value
+					coverart_value="$(metaflac --show-tag=COVERART "${i}")"
+
+					# If COVERART value is not null, so log it exists and that
+					# COVERART tag is depcrated
+					if [[ -n "${coverart_value#*=}" ]] ; then
+						printf "%s\n%s\n%s\n%s\n" \
+							   "FLAC:  ${i}" \
+							   "ERROR: \"${j}\" tag is DEPRECATED in above file. Consider migrating to" \
+							   "       the new format: METADATA_BLOCK_PICTURE." \
+							   "------------------------------------------------------------------" \
+							   >> "${metadata_errors}"
+
+						# Add one to fail count
+						__fail_count
+					fi
+				fi
+			done
+
+			# Load up all the tag values for current file
+			mapfile -n0 -t metaflac_tag_array < \
+			<(
+				metaflac \
+					"${show_tag_list[@]}" \
+					"${i}"
+			)
+
+			# Take above tag values and create an associative
+			# array using TAG_FIELD=TAG_VALUE as the key/value pair
+			#
+			# Specifically declare an empty associative array
+			declare -A temp_tag_array
+
+			# Run through the tag array from above and store
+			# the values into a temporary tag array
+			for tag_field_value in "${metaflac_tag_array[@]}" ; do
+				# This is the tag field (eg. TITLE)
+				tag_field="${tag_field_value%%=*}"
+
+				# Enforce the tag field to be uppercase
+				# ${tag_field_value} below is the tag value
+				temp_tag_array+=( ["${tag_field^^}"]="${tag_field_value#*=}" )
+			done
+
+			# Run through the tags array (from USER CONFIGURATION) and test
+			# each tag value from ${temp_tag_array} with the currently
+			# processed tag in ${tag[@]}.  For each match found, test if the
+			# tag value is null, reporting any missing tags. Then remove the
+			# tag field (index) from the ${temp_tag_array}, so the next iteration
+			# is faster and we can check for missing tags (tag fields)
+			for j in "${tags[@]}" ; do
+
+				# If the total # of indices in the temporary tag array is above
+				# 0, continue testing, else store missing tag (${j}) into the
+				# missing tags array
+				if [[ "${#temp_tag_array[@]}" -gt 0 ]] ; then
+
+					# Compare each tag field from the temporary array to ${j},
+					# checking if they are equal and if so, check for missing
+					# tag values.
+					# Skip output of COVERART tag as this is a temporary
+					# addition to the tag array (for processing legacy artwork)
+					for temp_tag_field in "${!temp_tag_array[@]}" ; do
+						# Both tag fields are equal
+						if [[ "${j}" == "${temp_tag_field}" && "${j}" != "COVERART" ]] ; then
+							# Check if tag value is null, logging missing tags if so
+							if [[ -z "${temp_tag_array[${temp_tag_field}]}" ]] ; then
+								if [[ "${file_printed}" != "true" ]] ; then
+									# First instance of missing tag for current file
+									missing_tags_array+=(
+										"FLAC:  ${i}"
+										"ERROR: ${j} tag not found"
+									)
+									file_printed="true"
+								else
+									# If more than one missing tag in current file,
+									# don't print out filename, just the missing tag
+									missing_tags_array+=( "       ${j} tag not found" )
+								fi
+							fi
+
+							# Remove the current tag field from the temporary tag
+							# array since it's been matched already
+							unset -v temp_tag_array[${temp_tag_field}]
+
+							# This variable let's the script know that the current
+							# tag, ${j} has been matched up with a tag field in
+							# ${temp_tag_array[@]}
+							tag_match="true"
+
+							# Break out of loop since the tag fields have been
+							# matched, continuing on to the next iteration of ${j}
+							break
+						fi
+					done
+
+					# If there wasn't a tag field in the temporary tag array
+					# ( eg. ${temp_tag_array[@]} ) that matched ${j}, the FLAC file
+					# must have a missing tag, so log it by throwing the missing tag
+					# into the missing tags array.  Also skip logging of COVERART tag
+					if [[ "${tag_match}" != "true" && "${j}" != "COVERART" ]] ; then
+						if [[ "${file_printed}" != "true" ]] ; then
+							# First instance of missing tag for current file
+							missing_tags_array+=(
+								"FLAC:  ${i}"
+								"ERROR: ${j} tag not found"
+							)
+							file_printed="true"
+						else
+							# If more than one missing tag in current file,
+							# don't print out filename, just the missing tag
+							missing_tags_array+=( "       ${j} tag not found" )
+						fi
+					fi
+
+					# Reset the value of tag match (if any) for the next iteration
+					# of ${j}
+					unset -v tag_match
+
+				# The total # of indices in the temporary tag array is 0, so
+				# whatever is left in ${tags[@]} represented by ${j} is logged
+				# as missing.  Also skip logging of COVERART tag
+				elif [[ "${j}" != "COVERART" ]] ; then
 					if [[ "${file_printed}" != "true" ]] ; then
 						# First instance of missing tag for current file
 						missing_tags_array+=(
@@ -3532,135 +3545,113 @@ __operation_analyze_tags_dont_log_coverart () {
 						missing_tags_array+=( "       ${j} tag not found" )
 					fi
 				fi
+			done
 
-				# Reset the value of tag match (if any) for the next iteration
-				# of ${j}
-				unset -v tag_match
+			# If missing_tags_array is not empty, there are missing
+			# tags in the current file so log output
+			if [[ -n "${missing_tags_array[@]}" ]] ; then
+				# Add separator to log for each file
+				missing_tags_array+=( "------------------------------------------------------------------" )
+				# Print array into log file
+				printf "%s\n" "${missing_tags_array[@]}" >> "${metadata_errors}"
 
-			# The total # of indices in the temporary tag array is 0, so
-			# whatever is left in ${tags[@]} represented by ${j} is logged
-			# as missing.  Also skip logging of COVERART tag
-			elif [[ "${j}" != "COVERART" ]] ; then
-				if [[ "${file_printed}" != "true" ]] ; then
-					# First instance of missing tag for current file
-					missing_tags_array+=(
-						"FLAC:  ${i}"
-						"ERROR: ${j} tag not found"
-					)
-					file_printed="true"
-				else
-					# If more than one missing tag in current file,
-					# don't print out filename, just the missing tag
-					missing_tags_array+=( "       ${j} tag not found" )
-				fi
+				# Add one to fail count
+				__fail_count
 			fi
-		done
-
-		# If missing_tags_array is not empty, there are missing
-		# tags in the current file so log output
-		if [[ -n "${missing_tags_array[@]}" ]] ; then
-			# Add separator to log for each file
-			missing_tags_array+=( "------------------------------------------------------------------" )
-			# Print array into log file
-			printf "%s\n" "${missing_tags_array[@]}" >> "${metadata_errors}"
-
-			# Add one to fail fd
-			printf '.' >&5
 		fi
-	fi
-
-	# Print newline into FIFO after completion
-	__newline >&3
+	done
 }
 export -f __operation_analyze_tags_dont_log_coverart
 
 # Re-tag FLAC files
 __operation_set_tags () {
-	__print_applying_tags
+	for i ; do
+		# Add one (iteration)
+		__iterate_count
 
-	# Remove and set new tags
-	#
-	# Iterate through the tag array and set a variable for each tag
-	for j in "${tags[@]}" ; do
-		# Check if ALBUMARTIST is in tag array and apply operations on
-		# the tag field if it exists
-		if [[ "${j}" == "ALBUMARTIST" ]] ; then
-			# ALBUMARTIST exists in tag array so allow script to check the
-			# various naming conventions within the FLAC files (ie,
-			# 'ALBUM ARTIST' or 'ALBUM_ARTIST')
+		__print_applying_tags
 
-			# "ALBUMARTIST"
-			if [[ -n "$(metaflac --show-tag=ALBUMARTIST "${i}")" ]] ; then
-				show_tag_list+=( "--show-tag=ALBUMARTIST" )
+		# Recreate the tags array so it can be parsed easily
+		eval "tags=(${exported_tags})"
 
-			elif [[ -n "$(metaflac --show-tag="ALBUM ARTIST" "${i}")" ]] ; then
-				show_tag_list+=( "--show-tag='ALBUM ARTIST'" )
+		# Remove and set new tags
+		#
+		# Iterate through the tag array and set a variable for each tag
+		for j in "${tags[@]}" ; do
+			# Check if ALBUMARTIST is in tag array and apply operations on
+			# the tag field if it exists
+			if [[ "${j}" == "ALBUMARTIST" ]] ; then
+				# ALBUMARTIST exists in tag array so allow script to check the
+				# various naming conventions within the FLAC files (ie,
+				# 'ALBUM ARTIST' or 'ALBUM_ARTIST')
 
-			elif [[ -n "$(metaflac --show-tag="ALBUM_ARTIST" "${i}")" ]] ; then
-				show_tag_list+=( "--show-tag=ALBUM_ARTIST" )
+				# "ALBUMARTIST"
+				if [[ -n "$(metaflac --show-tag=ALBUMARTIST "${i}")" ]] ; then
+					show_tag_list+=( "--show-tag=ALBUMARTIST" )
+
+				elif [[ -n "$(metaflac --show-tag="ALBUM ARTIST" "${i}")" ]] ; then
+					show_tag_list+=( "--show-tag='ALBUM ARTIST'" )
+
+				elif [[ -n "$(metaflac --show-tag="ALBUM_ARTIST" "${i}")" ]] ; then
+					show_tag_list+=( "--show-tag=ALBUM_ARTIST" )
+				fi
+			else
+				# Build up metaflac '--show-tag=' list
+				show_tag_list+=( "--show-tag=${j}" )
 			fi
-		else
-			# Build up metaflac '--show-tag=' list
-			show_tag_list+=( "--show-tag=${j}" )
-		fi
+		done
+
+		# Load up all the tag values for current file
+		mapfile -n0 -t metaflac_tag_array < \
+		<(
+			metaflac \
+				"${show_tag_list[@]}" \
+				"${i}"
+		)
+
+		# Add the saved tags back, by printing each tag field and value
+		# on a separate line to STDOUT.  This will be read in by metaflac.
+		# Use process substitution to allow this to finish if user
+		# invokes SIGINT
+		metaflac --remove-all-tags --import-tags-from=- "${i}" < \
+		<(
+			# This prints each tag key and value pair
+			# (eg. ARTIST=Kamelot)
+			printf "%s\n" "${metaflac_tag_array[@]}"
+		)
 	done
-
-	# Load up all the tag values for current file
-	mapfile -n0 -t metaflac_tag_array < \
-	<(
-		metaflac \
-			"${show_tag_list[@]}" \
-			"${i}"
-	)
-
-	# Add the saved tags back, by printing each tag field and value
-	# on a separate line to STDOUT.  This will be read in by metaflac.
-	# Use process substitution to allow this to finish if user
-	# invokes SIGINT
-	metaflac --remove-all-tags --import-tags-from=- "${i}" < \
-	<(
-		# This prints each tag key and value pair
-		# (eg. ARTIST=Kamelot)
-		printf "%s\n" "${metaflac_tag_array[@]}"
-	)
-
-	# Print newline into FIFO after completion
-	__newline >&3
 }
 export -f __operation_set_tags
 
 # Prune FLACS
 __operation_prune () {
-	__print_prune_flac
+	for i ; do
+		# Add one (iteration)
+		__iterate_count
 
-	# Check if file is a FLAC file (hide output) and send to
-	# background to allow killing on SIGTERM
-	metaflac --show-md5sum "${i}" >/dev/null 2>&1 &
+		__print_prune_flac
 
-	# Wait on background process and return exit code of
-	# said process
-	wait "${!}"
+		# Check if file is a FLAC file (hide output)
+		metaflac --show-md5sum "${i}" >/dev/null 2>&1
 
-	# Exit code 130 is SIGINT so only check for exit code '1'
-	if [[ "${?}" -eq "1" ]] ; then
-		# File is not a FLAC file, display failed
-		__print_failed_flac
-		printf "%s\n%s\n%s\n" \
-			   "FLAC:  ${i}" \
-			   "ERROR: The above file does not appear to be a FLAC file" \
-			   "------------------------------------------------------------------" \
-			   >> "${prune_errors}"
+		# Exit code 130 is SIGINT so only check for exit code '1'
+		if [[ "${?}" -eq "1" ]] ; then
+			# File is not a FLAC file, display failed
+			__print_failed_flac
+			printf "%s\n%s\n%s\n" \
+				   "FLAC:  ${i}" \
+				   "ERROR: The above file does not appear to be a FLAC file" \
+				   "------------------------------------------------------------------" \
+				   >> "${prune_errors}"
 
-		# Add one to fail fd
-		printf '.' >&5
-	else
-		# Remove all information but STREAMINFO,VORBIS_COMMENTs, and
-		# possibly METADATA_BLOCK_PICTURE
-		metaflac --remove --dont-use-padding --except-block-type="${dont_prune_flac_metadata}" "${i}"
-	fi
-
-	# Print newline into FIFO after completion
-	__newline >&3
+			# Add one to fail count
+			__fail_count
+		else
+			# Remove all information but STREAMINFO,VORBIS_COMMENTs, and
+			# possibly METADATA_BLOCK_PICTURE
+			metaflac --remove --dont-use-padding --except-block-type="${dont_prune_flac_metadata}" "${i}"
+		fi
+	done
 }
 export -f __operation_prune
 #== END OPERATIONS =============================================================
@@ -3801,11 +3792,11 @@ __processed_flacs_ok
 if [[ "${aucdtect_flac}" == "true" ]] ; then
 
 	# Check if auCDtect is found/installed
-	aucdtect_command="$(command -v auCDtect)"
+	export aucdtect_command="$(command -v auCDtect)"
 
 	if [[ -z "${aucdtect_command}" ]] ; then
 		# Check alternate spelling
-		aucdtect_command="$(command -v aucdtect)"
+		export aucdtect_command="$(command -v aucdtect)"
 	fi
 
 	if [[ -z "${aucdtect_command}" ]] ; then
@@ -3820,7 +3811,7 @@ if [[ "${aucdtect_flac}" == "true" ]] ; then
 	# make sure SoX is installed before starting
 	if [[ "${create_spectrogram}" == "true" ]] ; then
 		# Check if SoX is found/installed
-		sox_command="$(command -v sox)"
+		export sox_command="$(command -v sox)"
 
 		if [[ -z "${sox_command}" ]] ; then
 			# SoX can't be found, exit
@@ -3849,15 +3840,11 @@ if [[ "${aucdtect_flac}" == "true" ]] ; then
 	# Trap SIGINT (Control-C) to abort cleanly
 	trap __aucdtect_abort SIGINT
 
-	# Make sure to clear file descriptor '3' before proceeding
-	__clear_tmp_fd
+	# Clear/initialize iteration
+	> "${tmp_count_file}"
 
-	# Open up a temporary file descriptor to send auCDtect's
-	# STDOUT to
-	__create_aucdtect_fd
-
-	# Run parallel operations, that which is specified as ${1}
-	__run_parallel_files __operation_aucdtect
+	# Run the above function with the configured jobs
+	find "${directory}" -name "*${flac_extension}" -print0 2> /dev/null | xargs -0 -n 1 -P "${jobs}" bash -c '__operation_aucdtect "${@}"' --
 
 	if [[ -f "${aucdtect_errors}" ]] ; then
 		__log_aucdtect
@@ -3868,12 +3855,8 @@ if [[ "${aucdtect_flac}" == "true" ]] ; then
 		exit 1
 	fi
 
-	if [[ "${last_file}" == "true" ]] ; then
-		# FLAC is okay, so print only if it's the last file
-		__print_ok_flac ; __newline
-	fi
-
 	# auCDtect completed successfully
+	__print_ok_flac ; __newline
 	aucdtect_complete="true"
 fi
 #== END AUCDTECT ===============================================================
@@ -3900,11 +3883,11 @@ if [[ "${compress_flac}" == "true" ]] ; then
 	# Trap SIGINT (Control-C) to abort cleanly
 	trap __compress_abort SIGINT
 
-	# Make sure to clear file descriptor '3' before proceeding
-	__clear_tmp_fd
+	# Clear/initialize iteration
+	> "${tmp_count_file}"
 
-	# Run parallel operations, that which is specified as ${1}
-	__run_parallel_files __operation_compress
+	# Run the above function with the configured jobs
+	find "${directory}" -name "*${flac_extension}" -print0 2> /dev/null | xargs -0 -n 1 -P "${jobs}" bash -c '__operation_compress "${@}"' --
 
 	if [[ -f "${verify_errors}" ]] ; then
 		__log_compress_verify
@@ -3915,12 +3898,8 @@ if [[ "${compress_flac}" == "true" ]] ; then
 		exit 1
 	fi
 
-	if [[ "${last_file}" == "true" ]] ; then
-		# FLAC is okay, so print only if it's the last file
-		__print_ok_flac ; __newline
-	fi
-
 	# Compress FLACS completed successfully
+	__print_ok_flac ; __newline
 	compress_complete="true"
 fi
 #== END COMPRESS/VERIFY ========================================================
@@ -3935,11 +3914,11 @@ if [[ "${test_flac}" == "true" ]] ; then
 	# Trap SIGINT (Control-C) to abort cleanly
 	trap __test_abort SIGINT
 
-	# Make sure to clear file descriptor '3' before proceeding
-	__clear_tmp_fd
+	# Clear/initialize iteration
+	> "${tmp_count_file}"
 
-	# Run parallel operations, that which is specified as ${1}
-	__run_parallel_files __operation_test
+	# Run the above function with the configured jobs
+	find "${directory}" -name "*${flac_extension}" -print0 2> /dev/null | xargs -0 -n 1 -P "${jobs}" bash -c '__operation_test "${@}"' --
 
 	if [[ -f "${test_errors}" ]] ; then
 		__log_test
@@ -3950,12 +3929,8 @@ if [[ "${test_flac}" == "true" ]] ; then
 		exit 1
 	fi
 
-	if [[ "${last_file}" == "true" ]] ; then
-		# FLAC is okay, so print only if it's the last file
-		__print_ok_flac ; __newline
-	fi
-
 	# Test FLACS completed successfully
+	__print_ok_flac ; __newline
 	test_complete="true"
 fi
 #== END TEST ===================================================================
@@ -3970,11 +3945,11 @@ if [[ "${md5check_flac}" == "true" ]] ; then
 	# Trap SIGINT (Control-C) to abort cleanly
 	trap __md5_check_abort SIGINT
 
-	# Make sure to clear file descriptor '3' before proceeding
-	__clear_tmp_fd
+	# Clear/initialize iteration
+	> "${tmp_count_file}"
 
-	# Run parallel operations, that which is specified as ${1}
-	__run_parallel_files __operation_md5_check
+	# Run the above function with the configured jobs
+	find "${directory}" -name "*${flac_extension}" -print0 2> /dev/null | xargs -0 -n 1 -P "${jobs}" bash -c '__operation_md5_check "${@}"' --
 
 	if [[ -f "${md5_errors}" ]] ; then
 		__log_md5_check
@@ -3985,12 +3960,8 @@ if [[ "${md5check_flac}" == "true" ]] ; then
 		exit 1
 	fi
 
-	if [[ "${last_file}" == "true" ]] ; then
-		# FLAC is okay, so print only if it's the last file
-		__print_ok_flac ; __newline
-	fi
-
 	# MD5 Check completed successfully
+	__print_ok_flac ; __newline
 	md5check_complete="true"
 fi
 #== END MD5 CHECK ==============================================================
@@ -4035,6 +4006,7 @@ if [[ "${replaygain_flac}" == "true" ]] ; then
 		exit 1
 	fi
 
+	# ReplayGain test completed successfully
 	__print_ok_replaygain_file
 	testing_replaygain_complete="true"
 	#== END TEST REPLAYGAIN ====================================================
@@ -4073,12 +4045,8 @@ if [[ "${replaygain_flac}" == "true" ]] ; then
 		exit 1
 	fi
 
-	if [[ "${last_directory}" == "true" ]] ; then
-		# Directory is okay, so print only if it's the last directory
-		__print_ok_replaygain_dir ; __newline
-	fi
-
-	# ReplayGain completed successfully
+	# ReplayGain processing completed successfully
+	__print_ok_replaygain_dir ; __newline
 	adding_replaygain_complete="true"
 	#== END PROCESS REPLAYGAIN =================================================
 fi
@@ -4098,14 +4066,14 @@ if [[ "${retag_flac}" == "true" ]] ; then
 
 		# Analyze tags but don't log COVERART as a missing
 		# tag (if applicable)
-		analyze_tags="__operation_analyze_tags_dont_log_coverart"
+		export analyze_tags="__operation_analyze_tags_dont_log_coverart"
 	else
 
 		# Log all the missing tags found in the ${tags} array under
 		# USER CONFIGURATION, including COVERART tag, regardless of
 		# whether it was added by the script or explicitly chosen
 		# by the user
-		analyze_tags="__operation_analyze_tags"
+		export analyze_tags="__operation_analyze_tags"
 	fi
 
 	# Prints title message of current operation
@@ -4124,14 +4092,18 @@ if [[ "${retag_flac}" == "true" ]] ; then
 	# Trap SIGINT (Control-C) to abort cleanly
 	trap __analyzing_tags_abort SIGINT
 
+	# Clear/initialize iteration
+	> "${tmp_count_file}"
+
 	# Prints sub message of current operation
 	__sub_analyze_tags
 
-	# Make sure to clear file descriptor '3' before proceeding
-	__clear_tmp_fd
+	# Export the tag array using some trickery (BASH doesn't
+	# support exporting arrays natively)
+	export exported_tags="$(printf "%s\n" "${tags[@]}")"
 
-	# Run parallel operations, that which is specified as ${1}
-	__run_parallel_files "${analyze_tags}"
+	# Run the above function with the configured jobs
+	find "${directory}" -name "*${flac_extension}" -print0 2> /dev/null | xargs -0 -n 1 -P "${jobs}" bash -c '${analyze_tags} "${@}"' --
 
 	# Test for DEPRECATED tag, COVERART in METADATA_ERROR log.  If it
 	# exists, set coverart_warning variable to make script output
@@ -4170,11 +4142,9 @@ if [[ "${retag_flac}" == "true" ]] ; then
 		exit 1
 	fi
 
-	if [[ "${last_file}" == "true" ]] ; then
-		# FLAC is okay, so print only if it's the last file
-		__print_ok_tag
-		analyzing_retag_complete="true"
-	fi
+	# Analyze Tags completed successfully
+	__print_ok_tag
+	analyzing_retag_complete="true"
 	#== END ANALYZE TAGS =======================================================
 
 
@@ -4186,25 +4156,27 @@ if [[ "${retag_flac}" == "true" ]] ; then
 	# Trap SIGINT (Control-C) to abort cleanly
 	trap __applying_tags_abort SIGINT
 
+	# Clear/initialize iteration
+	> "${tmp_count_file}"
+
 	# Restore the original tags array as the script _may_ have
 	# added the COVERART tag.  This way, we ensure that the
 	# COVERART tag was, in fact, temporary.
 	tags=( "${old_tags[@]}" )
 
+	# Export the tag array using some trickery (BASH doesn't
+	# support exporting arrays natively)
+	export exported_tags="$(printf "%s\n" "${tags[@]}")"
+
 	# Prints sub message of current operation
 	__sub_applying_tags
 
-	# Make sure to clear file descriptor '3' before proceeding
-	__clear_tmp_fd
+	# Run the above function with the configured jobs
+	find "${directory}" -name "*${flac_extension}" -print0 2> /dev/null | xargs -0 -n 1 -P "${jobs}" bash -c '__operation_set_tags "${@}"' --
 
-	# Run parallel operations, that which is specified as ${1}
-	__run_parallel_files __operation_set_tags
-
-	if [[ "${last_file}" == "true" ]] ; then
-		# FLAC is okay, so print only if it's the last file
-		__print_ok_tag ; __newline
-		applying_retag_complete="true"
-	fi
+	# Applying Tags completed successfully
+	__print_ok_tag ; __newline
+	applying_retag_complete="true"
 	#== END SET TAGS ===========================================================
 fi
 #== END RETAG ==================================================================
@@ -4219,10 +4191,10 @@ if [[ "${prune_flac}" == "true" ]] ; then
 	# for the legacy COVERART tag as we are NOT removing any VORBIS_COMMENTs.
 	if [[ "${remove_artwork}" == "true" ]] ; then
 		# Remove artwork
-		dont_prune_flac_metadata="STREAMINFO,VORBIS_COMMENT"
+		export dont_prune_flac_metadata="STREAMINFO,VORBIS_COMMENT"
 	else
 		# Don't remove artwork
-		dont_prune_flac_metadata="STREAMINFO,PICTURE,VORBIS_COMMENT"
+		export dont_prune_flac_metadata="STREAMINFO,PICTURE,VORBIS_COMMENT"
 	fi
 
 	__title_prune_flac
@@ -4230,11 +4202,11 @@ if [[ "${prune_flac}" == "true" ]] ; then
 	# Trap SIGINT (Control-C) to abort cleanly	
 	trap __prune_abort SIGINT
 
-	# Make sure to clear file descriptor '3' before proceeding
-	__clear_tmp_fd
+	# Clear/initialize iteration
+	> "${tmp_count_file}"
 
-	# Run parallel operations, that which is specified as ${1}
-	__run_parallel_files __operation_prune
+	# Run the above function with the configured jobs
+	find "${directory}" -name "*${flac_extension}" -print0 2> /dev/null | xargs -0 -n 1 -P "${jobs}" bash -c '__operation_prune "${@}"' --
 
 	if [[ -f "${prune_errors}" ]] ; then
 		__log_prune
@@ -4245,12 +4217,8 @@ if [[ "${prune_flac}" == "true" ]] ; then
 		exit 1
 	fi
 
-	if [[ "${last_file}" == "true" ]] ; then
-		# FLAC is okay, so print only if it's the last file
-		__print_ok_flac ; __newline
-	fi
-
 	# Prune FLACS completed successfully
+	__print_ok_flac ; __newline
 	prune_complete="true"
 fi
 #== END PRUNE ==================================================================
