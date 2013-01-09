@@ -478,7 +478,6 @@ __log_replaygain_test () {
 	{ __error "please check:" ; __newline ;} >&2
 	{ __error "\"${replay_test_errors}\" for details." ; __newline ;} >&2
 }
-export -f __log_replaygain_test
 
 # ReplayGain process error log message
 __log_replaygain_process () {
@@ -487,7 +486,6 @@ __log_replaygain_process () {
 	{ __error "please check:" ; __newline ;} >&2
 	{ __error "\"${replay_add_errors}\" for details." ; __newline ;} >&2
 }
-export -f __log_replaygain_process
 
 # Compress and verify error log message
 __log_compress_verify () {
@@ -495,7 +493,6 @@ __log_compress_verify () {
 	{ __error "Errors found in some FLAC files, please check:" ; __newline ;} >&2
 	{ __error "\"${verify_errors}\" for errors" ; __newline ;} >&2
 }
-export -f __log_compress_verify
 
 # Test error log message
 __log_test () {
@@ -503,7 +500,6 @@ __log_test () {
 	{ __error "Errors found in some FLAC files, please check:" ; __newline ;} >&2
 	{ __error "\"${test_errors}\" for errors" ; __newline ;} >&2
 }
-export -f __log_test
 
 # auCDtect error log message
 __log_aucdtect () {
@@ -511,7 +507,6 @@ __log_aucdtect () {
 	{ __error "Some FLAC files may be lossy sourced, please check:" ; __newline ;} >&2
 	{ __error "\"${aucdtect_errors}\" for details" ; __newline ;} >&2
 }
-export -f __log_aucdtect
 
 # MD5 check error log message
 __log_md5_check () {
@@ -520,7 +515,6 @@ __log_md5_check () {
 	{ __error "issues with some of the FLAC files, please check:" ; __newline ;} >&2
 	{ __error "\"${md5_errors}\" for details" ; __newline ;} >&2
 }
-export -f __log_md5_check
 
 # Missing tags error log message
 __log_missing_tags () {
@@ -530,7 +524,6 @@ __log_missing_tags () {
 	{ __error "\"${metadata_errors}\" for details." ; __newline ;} >&2
 	{ __error "Not Re-Tagging files." ; __newline ;} >&2
 }
-export -f __log_missing_tags
 
 # Prune error log message
 __log_prune () {
@@ -539,7 +532,6 @@ __log_prune () {
 	{ __error "please check:" ; __newline ;} >&2
 	{ __error "\"${prune_errors}\" for details." ; __newline ;} >&2
 }
-export -f __log_prune
 #== END LOG MESSAGES ===========================================================
 
 
@@ -552,7 +544,6 @@ __title_compress_flac () {
 	__info "Compressing & Verifying FLAC Files :: "
 	printf "${cyan}%s${normal}\n" "[Compression: ${compression_level}]"
 }
-export -f __title_compress_flac
 
 # Compress FLACS & no verify
 __title_compress_notest_flac () {
@@ -560,42 +551,36 @@ __title_compress_notest_flac () {
 	__info "Compressing FLAC Files :: "
 	printf "${cyan}%s${normal}\n" "[Compression: ${compression_level}]"
 }
-export -f __title_compress_notest_flac
 
 # Apply ReplayGain to FLACS
 __title_replaygain () {
 	__newline
 	__info "Generating & Applying ReplayGain" ; __newline
 }
-export -f __title_replaygain
 
 # Retag FLACS
 __title_retag () {
 	__newline
 	__info "Retagging FLAC Files" ; __newline
 }
-export -f __title_retag
 
 # Testing FLACS
 __title_testing_flac () {
 	__newline
 	__info "Testing FLAC Files" ; __newline
 }
-export -f __title_testing_flac
 
 # Validating FLACS with auCDtect
 __title_aucdtect_flac () {
 	__newline
 	__info "Validating FLAC Files with auCDtect" ; __newline
 }
-export -f __title_aucdtect_flac
 
 # Checking MD5 of FLACS
 __title_md5check_flac () {
 	__newline
 	__info "Checking MD5 Signature" ; __newline
 }
-export -f __title_md5check_flac
 
 # Pruning FLACS
 __title_prune_flac () {
@@ -611,7 +596,6 @@ __title_prune_flac () {
 	__newline
 	__info "Pruning blocks except ${metadata_removed}" ; __newline
 }
-export -f __title_prune_flac
 #== END TITLE MESSAGES =========================================================
 
 
@@ -623,28 +607,24 @@ __sub_test_replaygain () {
 	printf "%s${green}%s${normal}%s${normal}%s${normal}\n" \
 	"   " ">" " " "Testing ReplayGain"
 }
-export -f __sub_test_replaygain
 
 # Adding ReplayGain values
 __sub_add_replaygain () {
 	printf "%s${green}%s${normal}%s${normal}%s${normal}\n" \
 	"   " ">" " " "Adding ReplayGain"
 }
-export -f __sub_add_replaygain
 
 # Analyze FLAC tags
 __sub_analyze_tags () {
 	printf "%s${green}%s${normal}%s${normal}%s${normal}\n" \
 	"   " ">" " " "Analyze Tags"
 }
-export -f __sub_analyze_tags
 
 # Applying new tags
 __sub_applying_tags () {
 	printf "%s${green}%s${normal}%s${normal}%s${normal}\n" \
 	"   " ">" " " "Applying Tags"
 }
-export -f __sub_applying_tags
 #== END SUB MESSAGES ===========================================================
 
 
@@ -675,7 +655,6 @@ __print_compressing_flac () {
 	printf "\r${normal}%s${magenta}%s${normal}%s%$(__current_length)s${blue}%s${normal}%s${yellow}%s${normal}%s${blue}%s${normal}%s" \
 	"   " "[${iteration}/${total_flacs}]" " ${filename} " "" "[" " " "Compressing FLAC" " " "]" " "
 }
-export -f __print_compressing_flac
 
 # Testing ReplayGain
 __print_test_replaygain () {
@@ -701,7 +680,6 @@ __print_test_replaygain () {
 	printf "\r${normal}%s${magenta}%s${normal}%s%$(__current_length)s${blue}%s${normal}%s${yellow}%s${normal}%s${blue}%s${normal}%s" \
 	"     " "[${iteration}/${total_flacs}]" " ${filename} " "" "[" " " "Testing ReplayGain" " " "]" " "
 }
-export -f __print_test_replaygain
 
 # Applying ReplayGain
 __print_add_replaygain () {
@@ -727,7 +705,6 @@ __print_add_replaygain () {
 	printf "\r${normal}%s${magenta}%s${normal}%s%$(__current_length)s${blue}%s${normal}%s${yellow}%s${normal}%s${blue}%s${normal}%s" \
 	"     " "[${iteration}/${total_directories}]" " ${filename} " "" "[" " " "Adding ReplayGain" " " "]" " "
 }
-export -f __print_add_replaygain
 
 # Testing
 __print_testing_flac () {
@@ -753,7 +730,6 @@ __print_testing_flac () {
 	printf "\r${normal}%s${magenta}%s${normal}%s%$(__current_length)s${blue}%s${normal}%s${yellow}%s${normal}%s${blue}%s${normal}%s" \
 	"   " "[${iteration}/${total_flacs}]" " ${filename} " "" "[" " " "Testing FLAC" " " "]" " "
 }
-export -f __print_testing_flac
 
 # Failed
 __print_failed_flac () {
@@ -779,7 +755,6 @@ __print_failed_flac () {
 	printf "\r${normal}%s${red}%s${normal}%s%$(__current_length)s${blue}%s${normal}%s${red}%s${normal}%s${blue}%s${normal}%s\n" \
 	"     " "*" " ${filename} " "" "[" " " "Failed" " " "]" " "
 }
-export -f __print_failed_flac
 
 # Checking MD5
 __print_checking_md5 () {
@@ -805,7 +780,6 @@ __print_checking_md5 () {
 	printf "\r${normal}%s${magenta}%s${normal}%s%$(__current_length)s${blue}%s${normal}%s${yellow}%s${normal}%s${blue}%s${normal}%s" \
 	"   " "[${iteration}/${total_flacs}]" " ${filename} " "" "[" " " "Checking MD5" " " "]" " "
 }
-export -f __print_checking_md5
 
 # File ok
 __print_ok_flac () {
@@ -835,7 +809,6 @@ __print_ok_flac () {
 	printf "\r${normal}%s${magenta}%s${normal}%s%$(__current_length)s${blue}%s${normal}%s${green}%s${normal}%s${blue}%s${normal}%s" \
 	"   " "[${iteration}/${total_flacs}]" " ${filename} " "" "[" " " "ok" " " "]" " "
 }
-export -f __print_ok_flac
 
 # ReplayGain file ok
 __print_ok_replaygain_file () {
@@ -865,7 +838,6 @@ __print_ok_replaygain_file () {
 	printf "\r${normal}%s${magenta}%s${normal}%s%$(__current_length)s${blue}%s${normal}%s${green}%s${normal}%s${blue}%s${normal}%s" \
 	"     " "[${iteration}/${total_flacs}]" " ${filename} " "" "[" " " "ok" " " "]" " "
 }
-export -f __print_ok_replaygain_file
 
 # ReplayGain file interrupted
 __print_interrupt_replaygain_file () {
@@ -891,7 +863,6 @@ __print_interrupt_replaygain_file () {
 	printf "\r${normal}%s${magenta}%s${normal}%s%$(__current_length)s${blue}%s${normal}%s${yellow}%s${normal}%s${blue}%s${normal}%s" \
 	"     " "[${iteration}/${total_flacs}]" " ${filename} " "" "[" " " "Interrupted" " " "]" " "
 }
-export -f __print_interrupt_replaygain_file
 
 # ReplayGain directory ok
 __print_ok_replaygain_dir () {
@@ -921,7 +892,6 @@ __print_ok_replaygain_dir () {
 	printf "\r${normal}%s${magenta}%s${normal}%s%$(__current_length)s${blue}%s${normal}%s${green}%s${normal}%s${blue}%s${normal}%s" \
 	"     " "[${iteration}/${total_directories}]" " ${filename} " "" "[" " " "ok" " " "]" " "
 }
-export -f __print_ok_replaygain_dir
 
 # ReplayGain directory interrupted
 __print_interrupt_replaygain_dir () {
@@ -947,7 +917,6 @@ __print_interrupt_replaygain_dir () {
 	printf "\r${normal}%s${magenta}%s${normal}%s%$(__current_length)s${blue}%s${normal}%s${yellow}%s${normal}%s${blue}%s${normal}%s" \
 	"     " "[${iteration}/${flac_directories}]" " ${filename} " "" "[" " " "Interrupted" " " "]" " "
 }
-export -f __print_interrupt_replaygain_dir
 
 # ReplayGain directory failed
 __print_failed_replaygain () {
@@ -973,7 +942,6 @@ __print_failed_replaygain () {
 	printf "\r${normal}%s${red}%s${normal}%s%$(__current_length)s${blue}%s${normal}%s${red}%s${normal}%s${blue}%s${normal}%s\n" \
 	"     " "*" " ${filename} " "" "[" " " "Failed" " " "]" " "
 }
-export -f __print_failed_replaygain
 
 # Validating with auCDtect
 __print_aucdtect_flac () {
@@ -999,7 +967,6 @@ __print_aucdtect_flac () {
 	printf "\r${normal}%s${magenta}%s${normal}%s%$(__current_length)s${blue}%s${normal}%s${yellow}%s${normal}%s${blue}%s${normal}%s" \
 	"   " "[${iteration}/${total_flacs}]" " ${filename} " "" "[" " " "Validating FLAC" " " "]" " "
 }
-export -f __print_aucdtect_flac
 
 # auCDtect issue
 __print_aucdtect_issue () {
@@ -1025,7 +992,6 @@ __print_aucdtect_issue () {
 	printf "\r${normal}%s${yellow}%s${normal}%s%$(__current_length)s${blue}%s${normal}%s${yellow}%s${normal}%s${blue}%s${normal}%s\n" \
 	"     " "*" " ${filename} " "" "[" " " "Issue" " " "]" " "
 }
-export -f __print_aucdtect_issue
 
 # auCDtect spectrogram
 __print_aucdtect_spectrogram () {
@@ -1051,7 +1017,6 @@ __print_aucdtect_spectrogram () {
 	printf "\r${normal}%s${magenta}%s${normal}%s%$(__current_length)s${blue}%s${normal}%s${yellow}%s${normal}%s${blue}%s${normal}%s" \
 	"   " "[${iteration}/${total_flacs}]" " ${filename} " "" "[" " " "Creating Spectrogram" " " "]" " "
 }
-export -f __print_aucdtect_spectrogram
 
 # auCDtect skip
 __print_aucdtect_skip () {
@@ -1077,7 +1042,6 @@ __print_aucdtect_skip () {
 	printf "\r${normal}%s${red}%s${normal}%s%$(__current_length)s${blue}%s${normal}%s${yellow}%s${normal}%s${blue}%s${normal}%s\n" \
 	"     " "*" " ${filename} " "" "[" " " "Skipped" " " "]" " "
 }
-export -f __print_aucdtect_skip
 
 # Tag ok
 __print_ok_tag () {
@@ -1107,7 +1071,6 @@ __print_ok_tag () {
 	printf "\r${normal}%s${magenta}%s${normal}%s%$(__current_length)s${blue}%s${normal}%s${green}%s${normal}%s${blue}%s${normal}%s" \
 	"     " "[${iteration}/${total_flacs}]" " ${filename} " "" "[" " " "ok" " " "]" " "
 }
-export -f __print_ok_tag
 
 # Compression level the same
 __print_level_same_compression () {
@@ -1133,7 +1096,6 @@ __print_level_same_compression () {
 	printf "\r${normal}%s${magenta}%s${normal}%s%$(__current_length)s${blue}%s${normal}%s${yellow}%s${normal}%s${blue}%s${normal}%s" \
 	"   " "[${iteration}/${total_flacs}]" " ${filename} " "" "[" " " "Already At Level ${compression_level}" " " "]" " "
 }
-export -f __print_level_same_compression
 
 # Analyzing tags
 __print_analyzing_tags () {
@@ -1159,7 +1121,6 @@ __print_analyzing_tags () {
 	printf "\r${normal}%s${magenta}%s${normal}%s%$(__current_length)s${blue}%s${normal}%s${yellow}%s${normal}%s${blue}%s${normal}%s" \
 	"     " "[${iteration}/${total_flacs}]" " ${filename} " "" "[" " " "Analyzing Tags" " " "]" " "
 }
-export -f __print_analyzing_tags
 
 # Applying tags
 __print_applying_tags () {
@@ -1185,7 +1146,6 @@ __print_applying_tags () {
 	printf "\r${normal}%s${magenta}%s${normal}%s%$(__current_length)s${blue}%s${normal}%s${yellow}%s${normal}%s${blue}%s${normal}%s" \
 	"     " "[${iteration}/${total_flacs}]" " ${filename} " "" "[" " " "Applying Tags" " " "]" " "
 }
-export -f __print_applying_tags
 
 # Pruning
 __print_prune_flac () {
@@ -1211,7 +1171,6 @@ __print_prune_flac () {
 	printf "\r${normal}%s${magenta}%s${normal}%s%$(__current_length)s${blue}%s${normal}%s${yellow}%s${normal}%s${blue}%s${normal}%s" \
 	"   " "[${iteration}/${total_flacs}]" " ${filename} " "" "[" " " "Pruning Metadata" " " "]" " "
 }
-export -f __print_prune_flac
 
 # Retag analyze interrupted
 __print_retag_analyze_interrupt () {
@@ -1237,7 +1196,6 @@ __print_retag_analyze_interrupt () {
 	printf "\r${normal}%s${magenta}%s${normal}%s%$(__current_length)s${blue}%s${normal}%s${yellow}%s${normal}%s${blue}%s${normal}%s" \
 	"     " "[${iteration}/${total_flacs}]" " ${filename} " "" "[" " " "Interrupted" " " "]" " "
 }
-export -f __print_retag_analyze_interrupt
 
 # Retag apply interrupted
 __print_retag_apply_interrupt () {
@@ -1263,7 +1221,6 @@ __print_retag_apply_interrupt () {
 	printf "\r${normal}%s${magenta}%s${normal}%s%$(__current_length)s${blue}%s${normal}%s${yellow}%s${normal}%s${blue}%s${normal}%s" \
 	"     " "[${iteration}/${total_flacs}]" " ${filename} " "" "[" " " "Interrupted" " " "]" " "
 }
-export -f __print_retag_apply_interrupt
 
 # Interrupted file
 __print_interrupt () {
@@ -1289,7 +1246,6 @@ __print_interrupt () {
 	printf "\r${normal}%s${magenta}%s${normal}%s%$(__current_length)s${blue}%s${normal}%s${yellow}%s${normal}%s${blue}%s${normal}%s" \
 	"   " "[${iteration}/${total_flacs}]" " ${filename} " "" "[" " " "Interrupted" " " "]" " "
 }
-export -f __print_interrupt
 #== PROCESSED FILE/DIRECTORY MESSAGES ==========================================
 
 
@@ -1319,7 +1275,6 @@ __countdown_abort () {
 
 	exit 1
 }
-export -f __countdown_abort
 
 # ReplayGain test abort
 __replaygain_test_abort () {
@@ -1341,7 +1296,6 @@ __replaygain_test_abort () {
 
 	exit 1
 }
-export -f __replaygain_test_abort
 
 # ReplayGain process abort
 __replaygain_process_abort () {
@@ -1363,7 +1317,6 @@ __replaygain_process_abort () {
 
 	exit 1
 }
-export -f __replaygain_process_abort
 
 # FLAC compress abort and remove temporarily encoded files (if any)
 __compress_abort () {
@@ -1389,7 +1342,6 @@ __compress_abort () {
 
 	exit 1
 }
-export -f __compress_abort
 
 # FLAC test abort
 __test_abort () {
@@ -1411,7 +1363,6 @@ __test_abort () {
 
 	exit 1
 }
-export -f __test_abort
 
 # auCDtect abort.  Removes temporary WAV files (if any)
 __aucdtect_abort () {
@@ -1437,7 +1388,6 @@ __aucdtect_abort () {
 
 	exit 1
 }
-export -f __aucdtect_abort
 
 # MD5 check abort
 __md5_check_abort () {
@@ -1459,7 +1409,6 @@ __md5_check_abort () {
 
 	exit 130
 }
-export -f __md5_check_abort
 
 # Analyzing tags abort
 __analyzing_tags_abort () {
@@ -1506,7 +1455,6 @@ __analyzing_tags_abort () {
 
 	exit 1
 }
-export -f __analyzing_tags_abort
 
 # Applying tags abort
 __applying_tags_abort () {
@@ -1553,7 +1501,6 @@ __applying_tags_abort () {
 
 	exit 1
 }
-export -f __applying_tags_abort
 
 # Prune FLACS abort
 __prune_abort () {
@@ -1575,7 +1522,6 @@ __prune_abort () {
 
 	exit 1
 }
-export -f __prune_abort
 #== END TRAPS ==================================================================
 
 
@@ -1669,7 +1615,6 @@ __find_cores () {
 		fi
 	fi
 }
-export -f __find_cores
 
 # Prints the number of newlines specified
 # by ${1}
@@ -1730,7 +1675,6 @@ __coverart_remove_conflict () {
 		fi
 	done
 }
-export -f __coverart_remove_conflict
 
 # Top banner displaying invocation settings
 __top_banner () {
@@ -1770,7 +1714,6 @@ __top_banner () {
 	# Message indicating the searching of FLAC files
 	__info "Finding FLAC files to process..."
 }
-export -f __top_banner
 
 # Below creates the '[ ok ]' message to print after the info
 # line above.  This will be displayed when all the FLAC files
@@ -1790,7 +1733,6 @@ __processed_flacs_ok () {
 	printf "${normal}%$(( ${columns} - 42 ))s${blue}%s${normal}%s${green}%s${normal}%s${blue}%s${normal}" \
 	"" "[" " " "ok" " " "]"
 }
-export -f __processed_flacs_ok
 
 # Create a countdown function for the metadata
 # to allow user to quit script safely
@@ -1894,6 +1836,108 @@ __fail_count () {
 	printf '.' >> "${tmp_fail_count}"
 }
 export -f __fail_count
+
+# Unset the various functions (to provide a small environment for
+# xargs).  If any of the variables are NOT null (meaning the operations
+# they represent have been run), unset the functions indicative to
+# those operations
+__tidy_env () {
+	# auCDtect
+	if [[ -n "${aucdtect_complete}" ]] ; then
+		unset -f \
+			__operation_aucdtect \
+			__aucdtect_abort \
+			__print_aucdtect_flac \
+			__print_aucdtect_issue \
+			__print_aucdtect_spectrogram \
+			__print_aucdtect_skip \
+			__log_aucdtect
+	fi
+
+	# Compress FLACs
+	if [[ -n "${compress_complete}" ]] ; then
+		unset -f \
+			__operation_compress \
+			__compress_abort \
+			__print_compressing_flac \
+			__print_level_same_compression \
+			__print_testing_flac \
+			__log_compress_verify
+	fi
+
+	# Test FLACs
+	if [[ -n "${test_complete}" ]] ; then
+		unset -f \
+			__operation_test \
+			__test_abort \
+			__print_testing_flac \
+			__log_test
+	fi
+
+	# MD5 Check
+	if [[ -n "${md5check_complete}" ]] ; then
+		unset -f \
+			__operation_md5_check \
+			__md5_check_abort \
+			__print_checking_md5 \
+			__log_md5_check
+	fi
+
+	# Test ReplayGain
+	if [[ -n "${testing_replaygain_complete}" ]] ; then
+		unset -f \
+			__operation_test_replaygain \
+			__replaygain_test_abort \
+			__print_test_replaygain \
+			__print_ok_replaygain_file \
+			__print_interrupt_replaygain_file \
+			__log_replaygain_test
+
+	fi
+
+	# Applying ReplayGain
+	if [[ -n "${adding_replaygain_complete}" ]] ; then
+		unset -f \
+			__operation_replaygain_force \
+			__operation_replaygain_noforce \
+			__replaygain_process_abort \
+			__print_add_replaygain \
+			__print_ok_replaygain_dir \
+			__print_failed_replaygain \
+			__print_interrupt_replaygain_dir \
+			__log_replaygain_process
+	fi
+
+	# Analyze tags
+	if [[ -n "${analyzing_retag_complete}" ]] ; then
+		unset -f \
+			__operation_analyze_tags \
+			__operation_analyze_tags_dont_log_coverart \
+			__analyzing_tags_abort \
+			__print_analyzing_tags \
+			__print_retag_analyze_interrupt
+	fi
+
+	# Applying tags
+	if [[ -n "${applying_retag_complete}" ]] ; then
+		unset -f \
+			__operation_set_tags \
+			__applying_tags_abort \
+			__print_applying_tags \
+			__print_ok_tag \
+			__print_retag_apply_interrupt \
+			__log_missing_tags
+	fi
+
+	# Prune FLACs
+	if [[ -n "${prune_complete}" ]] ; then
+		unset -f \
+			__operation_prune \
+			__prune_abort \
+			__print_prune_flac \
+			__log_prune
+	fi
+}
 
 # Obtain and process the positional parameters invoked
 # with the script
@@ -2747,7 +2791,6 @@ __operation_summary () {
 	# Restore the cursor
 	printf "\033[?25h"
 }
-export -f __operation_summary
 #== END VARIOUS COMMANDS =======================================================
 
 
@@ -2781,7 +2824,6 @@ __operation_test_replaygain () {
 		fi
 	done
 }
-export -f __operation_test_replaygain
 
 # Process Replaygain (only add values if missing)
 __operation_replaygain_noforce () {
@@ -2845,7 +2887,6 @@ __operation_replaygain_noforce () {
 		done
 	done
 }
-export -f __operation_replaygain_noforce
 
 # Process ReplayGain (force new values)
 __operation_replaygain_force () {
@@ -2874,16 +2915,12 @@ __operation_replaygain_force () {
 		fi
 	done
 }
-export -f __operation_replaygain_force
 
 # Compress FLAC files
 __operation_compress () {
 	for i ; do
 		# Add one (iteration)
 		__iterate_count
-
-		# Prints current file and operation
-		__print_add_replaygain
 
 		# Test for COMPRESSION level in FLAC file. Hide error output since
 		# we'll be verifying the FLAC file later
@@ -2941,7 +2978,6 @@ __operation_compress () {
 		fi
 	done
 }
-export -f __operation_compress
 
 # Test FLAC files
 __operation_test () {
@@ -2968,7 +3004,6 @@ __operation_test () {
 		fi
 	done
 }
-export -f __operation_test
 
 # Test FLAC validity with auCDtect
 __operation_aucdtect () {
@@ -3135,7 +3170,6 @@ __operation_aucdtect () {
 		fi
 	done
 }
-export -f __operation_aucdtect
 
 # Check MD5 in each FLAC file
 __operation_md5_check () {
@@ -3176,7 +3210,6 @@ __operation_md5_check () {
 		fi
 	done
 }
-export -f __operation_md5_check
 
 # Analyze FLAC tags
 __operation_analyze_tags () {
@@ -3359,7 +3392,6 @@ __operation_analyze_tags () {
 		fi
 	done
 }
-export -f __operation_analyze_tags
 
 # Analyze FLAC tags (not logging missing COVERART tag)
 __operation_analyze_tags_dont_log_coverart () {
@@ -3571,7 +3603,6 @@ __operation_analyze_tags_dont_log_coverart () {
 		fi
 	done
 }
-export -f __operation_analyze_tags_dont_log_coverart
 
 # Re-tag FLAC files
 __operation_set_tags () {
@@ -3631,7 +3662,6 @@ __operation_set_tags () {
 		)
 	done
 }
-export -f __operation_set_tags
 
 # Prune FLACS
 __operation_prune () {
@@ -3853,6 +3883,22 @@ if [[ "${aucdtect_flac}" == "true" ]] ; then
 	# Clear/initialize iteration
 	> "${tmp_count_file}"
 
+	# Unset any functions that were a result of previous operations
+	__tidy_env
+
+	# Export the necessary functions to allow subshell access
+	export -f \
+		__operation_aucdtect \
+		__aucdtect_abort \
+		__print_aucdtect_flac \
+		__print_aucdtect_issue \
+		__print_aucdtect_spectrogram \
+		__print_aucdtect_skip \
+		__print_ok_flac \
+		__print_failed_flac \
+		__print_interrupt \
+		__log_aucdtect
+
 	# Run the above function with the configured jobs
 	find "${directory}" -name "*${flac_extension}" -print0 2> /dev/null | xargs -0 -n 1 -P "${jobs}" bash -c '__operation_aucdtect "${@}"' --
 
@@ -3896,6 +3942,21 @@ if [[ "${compress_flac}" == "true" ]] ; then
 	# Clear/initialize iteration
 	> "${tmp_count_file}"
 
+	# Unset any functions that were a result of previous operations
+	__tidy_env
+
+	# Export the necessary functions to allow subshell access
+	export -f \
+		__operation_compress \
+		__compress_abort \
+		__print_compressing_flac \
+		__print_level_same_compression \
+		__print_testing_flac \
+		__print_ok_flac \
+		__print_failed_flac \
+		__print_interrupt \
+		__log_compress_verify
+
 	# Run the above function with the configured jobs
 	find "${directory}" -name "*${flac_extension}" -print0 2> /dev/null | xargs -0 -n 1 -P "${jobs}" bash -c '__operation_compress "${@}"' --
 
@@ -3927,6 +3988,19 @@ if [[ "${test_flac}" == "true" ]] ; then
 	# Clear/initialize iteration
 	> "${tmp_count_file}"
 
+	# Unset any functions that were a result of previous operations
+	__tidy_env
+
+	# Export the necessary functions to allow subshell access
+	export -f \
+		__operation_test \
+		__test_abort \
+		__print_testing_flac \
+		__print_ok_flac \
+		__print_failed_flac \
+		__print_interrupt \
+		__log_test
+
 	# Run the above function with the configured jobs
 	find "${directory}" -name "*${flac_extension}" -print0 2> /dev/null | xargs -0 -n 1 -P "${jobs}" bash -c '__operation_test "${@}"' --
 
@@ -3957,6 +4031,19 @@ if [[ "${md5check_flac}" == "true" ]] ; then
 
 	# Clear/initialize iteration
 	> "${tmp_count_file}"
+
+	# Unset any functions that were a result of previous operations
+	__tidy_env
+
+	# Export the necessary functions to allow subshell access
+	export -f \
+		__operation_md5_check \
+		__md5_check_abort \
+		__print_checking_md5 \
+		__print_ok_flac \
+		__print_failed_flac \
+		__print_interrupt \
+		__log_md5_check
 
 	# Run the above function with the configured jobs
 	find "${directory}" -name "*${flac_extension}" -print0 2> /dev/null | xargs -0 -n 1 -P "${jobs}" bash -c '__operation_md5_check "${@}"' --
@@ -4004,6 +4091,19 @@ if [[ "${replaygain_flac}" == "true" ]] ; then
 	# Prints sub message of current operation
 	__sub_test_replaygain
 
+	# Unset any functions that were a result of previous operations
+	__tidy_env
+
+	# Export the necessary functions to allow subshell access
+	export -f \
+		__operation_test_replaygain \
+		__replaygain_test_abort \
+		__print_test_replaygain \
+		__print_ok_replaygain_file \
+		__print_failed_flac \
+		__print_interrupt_replaygain_file \
+		__log_replaygain_test
+
 	# Run the above function with the configured jobs
 	find "${directory}" -name "*${flac_extension}" -print0 2> /dev/null | xargs -0 -n 1 -P "${jobs}" bash -c '__operation_test_replaygain "${@}"' --
 
@@ -4042,6 +4142,20 @@ if [[ "${replaygain_flac}" == "true" ]] ; then
 
 	# Prints sub message of current operation
 	__sub_add_replaygain
+
+	# Unset any functions that were a result of previous operations
+	__tidy_env
+
+	# Export the necessary functions to allow subshell access
+	export -f \
+		__operation_replaygain_force \
+		__operation_replaygain_noforce \
+		__replaygain_process_abort \
+		__print_add_replaygain \
+		__print_ok_replaygain_dir \
+		__print_failed_replaygain \
+		__print_interrupt_replaygain_dir \
+		__log_replaygain_process
 
 	# Run the above function with the configured jobs
 	printf "%s\0" "${flac_directories_array[@]}" | xargs -0 -n 1 -P "${jobs}" bash -c '${process_replaygain} "${@}"' --
@@ -4112,6 +4226,20 @@ if [[ "${retag_flac}" == "true" ]] ; then
 	# support exporting arrays natively)
 	export exported_tags="$(printf "%s\n" "${tags[@]}")"
 
+	# Unset any functions that were a result of previous operations
+	__tidy_env
+
+	# Export the necessary functions to allow subshell access
+	export -f \
+		__operation_analyze_tags \
+		__operation_analyze_tags_dont_log_coverart \
+		__analyzing_tags_abort \
+		__print_analyzing_tags \
+		__print_ok_tag \
+		__print_failed_flac \
+		__print_retag_analyze_interrupt \
+		__log_missing_tags
+
 	# Run the above function with the configured jobs
 	find "${directory}" -name "*${flac_extension}" -print0 2> /dev/null | xargs -0 -n 1 -P "${jobs}" bash -c '${analyze_tags} "${@}"' --
 
@@ -4181,6 +4309,18 @@ if [[ "${retag_flac}" == "true" ]] ; then
 	# Prints sub message of current operation
 	__sub_applying_tags
 
+	# Unset any functions that were a result of previous operations
+	__tidy_env
+
+	# Export the necessary functions to allow subshell access
+	export -f \
+		__operation_set_tags \
+		__applying_tags_abort \
+		__print_applying_tags \
+		__print_ok_tag \
+		__print_failed_flac \
+		__print_retag_apply_interrupt
+
 	# Run the above function with the configured jobs
 	find "${directory}" -name "*${flac_extension}" -print0 2> /dev/null | xargs -0 -n 1 -P "${jobs}" bash -c '__operation_set_tags "${@}"' --
 
@@ -4214,6 +4354,19 @@ if [[ "${prune_flac}" == "true" ]] ; then
 
 	# Clear/initialize iteration
 	> "${tmp_count_file}"
+
+	# Unset any functions that were a result of previous operations
+	__tidy_env
+
+	# Export the necessary functions to allow subshell access
+	export -f \
+		__operation_prune \
+		__prune_abort \
+		__print_prune_flac \
+		__print_ok_flac \
+		__print_failed_flac \
+		__print_interrupt \
+		__log_prune
 
 	# Run the above function with the configured jobs
 	find "${directory}" -name "*${flac_extension}" -print0 2> /dev/null | xargs -0 -n 1 -P "${jobs}" bash -c '__operation_prune "${@}"' --
