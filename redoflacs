@@ -121,7 +121,7 @@ spectrogram_location="default"
 #  STATIC VARIABLES
 #-------------------------------------------------------------------------------
 # Version
-version="0.18.1_cygwin"
+version="0.18.2_cygwin"
 
 # Various file extensions
 export flac_extension=".[Ff][Ll][Aa][Cc]"
