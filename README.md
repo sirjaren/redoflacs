@@ -28,3 +28,10 @@ Below are the various options available in `redoflacs`:
 <p align="center">
 	<img src="https://raw.github.com/sirjaren/repository-images/master/redoflacs/redoflacs_0.18_all.png" alt="redoflacs 0.18: all options"/>
 </p>
+
+##### Donations
+`Consider supporting me if you appreciate my work!`
+<iframe style="border: 0; margin: 0; padding: 0;"
+	src="https://www.gittip.com/sirjaren/widget.html"
+	width="48pt" height="22pt">
+</iframe>
