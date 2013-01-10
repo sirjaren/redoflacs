@@ -31,4 +31,5 @@ Below are the various options available in `redoflacs`:
 
 ##### Donations
 `Consider supporting me if you appreciate my work!`
+
 [Gittip](https://www.gittip.com/sirjaren "Gittip")
