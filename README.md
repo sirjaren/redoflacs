@@ -50,7 +50,7 @@
 `redoflacs` is a multi-process/multi-job BASH script for managing your FLAC library
 
 ##### Preamble
-> One of the best features of this program is the idea that it can use more job to process your FLAC files. By default, this program will try and determine how many CPUs/cores you have (via `/proc/cpuinfo`) and use that many jobs during the specified operation. This essentially means this program will utilize all your CPUs/cores to quickly and efficiently complete your specified operation. The number of jobs to use can be specified with the `-j, --jobs` option.
+> One of the best features of this program is the idea that it can use more than one job to process your FLAC files. By default, this program will try and determine how many CPUs/cores you have (via `/proc/cpuinfo`) and use that many jobs during the specified operation. This essentially means this program will utilize all your CPUs/cores to quickly and efficiently complete your specified operation. The number of jobs to use can be specified with the `-j, --jobs` option.
 
 > The most common operations are detailed below. If you have any more questions you can invoke `redoflacs -h` to get more information on the various operations and options available to you. When describing an invocation of this program, I'll use the short style options (-c, -m, -p, etc), but know you can use the long style options (`--compress`, `--md5check`, `--prune`, etc) as well as mix the short and long style (`--compress`, `-mp`).
 
