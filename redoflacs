@@ -3623,7 +3623,6 @@ __operation_set_tags () {
 	metaflac_tag_array=()
 
 	for j in "${!tag_field_array[@]}" ; do
-		echo "${tag_field_array[${j}]}=${tag_values_array[${j}]}"
 		# Add in the tag field and value as an index
 		metaflac_tag_array+=(
 			# Tag field (eg. ARTIST) = Tag value (eg. Kamelot)
