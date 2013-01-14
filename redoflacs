@@ -3650,6 +3650,28 @@ __operation_set_tags () {
 				"${i}"
 		)
 
+		# Create a copy of ${metaflac_tag_array[@]} with just the tag fields
+		# and force the tag fields to be uppercase
+		tag_field_array=( "${metaflac_tag_array[@]%%=*}" )
+		tag_field_array=( "${tag_field_array[@]^^}" )
+
+		# Create a copy of ${metaflac_tag_array[@]} with just the tag values
+		tag_values_array=( "${metaflac_tag_array[@]#*=}" )
+
+		# Re-create ${metaflac_tag_array[@]}, this time enforcing the tag
+		# fields are uppercase
+		#
+		# Clear ${metaflac_tag_array[@]}
+		metaflac_tag_array=()
+
+		for j in "${!tag_field_array[@]}" ; do
+			# Add in the tag field and value as an index
+			metaflac_tag_array+=(
+				# Tag field (eg. ARTIST) = Tag value (eg. Kamelot)
+				"${tag_field_array[${j}]}=${tag_values_array[${j}]}"
+			)
+		done
+
 		# Add the saved tags back, by printing each tag field and value
 		# on a separate line to STDOUT.  This will be read in by metaflac.
 		# Use process substitution to allow this to finish if user
