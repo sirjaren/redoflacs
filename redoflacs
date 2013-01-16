@@ -127,7 +127,7 @@ spectrogram_location="default"
 #  STATIC VARIABLES
 #-------------------------------------------------------------------------------
 # Version
-version="0.18.2"
+version="0.18.3_pre"
 
 # Various file extensions
 flac_extension=".[Ff][Ll][Aa][Cc]"
