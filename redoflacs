@@ -2127,6 +2127,44 @@ __check_missing_programs () {
 
 		exit 1
 	fi
+
+	# If auCDtect operation was specified, check
+	# if auCDtect is found/installed
+	aucdtect_exists="$(command -v auCDtect)"
+
+	if [[ -z "${aucdtect_exists}" ]] ; then
+		# Check alternate spelling
+		aucdtect_exists="$(command -v aucdtect)"
+	fi
+
+	if [[ -z "${aucdtect_exists}" ]] ; then
+		# auCDtect can't be found, exit
+		{ __error "It appears auCDtect is not installed. Please verify you" ; __newline ;} >&2
+		{ __error "have this program installed and can be found in \$PATH" ; __newline 2 ;} >&2
+
+		exit 1
+	else
+		# Set up auCDtect command
+		aucdtect_command="${aucdtect_exists}"
+	fi
+
+	# If "-A, --aucdtect-spectrogram" was called
+	# make sure SoX is installed before starting
+	if [[ "${create_spectrogram}" == "true" ]] ; then
+		# Check if SoX is found/installed
+		sox_exists="$(command -v sox)"
+
+		if [[ -z "${sox_exists}" ]] ; then
+			# SoX can't be found, exit
+			{ __error "It appears SoX is not installed. Please verify you" ; __newline ;} >&2
+			{ __error "have this program installed and can be found in \$PATH" ; __newline ;} >&2
+
+			exit 1
+		else
+			# Set up SoX command
+			sox_command="${sox_exists}"
+		fi
+	fi
 }
 
 # Check for any conflicting operations/arguments
@@ -3747,6 +3785,24 @@ if [[ ! -f "${find_flacs}" ]] ; then
 	exit 1
 fi
 
+# If "-A, --aucdtect-spectrogram" was called, make sure
+# spectrogramm_location is a valid location if user defined
+if [[ "${create_spectrogram}" == "true" ]] ; then
+
+	# Check if spectrogram_location is user-defined
+	if [[ "${spectrogram_location}" != "default" ]] ; then
+
+		# Put spectrograms in user-defined location
+		# Test to make sure directory exists
+		if [[ ! -d "${spectrogram_location}" ]] ; then
+			{ __error "\"${spectrogram_location}\" doesn't exist!" ; __newline ;} >&2
+			{ __error "Please choose a valid directory under USER CONFIGURATION!" ; __newline ;} >&2
+
+			exit 1
+		fi
+	fi
+fi
+
 # If ${jobs} wasn't set upon invocation, check in /proc
 # to see how many jobs should be run
 if [[ -z "${jobs}" ]] ; then
@@ -3812,50 +3868,6 @@ __processed_flacs_ok
 # isn't wasted on doing unnecessary operations if the
 # FLAC files are corrupt or have metadata issues
 if [[ "${aucdtect_flac}" == "true" ]] ; then
-
-	# Check if auCDtect is found/installed
-	aucdtect_command="$(command -v auCDtect)"
-
-	if [[ -z "${aucdtect_command}" ]] ; then
-		# Check alternate spelling
-		aucdtect_command="$(command -v aucdtect)"
-	fi
-
-	if [[ -z "${aucdtect_command}" ]] ; then
-		# auCDtect can't be found, exit
-		{ __error "It appears auCDtect is not installed. Please verify you" ; __newline ;} >&2
-		{ __error "have this program installed and can be found in \$PATH" ; __newline ;} >&2
-
-		exit 1
-	fi
-
-	# If "-A, --aucdtect-spectrogram" was called
-	# make sure SoX is installed before starting
-	if [[ "${create_spectrogram}" == "true" ]] ; then
-		# Check if SoX is found/installed
-		sox_command="$(command -v sox)"
-
-		if [[ -z "${sox_command}" ]] ; then
-			# SoX can't be found, exit
-			{ __error "It appears SoX is not installed. Please verify you" ; __newline ;} >&2
-			{ __error "have this program installed and can be found in \$PATH" ; __newline ;} >&2
-
-			exit 1
-		fi
-	fi
-
-	# Check if spectrogram_location is user-defined
-	if [[ "${spectrogram_location}" != "default" ]] ; then
-
-		# Put spectrograms in user-defined location
-		# Test to make sure directory exists
-		if [[ ! -d "${spectrogram_location}" ]] ; then
-			{ __error "\"${spectrogram_location}\" doesn't exist!" ; __newline ;} >&2
-			{ __error "Please choose a valid directory under USER CONFIGURATION!" ; __newline ;} >&2
-
-			exit 1
-		fi
-	fi
 
 	__title_aucdtect_flac
 
