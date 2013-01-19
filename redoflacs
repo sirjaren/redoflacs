@@ -3730,6 +3730,18 @@ __operation_prune () {
 # Enable BASH 4 globstar
 shopt -s globstar
 
+# Check if user is running under Cygwin
+# and if so, warn user and exit
+os_name="$(uname -o)"
+if [[ "${os_name}" == "Cygwin" ]] ; then
+	{ __error "This version of redoflacs is meant to be run under" ; __newline ;} >&2
+	{ __error "UNIX/Linux/BSD.  Please use the Windows (Cygwin)" ; __newline ;} >&2
+	{ __error "version located here:" ; __newline ;} >&2
+	{ __error "https://github.com/sirjaren/redoflacs/tags" ; __newline ;} >&2
+
+	exit 1
+fi
+
 # Process positional parameters, allowing script to see
 # which operations to run.  Make sure we send all the positional
 # parameters called to the function, otherwise the function will
