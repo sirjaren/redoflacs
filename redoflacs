@@ -2144,6 +2144,15 @@ __check_missing_programs () {
 
 		exit 1
 	else
+		# Check if auCDtect is executable and warn user if it isn't
+		if [[ ! -x "${aucdtect_exists}" ]] ; then
+			{ __error "It appears auCDtect is not executable.  In order to make" ; __newline ;} >&2
+			{ __error "auCDtect executable, run:" ; __newline ;} >&2
+			{ __error "chmod +x \"${aucdtect_exists}\"" ; __newline ;} >&2
+
+			exit 1
+		fi
+
 		# Set up auCDtect command
 		aucdtect_command="${aucdtect_exists}"
 	fi
