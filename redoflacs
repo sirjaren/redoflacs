@@ -28,141 +28,6 @@
 #    5: Number of FLAC files that failed
 #-------------------------------------------------------------------------------
 
-tags=(
-#-------------------------------------------------------------------------------
-#  USER CONFIGURATION
-#-------------------------------------------------------------------------------
-# List the tags to be kept in each FLAC file
-# The default is listed below.
-#
-# Be sure not to delete the parenthesis ")" below
-# or put wanted tags below it!
-#
-# Another common tag
-# not added by default is ALBUMARTIST.  Uncomment
-# ALBUMARTIST below to allow script to keep this
-# tag.
-
-TITLE
-ARTIST
-#ALBUMARTIST
-ALBUM
-DISCNUMBER
-DATE
-TRACKNUMBER
-TRACKTOTAL
-GENRE
-
-# The COMPRESSION tag is a custom tag to allow
-# the script to determine which level of compression
-# the FLAC file(s) has/have been compressed at.
-COMPRESSION
-
-# The RELEASETYPE tag is a custom tag the author
-# of this script uses to catalogue what kind of
-# release the album is (ie, Full Length, EP,
-# Demo, etc.).
-RELEASETYPE
-
-# The SOURCE tag is a custom tag the author of
-# this script uses to catalogue which source the
-# album has derived from (ie, CD, Vinyl,
-# Digital, etc.).
-SOURCE
-
-# The MASTERING tag is a custom tag the author of
-# this script uses to catalogue how the album has
-# been mastered (ie, Lossless, or Lossy).
-MASTERING
-
-# The REPLAYGAIN tags below, are added by the
-# '-g, --replaygain' or '-G, --replaygain-noforce'
-# argument.  If you want to keep the replaygain
-# tags, make sure you leave these here.
-REPLAYGAIN_REFERENCE_LOUDNESS
-REPLAYGAIN_TRACK_GAIN
-REPLAYGAIN_TRACK_PEAK
-REPLAYGAIN_ALBUM_GAIN
-REPLAYGAIN_ALBUM_PEAK
-
-) # <- DO NOT DELETE PARENTHESIS!
-
-# Set whether to remove embedded artwork within FLAC
-# files.  By default, this script will remove any
-# artwork it can find, whether it's in the legacy
-# COVERART tag or METADATA_BLOCK_PICTURE.  Legal
-# values are:
-#    "true"  (Remove Artwork)
-#    "false" (Keep Artwork)
-remove_artwork="true"
-
-# Set the type of COMPRESSION to compress the
-# FLAC files.  Numbers range from 1-8, with 1 being
-# the lowest compression and 8 being the highest
-# compression.  The default is 8.
-compression_level=8
-
-# Set the where you want the error logs to
-# be placed. By default, they are placed in
-# the user's HOME directory.
-error_log="${HOME}"
-
-# Set where the created spectrogram files should
-# be placed. By default, the spectrogram PNG files
-# will be placed in the same directory as the tested
-# FLAC files. Each PNG will have the same name as
-# the tested FLAC file but with the extension ".png"
-#
-# The special value, "default" does the default
-# action.  Other values are interpreted as a
-# directory. An example of a user-defined location:
-# spectrogram_location="${HOME}/Spectrogram_Images"
-#
-# See "--help" or "-h" for more information.
-spectrogram_location="default"
-#== END USER CONFIGURATION =====================================================
-
-
-#-------------------------------------------------------------------------------
-#  STATIC VARIABLES
-#-------------------------------------------------------------------------------
-# Version
-version="0.18.4_pre"
-
-# Various file extensions
-flac_extension=".[Ff][Ll][Aa][Cc]"
-wav_extension=".[Ww][Aa][Vv]"
-
-# Colors on by default
-blue="\033[34m"
-green="\033[32m"
-red="\033[31m"
-cyan="\033[36m"
-magenta="\033[35m"
-yellow="\033[33m"
-normal="\033[0m"
-
-# Log files with timestamp
-verify_errors="${error_log}/FLAC_Verify_Errors_$$.log"
-test_errors="${error_log}/FLAC_Test_Errors_$$.log"
-md5_errors="${error_log}/MD5_Signature_Errors_$$.log"
-metadata_errors="${error_log}/FLAC_Metadata_Errors_$$.log"
-replay_test_errors="${error_log}/ReplayGain_Test_Errors_$$.log"
-replay_add_errors="${error_log}/ReplayGain_Add_Errors_$$.log"
-aucdtect_errors="${error_log}/auCDtect_Errors_$$.log"
-prune_errors="${error_log}/FLAC_Prune_Errors_$$.log"
-
-# Set arguments to null
-# If enabled they will be changed to true
-compress_flac=""
-test_flac=""
-aucdtect_flac=""
-md5check_flac=""
-replaygain_flac=""
-retag_flac=""
-prune_flac=""
-#== END STATIC VARIABLES =======================================================
-
 
 #-------------------------------------------------------------------------------
 #  SCRIPT MESSAGES
@@ -302,7 +167,7 @@ long_help="  Usage: ${0} [operations] [options] [target] ...
 
     -p, --prune
            Delete every METADATA block in each FLAC file except the STREAMINFO and
-           VORBIS_COMMENT block.  If remove_artwork is set to 'false', then the
+           VORBIS_COMMENT block.  If remove_artwork is not set as 'true', then the
            PICTURE block will NOT be removed.
 
     -g, --replaygain
@@ -581,7 +446,7 @@ __title_md5check_flac () {
 # Pruning FLACS
 __title_prune_flac () {
 	# Change printed title based on whether embedded artwork is to be removed
-	if [[ "${remove_artwork}" == "false" ]] ; then
+	if [[ "${remove_artwork}" != "true" ]] ; then
 		# Keep artwork
 		local metadata_removed="STREAMINFO, VORBIS_COMMENT and PICTURE"
 	else
@@ -1423,6 +1288,179 @@ __print_version () {
 	printf "%s\n" "Version ${version}"
 }
 
+# Create a configuration file
+__create_config () {
+create_config="################################################################################
+#                                                                              #
+#                         REDOFLACS USER CONFIGURATION                         #
+#                         ----------------------------                         #
+#                                                                              #
+#  Any line that is _NOT_ prepened with a '#' will be interpreted as an        #
+#  option (except for blank lines -- these are not interpreted)                #
+#                                                                              #
+#  See \`redoflacs --help\` for a detailed description of each parameter         #
+#                                                                              #
+################################################################################
+
+#-------------------------------------------------------------------------------
+#  :: TAGGING SECTION ::
+#-------------------------------------------------------------------------------
+# List the tags to be kept in each FLAC file.  The default is listed below.
+#
+# Another common tag not added by default is ALBUMARTIST.  Uncomment ALBUMARTIST
+# below to allow script to keep this tag.
+
+TITLE
+ARTIST
+#ALBUMARTIST
+ALBUM
+DISCNUMBER
+DATE
+TRACKNUMBER
+TRACKTOTAL
+GENRE
+
+# The COMPRESSION tag is a custom tag to allow the script to determine which
+# level of compression the FLAC file(s) has/have been compressed at.
+COMPRESSION
+
+# The RELEASETYPE tag is a custom tag the author of this script uses to
+# catalogue what kind of release the album is (ie, Full Length, EP, Demo, etc.).
+RELEASETYPE
+
+# The SOURCE tag is a custom tag the author of this script uses to catalogue
+# which source the album has derived from (ie, CD, Vinyl, Digital, etc.).
+SOURCE
+
+# The MASTERING tag is a custom tag the author of this script uses to catalogue
+# how the album has been mastered (ie, Lossless, or Lossy).
+MASTERING
+
+# The REPLAYGAIN tags below, are added by the '-g, --replaygain' or
+# '-G, --replaygain-noforce' argument.  If you want to keep the replaygain tags,
+# make sure you leave these here.
+REPLAYGAIN_REFERENCE_LOUDNESS
+REPLAYGAIN_TRACK_GAIN
+REPLAYGAIN_TRACK_PEAK
+REPLAYGAIN_ALBUM_GAIN
+REPLAYGAIN_ALBUM_PEAK
+
+#== :: END TAGGING SECTION :: ==================================================
+
+#-------------------------------------------------------------------------------
+#  :: OPTIONS ::
+#-------------------------------------------------------------------------------
+#~~~~~~~~~~~~~~~~~~
+#  REMOVE ARTWORK
+#~~~~~~~~~~~~~~~~~~
+# Set whether to remove embedded artwork within FLAC files.  By default, this
+# script will remove any artwork it can find, whether it's in the legacy
+# COVERART tag or METADATA_BLOCK_PICTURE.  Set 'remove_artwork' as 'true' to
+# remove embedded artwork.  All other values are intepreted as 'false'.
+remove_artwork=\"true\"
+
+#~~~~~~~~~~~~~~~~~~~
+#  SET COMPRESSION
+#~~~~~~~~~~~~~~~~~~~
+# Set the type of COMPRESSION to compress the FLAC files.  Numbers range from
+# '1-8', with '1' being the lowest compression and 8 being the highest
+# compression.  The default is '8'.
+compression_level=\"8\"
+
+#~~~~~~~~~~~~~~~~~~~~~~~
+#  ERROR LOG DIRECTORY
+#~~~~~~~~~~~~~~~~~~~~~~~
+# Set the where you want the error logs to be placed. By default, they are
+# placed in the user's HOME directory.
+error_log=\"\${HOME}\"
+
+#~~~~~~~~~~~~~~~~~~~~~~~~~
+#  SPECTROGRAM DIRECTORY
+#~~~~~~~~~~~~~~~~~~~~~~~~~
+# Set where the created spectrogram files should be placed. By default, the
+# spectrogram images will be placed in the same directory as the tested FLAC
+# files. Each image will have the same name as the tested FLAC file but with
+# the extension '.png'.
+#
+# All values for 'spectrogram_location' are interpreted as a directory.  If left
+# blank, the default location will be used.
+#
+# An example of a user-defined location:
+#    spectrogram_location=\"\${HOME}/Spectrogram_Images\"
+#
+# See '--help' or '-h' for more information.
+spectrogram_location=\"\"
+
+#~~~~~~~~~~~~~~~~~~~~~~~~
+#  PREPEND TRACK NUMBER
+#~~~~~~~~~~~~~~~~~~~~~~~~
+# Change whether the '-r, --redo' operation will re-tag singular track numbers
+# and track totals from:
+#    [ 1, 2, 3, 4, 5, 6, 7, 8, 9 ]
+# to
+#    [ 01, 02, 03, 04, 05, 06, 07, 08, 09 ]
+#
+# For example, if you had:
+#    TRACKNUMBER=4
+#    TRACKTOTAL=9
+#
+# You would end up with:
+#    TRACKNUMBER=04
+#    TRACKTOTAL=09
+#
+# This is enabled by setting 'prepend_zero' option as 'true'.  All other values
+# are interpreted as 'false'.
+prepend_zero=\"false\"
+
+#== :: END OPTIONS :: =========================================================="
+
+
+	# Print out the configuration file to the specified location (either system-
+	# wide or local)
+	printf "%s\n" "${create_config}" > "${config_location}"
+}
+
+# Parse the configuration file
+__parse_config () {
+	# Load configuration file into an array
+	mapfile -n0 -t config_file_array < "${config_location}"
+
+	# For each line in the configuration file, obtain only the
+	# lines that are part of the configuration
+	for line in "${config_file_array[@]}" ; do
+		# Strip line and replace with comment _ONLY_ if the line
+		# starts with a comment
+		test_line="${line/##*/#}"
+
+		# If ${test_line} does not equal a comment and if ${line}
+		# is not blank, store the current line (which is either
+		# a tag to keep or an option) into an array for further
+		# parsing
+		if [[ "${test_line}" != "#" && "${line}" != "" ]] ; then
+			# Add valid configuration lines into an array
+			valid_config_array+=( "${line}" )
+		fi
+	done
+
+	# For each line in the configuration, store the tag fields
+	# and evaluate the options as variables into the environment
+	for line in "${valid_config_array[@]}" ; do
+		# ${value_type} holds the key=pair for options to be
+		# parsed, else the line is a tag field
+		value_type="${line//*=*/}"
+
+		# If ${value_type} is _NOT_ null, then the line parsed
+		# is a tag field
+		if [[ -n "${value_type}" ]] ; then
+			# Store the tag field into the tags array
+			tags+=( "${line}" )
+		else
+			# Evaluate the option
+			eval "${line}"
+		fi
+	done
+}
+
 # Determine the width of the terminal in columns
 __columns () {
 	# Grab the first line of 'stty -a' output
@@ -1591,7 +1629,18 @@ __top_banner () {
 
 	# Log directory
 	printf "${normal}%s${blue}%s${normal}%s${cyan}%s${normal}\n" \
-	"            Log Directory " "|" " " "${error_log}"
+	"            Log Directory " "|" " " "${error_log}/"
+
+	# Configuration directory
+	if [[ "${EUID}" -eq 0 ]] ; then
+		# Root: System-wide configuration
+		config_directory="/etc/"
+	else
+		# Non root: User configuration
+		config_directory="~/.config/redoflacs/"
+	fi
+	printf "${normal}%s${blue}%s${normal}%s${cyan}%s${normal}\n" \
+	"         Config Directory " "|" " " "${config_directory}"
 
 	# Bottom banner line
 	printf "${normal}%s${blue}%s${normal}\n\n" \
@@ -3102,11 +3151,14 @@ __operation_aucdtect () {
 
 				# There is an issue with the processed FLAC file
 				if [[ "${aucdtect_check_array[0]}" != "This track looks like CDDA with probability 100%" ]] ; then
+
 					# If user specified '-A, --aucdtect-spectrogram', then
 					# create a spectrogram with SoX and change logging accordingly
 					if [[ "${create_spectrogram}" == "true" ]] ; then
+
 						# Check whether to place spectrogram images in user-defined location
-						if [[ "${spectrogram_location}" == "default" ]] ; then
+						if [[ -z "${spectrogram_location}" ]] ; then
+
 							# Place images in same directory as the FLAC files
 							# Make sure we don't clobber any picture files
 							if [[ -f "${i%${flac_extension}}.png" ]] ; then
@@ -3388,6 +3440,7 @@ __operation_analyze_tags () {
 		if [[ -n "${missing_tags_array[@]}" ]] ; then
 			# Add separator to log for each file
 			missing_tags_array+=( "------------------------------------------------------------------" )
+
 			# Print array into log file
 			printf "%s\n" "${missing_tags_array[@]}" >> "${metadata_errors}"
 
@@ -3739,6 +3792,32 @@ __operation_prune () {
 # Enable BASH 4 globstar
 shopt -s globstar
 
+# Version
+version="0.18.4_pre"
+
+# Various file extensions
+flac_extension=".[Ff][Ll][Aa][Cc]"
+wav_extension=".[Ww][Aa][Vv]"
+
+# Colors on by default
+blue="\033[34m"
+green="\033[32m"
+red="\033[31m"
+cyan="\033[36m"
+magenta="\033[35m"
+yellow="\033[33m"
+normal="\033[0m"
+
+# Set arguments to null
+# If enabled they will be changed to true
+compress_flac=""
+test_flac=""
+aucdtect_flac=""
+md5check_flac=""
+replaygain_flac=""
+retag_flac=""
+prune_flac=""
+
 # Check if user is running under Cygwin
 # and if so, warn user and exit
 os_name="$(uname -o)"
@@ -3750,6 +3829,69 @@ if [[ "${os_name}" == "Cygwin" ]] ; then
 
 	exit 1
 fi
+
+# Check if configuration file exists based of ${EUID}.  If it doesn't
+# exist, create one
+if [[ "${EUID}" -eq 0 ]] ; then
+	# User is root
+	#
+	# Configuration file location
+	config_location="/etc/redoflacs.conf"
+
+	# Check if system-wide configuration doesn't exist
+	if [[ ! -f "${config_location}" ]] ; then
+		# Create system-wide configuration file
+		__create_config
+
+		# Inform user of created configuration file, reminding them to check
+		# it over before running program
+		__info "A configuration file has been created here:" ; __newline
+		__info "  ${config_location}" ; __newline 2
+
+		__info "Please review it before running this program." ; __newline
+
+		exit 0
+	else
+		# Configuration file exists, parse it
+		__parse_config
+	fi
+else
+	# User is _NOT_ root
+	#
+	# Configuration file location
+	config_location="${HOME}/.config/redoflacs/redoflacs.conf"
+
+	# Check if user configuration doesn't exist
+	if [[ ! -f "${config_location}" ]] ; then
+		# Create '.config/redoflacs' directory (if it doesn't exist)
+		mkdir -p "${config_location%/*}"
+
+		# Create user configuration file
+		__create_config
+
+		# Inform user of created configuration file, reminding them to check
+		# it over before running program
+		__info "A configuration file has been created here:" ; __newline
+		__info "  ${config_location}" ; __newline 2
+
+		__info "Please review it before running this program." ; __newline
+
+		exit 0
+	else
+		# Configuration file exists, parse it
+		__parse_config
+	fi
+fi
+
+# Log files with timestamp
+verify_errors="${error_log}/FLAC_Verify_Errors_$$.log"
+test_errors="${error_log}/FLAC_Test_Errors_$$.log"
+md5_errors="${error_log}/MD5_Signature_Errors_$$.log"
+metadata_errors="${error_log}/FLAC_Metadata_Errors_$$.log"
+replay_test_errors="${error_log}/ReplayGain_Test_Errors_$$.log"
+replay_add_errors="${error_log}/ReplayGain_Add_Errors_$$.log"
+aucdtect_errors="${error_log}/auCDtect_Errors_$$.log"
+prune_errors="${error_log}/FLAC_Prune_Errors_$$.log"
 
 # Process positional parameters, allowing script to see
 # which operations to run.  Make sure we send all the positional
@@ -3807,11 +3949,11 @@ if [[ ! -f "${find_flacs}" ]] ; then
 fi
 
 # If "-A, --aucdtect-spectrogram" was called, make sure
-# spectrogramm_location is a valid location if user defined
+# spectrogramm_location is a valid location, if user defined
 if [[ "${create_spectrogram}" == "true" ]] ; then
 
 	# Check if spectrogram_location is user-defined
-	if [[ "${spectrogram_location}" != "default" ]] ; then
+	if [[ -n "${spectrogram_location}" ]] ; then
 
 		# Put spectrograms in user-defined location
 		# Test to make sure directory exists
@@ -4143,7 +4285,7 @@ if [[ "${retag_flac}" == "true" ]] ; then
 	# tags, and if the user wants artwork to be kept, don't log
 	# missing COVERART tags (in the event that the script adds
 	# it into the tag array)
-	if [[ "${coverart_warning}" != "true" && "${remove_artwork}" == "false" ]] ; then
+	if [[ "${coverart_warning}" != "true" && "${remove_artwork}" != "true" ]] ; then
 
 		# Analyze tags but don't log COVERART as a missing
 		# tag (if applicable)
