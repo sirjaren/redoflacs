@@ -3722,13 +3722,44 @@ __operation_set_tags () {
 	# Clear ${metaflac_tag_array[@]}
 	metaflac_tag_array=()
 
-	for j in "${!tag_field_array[@]}" ; do
-		# Add in the tag field and value as an index
-		metaflac_tag_array+=(
-			# Tag field (eg. ARTIST) = Tag value (eg. Kamelot)
-			"${tag_field_array[${j}]}=${tag_values_array[${j}]}"
-		)
-	done
+	# If the user specified 'true' to the 'prepend_zero' option in the
+	# configuration file, enforce the TRACKNUMBER and TRACKTOTAL tags to have a
+	# '0' prepended before singular numbers
+	if [[ "${prepend_zero}" == "true" ]] ; then
+
+		# Prepend a '0' for TRACKNUMBER and TRACKTOTAL
+		for j in "${!tag_field_array[@]}" ; do
+
+			# Add in the tag field and value as an index
+			if [[ "${tag_field_array[${j}]}" == "TRACKNUMBER" ||
+				  "${tag_field_array[${j}]}" == "TRACKTOTAL" ]] ; then
+
+				# Format tag value with '0' prepended for single values
+				prepend_tag_value="$(printf "%02d" "${tag_values_array[${j}]}")"
+
+				metaflac_tag_array+=(
+					# Tag field (eg. TRACKNUMBER) = Tag value (eg. 03)
+					"${tag_field_array[${j}]}=${prepend_tag_value}"
+				)
+			else
+				metaflac_tag_array+=(
+					# Tag field (eg. ARTIST) = Tag value (eg. Kamelot)
+					"${tag_field_array[${j}]}=${tag_values_array[${j}]}"
+				)
+			fi
+		done
+	else
+		# ${prepend_zero} is not set as 'true', add each tag field and tag value
+		# into ${metaflac_tag_array[@]}
+		for j in "${!tag_field_array[@]}" ; do
+
+			# Add in the tag field and value as an index
+			metaflac_tag_array+=(
+				# Tag field (eg. ARTIST) = Tag value (eg. Kamelot)
+				"${tag_field_array[${j}]}=${tag_values_array[${j}]}"
+			)
+		done
+	fi
 
 	# Add the saved tags back, by printing each tag field and value
 	# on a separate line to STDOUT.  This will be read in by metaflac.
