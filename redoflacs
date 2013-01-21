@@ -2272,31 +2272,33 @@ __check_missing_programs () {
 
 	# If auCDtect operation was specified, check
 	# if auCDtect is found/installed
-	aucdtect_exists="$(command -v auCDtect)"
+	if [[ "${aucdtect_flac}" == "true" ]] ; then
+		aucdtect_exists="$(command -v auCDtect)"
 
-	if [[ -z "${aucdtect_exists}" ]] ; then
-		# Check alternate spelling
-		aucdtect_exists="$(command -v aucdtect)"
-	fi
-
-	if [[ -z "${aucdtect_exists}" ]] ; then
-		# auCDtect can't be found, exit
-		{ __error "It appears auCDtect is not installed. Please verify you" ; __newline ;} >&2
-		{ __error "have this program installed and can be found in \$PATH" ; __newline 2 ;} >&2
-
-		exit 1
-	else
-		# Check if auCDtect is executable and warn user if it isn't
-		if [[ ! -x "${aucdtect_exists}" ]] ; then
-			{ __error "It appears auCDtect is not executable.  In order to make" ; __newline ;} >&2
-			{ __error "auCDtect executable, run:" ; __newline ;} >&2
-			{ __error "chmod +x \"${aucdtect_exists}\"" ; __newline ;} >&2
-
-			exit 1
+		if [[ -z "${aucdtect_exists}" ]] ; then
+			# Check alternate spelling
+			aucdtect_exists="$(command -v aucdtect)"
 		fi
 
-		# Set up auCDtect command
-		aucdtect_command="${aucdtect_exists}"
+		if [[ -z "${aucdtect_exists}" ]] ; then
+			# auCDtect can't be found, exit
+			{ __error "It appears auCDtect is not installed. Please verify you" ; __newline ;} >&2
+			{ __error "have this program installed and can be found in \$PATH" ; __newline 2 ;} >&2
+
+			exit 1
+		else
+			# Check if auCDtect is executable and warn user if it isn't
+			if [[ ! -x "${aucdtect_exists}" ]] ; then
+				{ __error "It appears auCDtect is not executable.  In order to make" ; __newline ;} >&2
+				{ __error "auCDtect executable, run:" ; __newline ;} >&2
+				{ __error "chmod +x \"${aucdtect_exists}\"" ; __newline ;} >&2
+
+				exit 1
+			fi
+
+			# Set up auCDtect command
+			aucdtect_command="${aucdtect_exists}"
+		fi
 	fi
 
 	# If "-A, --aucdtect-spectrogram" was called
