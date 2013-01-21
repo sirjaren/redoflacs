@@ -4013,15 +4013,15 @@ else
 	fi
 fi
 
-# Log files with timestamp
-verify_errors="${error_log}/FLAC_Verify_Errors_$$.log"
-test_errors="${error_log}/FLAC_Test_Errors_$$.log"
-md5_errors="${error_log}/MD5_Signature_Errors_$$.log"
-metadata_errors="${error_log}/FLAC_Metadata_Errors_$$.log"
-replay_test_errors="${error_log}/ReplayGain_Test_Errors_$$.log"
-replay_add_errors="${error_log}/ReplayGain_Add_Errors_$$.log"
-aucdtect_errors="${error_log}/auCDtect_Errors_$$.log"
-prune_errors="${error_log}/FLAC_Prune_Errors_$$.log"
+# Log files with location
+verify_errors="${error_log}/redoflacs_verify_errors_$$.log"
+test_errors="${error_log}/redoflacs_test_errors_$$.log"
+md5_errors="${error_log}/redoflacs_md5_errors_$$.log"
+metadata_errors="${error_log}/redoflacs_metadata_errors_$$.log"
+replay_test_errors="${error_log}/redoflacs_replaygain_test_errors_$$.log"
+replay_add_errors="${error_log}/redoflacs_replaygain_add_errors_$$.log"
+aucdtect_errors="${error_log}/redoflacs_aucdtect_errors_$$.log"
+prune_errors="${error_log}/redoflacs_prune_errors_$$.log"
 
 # Process positional parameters, allowing script to see
 # which operations to run.  Make sure we send all the positional
