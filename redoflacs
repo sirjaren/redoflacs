@@ -3,6 +3,8 @@
 # redoflacs - Parallel BASH commandline FLAC compressor, verifier, organizer,
 #             analyzer, and retagger
 #-------------------------------------------------------------------------------
+# ~ THIS IS THE UNIX/LINUX/BSD VERSION OF REDOFLACS ~
+#-------------------------------------------------------------------------------
 # Copyright (C) 2010-2013  Jaren Stangret
 #-------------------------------------------------------------------------------
 # This program is free software; you can redistribute it and/or
@@ -4071,7 +4073,7 @@ if [[ ! -f "${find_flacs}" ]] ; then
 fi
 
 # If "-A, --aucdtect-spectrogram" was called, make sure
-# spectrogramm_location is a valid location, if user defined
+# spectrogram_location is a valid location, if user defined
 if [[ "${create_spectrogram}" == "true" ]] ; then
 
 	# Check if spectrogram_location is user-defined
@@ -4081,7 +4083,7 @@ if [[ "${create_spectrogram}" == "true" ]] ; then
 		# Test to make sure directory exists
 		if [[ ! -d "${spectrogram_location}" ]] ; then
 			{ __error "\"${spectrogram_location}\" doesn't exist!" ; __newline ;} >&2
-			{ __error "Please set a valid directory in configuration file!" ; __newline ;} >&2
+			{ __error "Please set a valid directory in the configuration file!" ; __newline ;} >&2
 
 			exit 1
 		fi
