@@ -80,228 +80,309 @@ __display_missing_commands_header () {
 
 # Display a lot of help
 __long_help () {
-long_help="  Usage: ${0} [operations] [options] [target] ...
-  Operations:
-    -c, --compress
-           Compress the FLAC files with the user-specified level of compression
-           defined under USER CONFIGURATION (as the variable compression_level)
-           and verify the resultant files.
+long_help=".TH \"REDOFLACS\" 1
+.SH NAME
+redoflacs \\- Parallel BASH commandline FLAC compressor, verifier, organizer, analyzer, and retagger
+.SH SYNOPSIS
+.B redoflacs
+.RI [operations]
+.RI [options]
+.RI [target]
+.RI ...
+.SH DESCRIPTION
+redoflacs is a BASH commandline program providing a series of operations
+to help manage and verify a user's FLAC music library.  One of the key
+features of redoflacs is it's ability to process a great number of FLAC
+files in parallel, using as many jobs to complete an operation as
+possible, very similar to 'GNU make'.
 
-           The default is 8, with the range of values starting from 1 to 8 with
-           the smallest compression at 1, and the highest at 8.  This option
-           will add a tag to all successfully verified FLAC files.  Below
-           shows the default COMPRESSION tag added to each successfully
-           verified FLAC:
+redoflacs searches for a config file (if run as a user) in:
 
-                       COMPRESSION=8
+.br
+            \\fB~/.config/redoflacs/config\\fP
 
-           If any FLAC files already have the defined compression_level tag (a
-           good indicator the files are already compressed at that level), the
-           script will instead test the FLAC files for any errors.  This is useful
-           to check your entire music library to make sure all the FLAC files are
-           compressed at the level specified as well as make sure they are intact.
+.br
+or (if run as root) in:
 
-           If any files are found to be corrupt, this script will quit upon
-           finishing the compression of any other files and produce an error
-           log.
+.br
+            \\fB/etc/redoflacs.conf\\fP
 
-    -C, --compress-notest
-           Same as the '--compress' option, but if any FLAC files already have the
-           defined compression_level tag, the script will skip the file and continue
-           on to the next without test the FLAC file's integrity.  Useful for
-           checking all your FLAC files are compressed at the level specified.
+If a config file is not found (in either place), one is created.
 
-    -t, --test
-           Same as compress but instead of compressing the FLAC files, this
-           script just verfies the files.  This option will NOT add the
-           COMPRESSION tag to the files.
+More information can be found at <\\fBhttps://github.com/sirjaren/redoflacs\\fP>.
+.SH OPERATIONS
+.TP
+.BI -c, --compress
+Compress the FLAC files with the user-specified level of compression
+defined from the configuration file as 'compression_level' and
+verify the resultant files.
 
-           As with the '--compress' option, this will produce an error log if
-           any FLAC files are found to be corrupt.
+The default is 8, with the range of values starting from 1 to 8 with
+the smallest compression at 1, and the highest at 8.  This option
+will add a tag to all successfully verified FLAC files.  Below
+shows the default COMPRESSION tag added to each successfully
+verified FLAC:
 
-    -a, --aucdtect
-           Uses the auCDtect program by Oleg Berngardt and Alexander Djourik to
-           analyze FLAC files and check with fairly accurate precision whether
-           the FLAC files are lossy sourced or not.  For example, an MP3 file
-           converted to FLAC is no longer lossless therefore lossy sourced.
+            COMPRESSION=8
 
-           While this program isn't foolproof, it gives a good idea which FLAC
-           files will need further investigation (ie a spectrogram).  This program
-           does not work on FLAC files which have a bit depth more than a typical
-           audio CD (16bit), and will skip the files that have a higher bit depth.
+If any FLAC files already have the defined compression_level tag (a
+good indicator the files are already compressed at that level), the
+script will instead test the FLAC files for any errors.  This is
+useful to check your entire music library to make sure all the FLAC
+files are compressed at the level specified as well as make sure they
+are intact.
 
-           If any files are found to not be perfect (100% CDDA), a log will be created
-           with the questionable FLAC files recorded in it.
+If any files are found to be corrupt, this script will quit upon
+finishing the compression of any other files and produce an error
+log.
+.TP
+.BI -C, --compress-notest
+Same as the '--compress' option, but if any FLAC files already have
+the defined compression_level tag, the script will skip the file and
+continue on to the next without test the FLAC file's integrity.
+This is useful for checking all your FLAC files are compressed at the
+level specified.
+.TP
+.BI -t, --test
+Same as compress but instead of compressing the FLAC files, this
+script just verfies the files.  This option will NOT add the
+COMPRESSION tag to the files.
 
-    -A, --aucdtect-spectrogram
-           Same as '-a, --aucdtect' with the addition of creating a spectrogram for
-           each FLAC file that fails auCDtect, that is, any FLAC file that does not
-           return 100% CDDA from auCDtect will be scanned and a spectrogram will be
-           created.
+As with the '--compress' option, this will produce an error log if any
+FLAC files are found to be corrupt.
+.TP
+.BI -a, --aucdtect
+Uses the auCDtect program by Oleg Berngardt and Alexander Djourik to
+analyze FLAC files and check with fairly accurate precision whether
+the FLAC files are lossy sourced or not.  For example, an MP3 file
+converted to FLAC is no longer lossless therefore lossy sourced.
 
-           Any FLAC file skipped (due to having a higher bit depth than 16), will
-           NOT have a spectrogram created.
+While this program isn't foolproof, it gives a good idea which FLAC
+files will need further investigation (ie a spectrogram).  This
+program does not work on FLAC files which have a bit depth more than a
+typical audio CD (16bit), and will skip the files that have a higher
+bit depth.
 
-           By default, each spectrogram will be created in the same folder as the
-           tested FLAC file with the same name as the tested FLAC file:
+If any files are found to not be perfect (100% CDDA), a log will be
+created with the questionable FLAC files recorded in it.
+.TP
+.BI -A, --aucdtect-spectrogram
+Same as '-a, --aucdtect' with the addition of creating a spectrogram
+for each FLAC file that fails auCDtect, that is, any FLAC file that
+does not return 100% CDDA from auCDtect will be scanned and a
+spectrogram will be created.
 
-               03 - Some FLAC File.flac --> 03 - Some FLAC File.png
+Any FLAC file skipped (due to having a higher bit depth than 16), will
+NOT have a spectrogram created.
 
-           If there already is a PNG file with the same name as the tested FLAC,
-           the name 'spectrogram' will prepend the '.png' extension:
+By default, each spectrogram will be created in the same folder as the
+tested FLAC file with the same name as the tested FLAC file:
 
-               03 - Some FLAC File.flac --> 03 - Some FLAC File.spectrogram.png
+            03 - Some FLAC File.flac --> 03 - Some FLAC File.png
 
-           The user can change the location of where to store the created
-           spectrogram images by changing the value of spectrogram_location under
-           the USER CONFIGURATION section of this script.  The location defined by
-           the user will be tested to see if it exists before starting the script.
-           If the location does NOT exist, the script will warn the user and exit.
+If there already is a PNG file with the same name as the tested FLAC,
+the name 'spectrogram' will prepend the '.png' extension:
 
-           The created PNG file is large in resolution to best capture the
-           FLAC file's waveform (roughly 5140x2149).
+            03 - Some FLAC File.flac --> 03 - Some FLAC File.spectrogram.png
 
-           The spectrogram is created using the program SoX.  If the user tries
-           to use this option without having SoX installed, the script will warn
-           the user that SoX is missing and exit.
+The user can change the location of where to store the created
+spectrogram images by changing the value of 'spectrogram_location'
+defined in the configuration file.  The location defined by the user
+will be tested to see if it exists before starting the script.  If
+The location does NOT exist, the script will warn the user and exit.
 
-    -m, --md5check
-           Check the FLAC files for unset MD5 Signatures and log the output of
-           any unset signatures.  An unset MD5 signature doesn't necessarily mean
-           a FLAC file is corrupt, and can be repaired with a re-encoding of said
-           FLAC file.
+The created PNG file is large in resolution to best capture the FLAC
+file's waveform (roughly 1800x513).
 
-    -p, --prune
-           Delete every METADATA block in each FLAC file except the STREAMINFO and
-           VORBIS_COMMENT block.  If remove_artwork is not set as 'true', then the
-           PICTURE block will NOT be removed.
+The spectrogram is created using the program SoX.  If the user tries
+to use this option without having SoX installed, the script will warn
+the user that SoX is missing and exit.
+.TP
+.BI -m, --md5check
+Check the FLAC files for unset MD5 Signatures and log the output of
+any unset signatures.  An unset MD5 signature doesn't necessarily mean
+a FLAC file is corrupt, and can be repaired with a re-encoding of said
+FLAC file.
+.TP
+.BI -p, --prune
+Delete every METADATA block in each FLAC file except the STREAMINFO
+and VORBIS_COMMENT block.  If 'remove_artwork' is not set as 'true',
+defined in the configuration file, then the PICTURE block will NOT be
+removed.
+.TP
+.BI -g, --replaygain
+Add ReplayGain tags to the FLAC files.  The ReplayGain is calculated
+for ALBUM and TRACK values. ReplayGain is applied via VORBIS_TAGS and
+as such, will require the '-r, --retag' argument to have these tags
+kept in order to preserve the added ReplayGain values.  The tags
+added are:
 
-    -g, --replaygain
-           Add ReplayGain tags to the FLAC files.  The ReplayGain is calculated
-           for ALBUM and TRACK values. ReplayGain is applied via VORBIS_TAGS and
-           as such, will require the redo, '--r argument' to have these tags kept
-           in order to preserve the added ReplayGain values.  The tags added are:
+             REPLAYGAIN_REFERENCE_LOUDNESS
+.br
+             REPLAYGAIN_TRACK_GAIN
+.br
+             REPLAYGAIN_TRACK_PEAK
+.br
+             REPLAYGAIN_ALBUM_GAIN
+.br
+             REPLAYGAIN_ALBUM_PEAK
 
-                      REPLAYGAIN_REFERENCE_LOUDNESS
-                      REPLAYGAIN_TRACK_GAIN
-                      REPLAYGAIN_TRACK_PEAK
-                      REPLAYGAIN_ALBUM_GAIN
-                      REPLAYGAIN_ALBUM_PEAK
+This option ignores any ReplayGain tags that may already be set,
+removing existing values before applying new ones.
 
-           This option ignores any ReplayGain tags that may already be set,
-           removing existing values before applying new ones.
+In order for the ReplayGain values to be applied correctly, the script
+has to determine which FLAC files to add values by directory.  What
+this means is that the script must add the ReplayGain values by
+working off the FLAC files' parent directory.  If there are some FLAC
+files found, the script will move up one directory and begin applying
+the ReplayGain values.  This is necessary in order to get the
+REPLAYGAIN_ALBUM_GAIN and REPLAYGAIN_ALBUM_PEAK values set correctly.
+Without doing this, the ALBUM and TRACK values would be identical.
 
-           In order for the ReplayGain values to be applied correctly, the
-           script has to determine which FLAC files to add values by directory.
-           What this means is that the script must add the ReplayGain values by
-           working off the FLAC files' parent directory.  If there are some FLAC
-           files found, the script will move up one directory and begin applying
-           the ReplayGain values.  This is necessary in order to get the
-           REPLAYGAIN_ALBUM_GAIN and REPLAYGAIN_ALBUM_PEAK values set correctly.
-           Without doing this, the ALBUM and TRACK values would be identical.
+If a user has many FLAC files under one directory (of different
+albums/artists), the ReplayGain ALBUM values are going to be incorrect
+as the script will perceive all those FLAC files to essentially be
+from the same album.  This is mitigated by having your music library
+somewhat organized with each album housing the correct FLAC files and
+no others.  Keep in mind, multi-disc albums must be in separate
+folders in order to be processed with different ALBUM GAIN and PEAK
+values.
 
-           If a user has many FLAC files under one directory (of different
-           albums/artists), the ReplayGain ALBUM values are going to be incorrect
-           as the script will perceive all those FLAC files to essentially be
-           from the same album.  This is mitigated by having your music library
-           somewhat organized with each album housing the correct FLAC files and
-           no others.  Keep in mind, multi-disc albums must be in separate folders
-           in order to be processed with different ALBUM GAIN and PEAK values.
+If there are any errors found while creating the ReplayGain values
+and/or setting the values, an error log will be produced.
+.TP
+.BI -G, --replaygain-noforce
+Same as '-g, --replaygain' but will check for existing ReplayGain tags
+before reapplying new ones.  If any one of the five ReplayGain tags
+are missing from any FLAC file, the script will apply new values to
+each FLAC file in that folder (first removing the old ReplayGain
+tags - if any).
 
-           If there are any errors found while creating the ReplayGain values
-           and/or setting the values, an error log will be produced.
+If all five ReplayGain tags are intact in every FLAC file in a
+directory, that directory will be skipped and no new ReplayGain tags
+will be added.
+.TP
+.BI -r, --retag
+Extract the configured tags in each FLAC file and clear the rest
+before retagging the file.  The default tags kept are:
 
-    -G, --replaygain-noforce
-           Same as '-g, --replaygain' but will check for existing ReplayGain
-           tags before reapplying new ones.  If any one of the five ReplayGain
-           tags are missing from any FLAC file, the script will apply new values
-           to each FLAC file in that folder (first removing the old ReplayGain
-           tags - if any).
+            TITLE
+.br
+            ARTIST
+.br
+            ALBUM
+.br
+            DISCNUMBER
+.br
+            DATE
+.br
+            TRACKNUMBER
+.br
+            TRACKTOTAL
+.br
+            GENRE
+.br
+            COMPRESSION
+.br
+            RELEASETYPE
+.br
+            SOURCE
+.br
+            MASTERING
+.br
+            REPLAYGAIN_REFERENCE_LOUDNESS
+.br
+            REPLAYGAIN_TRACK_GAIN
+.br
+            REPLAYGAIN_TRACK_PEAK
+.br
+            REPLAYGAIN_ALBUM_GAIN
+.br
+            REPLAYGAIN_ALBUM_PEAK
 
-           If all five ReplayGain tags are intact in every FLAC
-           file in a directory, that directory will be skipped and no new
-           ReplayGain tags will be added.
+If any FLAC files have missing tags (from those configured to be
+kept), the file and the missing tag will be recorded in a log.
 
-    -r, --redo
-           Extract the configured tags in each FLAC file and clear the rest before
-           retagging the file.  The default tags kept are:
+The tags that can be kept are eseentially infinite, as long as the
+tags to be kept are set in the TAGGING SECTION of the configuration
+file.
 
-                      TITLE
-                      ARTIST
-                      ALBUM
-                      DISCNUMBER
-                      DATE
-                      TRACKNUMBER
-                      TRACKTOTAL
-                      GENRE
-                      COMPRESSION
-                      RELEASETYPE
-                      SOURCE
-                      MASTERING
-                      REPLAYGAIN_REFERENCE_LOUDNESS
-                      REPLAYGAIN_TRACK_GAIN
-                      REPLAYGAIN_TRACK_PEAK
-                      REPLAYGAIN_ALBUM_GAIN
-                      REPLAYGAIN_ALBUM_PEAK
+If this option is specified, a warning will appear upon script
+execution.  This warning will show which of the configured TAG fields
+to keep when re-tagging the FLAC files.  A countdown will appear
+giving the user 10 seconds to abort the script, after which, the
+program will begin running it's course.
+.TP
+.BI -l, --all
+This option is short for:
 
-           If any FLAC files have missing tags (from those configured to be kept),
-           the file and the missing tag will be recorded in a log.
+            -c, --compress
+.br
+            -m, --md5check
+.br
+            -p, --prune
+.br
+            -g, --replaygain
+.br
+            -r, --retag
 
-           The tags that can be kept are eseentially infinite, as long as the
-           tags to be kept are set in the tag configuration located at the top of
-           this script under USER CONFIGURATION.
+If any of these options (or variations of the above options) are
+called, this script will warn the user of conflicting options and
+exit.
+.TP
+.BI -L, --reallyall
+This option is short for:
 
-           If this option is specified, a warning will appear upon script
-           execution.  This warning will show which of the configured TAG fields
-           to keep when re-tagging the FLAC files.  A countdown will appear
-           giving the user 10 seconds to abort the script, after which, the script
-           will begin running it's course.
+            -c, --compress
+.br
+            -m, --md5check
+.br
+            -p, --prune
+.br
+            -g, --replaygain
+.br
+            -r, --retag
+.br
+            -A, --aucdtect-spectrogram
 
-    -l, --all
-           This option is short for:
+If any of these options (or variations of the above options) are
+called, this script will warn the user of conflicting options and
+exit.
+.SH OPTIONS
+.BI -j[N], --jobs[=N]
+Set the number of parallel jobs to run on script invocation.  If this
+is not set, this script will attempt to find the number of CPU cores
+available, using the number found as the number of parallel jobs to
+run.
 
-                      -c, --compress
-                      -m, --md5check
-                      -p, --prune
-                      -g, --replaygain
-                      -r, --redo
+If the script is unable to find the number of CPU cores available, the
+number of jobs will be set to two (2) by default.
+.TP
+.BI -n, --no-color
+Turn off color output.
+.TP
+.BI -v, --version
+Display script version and exit.
+.TP
+.BI -h, --help
+Shows this help message.
+.SH FILES
+.TP
+.BI ~/.config/redoflacs/config
+User configuration file.
+.TP
+.BI /etc/redoflacs.conf
+System/root configuration file.
+.SH BUGS
+If you find a bug, please report it at:
+<\\fBhttps://github.com/sirjaren/redoflacs/issues/new\\fP>
+.SH AUTHOR
+Jaren Stangret <sirjaren@gmail.com>
+.SH THANKS
+Thanks to all the people that provided feedback and support."
 
-           If any of these options (or variations of the above options) are called, this
-           script will warn the user of conflicting options and exit.
-
-    -L, --reallyall
-           This option is short for:
-
-                      -c, --compress
-                      -m, --md5check
-                      -p, --prune
-                      -g, --replaygain
-                      -r, --redo
-                      -A, --aucdtect-spectrogram
-
-           If any of these options (or variations of the above options) are called, this
-           script will warn the user of conflicting options and exit.
-
-  Options:
-    -j[N], --jobs[=N]
-           Set the number of parallel jobs to run on script invocation.  If this is not set,
-           this script will attempt to find the number of CPU cores available, using the number
-           found as the number of parallel jobs to run.
-
-           If the script is unable to find the number of CPU cores available, the number of jobs
-           will be set to two (2) by default.
-
-    -n, --no-color
-           Turn off color output.
-
-    -v, --version
-           Display script version and exit.
-
-    -h, --help
-           Shows this help message."
-
-# Print out help (will be piped to ${PAGER} elsewhere)
-printf "%s\n" "${long_help}"
+	# Print out help to temporary file which will read by 'man'
+	printf "%s\n" "${long_help}" > "${tmp_man_page}"
 }
 
 # Display short help
@@ -317,7 +398,7 @@ __short_help () {
 	printf "%s\n" "   -p, --prune"
 	printf "%s\n" "   -g, --replaygain"
 	printf "%s\n" "   -G, --replaygain-noforce"
-	printf "%s\n" "   -r, --redo"
+	printf "%s\n" "   -r, --retag"
 	printf "%s\n" "   -l, --all"
 	printf "%s\n" "   -L, --reallyall"
 	printf "%s\n" " Options:"
@@ -1400,7 +1481,7 @@ spectrogram_location=\"\"
 #~~~~~~~~~~~~~~~~~~~~~~~~
 #  PREPEND TRACK NUMBER
 #~~~~~~~~~~~~~~~~~~~~~~~~
-# Change whether the '-r, --redo' operation will re-tag singular track numbers
+# Change whether the '-r, --retag' operation will re-tag singular track numbers
 # and track totals from:
 #    [ 1, 2, 3, 4, 5, 6, 7, 8, 9 ]
 # to
@@ -1576,19 +1657,18 @@ __coverart_remove_conflict () {
 
 			# If remove_artwork is "true" (remove the artwork), then
 			# exit and warn the user you can't specify whether you want to
-			# remove artwork, yet keep the COVERART tag in USER CONFIGURATION
+			# remove artwork, yet keep the COVERART tag in configuration file
 			if [[ "${remove_artwork}" == "true" ]] ; then
 
 				# Display COVERART tag warning
 				__coverart_warning
 
 				__newline >&2
-				{ __error "It appears you have remove_artwork set to \"true\" under" ; __newline ;} >&2
-				{ __error "USER CONFIGURATION, yet COVERART is specified as one" ; __newline ;} >&2
+				{ __error "It appears you have remove_artwork set to \"true\" in the" ; __newline ;} >&2
+				{ __error "configuration file, yet COVERART is specified as one" ; __newline ;} >&2
 				{ __error "(or more) of the FLAC tags to be kept. Please choose either" ; __newline ;} >&2
 				{ __error "to keep album artwork (ie remove_artwork=\"false\") or remove" ; __newline ;} >&2
-				{ __error "the COVERART tag under the USER CONFIGURATION portion of this" ; __newline ;} >&2
-				{ __error "script." ; __newline ;} >&2
+				{ __error "the COVERART tag located in the configuration file." ; __newline ;} >&2
 
 				exit 1
 
@@ -1701,12 +1781,12 @@ __countdown_metadata () {
 	# Warning message about embedded coverart
 	__newline
 	__error "By default, this script will REMOVE the legacy (deprecated)" ; __newline
-	__error "COVERART tag when re-tagging files.  Change the remove_artwork" ; __newline
-	__error "option under USER CONFIGURATION to \"false\" to keep the legacy" ; __newline
+	__error "COVERART tag when re-tagging files.  Change the 'remove_artwork'" ; __newline
+	__error "option (in the configuration file) to 'false' to keep the legacy" ; __newline
 	__error "COVERART tag, or add the COVERART tag to the list of tags to" ; __newline
-	__error "be kept under USER CONFIGURATION." ; __newline
+	__error "be kept in the TAGGING SECTION of the configuration file." ; __newline
 	__error ; __newline
-	__error "Keep in mind, if the remove_artwork option is set to \"false\"," ; __newline
+	__error "Keep in mind, if the 'remove_artwork' option is set to 'false'," ; __newline
 	__error "embedded artwork in the PICTURE block will be kept when using" ; __newline
 	__error "--prune (-p) option as well." ; __newline 2
 
@@ -1812,15 +1892,20 @@ __process_positional_parameters () {
 				exit 0
 			;;
 			--help|-h)
-				# Check for ${PAGER}. If a pager is available
-				# lets use it. If not, just display help
-				if [[ -n "${PAGER}" ]] ; then
-					__long_help | "${PAGER}"
-					exit 0
-				else
-					__long_help
-					exit 0
-				fi
+				# Create the temporary file in which a man page will be
+				# generated
+				tmp_man_page="/tmp/redoflacs_man_$$.1"
+
+				# Generate the man page to the above temporary location
+				__long_help
+
+				# Read the man page with 'man'
+				man "${tmp_man_page}"
+
+				# After reading, remove temporary file and exit
+				rm -v "${tmp_man_page}"
+
+				exit 0
 			;;
 			*)
 				__usage >&2
@@ -1906,7 +1991,7 @@ __process_positional_parameters () {
 				--replaygain-noforce)
 					converted_arguments_array+=( -G )
 				;;
-				--redo)
+				--retag)
 					converted_arguments_array+=( -r )
 				;;
 				--all)
@@ -2277,9 +2362,9 @@ __check_conflicting_operations () {
 			argument_conflict_array+=( "-G, --replaygain-noforce" )
 		fi
 
-		# Check for "-r, --redo".  If used add it to array
+		# Check for "-r, --retag".  If used add it to array
 		if [[ "${retag_flac}" == "true" ]] ; then
-			argument_conflict_array+=( "-r, --redo" )
+			argument_conflict_array+=( "-r, --retag" )
 		fi
 
 		# If "-L, --reallyall" was called, check for the various forms of calling
@@ -3349,12 +3434,12 @@ __operation_analyze_tags () {
 			temp_tag_array+=( ["${tag_field^^}"]="${tag_field_value#*=}" )
 		done
 
-		# Run through the tags array (from USER CONFIGURATION) and test
-		# each tag value from ${temp_tag_array} with the currently
-		# processed tag in ${tag[@]}.  For each match found, test if the
-		# tag value is null, reporting any missing tags. Then remove the
-		# tag field (index) from the ${temp_tag_array}, so the next iteration
-		# is faster and we can check for missing tags (tag fields)
+		# Run through the tags array and test each tag value from
+		# ${temp_tag_array} with the currently processed tag in ${tag[@]}.  For
+		# each match found, test if the tag value is null, reporting any missing
+		# tags. Then remove the tag field (index) from the ${temp_tag_array}, so
+		# the next iteration is faster and we can check for missing tags (tag
+		# fields)
 		for j in "${tags[@]}" ; do
 
 			# If the total # of indices in the temporary tag array is above
@@ -3559,12 +3644,12 @@ __operation_analyze_tags_dont_log_coverart () {
 			temp_tag_array+=( ["${tag_field^^}"]="${tag_field_value#*=}" )
 		done
 
-		# Run through the tags array (from USER CONFIGURATION) and test
-		# each tag value from ${temp_tag_array} with the currently
-		# processed tag in ${tag[@]}.  For each match found, test if the
-		# tag value is null, reporting any missing tags. Then remove the
-		# tag field (index) from the ${temp_tag_array}, so the next iteration
-		# is faster and we can check for missing tags (tag fields)
+		# Run through the tags array and test each tag value from
+		# ${temp_tag_array} with the currently processed tag in ${tag[@]}.  For
+		# each match found, test if the tag value is null, reporting any missing
+		# tags. Then remove the tag field (index) from the ${temp_tag_array}, so
+		# the next iteration is faster and we can check for missing tags (tag
+		# fields)
 		for j in "${tags[@]}" ; do
 
 			# If the total # of indices in the temporary tag array is above
@@ -3996,7 +4081,7 @@ if [[ "${create_spectrogram}" == "true" ]] ; then
 		# Test to make sure directory exists
 		if [[ ! -d "${spectrogram_location}" ]] ; then
 			{ __error "\"${spectrogram_location}\" doesn't exist!" ; __newline ;} >&2
-			{ __error "Please choose a valid directory under USER CONFIGURATION!" ; __newline ;} >&2
+			{ __error "Please set a valid directory in configuration file!" ; __newline ;} >&2
 
 			exit 1
 		fi
@@ -4329,10 +4414,9 @@ if [[ "${retag_flac}" == "true" ]] ; then
 		analyze_tags="__operation_analyze_tags_dont_log_coverart"
 	else
 
-		# Log all the missing tags found in the ${tags} array under
-		# USER CONFIGURATION, including COVERART tag, regardless of
-		# whether it was added by the script or explicitly chosen
-		# by the user
+		# Log all the missing tags found in the ${tags} array including COVERART
+		# tag, regardless of whether it was added by the script or explicitly
+		# chosen by the user
 		analyze_tags="__operation_analyze_tags"
 	fi
 
