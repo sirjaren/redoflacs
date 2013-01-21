@@ -390,7 +390,7 @@ Thanks to all the people that provided feedback and support."
 
 # Display short help
 __short_help () {
-	printf "%s\n" " Usage: ${0} [operations] [options] [target] ..."
+	printf "%s\n" " Usage: redoflacs [operations] [options] [target] ..."
 	printf "%s\n" " Operations:"
 	printf "%s\n" "   -c, --compress"
 	printf "%s\n" "   -C, --compress-notest"
@@ -409,12 +409,12 @@ __short_help () {
 	printf "%s\n" "   -n, --no-color"
 	printf "%s\n" "   -v, --version"
 	printf "%s\n" "   -h, --help"
-	printf "%s\n" " This is the short help; for details use '${0} --help' or '${0} -h'"
+	printf "%s\n" " This is the short help; for details use 'redoflacs --help' or 'redoflacs -h'"
 }
 
 # Display usage
 __usage () {
-	printf "%s\n" " Usage: ${0} [operations] [options] [target] ..."
+	printf "%s\n" " Usage: redoflacs [operations] [options] [target] ..."
 }
 #== END SCRIPT MESSAGES ========================================================
 
@@ -3830,8 +3830,11 @@ __operation_set_tags () {
 			if [[ "${tag_field_array[${j}]}" == "TRACKNUMBER" ||
 				  "${tag_field_array[${j}]}" == "TRACKTOTAL" ]] ; then
 
-				# Format tag value with '0' prepended for single values
-				prepend_tag_value="$(printf "%02d" "${tag_values_array[${j}]}")"
+				# Format tag value with '0' prepended for single values.  We
+				# force arithmetic expansion and explicitly specify base 10
+				# in order to prevent octal errors if the value is either '08'
+				# or '09'
+				prepend_tag_value="$(printf "%02d" "$(( 10#${tag_values_array[${j}]} ))")"
 
 				metaflac_tag_array+=(
 					# Tag field (eg. TRACKNUMBER) = Tag value (eg. 03)
@@ -4060,7 +4063,7 @@ __check_missing_programs
 
 # Check whether directory exists
 if [[ ! -d "${directory}" ]] ; then
-	{ printf "%s\n" "  Usage: ${0} [OPTION] [PATH_TO_FLAC(s)]..." ;} >&2
+	{ printf "%s\n" "  Usage: redoflacs [OPTION] [PATH_TO_FLAC(s)]..." ;} >&2
 	{ __error "Please specify a directory!" ; __newline ;} >&2
 
 	exit 1
