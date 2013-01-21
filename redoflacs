@@ -3923,7 +3923,7 @@ __operation_prune () {
 shopt -s globstar
 
 # Version
-version="0.18.4_pre"
+version="0.19"
 
 # Various file extensions
 flac_extension=".[Ff][Ll][Aa][Cc]"
