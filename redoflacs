@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 #-------------------------------------------------------------------------------
-# redoflacs : Parallel BASH commandline FLAC compressor, verifier, organizer,
+# redoflacs - Parallel BASH commandline FLAC compressor, verifier, organizer,
 #             analyzer, and retagger
 #-------------------------------------------------------------------------------
 # Copyright (C) 2010-2013  Jaren Stangret
@@ -1903,7 +1903,7 @@ __process_positional_parameters () {
 				man "${tmp_man_page}"
 
 				# After reading, remove temporary file and exit
-				rm -v "${tmp_man_page}"
+				rm -f "${tmp_man_page}"
 
 				exit 0
 			;;
@@ -3981,7 +3981,7 @@ else
 	# User is _NOT_ root
 	#
 	# Configuration file location
-	config_location="${HOME}/.config/redoflacs/redoflacs.conf"
+	config_location="${HOME}/.config/redoflacs/config"
 
 	# Check if user configuration doesn't exist
 	if [[ ! -f "${config_location}" ]] ; then
