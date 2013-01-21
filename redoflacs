@@ -351,6 +351,7 @@ If any of these options (or variations of the above options) are
 called, this script will warn the user of conflicting options and
 exit.
 .SH OPTIONS
+.TP
 .BI -j[N], --jobs[=N]
 Set the number of parallel jobs to run on script invocation.  If this
 is not set, this script will attempt to find the number of CPU cores
