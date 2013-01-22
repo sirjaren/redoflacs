@@ -2,7 +2,7 @@
 `redoflacs`: Parallel BASH commandline FLAC compressor, verifier, organizer, analyzer, and retagger
 
 <p align="center">
-	<img src="https://raw.github.com/sirjaren/repository-images/master/redoflacs/redoflacs_0.18.2_all.png" alt="redoflacs 0.18.2: all options"/>
+	<img src="https://raw.github.com/sirjaren/repository-images/master/redoflacs/redoflacs_0.19_all.png" alt="redoflacs 0.18.2: all options"/>
 </p>
 
 ##Dependencies
