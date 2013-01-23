@@ -1572,8 +1572,13 @@ __filename () {
 	# Replace possible newlines in filename with '?' (like 'ls' output)
 	filename="${filename//$'\n'/?}"
 
+	# Obtain filename length.  We cannot use ${#filename} in the event there is
+	# multibyte characters -- the width would not be equal to characters since
+	# the characters can take up more than one block in a terminal
+	current_filename_length="$(wc -L <<< "${filename}")"
+
 	# Cull filename and add an ellipsis if the filename is too long
-	if [[ "${#filename}" -gt "${max_filename_length}" ]] ; then
+	if [[ "${current_filename_length}" -gt "${max_filename_length}" ]] ; then
 		filename="${filename::${max_filename_length}}…"
 	fi
 }
@@ -1585,11 +1590,12 @@ __current_length () {
 	#
 	#  [1234/123456] 07 - Some_FLAC_Filename.flac <- ${current_length} -> [ Operation Message ]
 	#                                             ^^^^^^^^^^^^^^^^^^^^^^^
-	#                ${#filename}:  Length of the current filename
+	#  ${current_filename_length}:  Length of the current filename from __filename
 	#  ${max_filename_length} + 1:  Total length of what's printed minus the operation
 	#                               message plus one because we do not want the ellipsis
 	#                               from ${max_filename_length}, just the space/gap
-	printf "%s" "$(( ${max_filename_length} - ${#filename} + 1 ))"
+	#printf "%s" "$(( ${max_filename_length} - ${#filename} + 1 ))"
+	printf "%s" "$(( ${max_filename_length} - ${current_filename_length} + 1 ))"
 }
 
 # Determine number of jobs to run via the number
