@@ -3282,7 +3282,7 @@ __operation_aucdtect () {
 
 						# SoX command to create the spectrogram and place it in spectrogram_picture,
 						# sent to the background to allow killing via SIGTERM
-						"${sox_command}" "${i}" -n spectrogram -c '' -t "${i}" -p1 -z90 -Z0 -q249 -wHann -x1800 -y513 -o "${spectrogram_picture}" &
+						"${sox_command}" "${decoded_wav}" -n spectrogram -c '' -t "${i}" -p1 -z90 -Z0 -q249 -wHann -x1800 -y513 -o "${spectrogram_picture}" &
 
 						# Use the below version of the command to create hi-res spectrograms
 						#"${sox_command}" "${i}" -n spectrogram -c '' -t "${i}" -p1 -z90 -Z0 -q249 -wHann -x5000 -y1025 -o "${spectrogram_picture}"
