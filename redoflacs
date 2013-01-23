@@ -1594,7 +1594,6 @@ __current_length () {
 	#  ${max_filename_length} + 1:  Total length of what's printed minus the operation
 	#                               message plus one because we do not want the ellipsis
 	#                               from ${max_filename_length}, just the space/gap
-	#printf "%s" "$(( ${max_filename_length} - ${#filename} + 1 ))"
 	printf "%s" "$(( ${max_filename_length} - ${current_filename_length} + 1 ))"
 }
 
@@ -3929,7 +3928,7 @@ __operation_prune () {
 shopt -s globstar
 
 # Version
-version="0.19"
+version="0.19.1_pre"
 
 # Various file extensions
 flac_extension=".[Ff][Ll][Aa][Cc]"
