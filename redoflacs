@@ -3304,21 +3304,24 @@ __operation_aucdtect () {
 
 								# Check whether to place spectrogram images in user-defined location
 								if [[ -z "${spectrogram_location}" ]] ; then
-
-									# Place images in same directory as the FLAC files
-									# Make sure we don't clobber any picture files
-									if [[ -f "${i%${flac_extension}}.png" ]] ; then
-										# File exists so prepend "spectrogram" before ".png"
-										spectrogram_picture="${i%${flac_extension}}.spectrogram.png"
-									else
-										# File doesn't exist, so create the spectrogram with the basename of "$i"
-										# with ".png" as the extension
-										spectrogram_picture="${i%${flac_extension}}.png"
-									fi
-								else
-									# Place images in user-defined location
+									# Obtain basename of current FLAC file
 									flac_file="${i##*/}"
-									spectrogram_picture="${spectrogram_location}/${flac_file%${flac_extension}}.png"
+
+									# Obtain dirname of current FLAC file
+									spectrogram_dirname="${i%/*}"
+
+									# Create the spectrogram with '.png' as the
+									# file extension, placed in the same
+									# directory as the current FLAC file
+									spectrogram_picture="${spectrogram_dirname}/[${iteration}] ${flac_file%${flac_extension}}.png"
+								else
+									# Obtain basename of current FLAC file
+									flac_file="${i##*/}"
+
+									# Create the spectrogram with '.png' as the
+									# file extension, placed in the user-defined
+									# location
+									spectrogram_picture="${spectrogram_location}/[${iteration}] ${flac_file%${flac_extension}}.png"
 								fi
 
 								# Let's create the spectrogram for the failed FLAC file
@@ -3336,12 +3339,12 @@ __operation_aucdtect () {
 								# said process
 								wait "${!}"
 
-								# Print ISSUE and log error, and show where to find
+								# Print ISSUE and log issue, and show where to find
 								# the created spectrogram of the processed FLAC file
 								__print_aucdtect_issue
 								printf "%s\n%s\n%s\n%s\n" \
 									   "FLAC:        ${i}" \
-									   "ERROR:       ${aucdtect_check_array[0]}" \
+									   "REPORT:      ${aucdtect_check_array[0]}" \
 									   "SPECTROGRAM: ${spectrogram_picture}" \
 									   "------------------------------------------------------------------" \
 									   >> "${aucdtect_errors}"
@@ -3350,11 +3353,11 @@ __operation_aucdtect () {
 								printf '.' >&5
 
 							else
-								# Print ISSUE and log error
+								# Print ISSUE and log issue
 								__print_aucdtect_issue
 								printf "%s\n%s\n%s\n" \
-									   "FLAC:  ${i}" \
-									   "ERROR: ${aucdtect_check_array[0]}" \
+									   "FLAC:   ${i}" \
+									   "REPORT: ${aucdtect_check_array[0]}" \
 									   "------------------------------------------------------------------" \
 									   >> "${aucdtect_errors}"
 
