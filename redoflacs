@@ -1702,7 +1702,7 @@ __current_length () {
 	#                               message plus one because we do not want the ellipsis
 	#                               from ${max_filename_length}, just the space/gap
 	#
-	# Only print out ${current_lengt} if the current filename length is less
+	# Only print out ${current_length} if the current filename length is less
 	# than the maximum file length allowed
 	if [[ "${current_filename_length}" -lt "${max_filename_length}" ]] ; then
 		printf "%s" "$(( ${max_filename_length} - ${current_filename_length} + 1 ))"
@@ -2244,7 +2244,7 @@ __process_positional_parameters () {
 					converted_arguments_array+=( -v )
 				;;
 				o)
-					converted_arguments_array+=( -v )
+					converted_arguments_array+=( -o )
 				;;
 				:)
 					# Currently, this is just for '-j' so we can explicity specify it
