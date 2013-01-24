@@ -101,13 +101,13 @@ possible, very similar to 'GNU make'.
 redoflacs searches for a config file (if run as a user) in:
 
 .br
-            \\fB~/.config/redoflacs/config\\fP
+        \\fB~/.config/redoflacs/config\\fP
 
 .br
 or (if run as root) in:
 
 .br
-            \\fB/etc/redoflacs.conf\\fP
+        \\fB/etc/redoflacs.conf\\fP
 
 If a config file is not found (in either place), one is created.
 
@@ -125,7 +125,7 @@ will add a tag to all successfully verified FLAC files.  Below
 shows the default COMPRESSION tag added to each successfully
 verified FLAC:
 
-            COMPRESSION=8
+        COMPRESSION=8
 
 If any FLAC files already have the defined compression_level tag (a
 good indicator the files are already compressed at that level), the
@@ -178,14 +178,19 @@ Any FLAC file skipped (due to having a higher bit depth than 16), will
 NOT have a spectrogram created.
 
 By default, each spectrogram will be created in the same folder as the
-tested FLAC file with the same name as the tested FLAC file:
+tested FLAC file name as follows:
 
-            03 - Some FLAC File.flac --> 03 - Some FLAC File.png
+        [<# of current file processed>] <filename>.png
 
-If there already is a PNG file with the same name as the tested FLAC,
-the name 'spectrogram' will prepend the '.png' extension:
+An example of this:
 
-            03 - Some FLAC File.flac --> 03 - Some FLAC File.spectrogram.png
+        FLAC file (7th file processed):
+.br
+                03 - Some FLAC File.flac
+
+        Spectrogram Image:
+.br
+                [7] 03 - Some FLAC File.png
 
 The user can change the location of where to store the created
 spectrogram images by changing the value of 'spectrogram_location'
@@ -219,15 +224,15 @@ as such, will require the '-r, --retag' argument to have these tags
 kept in order to preserve the added ReplayGain values.  The tags
 added are:
 
-             REPLAYGAIN_REFERENCE_LOUDNESS
+        REPLAYGAIN_REFERENCE_LOUDNESS
 .br
-             REPLAYGAIN_TRACK_GAIN
+        REPLAYGAIN_TRACK_GAIN
 .br
-             REPLAYGAIN_TRACK_PEAK
+        REPLAYGAIN_TRACK_PEAK
 .br
-             REPLAYGAIN_ALBUM_GAIN
+        REPLAYGAIN_ALBUM_GAIN
 .br
-             REPLAYGAIN_ALBUM_PEAK
+        REPLAYGAIN_ALBUM_PEAK
 
 This option ignores any ReplayGain tags that may already be set,
 removing existing values before applying new ones.
@@ -268,39 +273,39 @@ will be added.
 Extract the configured tags in each FLAC file and clear the rest
 before retagging the file.  The default tags kept are:
 
-            TITLE
+        TITLE
 .br
-            ARTIST
+        ARTIST
 .br
-            ALBUM
+        ALBUM
 .br
-            DISCNUMBER
+        DISCNUMBER
 .br
-            DATE
+        DATE
 .br
-            TRACKNUMBER
+        TRACKNUMBER
 .br
-            TRACKTOTAL
+        TRACKTOTAL
 .br
-            GENRE
+        GENRE
 .br
-            COMPRESSION
+        COMPRESSION
 .br
-            RELEASETYPE
+        RELEASETYPE
 .br
-            SOURCE
+        SOURCE
 .br
-            MASTERING
+        MASTERING
 .br
-            REPLAYGAIN_REFERENCE_LOUDNESS
+        REPLAYGAIN_REFERENCE_LOUDNESS
 .br
-            REPLAYGAIN_TRACK_GAIN
+        REPLAYGAIN_TRACK_GAIN
 .br
-            REPLAYGAIN_TRACK_PEAK
+        REPLAYGAIN_TRACK_PEAK
 .br
-            REPLAYGAIN_ALBUM_GAIN
+        REPLAYGAIN_ALBUM_GAIN
 .br
-            REPLAYGAIN_ALBUM_PEAK
+        REPLAYGAIN_ALBUM_PEAK
 
 If any FLAC files have missing tags (from those configured to be
 kept), the file and the missing tag will be recorded in a log.
@@ -318,15 +323,15 @@ program will begin running it's course.
 .BI -l, --all
 This option is short for:
 
-            -c, --compress
+        -c, --compress
 .br
-            -m, --md5check
+        -m, --md5check
 .br
-            -p, --prune
+        -p, --prune
 .br
-            -g, --replaygain
+        -g, --replaygain
 .br
-            -r, --retag
+        -r, --retag
 
 If any of these options (or variations of the above options) are
 called, this script will warn the user of conflicting options and
@@ -335,17 +340,17 @@ exit.
 .BI -L, --reallyall
 This option is short for:
 
-            -c, --compress
+        -c, --compress
 .br
-            -m, --md5check
+        -m, --md5check
 .br
-            -p, --prune
+        -p, --prune
 .br
-            -g, --replaygain
+        -g, --replaygain
 .br
-            -r, --retag
+        -r, --retag
 .br
-            -A, --aucdtect-spectrogram
+        -A, --aucdtect-spectrogram
 
 If any of these options (or variations of the above options) are
 called, this script will warn the user of conflicting options and
