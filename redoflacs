@@ -369,6 +369,10 @@ number of jobs will be set to two (2) by default.
 .BI -n, --no-color
 Turn off color output.
 .TP
+.BI -o, --new-config
+Force the creation of a new configuration file.  This option does _NOT_
+overwrite any existing configuration file.
+.TP
 .BI -v, --version
 Display script version and exit.
 .TP
@@ -387,7 +391,10 @@ If you find a bug, please report it at:
 .SH AUTHOR
 Jaren Stangret <sirjaren@gmail.com>
 .SH THANKS
-Thanks to all the people that provided feedback and support."
+Thanks to all the people that provided feedback and support
+.br
+.SH REVISION
+[ 2 ]"
 
 	# Print out help to temporary file which will read by 'man'
 	printf "%s\n" "${long_help}" > "${tmp_man_page}"
@@ -412,6 +419,7 @@ __short_help () {
 	printf "%s\n" " Options:"
 	printf "%s\n" "   -j[N], --jobs[=N]"
 	printf "%s\n" "   -n, --no-color"
+	printf "%s\n" "   -o, --new-config"
 	printf "%s\n" "   -v, --version"
 	printf "%s\n" "   -h, --help"
 	printf "%s\n" " This is the short help; for details use 'redoflacs --help' or 'redoflacs -h'"
@@ -1383,6 +1391,54 @@ __print_version () {
 	printf "%s\n" "Version ${version}"
 }
 
+# Force the creation of a new configuration file
+__new_config () {
+	# Check if configuration file exists based of ${EUID}.  If it doesn't
+	# exist, create one
+	if [[ "${EUID}" -eq 0 ]] ; then
+		# User is root
+		#
+		# Configuration file location
+		config_location="/etc/redoflacs.conf"
+
+		# If there already is a configuration file, do not overwrite it
+		if [[ -f "${config_location}" ]] ; then
+			config_location="/etc/_${$}.redoflacs.conf"
+		fi
+	else
+		# User is _NOT_ root
+		#
+		# Configuration file location
+		config_location="${HOME}/.config/redoflacs/config"
+
+		# If there already is a configuration file, do not overwrite it
+		if [[ -f "${config_location}" ]] ; then
+			config_location="${HOME}/.config/redoflacs/_${$}.config"
+		fi
+	fi
+
+	# Creates the (new) configuration file
+	__create_config
+
+	# Explain to user where to find the new configuration file
+	__info "A new configuration file has been created here:" ; __newline
+	__info "   ${config_location}" ; __newline 2
+
+	__info "It's recommended to review the new configuration file" ; __newline
+	__info "and transfer over any changes you made in your old" ; __newline
+	__info "configuration file." ; __newline 2
+
+	__info "After making the changes (if any), rename the new" ; __newline
+	__info "configuration file to your old configuration file" ; __newline
+	__info "name.  Here is the command you could use:" ; __newline
+
+	if [[ "${EUID}" -eq 0 ]] ; then
+		__info "   mv ${config_location} /etc/redoflacs.conf" ; __newline
+	else
+		__info "   mv ${config_location} ${HOME}/.config/redoflacs/config" ; __newline
+	fi
+}
+
 # Create a configuration file
 __create_config () {
 create_config="################################################################################
@@ -1390,7 +1446,7 @@ create_config="#################################################################
 #                         REDOFLACS USER CONFIGURATION                         #
 #                         ----------------------------                         #
 #                                                                              #
-#  Any line that is _NOT_ prepened with a '#' will be interpreted as an        #
+#  Any line that is _NOT_ prepended with a '#' will be interpreted as an       #
 #  option (except for blank lines -- these are not interpreted)                #
 #                                                                              #
 #  See \`redoflacs --help\` for a detailed description of each parameter         #
@@ -1507,8 +1563,7 @@ spectrogram_location=\"\"
 # are interpreted as 'false'.
 prepend_zero=\"false\"
 
-#== :: END OPTIONS :: =========================================================="
-
+#== :: END OPTIONS :: ====================================== :: REVISION 1 :: =="
 
 	# Print out the configuration file to the specified location (either system-
 	# wide or local)
@@ -1556,6 +1611,53 @@ __parse_config () {
 	done
 }
 
+# Check current configuration, if the version in the script is newer
+# warn user and display a countdown before starting script
+__check_config_version () {
+	# Check if configuration file exists based of ${EUID}.  If it doesn't
+	# exist, create one
+	if [[ "${EUID}" -eq 0 ]] ; then
+		# User is root
+		#
+		# Configuration file location
+		config_location="/etc/redoflacs.conf"
+	else
+		# User is _NOT_ root
+		#
+		# Configuration file location
+		config_location="${HOME}/.config/redoflacs/config"
+	fi
+
+	# Load configuration file into an array
+	mapfile -n0 -t config_array < "${config_location}"
+
+	# Obtain only the last line of the config
+	config_last_line="${config_array[$(( ${#config_array[@]} - 1 ))]}"
+
+	# Remove everything from the last line, except the REVISION number
+	#
+	# Below leaves:
+	#  '<revision number> :: =='
+	user_revision="${config_last_line#*REVISION }"
+	# Obtains REVISION number
+	user_revision="${user_revision% ::*}"
+
+	# Check if ${user_revision} is an integer.  If not, display countdown
+	# and warn user of new config file, else test if the user revision is
+	# less than the script revision
+	if [[ "${user_revision}" =~ ^[0-9]+$ ]] ; then
+		# If ${script_revision} is greater than ${user_revision}
+		# warn user and display countdown
+		if [[ "${script_revision}" -gt "${user_revision}" ]] ; then
+			# Display warning and countdown
+			__countdown_config ; __newline 2
+		fi
+	else
+		# Display warning and countdown
+		__countdown_config ; __newline 2
+	fi
+}
+
 # Determine the width of the terminal in columns
 __columns () {
 	# Grab the first line of 'stty -a' output
@@ -1599,7 +1701,12 @@ __current_length () {
 	#  ${max_filename_length} + 1:  Total length of what's printed minus the operation
 	#                               message plus one because we do not want the ellipsis
 	#                               from ${max_filename_length}, just the space/gap
-	printf "%s" "$(( ${max_filename_length} - ${current_filename_length} + 1 ))"
+	#
+	# Only print out ${current_lengt} if the current filename length is less
+	# than the maximum file length allowed
+	if [[ "${current_filename_length}" -lt "${max_filename_length}" ]] ; then
+		printf "%s" "$(( ${max_filename_length} - ${current_filename_length} + 1 ))"
+	fi
 }
 
 # Determine number of jobs to run via the number
@@ -1783,8 +1890,9 @@ __countdown_metadata () {
 	trap __countdown_abort SIGINT
 
 	# Warning message
-	__warn "CAUTION! These are the tag fields that will be kept" ; __newline
-	__warn "when re-tagging the selected files:" ; __newline 2
+	{ __warn "CAUTION! These are the tag fields that will be kept" ; __newline ;} >&2
+	{ __warn "when re-tagging the selected files:" ; __newline ;} >&2
+	__newline
 
 	# Creates the listing of tags to be kept
 	for i in "${tags[@]}" ; do
@@ -1792,18 +1900,47 @@ __countdown_metadata () {
 	done
 
 	# Warning message about embedded coverart
-	__newline
-	__error "By default, this script will REMOVE the legacy (deprecated)" ; __newline
-	__error "COVERART tag when re-tagging files.  Change the 'remove_artwork'" ; __newline
-	__error "option (in the configuration file) to 'false' to keep the legacy" ; __newline
-	__error "COVERART tag, or add the COVERART tag to the list of tags to" ; __newline
-	__error "be kept in the TAGGING SECTION of the configuration file." ; __newline
-	__error ; __newline
-	__error "Keep in mind, if the 'remove_artwork' option is set to 'false'," ; __newline
-	__error "embedded artwork in the PICTURE block will be kept when using" ; __newline
-	__error "--prune (-p) option as well." ; __newline 2
+	__newline >&2
+	{ __error "By default, this script will REMOVE the legacy (deprecated)" ; __newline ;} >&2
+	{ __error "COVERART tag when re-tagging files.  Change the 'remove_artwork'" ; __newline ;} >&2
+	{ __error "option (in the configuration file) to 'false' to keep the legacy" ; __newline ;} >&2
+	{ __error "COVERART tag, or add the COVERART tag to the list of tags to" ; __newline ;} >&2
+	{ __error "be kept in the TAGGING SECTION of the configuration file." ; __newline ;} >&2
+	{ __error ; __newline ;} >&2
+	{ __error "Keep in mind, if the 'remove_artwork' option is set to 'false'," ; __newline ;} >&2
+	{ __error "embedded artwork in the PICTURE block will be kept when using" ; __newline ;} >&2
+	{ __error "--prune (-p) option as well." ; __newline 2 ;} >&2
 
-	__warn "Waiting 10 seconds before starting script..." ; __newline
+	__warn "Waiting 10 seconds before starting program..." ; __newline
+	__warn "Ctrl+C (Control-C) to abort..." ; __newline
+	__info "Starting in: "
+
+	# 10 second countdown
+	for (( count=10; count>0; count-- )); do
+		printf "${red}%s${normal}%s" "$count" " "
+		sleep 1
+	done
+}
+
+# Displays a countdown after a newer config is found than what
+# the user has.  Allows user to quit script before proceeding
+__countdown_config () {
+	# Trap SIGINT (Control-C) to abort cleanly
+	trap __countdown_abort SIGINT
+
+	# Warning message
+	__info "There is a newer configuration file available!" ; __newline 2
+
+	{ __warn "It is recommended you generate a new configuration" ; __newline ;} >&2
+	{ __warn "file for use with this program." ; __newline 2 ;} >&2
+
+	{ __warn "To generate a new configuration file, run:" ; __newline ;} >&2
+	{ __warn "   redoflacs --new-config" ; __newline 2 ;} >&2
+
+	{ __warn "The above command will _NOT_ overwrite your" ; __newline ;} >&2
+	{ __warn "current configuration file." ; __newline 2 ;} >&2
+
+	__warn "Waiting 10 seconds before starting program..." ; __newline
 	__warn "Ctrl+C (Control-C) to abort..." ; __newline
 	__info "Starting in: "
 
@@ -1920,6 +2057,10 @@ __process_positional_parameters () {
 
 				exit 0
 			;;
+			--new-config|-o)
+				__new_config
+				exit 0
+			;;
 			*)
 				__usage >&2
 				exit 1
@@ -1940,6 +2081,10 @@ __process_positional_parameters () {
 				exit 1
 			;;
 			--version|-v)
+				__usage >&2
+				exit 1
+			;;
+			--new-config|-o)
 				__usage >&2
 				exit 1
 			;;
@@ -1971,7 +2116,7 @@ __process_positional_parameters () {
 
 	# If there were any long style arguments called, convert them
 	# to short style in order for getopts to be able to process
-	# them correctly (ignoring "--help" and "--version" since
+	# them correctly (ignoring '--help', '--version', '--new-config' since
 	# this is taken care of above).  Add invalid arguments to it's
 	# own array
 	if [[ -n "${long_style_arguments_array[@]}" ]] ; then
@@ -2029,6 +2174,10 @@ __process_positional_parameters () {
 					__usage >&2
 					exit 1
 				;;
+				--new-config)
+					__usage >&2
+					exit 1
+				;;
 				*)
 					# Set invalid argument into array
 					invalid_arguments_array+=( "${i}" )
@@ -2041,7 +2190,7 @@ __process_positional_parameters () {
 	# them, adding the valid arguments to the "converted_arguments"
 	# array and adding invalid arguments to it's own array
 	if [[ -n "${short_style_arguments_array[@]}" ]] ; then
-		while getopts ":LlcCtgGaAmprnj:hv" arguments "${short_style_arguments_array[@]}" ; do
+		while getopts ":LlcCtgGaAmprnj:hvo" arguments "${short_style_arguments_array[@]}" ; do
 			case "${arguments}" in
 				l)
 					converted_arguments_array+=( -l )
@@ -2092,6 +2241,9 @@ __process_positional_parameters () {
 					converted_arguments_array+=( -h )
 				;;
 				v)
+					converted_arguments_array+=( -v )
+				;;
+				o)
 					converted_arguments_array+=( -v )
 				;;
 				:)
@@ -2197,6 +2349,10 @@ __process_positional_parameters () {
 				exit 1
 			;;
 			-h)
+				__usage >&2
+				exit 1
+			;;
+			-o)
 				__usage >&2
 				exit 1
 			;;
@@ -3985,6 +4141,9 @@ shopt -s globstar
 # Version
 version="0.19.1_pre"
 
+# This sets the script revision (used to compare against user revision)
+script_revision="1"
+
 # Various file extensions
 flac_extension=".[Ff][Ll][Aa][Cc]"
 wav_extension=".[Ww][Aa][Vv]"
@@ -4177,6 +4336,10 @@ stty -ctlecho 2> /dev/null
 
 # Hide the cursor
 printf "\033[?25l"
+
+# Check to see if config file in script is newer than user config, warning
+# user if their config is older displaying a countdown before continuing
+__check_config_version
 
 # Temporary FIFO location
 tmp_fifo="/tmp/redoflacs_fifo_$$"
