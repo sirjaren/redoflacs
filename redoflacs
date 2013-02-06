@@ -500,6 +500,313 @@ __log_prune () {
 
 
 #-------------------------------------------------------------------------------
+#  LOG HEADERS
+#-------------------------------------------------------------------------------
+# ReplayGain test header
+__header_replaygain_test () {
+	# Store header into array to be printed out below
+	header_replaygain_test=(
+		"################################################################################"
+		"#                                                                              #"
+		"#                          REPLAYGAIN TEST ERROR LOG                           #"
+		"#                          -------------------------                           #"
+		"#                                                                              #"
+		"#   This report details the errors that may happen when testing FLAC files for #"
+		"# ReplayGain compatability.  The only message displayed to your screen that is #"
+		"# logged is noted below:                                                       #"
+		"#                                                                              #"
+		"#    [ Failed ]  :  The FLAC is unable to have ReplayGain applied to it        #"
+		"#                   because the FLAC file turned out to be fake                #"
+		"#                                                                              #"
+		"#                          -------------------------                           #"
+		"#                                                                              #"
+		"#                    The legend for the log file is below:                     #"
+		"#                                                                              #"
+		"#              FLAC FILE  :  The basename of the FLAC file                     #"
+		"#     FLAC FILE LOCATION  :  The path where the FLAC file is located           #"
+		"#                  ERROR  :  Message describing what went wrong with the file  #"
+		"#                                                                              #"
+		"################################################################################"
+	)
+
+	# Create array of current log file
+	mapfile -n0 -t tmp_log_file < "${replay_test_errors}"
+
+	# Print out log header and log array to log file, truncating old log
+	printf "%s\n%s\n" \
+		   "${header_replaygain_test[@]}" \
+		   "${tmp_log_file[@]}" \
+		   > "${replay_test_errors}"
+}
+
+# ReplayGain process header
+__header_replaygain_process () {
+	# Store header into array to be printed out below
+	header_replaygain_add=(
+		"################################################################################"
+		"#                                                                              #"
+		"#                          REPLAYGAIN ADD ERROR LOG                            #"
+		"#                          ------------------------                            #"
+		"#                                                                              #"
+		"#   This report details the errors that may happen when applying ReplayGain    #"
+		"# values.  The only message displayed to your screen that is logged is noted   #"
+		"# below:                                                                       #"
+		"#                                                                              #"
+		"#    [ Failed ]  :  The directory of FLAC files is unable to have ReplayGain   #"
+		"#                   values applied to them most likely because there are files #"
+		"#                   with varying sample rates.                                 #"
+		"#                                                                              #"
+		"#                          ------------------------                            #"
+		"#                                                                              #"
+		"#                    The legend for the log file is below:                     #"
+		"#                                                                              #"
+		"#              DIRECTORY  :  Basename of the directory ReplayGain was applied  #"
+		"#    FULL DIRECTORY PATH  :  Relative/absolute pathname to directory above     #"
+		"#                  ERROR  :  Message describing what went wrong applying       #"
+		"#                            applying ReplayGain to directory                  #"
+		"#                                                                              #"
+		"################################################################################"
+	)
+
+	# Create array of current log file
+	mapfile -n0 -t tmp_log_file < "${replay_add_errors}"
+
+	# Print out log header and log array to log file, truncating old log
+	printf "%s\n%s\n" \
+		   "${header_replaygain_add[@]}" \
+		   "${tmp_log_file[@]}" \
+		   > "${replay_add_errors}"
+}
+
+# Compress and verify header
+__header_compress_verify () {
+	# Store header into array to be printed out below
+	header_compress_verify=(
+		"################################################################################"
+		"#                                                                              #"
+		"#                         COMPRESS & VERIFY ERROR LOG                          #"
+		"#                         ---------------------------                          #"
+		"#                                                                              #"
+		"#   This report details the errors that may happen when compressing and/or     #"
+		"# verifying FLAC files.  The only message displayed to your screen that is     #"
+		"# logged is noted below:                                                       #"
+		"#                                                                              #"
+		"#    [ Failed ]  :  The FLAC failed verification during compressing or failed  #"
+		"#                   during testing.                                            #"
+		"#                                                                              #"
+		"#                          -------------------------                           #"
+		"#                                                                              #"
+		"#                    The legend for the log file is below:                     #"
+		"#                                                                              #"
+		"#              FLAC FILE  :  The basename of the FLAC file                     #"
+		"#     FLAC FILE LOCATION  :  The path where the FLAC file is located           #"
+		"#                  ERROR  :  Message describing what went wrong with the file  #"
+		"#                                                                              #"
+		"################################################################################"
+	)
+
+	# Create array of current log file
+	mapfile -n0 -t tmp_log_file < "${verify_errors}"
+
+	# Print out log header and log array to log file, truncating old log
+	printf "%s\n%s\n" \
+		   "${header_compress_verify[@]}" \
+		   "${tmp_log_file[@]}" \
+		   > "${verify_errors}"
+}
+
+# Test header
+__header_test () {
+	# Store header into array to be printed out below
+	header_test=(
+		"################################################################################"
+		"#                                                                              #"
+		"#                            TEST FLACS ERROR LOG                              #"
+		"#                            --------------------                              #"
+		"#   This report details the errors that may happen when testing FLAC files.    #"
+		"# The only message displayed to your screen that is logged is noted below:     #"
+		"#                                                                              #"
+		"#    [ Failed ]  :  The FLAC failed verification during testing                #"
+		"#                                                                              #"
+		"#                            --------------------                              #"
+		"#                                                                              #"
+		"#                    The legend for the log file is below:                     #"
+		"#                                                                              #"
+		"#              FLAC FILE  :  The basename of the FLAC file                     #"
+		"#     FLAC FILE LOCATION  :  The path where the FLAC file is located           #"
+		"#                  ERROR  :  Message describing what went wrong with the file  #"
+		"#                                                                              #"
+		"################################################################################"
+	)
+
+	# Create array of current log file
+	mapfile -n0 -t tmp_log_file < "${test_errors}"
+
+	# Print out log header and log array to log file, truncating old log
+	printf "%s\n%s\n" \
+		   "${header_test[@]}" \
+		   "${tmp_log_file[@]}" \
+		   > "${test_errors}"
+}
+
+# auCDtect header
+__header_aucdtect () {
+	# Store header into array to be printed out below
+	header_aucdtect=(
+		"################################################################################"
+		"#                                                                              #"
+		"#                          AUCDTECT ERROR/REPORT LOG                           #"
+		"#                          -------------------------                           #"
+		"#                                                                              #"
+		"#   This report details the various types issues that may happen when running  #"
+		"# auCDtect.  Depending on the FLAC file, there are different messages that may #"
+		"# be displayed to your screen.  The messages that are logged are noted below:  #"
+		"#                                                                              #"
+		"#     [ Issue ]  :  The FLAC did NOT pass auCDtect's verification with a score #"
+		"#                   of 100%.                                                   #"
+		"#                                                                              #"
+		"#    [ Failed ]  :  The FLAC was unable to be processed by auCDtect, most      #"
+		"#                   likely indicating a faulty FLAC.                           #"
+		"#                                                                              #"
+		"#   [ Skipped ]  :  The FLAC was skipped (not processed by auCDtect) since it  #"
+		"#                   has a bit depth greater than 16.  auCDtect only supports   #"
+		"#                   CD quality FLAC files (16bit or lower).                    #"
+		"#                                                                              #"
+		"#                          -------------------------                           #"
+		"#                                                                              #"
+		"#     The legend for the log file is below (some or all may be displayed):     #"
+		"#                                                                              #"
+		"#              FLAC FILE  :  The basename of the FLAC file                     #"
+		"#                    WAV  :  The basename of the WAV file                      #"
+		"#                  ERROR  :  Message describing what went wrong with the file  #"
+		"#        AUCDTECT REPORT  :  auCDtect's findings on the FLAC file              #"
+		"#     FLAC FILE LOCATION  :  The path where the FLAC file is located           #"
+		"#      SPECTROGRAM IMAGE  :  The basename of the created spectrogram           #"
+		"#   SPECTROGRAM LOCATION  :  The path where the spectrogram is located         #"
+		"#                                                                              #"
+		"################################################################################"
+	)
+
+	# Create array of current log file
+	mapfile -n0 -t tmp_log_file < "${aucdtect_errors}"
+
+	# Print out log header and log array to log file, truncating old log
+	printf "%s\n%s\n" \
+		   "${header_aucdtect[@]}" \
+		   "${tmp_log_file[@]}" \
+		   > "${aucdtect_errors}"
+}
+
+# MD5 check header
+__header_md5_check () {
+	# Store header into array to be printed out below
+	header_md5_check=(
+		"################################################################################"
+		"#                                                                              #"
+		"#                             MD5 CHECK ERROR LOG                              #"
+		"#                             -------------------                              #"
+		"#   This report details the errors that may happen when checking a FLAC file's #"
+		"# MD5 signature.  The only message displayed to your screen that is logged is  #"
+		"# noted below:                                                                 #"
+		"#                                                                              #"
+		"#    [ Failed ]  :  The MD5 signature could not be checked or the MD5          #"
+		"#                   signature is unset, possibly indicating a faulty FLAC      #"
+		"#                   file.                                                      #"
+		"#                                                                              #"
+		"#                             -------------------                              #"
+		"#                                                                              #"
+		"#                    The legend for the log file is below:                     #"
+		"#                                                                              #"
+		"#              FLAC FILE  :  The basename of the FLAC file                     #"
+		"#     FLAC FILE LOCATION  :  The path where the FLAC file is located           #"
+		"#                  ERROR  :  Message describing what went wrong with the file  #"
+		"#                                                                              #"
+		"################################################################################"
+	)
+
+	# Create array of current log file
+	mapfile -n0 -t tmp_log_file < "${md5_errors}"
+
+	# Print out log header and log array to log file, truncating old log
+	printf "%s\n%s\n" \
+		   "${header_md5_check[@]}" \
+		   "${tmp_log_file[@]}" \
+		   > "${md5_errors}"
+}
+
+# Retag header
+__header_retag () {
+	# Store header into array to be printed out below
+	header_retag=(
+		"################################################################################"
+		"#                                                                              #"
+		"#                               RETAG ERROR LOG                                #"
+		"#                               ---------------                                #"
+		"#   This report details the errors that may happen when retagging a FLAC file. #"
+		"# The only message displayed to your screen that is logged is noted below:     #"
+		"#                                                                              #"
+		"#            [ Failed ]  :  The FLAC file is not a real FLAC file              #"
+		"#                                                                              #"
+		"#                               ---------------                                #"
+		"#                                                                              #"
+		"#                    The legend for the log file is below:                     #"
+		"#                                                                              #"
+		"#              FLAC FILE  :  The basename of the FLAC file                     #"
+		"#     FLAC FILE LOCATION  :  The path where the FLAC file is located           #"
+		"#                  ERROR  :  Message describing what went wrong with the file  #"
+		"#                            or if there were any missing tags                 #"
+		"#                                                                              #"
+		"################################################################################"
+	)
+
+	# Create array of current log file
+	mapfile -n0 -t tmp_log_file < "${metadata_errors}"
+
+	# Print out log header and log array to log file, truncating old log
+	printf "%s\n%s\n" \
+		   "${header_retag[@]}" \
+		   "${tmp_log_file[@]}" \
+		   > "${metadata_errors}"
+}
+
+# Prune header
+__header_prune () {
+	# Store header into array to be printed out below
+	header_prune=(
+		"################################################################################"
+		"#                                                                              #"
+		"#                               PRUNE ERROR LOG                                #"
+		"#                               ---------------                                #"
+		"#   This report details the errors that may happen when pruning the various    #"
+		"# METADTA blocks in a FLAC file.  The only message displayed to your screen    #"
+		"# that is logged is noted below:                                               #"
+		"#                                                                              #"
+		"#            [ Failed ]  :  The FLAC file is not a real FLAC file              #"
+		"#                                                                              #"
+		"#                               ---------------                                #"
+		"#                                                                              #"
+		"#                    The legend for the log file is below:                     #"
+		"#                                                                              #"
+		"#              FLAC FILE  :  The basename of the FLAC file                     #"
+		"#     FLAC FILE LOCATION  :  The path where the FLAC file is located           #"
+		"#                  ERROR  :  Message describing what went wrong with the file  #"
+		"#                                                                              #"
+		"################################################################################"
+	)
+
+	# Create array of current log file
+	mapfile -n0 -t tmp_log_file < "${prune_errors}"
+
+	# Print out log header and log array to log file, truncating old log
+	printf "%s\n%s\n" \
+		   "${header_prune[@]}" \
+		   "${tmp_log_file[@]}" \
+		   > "${prune_errors}"
+}
+#== END LOG HEADERS ============================================================
+
+
+#-------------------------------------------------------------------------------
 #  TITLE MESSAGES
 #-------------------------------------------------------------------------------
 # Compress FLACS & verify
@@ -1154,7 +1461,11 @@ __replaygain_test_abort () {
 	__info "Control-C received, generating summary. Please wait..."
 
 	if [[ -f "${replay_test_errors}" ]] ; then
+		# Print out log exists to STDERR
 		__log_replaygain_test
+
+		# Prepend log header to log file
+		__header_replaygain_test
 	fi
 
 	testing_replaygain_complete="interrupt"
@@ -1174,7 +1485,11 @@ __replaygain_process_abort () {
 	__info "Control-C received, generating summary. Please wait..." ; __newline
 
 	if [[ -f "${replay_add_errors}" ]] ; then
+		# Print out log exists to STDERR
 		__log_replaygain_process
+
+		# Prepend log header to log file
+		__header_replaygain_test
 	fi
 
 	adding_replaygain_complete="interrupt"
@@ -1198,7 +1513,11 @@ __compress_abort () {
 	rm -f "${directory}"/**/*.tmp,fl-ac+en\'c
 
 	if [[ -f "${verify_errors}" ]] ; then
+		# Print out log exists to STDERR
 		__log_compress_verify
+
+		# Prepend log header to log file
+		__header_compress_verify
 	fi
 
 	compress_complete="interrupt"
@@ -1218,7 +1537,11 @@ __test_abort () {
 	__info "Control-C received, generating summary. Please wait..." ; __newline
 
 	if [[ -f "${test_errors}" ]] ; then
+		# Print out log exists to STDERR
 		__log_test
+
+		# Prepend log header to log file
+		__header_test
 	fi
 
 	test_complete="interrupt"
@@ -1242,7 +1565,11 @@ __aucdtect_abort () {
 	rm -f "${directory}"/**/*_redoflacs_"$$".wav
 
 	if [[ -f "${aucdtect_errors}" ]] ; then
+		# Print out log exists to STDERR
 		__log_aucdtect
+
+		# Prepend log header to log file
+		__header_aucdtect
 	fi
 
 	aucdtect_complete="interrupt"
@@ -1262,7 +1589,11 @@ __md5_check_abort () {
 	__info "Control-C received, generating summary. Please wait..." ; __newline
 
 	if [[ -f "${md5_errors}" ]] ; then
+		# Print out log exists to STDERR
 		__log_md5_check
+
+		# Prepend log header to log file
+		__header_md5_check
 	fi
 
 	md5check_complete="interrupt"
@@ -1297,17 +1628,19 @@ __analyzing_tags_abort () {
 
 	if [[ -f "${metadata_errors}"  && "${coverart_warning}" == "true" ]] ; then
 		# Display COVERART warning function and metadata issues
-		__newline >&2
+		__newline >&2 ; __coverart_warning
 
-		# Below is already redirected to STDERR
-		__coverart_warning
-
-		# Display metadata issue
+		# Print out log exists to STDERR
 		__log_missing_tags
 
+		# Prepend log header to log file
+		__header_retag
 	elif [[ -f "${metadata_errors}" ]] ; then
-		# Display metadata issue
+		# Print out log exists to STDERR
 		__log_missing_tags
+
+		# Prepend log header to log file
+		__header_retag
 	fi
 
 	analyzing_retag_complete="interrupt"
@@ -1342,17 +1675,19 @@ __applying_tags_abort () {
 
 	if [[ -f "${metadata_errors}"  && "${coverart_warning}" == "true" ]] ; then
 		# Display COVERART warning function and metadata issues
-		__newline >&2
+		__newline >&2 ; __coverart_warning
 
-		# Below is already redirected to STDERR
-		__coverart_warning
-
-		# Display metadata issue
+		# Print out log exists to STDERR
 		__log_missing_tags
 
+		# Prepend log header to log file
+		__header_retag
 	elif [[ -f "${metadata_errors}" ]] ; then
-		# Display metadata issue
+		# Print out log exists to STDERR
 		__log_missing_tags
+
+		# Prepend log header to log file
+		__header_retag
 	fi
 
 	applying_retag_complete="interrupt"
@@ -1372,7 +1707,11 @@ __prune_abort () {
 	__info "Control-C received, generating summary. Please wait..." ; __newline
 
 	if [[ -f "${prune_errors}" ]] ; then
+		# Print out log exists to STDERR
 		__log_prune
+
+		# Prepend log header to log file
+		__header_prune
 	fi
 
 	prune_complete="interrupt"
@@ -3074,12 +3413,17 @@ __operation_test_replaygain () {
 
 	# Exit code 130 is SIGINT so only check for exit code '1'
 	if [[ "${?}" -eq "1" ]] ; then
+
 		# File is not a FLAC file, display failed
 		__print_failed_flac
-		printf "%s\n%s\n%s\n" \
-			   "FLAC:  ${i}" \
-			   "ERROR: Not a FLAC file" \
-			   "------------------------------------------------------------------" \
+
+		# Log FLAC failure
+		printf "\n%s\n%s\n%s\n%s\n\n%s\n" \
+			   "            FLAC FILE  :  ${i##*/}" \
+			   "   FLAC FILE LOCATION  :  ${i%/*}" \
+			   "                       :" \
+			   "                ERROR  :  Not a real FLAC file (or empty file)." \
+			   "--------------------------------------------------------------------------------" \
 			   >> "${replay_test_errors}"
 
 		# Add one to fail fd
@@ -3136,12 +3480,22 @@ __operation_replaygain_noforce () {
 
 			# Exit code 130 is SIGINT so only check for exit code '1'
 			if [[ "${?}" -eq 1 ]] ; then
-				__print_failed_flac
-				printf "%s\n%s\n%s\n%s\n" \
-					   "Directory: ${i}" \
-					   "ERROR:     There was an issue with some FLAC files in this directory." \
-					   "           Check that the sample rate is the same for all FLAC files." \
-					   "------------------------------------------------------------------" \
+
+				# Print failed applying replaygain values to FLAC file diretory
+				__print_failed_replaygain
+
+				# Log ReplayGain error
+				printf "\n%s\n%s\n%s\n%s\n%s\n%s\n%s\n%s\n%s\n\n%s\n" \
+					   "            DIRECTORY  :  ${i##*/}" \
+					   "  FULL DIRECTORY PATH  :  ${i%/*}" \
+					   "                       :" \
+					   "                ERROR  :  There was a problem applying ReplayGain values to the" \
+					   "                          FLAC files in the above directory.  The most common  " \
+					   "                          reason for failure is if at least one FLAC has a" \
+					   "                          different sample rate then another FLAC file in the" \
+					   "                          same directory.  Album ReplayGain values cannot be" \
+					   "                          to FLAC files with varying sample rates." \
+					   "--------------------------------------------------------------------------------" \
 					   >> "${replay_add_errors}"
 
 				# Add one to fail fd
@@ -3181,12 +3535,22 @@ __operation_replaygain_force () {
 
 	# Exit code 130 is SIGINT so only check for exit code '1'
 	if [[ "${?}" -eq 1 ]] ; then
+
+		# Print failed applying replaygain values to FLAC file diretory
 		__print_failed_replaygain
-		printf "%s\n%s\n%s\n%s\n" \
-			   "Directory: ${i}" \
-			   "ERROR:     There was an issue with some FLAC files in this directory." \
-			   "           Check that the sample rate is the same for all FLAC files." \
-			   "------------------------------------------------------------------" \
+
+		# Log ReplayGain error
+		printf "\n%s\n%s\n%s\n%s\n%s\n%s\n%s\n%s\n%s\n\n%s\n" \
+			   "            DIRECTORY  :  ${i##*/}" \
+			   "  FULL DIRECTORY PATH  :  ${i%/*}" \
+			   "                       :" \
+			   "                ERROR  :  There was a problem applying ReplayGain values to the" \
+			   "                          FLAC files in the above directory.  The most common  " \
+			   "                          reason for failure is if at least one FLAC has a" \
+			   "                          different sample rate then another FLAC file in the" \
+			   "                          same directory.  Album ReplayGain values cannot be" \
+			   "                          to FLAC files with varying sample rates." \
+			   "--------------------------------------------------------------------------------" \
 			   >> "${replay_add_errors}"
 
 		# Add one to fail fd
@@ -3222,11 +3586,19 @@ __operation_compress () {
 
 		# Exit code 130 is SIGINT so only check for exit code '1'
 		if [[ "${?}" -eq 1 ]] ; then
+
+			# File is not a FLAC file, display failed
 			__print_failed_flac
-			printf "%s\n%s\n%s\n" \
-				   "FLAC:  ${i}" \
-				   "ERROR: Not a FLAC file or failed verification." \
-				   "------------------------------------------------------------------" \
+
+			# Log FLAC failure
+			printf "\n%s\n%s\n%s\n%s\n%s\n%s\n\n%s\n" \
+				   "            FLAC FILE  :  ${i##*/}" \
+				   "   FLAC FILE LOCATION  :  ${i%/*}" \
+				   "                       :" \
+				   "                ERROR  :  The FLAC file failed verification during it's" \
+				   "                       :  compression.  Either the FLAC file is NOT a real FLAC" \
+				   "                       :  file, or it's corrupt." \
+				   "--------------------------------------------------------------------------------" \
 				   >> "${verify_errors}"
 
 			# Add one to fail fd
@@ -3255,11 +3627,19 @@ __operation_compress () {
 
 			# Exit code 130 is SIGINT so only check for exit code '1'
 			if [[ "${?}" -eq 1 ]] ; then
+
+				# File is not a FLAC file, display failed
 				__print_failed_flac
-				printf "%s\n%s\n%s\n" \
-					   "FLAC:  ${i}" \
-					   "ERROR: Not a FLAC file or failed testing." \
-					   "------------------------------------------------------------------" \
+
+				# Log FLAC failure
+				printf "\n%s\n%s\n%s\n%s\n%s\n%s\n\n%s\n" \
+					   "            FLAC FILE  :  ${i##*/}" \
+					   "   FLAC FILE LOCATION  :  ${i%/*}" \
+					   "                       :" \
+					   "                ERROR  :  The FLAC file failed verification during it's" \
+					   "                       :  testing.  Either the FLAC file is NOT a real FLAC" \
+					   "                       :  file, or it's corrupt." \
+					   "--------------------------------------------------------------------------------" \
 					   >> "${verify_errors}"
 
 				# Add one to fail fd
@@ -3292,11 +3672,19 @@ __operation_test () {
 
 	# Exit code 130 is SIGINT so only check for exit code '1'
 	if [[ "${?}" -eq 1 ]] ; then
+
+		# File is not a FLAC file, display failed
 		__print_failed_flac
-		printf "%s\n%s\n%s\n" \
-			   "FLAC:  ${i}" \
-			   "ERROR: Not a FLAC file or failed testing." \
-			   "------------------------------------------------------------------" \
+
+		# Log FLAC failure
+		printf "\n%s\n%s\n%s\n%s\n%s\n%s\n\n%s\n" \
+			   "            FLAC FILE  :  ${i##*/}" \
+			   "   FLAC FILE LOCATION  :  ${i%/*}" \
+			   "                       :" \
+			   "                ERROR  :  The FLAC file failed verification during it's" \
+			   "                       :  testing.  Either the FLAC file is NOT a real FLAC" \
+			   "                       :  file, or it's corrupt." \
+			   "--------------------------------------------------------------------------------" \
 			   >> "${test_errors}"
 
 		# Add one to fail fd
@@ -3322,12 +3710,17 @@ __operation_aucdtect () {
 
 	# Exit code 130 is SIGINT so only check for exit code '1'
 	if [[ "${?}" -eq "1" ]] ; then
+
 		# File is not a FLAC file, display failed
 		__print_failed_flac
-		printf "%s\n%s\n%s\n" \
-			   "FLAC:  ${i}" \
-			   "ERROR: Not a FLAC file" \
-			   "------------------------------------------------------------------" \
+
+		# Log FLAC failure
+		printf "\n%s\n%s\n%s\n%s\n\n%s\n" \
+			   "            FLAC FILE  :  ${i##*/}" \
+			   "   FLAC FILE LOCATION  :  ${i%/*}" \
+			   "                       :" \
+			   "                ERROR  :  Not a real FLAC file (or empty file)." \
+			   "--------------------------------------------------------------------------------" \
 			   >> "${aucdtect_errors}"
 
 		# Add one to fail fd
@@ -3337,11 +3730,19 @@ __operation_aucdtect () {
 	# than 16 since auCDtect doesn't support audio
 	# files with a higher resolution than a CD.
 	elif [[ "${bits}" -gt "16" ]] ; then
+
+		# Print skipped FLAC file and log issue
 		__print_aucdtect_skip
-		printf "%s\n%s\n%s\n" \
-			   "FLAC:  ${i}" \
-			   "ERROR: The above file has a bit depth greater than 16 and was skipped" \
-			   "------------------------------------------------------------------" \
+
+		# Log skipped FLAC file
+		printf "\n%s\n%s\n%s\n%s\n%s\n%s\n\n%s\n" \
+			   "            FLAC FILE  :  ${i##*/}" \
+			   "   FLAC FILE LOCATION  :  ${i%/*}" \
+			   "                       :" \
+			   "                ERROR  :  FLAC file has a bit depth greater than 16 and was" \
+			   "                       :  subsequently skipped.  auCDtect only supports CD" \
+			   "                       :  quality FLAC files (16bit or lower)." \
+			   "--------------------------------------------------------------------------------" \
 			   >> "${aucdtect_errors}"
 
 		# Add one to fail fd
@@ -3364,11 +3765,18 @@ __operation_aucdtect () {
 		# If FLAC file failed decoding to WAV, log error, otherwise
 		# continue processing
 		if [[ "${?}" -eq "1" ]] ; then
+
+			# Print FLAC failed and log issue
 			__print_failed_flac
-			printf "%s\n%s\n%s\n" \
-				   "FLAC:  ${i}" \
-				   "ERROR: Failed decoding FLAC file to WAV (most likely corrupt)" \
-				   "------------------------------------------------------------------" \
+
+			# Log FLAC failure
+			printf "\n%s\n%s\n%s\n%s\n%s\n\n%s\n" \
+				   "            FLAC FILE  :  ${i##*/}" \
+				   "   FLAC FILE LOCATION  :  ${i%/*}" \
+				   "                       :" \
+				   "                ERROR  :  Failed decoding FLAC file.  Please verify the FLAC    " \
+				   "                       :  file is not corrupt." \
+				   "--------------------------------------------------------------------------------" \
 				   >> "${aucdtect_errors}"
 
 			# Add one to fail fd
@@ -3391,14 +3799,23 @@ __operation_aucdtect () {
 
 			# Exit code 130 is SIGINT so only check for exit code '1'
 			if [[ "${?}" -eq "1" ]] ; then
+
+				# Print FLAC failed and log issue
 				__print_failed_flac
-				printf "%s\n%s\n%s\n%s\n%s\n%s\n" \
-					   "FLAC:  ${i}" \
-					   "WAV:   ${decoded_wav}" \
-					   "ERROR: auCDtect failed to analyze the decoded WAV file." \
-					   "       Something may have happened when decoding the above FLAC" \
-					   "       file.  Please verify the FLAC file is not corrupt." \
-					   "------------------------------------------------------------------" \
+
+				# Log FLAC failure
+				printf "\n%s\n%s\n%s\n%s\n%s\n%s\n%s\n%s\n%s\n%s\n\n%s\n" \
+					   "            FLAC FILE  :  ${i##*/}" \
+					   "   FLAC FILE LOCATION  :  ${i%/*}" \
+					   "                       :" \
+					   "             WAV FILE  :  ${decoded_wav##*/}" \
+					   "    WAV FILE LOCATION  :  ${decoded_wav%/*}" \
+					   "                       :" \
+					   "                ERROR  :  auCDtect failed to analyze the decoded WAV file." \
+					   "                       :  Something may have happened when decoding the above" \
+					   "                       :  FLAC file.  Please verify the FLAC file is not" \
+					   "                       :  corrupt." \
+					   "--------------------------------------------------------------------------------" \
 					   >> "${aucdtect_errors}"
 
 				# Add one to fail fd
@@ -3432,14 +3849,23 @@ __operation_aucdtect () {
 
 					# Exit code 130 is SIGINT so only check for exit code '1'
 					if [[ "${?}" -eq "1" ]] ; then
+
+						# Print FLAC failed and log issue
 						__print_failed_flac
-						printf "%s\n%s\n%s\n%s\n%s\n%s\n" \
-							   "FLAC:  ${i}" \
-							   "WAV:   ${decoded_wav}" \
-							   "ERROR: auCDtect failed to analyze the decoded WAV file." \
-							   "       Something may have happened when decoding the above FLAC" \
-							   "       file.  Please verify the FLAC file is not corrupt." \
-							   "------------------------------------------------------------------" \
+
+						# Log FLAC failure
+						printf "\n%s\n%s\n%s\n%s\n%s\n%s\n%s\n%s\n%s\n%s\n\n%s\n" \
+							   "            FLAC FILE  :  ${i##*/}" \
+							   "   FLAC FILE LOCATION  :  ${i%/*}" \
+							   "                       :" \
+							   "             WAV FILE  :  ${decoded_wav##*/}" \
+							   "    WAV FILE LOCATION  :  ${decoded_wav%/*}" \
+							   "                       :" \
+							   "                ERROR  :  auCDtect failed to analyze the decoded WAV file." \
+							   "                       :  Something may have happened when decoding the above" \
+							   "                       :  FLAC file.  Please verify the FLAC file is not" \
+							   "                       :  corrupt." \
+							   "--------------------------------------------------------------------------------" \
 							   >> "${aucdtect_errors}"
 
 						# Add one to fail fd
@@ -3503,11 +3929,17 @@ __operation_aucdtect () {
 								# Print ISSUE and log issue, and show where to find
 								# the created spectrogram of the processed FLAC file
 								__print_aucdtect_issue
-								printf "%s\n%s\n%s\n%s\n" \
-									   "FLAC:        ${i}" \
-									   "REPORT:      ${aucdtect_check_array[0]}" \
-									   "SPECTROGRAM: ${spectrogram_picture}" \
-									   "------------------------------------------------------------------" \
+
+								# Log auCDtect report
+								printf "\n%s\n%s\n%s\n%s\n%s\n%s\n%s\n\n%s\n" \
+									   "            FLAC FILE  :  ${i##*/}" \
+									   "                       :" \
+									   "      AUCDTECT REPORT  :  ${aucdtect_check_array[0]}" \
+									   "   FLAC FILE LOCATION  :  ${i%/*}" \
+									   "                       :" \
+									   "    SPECTROGRAM IMAGE  :  ${spectrogram_picture##*/}" \
+									   " SPECTROGRAM LOCATION  :  ${spectrogram_picture%/*}" \
+									   "--------------------------------------------------------------------------------" \
 									   >> "${aucdtect_errors}"
 
 								# Add one to fail fd
@@ -3516,10 +3948,14 @@ __operation_aucdtect () {
 							else
 								# Print ISSUE and log issue
 								__print_aucdtect_issue
-								printf "%s\n%s\n%s\n" \
-									   "FLAC:   ${i}" \
-									   "REPORT: ${aucdtect_check_array[0]}" \
-									   "------------------------------------------------------------------" \
+
+								# Log auCDtect report
+								printf "\n%s\n%s\n%s\n%s\n\n%s\n" \
+									   "            FLAC FILE  :  ${i##*/}" \
+									   "                       :" \
+									   "      AUCDTECT REPORT  :  ${aucdtect_check_array[0]}" \
+									   "   FLAC FILE LOCATION  :  ${i%/*}" \
+									   "--------------------------------------------------------------------------------" \
 									   >> "${aucdtect_errors}"
 
 								# Add one to fail fd
@@ -3554,12 +3990,19 @@ __operation_md5_check () {
 
 	# Exit code 130 is SIGINT so only check for exit code '1'
 	if [[ "${?}" -eq "1" ]] ; then
+
 		# File is not a FLAC file, display failed
 		__print_failed_flac
-		printf "%s\n%s\n%s\n" \
-			   "FLAC:  ${i}" \
-			   "ERROR: Not a FLAC file" \
-			   "------------------------------------------------------------------" \
+
+		# Log FLAC failure
+		printf "\n%s\n%s\n%s\n%s\n%s\n%s\n\n%s\n" \
+			   "            FLAC FILE  :  ${i##*/}" \
+			   "   FLAC FILE LOCATION  :  ${i%/*}" \
+			   "                       :" \
+			   "                ERROR  :  The FLAC file failed verification during it's" \
+			   "                       :  testing.  Either the FLAC file is NOT a real FLAC" \
+			   "                       :  file, or it's corrupt." \
+			   "--------------------------------------------------------------------------------" \
 			   >> "${md5_errors}"
 
 		# Add one to fail fd
@@ -3567,11 +4010,21 @@ __operation_md5_check () {
 
 	# FLAC file is real, check for unset MD5 checksum
 	elif [[ "${md5_sum}" == "00000000000000000000000000000000" ]] ; then
+
+		# File is not a FLAC file, display failed
 		__print_failed_flac
-		printf "%s\n%s\n%s\n" \
-			   "FLAC:  ${i}" \
-			   "ERROR: MD5 Signature unset: (${md5_sum})" \
-			   "------------------------------------------------------------------" \
+
+		# Log FLAC failure
+		printf "\n%s\n%s\n%s\n%s\n%s\n%s\n%s\n%s\n\n%s\n" \
+			   "            FLAC FILE  :  ${i##*/}" \
+			   "   FLAC FILE LOCATION  :  ${i%/*}" \
+			   "                       :" \
+			   "                ERROR  :  The MD5 signature is unset (eg. a string of zeroes)."
+			   "                       :  This _may_ indicate a faulty FLAC file or the FLAC"
+			   "                       :  file was encoded with a third-party encoder which"
+			   "                       :  does not embed an MD5 signature in the STREAMINFO" \
+			   "                       :  block." \
+			   "--------------------------------------------------------------------------------" \
 			   >> "${md5_errors}"
 
 		# Add one to fail fd
@@ -3596,11 +4049,18 @@ __operation_analyze_tags () {
 
 	# If above command return anything other than '0', log output
 	if [[ "${?}" -ne "0" ]] ; then
-		printf "%s\n%s\n%s\n" \
-			  "FLAC:  ${i}" \
-			  "ERROR: The above file does not appear to be a FLAC file" \
-			  "------------------------------------------------------------------" \
-			  >> "${metadata_errors}"
+
+		# File is not a FLAC file, display failed
+		__print_failed_flac
+
+		# Log FLAC failure
+		printf "\n%s\n%s\n%s\n%s\n\n%s\n" \
+			   "            FLAC FILE  :  ${i##*/}" \
+			   "   FLAC FILE LOCATION  :  ${i%/*}" \
+			   "                       :" \
+			   "                ERROR  :  Not a real FLAC file (or empty file)." \
+			   "--------------------------------------------------------------------------------" \
+			   >> "${metadata_errors}"
 
 		# Add one to fail fd
 		printf '.' >&5
@@ -3678,15 +4138,12 @@ __operation_analyze_tags () {
 						if [[ -z "${temp_tag_array[${temp_tag_field}]}" ]] ; then
 							if [[ "${file_printed}" != "true" ]] ; then
 								# First instance of missing tag for current file
-								missing_tags_array+=(
-									"FLAC:  ${i}"
-									"ERROR: ${j} tag not found"
-								)
+								missing_tags_array+=( "                ERROR  :  ${j} tag not found" )
 								file_printed="true"
 							else
 								# If more than one missing tag in current file,
 								# don't print out filename, just the missing tag
-								missing_tags_array+=( "       ${j} tag not found" )
+								missing_tags_array+=( "                       :  ${j} tag not found" )
 							fi
 						fi
 
@@ -3712,15 +4169,12 @@ __operation_analyze_tags () {
 				if [[ "${tag_match}" != "true" ]] ; then
 					if [[ "${file_printed}" != "true" ]] ; then
 						# First instance of missing tag for current file
-						missing_tags_array+=(
-							"FLAC:  ${i}"
-							"ERROR: ${j} tag not found"
-						)
+						missing_tags_array+=( "                ERROR  :  ${j} tag not found" )
 						file_printed="true"
 					else
 						# If more than one missing tag in current file,
 						# don't print out filename, just the missing tag
-						missing_tags_array+=( "       ${j} tag not found" )
+						missing_tags_array+=( "                       :  ${j} tag not found" )
 					fi
 				fi
 
@@ -3734,15 +4188,12 @@ __operation_analyze_tags () {
 			else
 				if [[ "${file_printed}" != "true" ]] ; then
 					# First instance of missing tag for current file
-					missing_tags_array+=(
-						"FLAC:  ${i}"
-						"ERROR: ${j} tag not found"
-					)
+					missing_tags_array+=( "                ERROR  :  ${j} tag not found" )
 					file_printed="true"
 				else
 					# If more than one missing tag in current file,
 					# don't print out filename, just the missing tag
-					missing_tags_array+=( "       ${j} tag not found" )
+					missing_tags_array+=( "                       :  ${j} tag not found" )
 				fi
 			fi
 		done
@@ -3750,11 +4201,20 @@ __operation_analyze_tags () {
 		# If missing_tags_array is not empty, there are missing
 		# tags in the current file so log output
 		if [[ -n "${missing_tags_array[@]}" ]] ; then
-			# Add separator to log for each file
-			missing_tags_array+=( "------------------------------------------------------------------" )
 
-			# Print array into log file
-			printf "%s\n" "${missing_tags_array[@]}" >> "${metadata_errors}"
+			# Create a temporary array housing the missing tags
+			tmp_tag_array=(
+				""
+				"            FLAC FILE  :  ${i##*/}"
+				"   FLAC FILE LOCATION  :  ${i%/*}"
+				"                       :"
+				"${missing_tags_array[@]}"
+				""
+				"--------------------------------------------------------------------------------"
+			)
+
+			# Log the missing tags
+			printf "%s\n" "${tmp_tag_array[@]}" >> "${metadata_errors}"
 
 			# Add one to fail fd
 			printf '.' >&5
@@ -3779,13 +4239,18 @@ __operation_analyze_tags_dont_log_coverart () {
 
 	# If above command return anything other than '0', log output
 	if [[ "${?}" -ne "0" ]] ; then
-		printf "$%s\n%s\n%s\n" \
-			   "FLAC:  ${i}" \
-			   "ERROR: The above file does not appear to be a FLAC file" \
-			   "------------------------------------------------------------------" \
-			   >> "${metadata_errors}"
+
 		# File is not a FLAC file, display failed
 		__print_failed_flac
+
+		# Log FLAC failure
+		printf "\n%s\n%s\n%s\n%s\n\n%s\n" \
+			   "            FLAC FILE  :  ${i##*/}" \
+			   "   FLAC FILE LOCATION  :  ${i%/*}" \
+			   "                       :" \
+			   "                ERROR  :  Not a real FLAC file (or empty file)." \
+			   "--------------------------------------------------------------------------------" \
+			   >> "${metadata_errors}"
 
 		# Add one to fail fd
 		printf '.' >&5
@@ -3827,11 +4292,13 @@ __operation_analyze_tags_dont_log_coverart () {
 				# If COVERART value is not null, so log it exists and that
 				# COVERART tag is depcrated
 				if [[ -n "${coverart_value#*=}" ]] ; then
-					printf "%s\n%s\n%s\n%s\n" \
-						   "FLAC:  ${i}" \
-						   "ERROR: \"${j}\" tag is DEPRECATED in above file. Consider migrating to" \
-						   "       the new format: METADATA_BLOCK_PICTURE." \
-						   "------------------------------------------------------------------" \
+					printf "\n%s\n%s\n%s\n%s\n%s\n\n%s\n" \
+						   "            FLAC FILE  :  ${i##*/}" \
+						   "   FLAC FILE LOCATION  :  ${i%/*}" \
+						   "                       :" \
+						   "                ERROR  :  COVERART tag is DEPRECATED in above file.  Consider" \
+						   "                       :  migrating to the new format:  METADATA_BLOCK_PICTURE" \
+						   "--------------------------------------------------------------------------------" \
 						   >> "${metadata_errors}"
 
 					# Add one to fail fd
@@ -3890,15 +4357,12 @@ __operation_analyze_tags_dont_log_coverart () {
 						if [[ -z "${temp_tag_array[${temp_tag_field}]}" ]] ; then
 							if [[ "${file_printed}" != "true" ]] ; then
 								# First instance of missing tag for current file
-								missing_tags_array+=(
-									"FLAC:  ${i}"
-									"ERROR: ${j} tag not found"
-								)
+								missing_tags_array+=( "                ERROR  :  ${j} tag not found" )
 								file_printed="true"
 							else
 								# If more than one missing tag in current file,
 								# don't print out filename, just the missing tag
-								missing_tags_array+=( "       ${j} tag not found" )
+								missing_tags_array+=( "                       :  ${j} tag not found" )
 							fi
 						fi
 
@@ -3924,15 +4388,12 @@ __operation_analyze_tags_dont_log_coverart () {
 				if [[ "${tag_match}" != "true" && "${j}" != "COVERART" ]] ; then
 					if [[ "${file_printed}" != "true" ]] ; then
 						# First instance of missing tag for current file
-						missing_tags_array+=(
-							"FLAC:  ${i}"
-							"ERROR: ${j} tag not found"
-						)
+						missing_tags_array+=( "                ERROR  :  ${j} tag not found" )
 						file_printed="true"
 					else
 						# If more than one missing tag in current file,
 						# don't print out filename, just the missing tag
-						missing_tags_array+=( "       ${j} tag not found" )
+						missing_tags_array+=( "                       :  ${j} tag not found" )
 					fi
 				fi
 
@@ -3946,15 +4407,12 @@ __operation_analyze_tags_dont_log_coverart () {
 			elif [[ "${j}" != "COVERART" ]] ; then
 				if [[ "${file_printed}" != "true" ]] ; then
 					# First instance of missing tag for current file
-					missing_tags_array+=(
-						"FLAC:  ${i}"
-						"ERROR: ${j} tag not found"
-					)
+					missing_tags_array+=( "                ERROR  :  ${j} tag not found" )
 					file_printed="true"
 				else
 					# If more than one missing tag in current file,
 					# don't print out filename, just the missing tag
-					missing_tags_array+=( "       ${j} tag not found" )
+					missing_tags_array+=( "                       :  ${j} tag not found" )
 				fi
 			fi
 		done
@@ -3962,10 +4420,20 @@ __operation_analyze_tags_dont_log_coverart () {
 		# If missing_tags_array is not empty, there are missing
 		# tags in the current file so log output
 		if [[ -n "${missing_tags_array[@]}" ]] ; then
-			# Add separator to log for each file
-			missing_tags_array+=( "------------------------------------------------------------------" )
-			# Print array into log file
-			printf "%s\n" "${missing_tags_array[@]}" >> "${metadata_errors}"
+
+			# Create a temporary array housing the missing tags
+			tmp_tag_array=(
+				""
+				"            FLAC FILE  :  ${i##*/}"
+				"   FLAC FILE LOCATION  :  ${i%/*}"
+				"                       :"
+				"${missing_tags_array[@]}"
+				""
+				"--------------------------------------------------------------------------------"
+			)
+
+			# Log the missing tags
+			printf "%s\n" "${tmp_tag_array[@]}" >> "${metadata_errors}"
 
 			# Add one to fail fd
 			printf '.' >&5
@@ -4112,10 +4580,14 @@ __operation_prune () {
 	if [[ "${?}" -eq "1" ]] ; then
 		# File is not a FLAC file, display failed
 		__print_failed_flac
-		printf "%s\n%s\n%s\n" \
-			   "FLAC:  ${i}" \
-			   "ERROR: The above file does not appear to be a FLAC file" \
-			   "------------------------------------------------------------------" \
+
+		# Log FLAC failure
+		printf "\n%s\n%s\n%s\n%s\n\n%s\n" \
+			   "            FLAC FILE  :  ${i##*/}" \
+			   "   FLAC FILE LOCATION  :  ${i%/*}" \
+			   "                       :" \
+			   "                ERROR  :  Not a real FLAC file (or empty file)." \
+			   "--------------------------------------------------------------------------------" \
 			   >> "${prune_errors}"
 
 		# Add one to fail fd
@@ -4401,7 +4873,11 @@ if [[ "${aucdtect_flac}" == "true" ]] ; then
 	__run_parallel_files __operation_aucdtect
 
 	if [[ -f "${aucdtect_errors}" ]] ; then
+		# Print out log exists to STDERR
 		__log_aucdtect
+
+		# Prepend log header to log file
+		__header_aucdtect
 
 		aucdtect_complete="false"
 		__operation_summary
@@ -4436,7 +4912,11 @@ if [[ "${md5check_flac}" == "true" ]] ; then
 	__run_parallel_files __operation_md5_check
 
 	if [[ -f "${md5_errors}" ]] ; then
+		# Print out log exists to STDERR
 		__log_md5_check
+
+		# Prepend log header to log file
+		__header_md5_check
 
 		md5check_complete="false"
 		__operation_summary
@@ -4483,7 +4963,11 @@ if [[ "${compress_flac}" == "true" ]] ; then
 	__run_parallel_files __operation_compress
 
 	if [[ -f "${verify_errors}" ]] ; then
+		# Print out log exists to STDERR
 		__log_compress_verify
+
+		# Prepend log header to log file
+		__header_compress_verify
 
 		compress_complete="false"
 		__operation_summary
@@ -4518,7 +5002,11 @@ if [[ "${test_flac}" == "true" ]] ; then
 	__run_parallel_files __operation_test
 
 	if [[ -f "${test_errors}" ]] ; then
+		# Print out log exists to STDERR
 		__log_test
+
+		# Prepend log header to log file
+		__header_test
 
 		test_complete="false"
 		__operation_summary
@@ -4568,7 +5056,11 @@ if [[ "${replaygain_flac}" == "true" ]] ; then
 	__run_parallel_files __operation_test_replaygain
 
 	if [[ -f "${replay_test_errors}" ]] ; then
+		# Print out log exists to STDERR
 		__log_replaygain_test
+
+		# Prepend log header to log file
+		__header_replaygain_test
 
 		testing_replaygain_complete="false"
 		__operation_summary
@@ -4609,7 +5101,11 @@ if [[ "${replaygain_flac}" == "true" ]] ; then
 	__run_parallel_directories "${process_replaygain}"
 
 	if [[ -f "${replay_add_errors}" ]] ; then
+		# Print out log exists to STDERR
 		__log_replaygain_process
+
+		# Prepend log header to log file
+		__header_replaygain_test
 
 		adding_replaygain_complete="false"
 		__operation_summary
@@ -4692,20 +5188,24 @@ if [[ "${retag_flac}" == "true" ]] ; then
 
 	if [[ -f "${metadata_errors}"  && "${coverart_warning}" == "true" ]] ; then
 		# Display COVERART warning function and metadata issues
-		__newline >&2
+		__newline >&2 ; __coverart_warning
 
-		# Below is already redirected to STDERR
-		__coverart_warning
-
+		# Print out log exists to STDERR
 		__log_missing_tags
+
+		# Prepend log header to log file
+		__header_retag
 
 		analyzing_retag_complete="false"
 		__operation_summary
 
 		exit 1
 	elif [[ -f "${metadata_errors}" ]] ; then
-		# Just display metadata issues
+		# Print out log exists to STDERR
 		__log_missing_tags
+
+		# Prepend log header to log file
+		__header_retag
 
 		analyzing_retag_complete="false"
 		__operation_summary
@@ -4780,7 +5280,11 @@ if [[ "${prune_flac}" == "true" ]] ; then
 	__run_parallel_files __operation_prune
 
 	if [[ -f "${prune_errors}" ]] ; then
+		# Print out log exists to STDERR
 		__log_prune
+
+		# Prepend log header to log file
+		__header_prune
 
 		prune_complete="false"
 		__operation_summary
