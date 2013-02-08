@@ -3774,7 +3774,7 @@ __operation_aucdtect () {
 				   "            FLAC FILE  :  ${i##*/}" \
 				   "   FLAC FILE LOCATION  :  ${i%/*}" \
 				   "                       :" \
-				   "                ERROR  :  Failed decoding FLAC file.  Please verify the FLAC    " \
+				   "                ERROR  :  Failed decoding FLAC file.  Please verify the FLAC" \
 				   "                       :  file is not corrupt." \
 				   "--------------------------------------------------------------------------------" \
 				   >> "${aucdtect_errors}"
@@ -4019,9 +4019,9 @@ __operation_md5_check () {
 			   "            FLAC FILE  :  ${i##*/}" \
 			   "   FLAC FILE LOCATION  :  ${i%/*}" \
 			   "                       :" \
-			   "                ERROR  :  The MD5 signature is unset (eg. a string of zeroes)."
-			   "                       :  This _may_ indicate a faulty FLAC file or the FLAC"
-			   "                       :  file was encoded with a third-party encoder which"
+			   "                ERROR  :  The MD5 signature is unset (eg. a string of zeroes)." \
+			   "                       :  This _may_ indicate a faulty FLAC file or the FLAC" \
+			   "                       :  file was encoded with a third-party encoder which" \
 			   "                       :  does not embed an MD5 signature in the STREAMINFO" \
 			   "                       :  block." \
 			   "--------------------------------------------------------------------------------" \
