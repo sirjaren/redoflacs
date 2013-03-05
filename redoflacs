@@ -907,7 +907,7 @@ __print_compressing_flac () {
 	# This is the maximum length of a string to be displayed based on column width,
 	# obtained via the number of columns minus the length of displayed characters:
 	#
-	#             ${columns}:  Width of terminal
+	#           $(__columns):  Width of terminal
 	#          ${#iteration}:  Length of the # of FLACs processed
 	#  ${total_flacs_length}:  Length of the total # of FLAC files
 	#                     30:  Length of:
@@ -915,7 +915,7 @@ __print_compressing_flac () {
 	#                            5 Spaces
 	#                            3 Characters: [/]
 	#                            2 Gap and ellipsis (…)
-	max_filename_length="$(( ${columns} - ${#iteration} - ${total_flacs_length} - 30 ))"
+	max_filename_length="$(( $(__columns) - ${#iteration} - ${total_flacs_length} - 30 ))"
 
 	# Create and cull filename if needed returned as ${filename}
 	__filename
@@ -929,7 +929,7 @@ __print_test_replaygain () {
 	# This is the maximum length of a string to be displayed based on column width,
 	# obtained via the number of columns minus the length of displayed characters:
 	#
-	#             ${columns}:  Width of terminal
+	#           $(__columns):  Width of terminal
 	#          ${#iteration}:  Length of the # of FLACs processed
 	#  ${total_flacs_length}:  Length of the total # of FLAC files
 	#                     34:  Length of:
@@ -937,7 +937,7 @@ __print_test_replaygain () {
 	#                            7 Spaces
 	#                            3 Characters: [/]
 	#                            2 Gap and ellipsis (…)
-	max_filename_length="$(( ${columns} - ${#iteration} - ${total_flacs_length} - 34 ))"
+	max_filename_length="$(( $(__columns) - ${#iteration} - ${total_flacs_length} - 34 ))"
 
 	# Create and cull filename if needed returned as ${filename}
 	__filename
@@ -951,7 +951,7 @@ __print_add_replaygain () {
 	# This is the maximum length of a string to be displayed based on column width,
 	# obtained via the number of columns minus the length of displayed characters:
 	#
-	#             ${columns}:  Width of terminal
+	#           $(__columns):  Width of terminal
 	#          ${#iteration}:  Length of the # processed directories
 	#  ${#total_directories}:  Length of the total # of directories
 	#                     33:  Length of:
@@ -959,7 +959,7 @@ __print_add_replaygain () {
 	#                            7 Spaces
 	#                            3 Characters: [/]
 	#                            2 Gap and ellipsis (…)
-	max_filename_length="$(( ${columns} - ${#iteration} - ${#total_directories} - 33 ))"
+	max_filename_length="$(( $(__columns) - ${#iteration} - ${#total_directories} - 33 ))"
 
 	# Create and cull filename if needed returned as ${filename}
 	__filename
@@ -973,7 +973,7 @@ __print_testing_flac () {
 	# This is the maximum length of a string to be displayed based on column width,
 	# obtained via the number of columns minus the length of displayed characters:
 	#
-	#             ${columns}:  Width of terminal
+	#           $(__columns):  Width of terminal
 	#          ${#iteration}:  Length of the # of FLACs processed
 	#  ${total_flacs_length}:  Length of the total # of FLAC files
 	#                     26:  Length of:
@@ -981,7 +981,7 @@ __print_testing_flac () {
 	#                            5 Spaces
 	#                            3 Characters: [/]
 	#                            2 Gap and ellipsis (…)
-	max_filename_length="$(( ${columns} - ${#iteration} - ${total_flacs_length} - 26 ))"
+	max_filename_length="$(( $(__columns) - ${#iteration} - ${total_flacs_length} - 26 ))"
 
 	# Create and cull filename if needed returned as ${filename}
 	__filename
@@ -995,7 +995,7 @@ __print_failed_flac () {
 	# This is the maximum length of a string to be displayed based on column width,
 	# obtained via the number of columns minus the length of displayed characters:
 	#
-	#             ${columns}:  Width of terminal
+	#           $(__columns):  Width of terminal
 	#          ${#iteration}:  Length of the # of FLACs processed
 	#  ${total_flacs_length}:  Length of the total # of FLAC files
 	#                     20:  Length of:
@@ -1003,7 +1003,7 @@ __print_failed_flac () {
 	#                            7 Spaces
 	#                            1 Asterisk: *
 	#                            2 Gap and ellipsis (…)
-	max_filename_length="$(( ${columns} - 20 ))"
+	max_filename_length="$(( $(__columns) - 20 ))"
 
 	# Create and cull filename if needed returned as ${filename}
 	__filename
@@ -1017,7 +1017,7 @@ __print_checking_md5 () {
 	# This is the maximum length of a string to be displayed based on column width,
 	# obtained via the number of columns minus the length of displayed characters:
 	#
-	#             ${columns}:  Width of terminal
+	#           $(__columns):  Width of terminal
 	#          ${#iteration}:  Length of the # of FLACs processed
 	#  ${total_flacs_length}:  Length of the total # of FLAC files
 	#                     26:  Length of:
@@ -1025,7 +1025,7 @@ __print_checking_md5 () {
 	#                            5 Spaces
 	#                            3 Characters: [/]
 	#                            2 Gap and ellipsis (…)
-	max_filename_length="$(( ${columns} - ${#iteration} - ${total_flacs_length} - 26 ))"
+	max_filename_length="$(( $(__columns) - ${#iteration} - ${total_flacs_length} - 26 ))"
 
 	# Create and cull filename if needed returned as ${filename}
 	__filename
@@ -1039,7 +1039,7 @@ __print_ok_flac () {
 	# This is the maximum length of a string to be displayed based on column width,
 	# obtained via the number of columns minus the length of displayed characters:
 	#
-	#             ${columns}:  Width of terminal
+	#           $(__columns):  Width of terminal
 	#          ${#iteration}:  Length of the # of FLACs processed
 	#  ${total_flacs_length}:  Length of the total # of FLAC files
 	#                     16:  Length of:
@@ -1047,7 +1047,7 @@ __print_ok_flac () {
 	#                            5 Spaces
 	#                            3 Characters: [/]
 	#                            2 Gap and ellipsis (…)
-	max_filename_length="$(( ${columns} - ${#iteration} - ${total_flacs_length} - 16 ))"
+	max_filename_length="$(( $(__columns) - ${#iteration} - ${total_flacs_length} - 16 ))"
 
 	# Create and cull filename if needed returned as ${filename}
 	__filename
@@ -1061,7 +1061,7 @@ __print_ok_replaygain_file () {
 	# This is the maximum length of a string to be displayed based on column width,
 	# obtained via the number of columns minus the length of displayed characters:
 	#
-	#             ${columns}:  Width of terminal
+	#           $(__columns):  Width of terminal
 	#          ${#iteration}:  Length of the # of FLACs processed
 	#  ${total_flacs_length}:  Length of the total # of FLAC files
 	#                     18:  Length of:
@@ -1069,7 +1069,7 @@ __print_ok_replaygain_file () {
 	#                            7 Spaces
 	#                            3 Characters: [/]
 	#                            2 Gap and ellipsis (…)
-	max_filename_length="$(( ${columns} - ${#iteration} - ${total_flacs_length} - 18 ))"
+	max_filename_length="$(( $(__columns) - ${#iteration} - ${total_flacs_length} - 18 ))"
 
 	# Create and cull filename if needed returned as ${filename}
 	__filename
@@ -1083,7 +1083,7 @@ __print_interrupt_replaygain_file () {
 	# This is the maximum length of a string to be displayed based on column width,
 	# obtained via the number of columns minus the length of displayed characters:
 	#
-	#             ${columns}:  Width of terminal
+	#           $(__columns):  Width of terminal
 	#          ${#iteration}:  Length of the # of FLACs processed
 	#  ${total_flacs_length}:  Length of the total # of FLAC files
 	#                     27:  Length of:
@@ -1091,7 +1091,7 @@ __print_interrupt_replaygain_file () {
 	#                            7 Spaces
 	#                            3 Characters: [/]
 	#                            2 Gap and ellipsis (…)
-	max_filename_length="$(( ${columns} - ${#iteration} - ${total_flacs_length} - 27 ))"
+	max_filename_length="$(( $(__columns) - ${#iteration} - ${total_flacs_length} - 27 ))"
 
 	# Create and cull filename if needed returned as ${filename}
 	__filename
@@ -1105,7 +1105,7 @@ __print_ok_replaygain_dir () {
 	# This is the maximum length of a string to be displayed based on column width,
 	# obtained via the number of columns minus the length of displayed characters:
 	#
-	#             ${columns}:  Width of terminal
+	#           $(__columns):  Width of terminal
 	#          ${#iteration}:  Length of the # of processed directories
 	#  ${#total_directories}:  Length of the total # of directories
 	#                     18:  Length of:
@@ -1113,7 +1113,7 @@ __print_ok_replaygain_dir () {
 	#                            7 Spaces
 	#                            3 Characters: [/]
 	#                            2 Gap and ellipsis (…)
-	max_filename_length="$(( ${columns} - ${#iteration} - ${#total_directories} - 18 ))"
+	max_filename_length="$(( $(__columns) - ${#iteration} - ${#total_directories} - 18 ))"
 
 	# Create and cull filename if needed returned as ${filename}
 	__filename
@@ -1127,7 +1127,7 @@ __print_interrupt_replaygain_dir () {
 	# This is the maximum length of a string to be displayed based on column width,
 	# obtained via the number of columns minus the length of displayed characters:
 	#
-	#             ${columns}:  Width of terminal
+	#           $(__columns):  Width of terminal
 	#          ${#iteration}:  Length of the # processed directories
 	#  ${#total_directories}:  Length of the total # of directories
 	#                     27:  Length of:
@@ -1135,7 +1135,7 @@ __print_interrupt_replaygain_dir () {
 	#                            7 Spaces
 	#                            3 Characters: [/]
 	#                            2 Gap and ellipsis (…)
-	max_filename_length="$(( ${columns} - ${#iteration} - ${#total_directories} - 27 ))"
+	max_filename_length="$(( $(__columns) - ${#iteration} - ${#total_directories} - 27 ))"
 
 	# Create and cull filename if needed returned as ${filename}
 	__filename
@@ -1149,7 +1149,7 @@ __print_failed_replaygain () {
 	# This is the maximum length of a string to be displayed based on column width,
 	# obtained via the number of columns minus the length of displayed characters:
 	#
-	#             ${columns}:  Width of terminal
+	#           $(__columns):  Width of terminal
 	#          ${#iteration}:  Length of the # processed directories
 	#  ${#total_directories}:  Length of the total # of directories
 	#                     20:  Length of:
@@ -1157,7 +1157,7 @@ __print_failed_replaygain () {
 	#                            7 Spaces
 	#                            1 Characters: *
 	#                            2 Gap and ellipsis (…)
-	max_filename_length="$(( ${columns} - ${#iteration} - ${#total_directories} - 20 ))"
+	max_filename_length="$(( $(__columns) - ${#iteration} - ${#total_directories} - 20 ))"
 
 	# Create and cull filename if needed returned as ${filename}
 	__filename
@@ -1171,7 +1171,7 @@ __print_aucdtect_flac () {
 	# This is the maximum length of a string to be displayed based on column width,
 	# obtained via the number of columns minus the length of displayed characters:
 	#
-	#             ${columns}:  Width of terminal
+	#           $(__columns):  Width of terminal
 	#          ${#iteration}:  Length of the # of FLACs processed
 	#  ${total_flacs_length}:  Length of the total # of FLAC files
 	#                     29:  Length of:
@@ -1179,7 +1179,7 @@ __print_aucdtect_flac () {
 	#                            5 Spaces
 	#                            3 Characters: [/]
 	#                            2 Gap and ellipsis (…)
-	max_filename_length="$(( ${columns} - ${#iteration} - ${total_flacs_length} - 29 ))"
+	max_filename_length="$(( $(__columns) - ${#iteration} - ${total_flacs_length} - 29 ))"
 
 	# Create and cull filename if needed returned as ${filename}
 	__filename
@@ -1193,7 +1193,7 @@ __print_aucdtect_issue () {
 	# This is the maximum length of a string to be displayed based on column width,
 	# obtained via the number of columns minus the length of displayed characters:
 	#
-	#             ${columns}:  Width of terminal
+	#           $(__columns):  Width of terminal
 	#          ${#iteration}:  Length of the # of FLACs processed
 	#  ${total_flacs_length}:  Length of the total # of FLAC files
 	#                     19:  Length of:
@@ -1201,7 +1201,7 @@ __print_aucdtect_issue () {
 	#                            7 Spaces
 	#                            1 Asterisk: *
 	#                            2 Gap and ellipsis (…)
-	max_filename_length="$(( ${columns} - 19 ))"
+	max_filename_length="$(( $(__columns) - 19 ))"
 
 	# Create and cull filename if needed returned as ${filename}
 	__filename
@@ -1215,7 +1215,7 @@ __print_aucdtect_spectrogram () {
 	# This is the maximum length of a string to be displayed based on column width,
 	# obtained via the number of columns minus the length of displayed characters:
 	#
-	#             ${columns}:  Width of terminal
+	#           $(__columns):  Width of terminal
 	#          ${#iteration}:  Length of the # of FLACs processed
 	#  ${total_flacs_length}:  Length of the total # of FLAC files
 	#                     34:  Length of:
@@ -1223,7 +1223,7 @@ __print_aucdtect_spectrogram () {
 	#                            5 Spaces
 	#                            3 Characters: [/]
 	#                            2 Gap and ellipsis (…)
-	max_filename_length="$(( ${columns} - ${#iteration} - ${total_flacs_length} - 34 ))"
+	max_filename_length="$(( $(__columns) - ${#iteration} - ${total_flacs_length} - 34 ))"
 
 	# Create and cull filename if needed returned as ${filename}
 	__filename
@@ -1237,7 +1237,7 @@ __print_aucdtect_skip () {
 	# This is the maximum length of a string to be displayed based on column width,
 	# obtained via the number of columns minus the length of displayed characters:
 	#
-	#             ${columns}:  Width of terminal
+	#           $(__columns):  Width of terminal
 	#          ${#iteration}:  Length of the # of FLACs processed
 	#  ${total_flacs_length}:  Length of the total # of FLAC files
 	#                     21:  Length of:
@@ -1245,7 +1245,7 @@ __print_aucdtect_skip () {
 	#                            7 Spaces
 	#                            1 Asterisk: *
 	#                            2 Gap and ellipsis (…)
-	max_filename_length="$(( ${columns} - 21 ))"
+	max_filename_length="$(( $(__columns) - 21 ))"
 
 	# Create and cull filename if needed returned as ${filename}
 	__filename
@@ -1259,7 +1259,7 @@ __print_ok_tag () {
 	# This is the maximum length of a string to be displayed based on column width,
 	# obtained via the number of columns minus the length of displayed characters:
 	#
-	#             ${columns}:  Width of terminal
+	#           $(__columns):  Width of terminal
 	#          ${#iteration}:  Length of the # of FLACs processed
 	#  ${total_flacs_length}:  Length of the total # of FLAC files
 	#                     18:  Length of:
@@ -1267,7 +1267,7 @@ __print_ok_tag () {
 	#                            7 Spaces
 	#                            3 Characters: [/]
 	#                            2 Gap and ellipsis (…)
-	max_filename_length="$(( ${columns} - ${#iteration} - ${total_flacs_length} - 18 ))"
+	max_filename_length="$(( $(__columns) - ${#iteration} - ${total_flacs_length} - 18 ))"
 
 	# Create and cull filename if needed returned as ${filename}
 	__filename
@@ -1281,7 +1281,7 @@ __print_level_same_compression () {
 	# This is the maximum length of a string to be displayed based on column width,
 	# obtained via the number of columns minus the length of displayed characters:
 	#
-	#             ${columns}:  Width of terminal
+	#           $(__columns):  Width of terminal
 	#          ${#iteration}:  Length of the # of FLACs processed
 	#  ${total_flacs_length}:  Length of the total # of FLAC files
 	#                     32:  Length of:
@@ -1289,7 +1289,7 @@ __print_level_same_compression () {
 	#                            5 Spaces
 	#                            3 Characters: [/]
 	#                            2 Gap and ellipsis (…)
-	max_filename_length="$(( ${columns} - ${#iteration} - ${total_flacs_length} - 32 ))"
+	max_filename_length="$(( $(__columns) - ${#iteration} - ${total_flacs_length} - 32 ))"
 
 	# Create and cull filename if needed returned as ${filename}
 	__filename
@@ -1303,7 +1303,7 @@ __print_analyzing_tags () {
 	# This is the maximum length of a string to be displayed based on column width,
 	# obtained via the number of columns minus the length of displayed characters:
 	#
-	#             ${columns}:  Width of terminal
+	#           $(__columns):  Width of terminal
 	#          ${#iteration}:  Length of the # of FLACs processed
 	#  ${total_flacs_length}:  Length of the total # of FLAC files
 	#                     30:  Length of:
@@ -1311,7 +1311,7 @@ __print_analyzing_tags () {
 	#                            7 Spaces
 	#                            3 Characters: [/]
 	#                            2 Gap and ellipsis (…)
-	max_filename_length="$(( ${columns} - ${#iteration} - ${total_flacs_length} - 30 ))"
+	max_filename_length="$(( $(__columns) - ${#iteration} - ${total_flacs_length} - 30 ))"
 
 	# Create and cull filename if needed returned as ${filename}
 	__filename
@@ -1325,7 +1325,7 @@ __print_applying_tags () {
 	# This is the maximum length of a string to be displayed based on column width,
 	# obtained via the number of columns minus the length of displayed characters:
 	#
-	#             ${columns}:  Width of terminal
+	#           $(__columns):  Width of terminal
 	#          ${#iteration}:  Length of the # of FLACs processed
 	#  ${total_flacs_length}:  Length of the total # of FLAC files
 	#                     29:  Length of:
@@ -1333,7 +1333,7 @@ __print_applying_tags () {
 	#                            7 Spaces
 	#                            3 Characters: [/]
 	#                            2 Gap and ellipsis (…)
-	max_filename_length="$(( ${columns} - ${#iteration} - ${total_flacs_length} - 29 ))"
+	max_filename_length="$(( $(__columns) - ${#iteration} - ${total_flacs_length} - 29 ))"
 
 	# Create and cull filename if needed returned as ${filename}
 	__filename
@@ -1347,7 +1347,7 @@ __print_prune_flac () {
 	# This is the maximum length of a string to be displayed based on column width,
 	# obtained via the number of columns minus the length of displayed characters:
 	#
-	#             ${columns}:  Width of terminal
+	#           $(__columns):  Width of terminal
 	#          ${#iteration}:  Length of the # of FLACs processed
 	#  ${total_flacs_length}:  Length of the total # of FLAC files
 	#                     30:  Length of:
@@ -1355,7 +1355,7 @@ __print_prune_flac () {
 	#                            5 Spaces
 	#                            3 Characters: [/]
 	#                            2 Gap and ellipsis (…)
-	max_filename_length="$(( ${columns} - ${#iteration} - ${total_flacs_length} - 30 ))"
+	max_filename_length="$(( $(__columns) - ${#iteration} - ${total_flacs_length} - 30 ))"
 
 	# Create and cull filename if needed returned as ${filename}
 	__filename
@@ -1369,7 +1369,7 @@ __print_retag_analyze_interrupt () {
 	# This is the maximum length of a string to be displayed based on column width,
 	# obtained via the number of columns minus the length of displayed characters:
 	#
-	#             ${columns}:  Width of terminal
+	#           $(__columns):  Width of terminal
 	#          ${#iteration}:  Length of the # of FLACs processed
 	#  ${total_flacs_length}:  Length of the total # of FLAC files
 	#                     27:  Length of:
@@ -1377,7 +1377,7 @@ __print_retag_analyze_interrupt () {
 	#                            7 Spaces
 	#                            3 Characters: [/]
 	#                            2 Gap and ellipsis (…)
-	max_filename_length="$(( ${columns} - ${#iteration} - ${total_flacs_length} - 27 ))"
+	max_filename_length="$(( $(__columns) - ${#iteration} - ${total_flacs_length} - 27 ))"
 
 	# Create and cull filename if needed returned as ${filename}
 	__filename
@@ -1391,7 +1391,7 @@ __print_retag_apply_interrupt () {
 	# This is the maximum length of a string to be displayed based on column width,
 	# obtained via the number of columns minus the length of displayed characters:
 	#
-	#             ${columns}:  Width of terminal
+	#           $(__columns):  Width of terminal
 	#          ${#iteration}:  Length of the # of FLACs processed
 	#  ${total_flacs_length}:  Length of the total # of FLAC files
 	#                     27:  Length of:
@@ -1399,7 +1399,7 @@ __print_retag_apply_interrupt () {
 	#                            7 Spaces
 	#                            3 Characters: [/]
 	#                            2 Gap and ellipsis (…)
-	max_filename_length="$(( ${columns} - ${#iteration} - ${total_flacs_length} - 27 ))"
+	max_filename_length="$(( $(__columns) - ${#iteration} - ${total_flacs_length} - 27 ))"
 
 	# Create and cull filename if needed returned as ${filename}
 	__filename
@@ -1413,7 +1413,7 @@ __print_interrupt () {
 	# This is the maximum length of a string to be displayed based on column width,
 	# obtained via the number of columns minus the length of displayed characters:
 	#
-	#             ${columns}:  Width of terminal
+	#           $(__columns):  Width of terminal
 	#          ${#iteration}:  Length of the # of FLACs processed
 	#  ${total_flacs_length}:  Length of the total # of FLAC files
 	#                     25:  Length of:
@@ -1421,7 +1421,7 @@ __print_interrupt () {
 	#                            5 Spaces
 	#                            3 Characters: [/]
 	#                            2 Gap and ellipsis (…)
-	max_filename_length="$(( ${columns} - ${#iteration} - ${total_flacs_length} - 25 ))"
+	max_filename_length="$(( $(__columns) - ${#iteration} - ${total_flacs_length} - 25 ))"
 
 	# Create and cull filename if needed returned as ${filename}
 	__filename
@@ -2024,8 +2024,31 @@ __filename () {
 	current_filename_length="$(wc -L <<< "${filename}")"
 
 	# Cull filename and add an ellipsis if the filename is too long
-	if [[ "${current_filename_length}" -gt "${max_filename_length}" ]] ; then
-		filename="${filename::${max_filename_length}}…"
+	if (( current_filename_length > max_filename_length )) ; then
+
+		# Grab the current filename length after it's been culled by the maximum
+		# length allowed by ${columns}
+		culled_filename_length="$(wc -L <<< "${filename::${max_filename_length}}")"
+
+		# Set a placeholder ${max_filename_length} to be changed in the loop
+		# below
+		max_length="${max_filename_length}"
+
+		# Keep looping until the culled filename length equals the maximum
+		# length allowed via ${columns}
+		until (( culled_filename_length == max_filename_length )) ; do
+
+			# Decrement placeholder ${max_length} by one (1)
+			((--max_length))
+			
+			# Obtain the new culled filename length
+			culled_filename_length="$(wc -L <<< "${filename::${max_length}}")"
+
+		done
+
+		# Set the culled filename to display slicing the correct amount of
+		# characters determined from ${max_length}
+		filename="${filename::${max_length}}…"
 	fi
 }
 
