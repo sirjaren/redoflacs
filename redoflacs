@@ -2028,7 +2028,7 @@ __filename () {
 
 		# Grab the current filename length after it's been culled by the maximum
 		# length allowed by ${columns}
-		culled_filename_length="$(wc -L <<< "${filename::${max_filename_length}}")"
+		culled_filename_length="$(wc -L <<< "${filename:0:${max_filename_length}}")"
 
 		# Set a placeholder ${max_filename_length} to be changed in the loop
 		# below
@@ -2042,13 +2042,13 @@ __filename () {
 			((--max_length))
 			
 			# Obtain the new culled filename length
-			culled_filename_length="$(wc -L <<< "${filename::${max_length}}")"
+			culled_filename_length="$(wc -L <<< "${filename:0:${max_length}}")"
 
 		done
 
 		# Set the culled filename to display slicing the correct amount of
 		# characters determined from ${max_length}
-		filename="${filename::${max_length}}…"
+		filename="${filename:0:${max_length}}…"
 	fi
 }
 
