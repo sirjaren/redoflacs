@@ -909,13 +909,13 @@ __print_compressing_flac () {
 	#
 	#           $(__columns):  Width of terminal
 	#          ${#iteration}:  Length of the # of FLACs processed
-	#  ${total_flacs_length}:  Length of the total # of FLAC files
+	#     total_flacs_length:  Length of the total # of FLAC files
 	#                     30:  Length of:
 	#                            [ Compressing FLAC ] (20)
 	#                            5 Spaces
 	#                            3 Characters: [/]
 	#                            2 Gap and ellipsis (…)
-	max_filename_length="$(( $(__columns) - ${#iteration} - ${total_flacs_length} - 30 ))"
+	max_filename_length="$(( $(__columns) - ${#iteration} - total_flacs_length - 30 ))"
 
 	# Create and cull filename if needed returned as ${filename}
 	__filename
@@ -931,13 +931,13 @@ __print_test_replaygain () {
 	#
 	#           $(__columns):  Width of terminal
 	#          ${#iteration}:  Length of the # of FLACs processed
-	#  ${total_flacs_length}:  Length of the total # of FLAC files
+	#     total_flacs_length:  Length of the total # of FLAC files
 	#                     34:  Length of:
 	#                            [ Testing ReplayGain ] (22)
 	#                            7 Spaces
 	#                            3 Characters: [/]
 	#                            2 Gap and ellipsis (…)
-	max_filename_length="$(( $(__columns) - ${#iteration} - ${total_flacs_length} - 34 ))"
+	max_filename_length="$(( $(__columns) - ${#iteration} - total_flacs_length - 34 ))"
 
 	# Create and cull filename if needed returned as ${filename}
 	__filename
@@ -975,13 +975,13 @@ __print_testing_flac () {
 	#
 	#           $(__columns):  Width of terminal
 	#          ${#iteration}:  Length of the # of FLACs processed
-	#  ${total_flacs_length}:  Length of the total # of FLAC files
+	#     total_flacs_length:  Length of the total # of FLAC files
 	#                     26:  Length of:
 	#                            [ Testing FLAC ] (16)
 	#                            5 Spaces
 	#                            3 Characters: [/]
 	#                            2 Gap and ellipsis (…)
-	max_filename_length="$(( $(__columns) - ${#iteration} - ${total_flacs_length} - 26 ))"
+	max_filename_length="$(( $(__columns) - ${#iteration} - total_flacs_length - 26 ))"
 
 	# Create and cull filename if needed returned as ${filename}
 	__filename
@@ -997,7 +997,7 @@ __print_failed_flac () {
 	#
 	#           $(__columns):  Width of terminal
 	#          ${#iteration}:  Length of the # of FLACs processed
-	#  ${total_flacs_length}:  Length of the total # of FLAC files
+	#     total_flacs_length:  Length of the total # of FLAC files
 	#                     20:  Length of:
 	#                            [ Failed ] (10)
 	#                            7 Spaces
@@ -1019,13 +1019,13 @@ __print_checking_md5 () {
 	#
 	#           $(__columns):  Width of terminal
 	#          ${#iteration}:  Length of the # of FLACs processed
-	#  ${total_flacs_length}:  Length of the total # of FLAC files
+	#     total_flacs_length:  Length of the total # of FLAC files
 	#                     26:  Length of:
 	#                            [ Checking MD5 ] (16)
 	#                            5 Spaces
 	#                            3 Characters: [/]
 	#                            2 Gap and ellipsis (…)
-	max_filename_length="$(( $(__columns) - ${#iteration} - ${total_flacs_length} - 26 ))"
+	max_filename_length="$(( $(__columns) - ${#iteration} - total_flacs_length - 26 ))"
 
 	# Create and cull filename if needed returned as ${filename}
 	__filename
@@ -1041,13 +1041,13 @@ __print_ok_flac () {
 	#
 	#           $(__columns):  Width of terminal
 	#          ${#iteration}:  Length of the # of FLACs processed
-	#  ${total_flacs_length}:  Length of the total # of FLAC files
+	#     total_flacs_length:  Length of the total # of FLAC files
 	#                     16:  Length of:
 	#                            [ ok ] (6)
 	#                            5 Spaces
 	#                            3 Characters: [/]
 	#                            2 Gap and ellipsis (…)
-	max_filename_length="$(( $(__columns) - ${#iteration} - ${total_flacs_length} - 16 ))"
+	max_filename_length="$(( $(__columns) - ${#iteration} - total_flacs_length - 16 ))"
 
 	# Create and cull filename if needed returned as ${filename}
 	__filename
@@ -1063,13 +1063,13 @@ __print_ok_replaygain_file () {
 	#
 	#           $(__columns):  Width of terminal
 	#          ${#iteration}:  Length of the # of FLACs processed
-	#  ${total_flacs_length}:  Length of the total # of FLAC files
+	#     total_flacs_length:  Length of the total # of FLAC files
 	#                     18:  Length of:
 	#                            [ ok ] (6)
 	#                            7 Spaces
 	#                            3 Characters: [/]
 	#                            2 Gap and ellipsis (…)
-	max_filename_length="$(( $(__columns) - ${#iteration} - ${total_flacs_length} - 18 ))"
+	max_filename_length="$(( $(__columns) - ${#iteration} - total_flacs_length - 18 ))"
 
 	# Create and cull filename if needed returned as ${filename}
 	__filename
@@ -1085,13 +1085,13 @@ __print_interrupt_replaygain_file () {
 	#
 	#           $(__columns):  Width of terminal
 	#          ${#iteration}:  Length of the # of FLACs processed
-	#  ${total_flacs_length}:  Length of the total # of FLAC files
+	#     total_flacs_length:  Length of the total # of FLAC files
 	#                     27:  Length of:
 	#                            [ Interrupted ] (15)
 	#                            7 Spaces
 	#                            3 Characters: [/]
 	#                            2 Gap and ellipsis (…)
-	max_filename_length="$(( $(__columns) - ${#iteration} - ${total_flacs_length} - 27 ))"
+	max_filename_length="$(( $(__columns) - ${#iteration} - total_flacs_length - 27 ))"
 
 	# Create and cull filename if needed returned as ${filename}
 	__filename
@@ -1173,13 +1173,13 @@ __print_aucdtect_flac () {
 	#
 	#           $(__columns):  Width of terminal
 	#          ${#iteration}:  Length of the # of FLACs processed
-	#  ${total_flacs_length}:  Length of the total # of FLAC files
+	#     total_flacs_length:  Length of the total # of FLAC files
 	#                     29:  Length of:
 	#                            [ Validating FLAC ] (19)
 	#                            5 Spaces
 	#                            3 Characters: [/]
 	#                            2 Gap and ellipsis (…)
-	max_filename_length="$(( $(__columns) - ${#iteration} - ${total_flacs_length} - 29 ))"
+	max_filename_length="$(( $(__columns) - ${#iteration} - total_flacs_length - 29 ))"
 
 	# Create and cull filename if needed returned as ${filename}
 	__filename
@@ -1195,7 +1195,7 @@ __print_aucdtect_issue () {
 	#
 	#           $(__columns):  Width of terminal
 	#          ${#iteration}:  Length of the # of FLACs processed
-	#  ${total_flacs_length}:  Length of the total # of FLAC files
+	#     total_flacs_length:  Length of the total # of FLAC files
 	#                     19:  Length of:
 	#                            [ Issue ] (9)
 	#                            7 Spaces
@@ -1217,13 +1217,13 @@ __print_aucdtect_spectrogram () {
 	#
 	#           $(__columns):  Width of terminal
 	#          ${#iteration}:  Length of the # of FLACs processed
-	#  ${total_flacs_length}:  Length of the total # of FLAC files
+	#     total_flacs_length:  Length of the total # of FLAC files
 	#                     34:  Length of:
 	#                            [ Creating Spectrogram ] (24)
 	#                            5 Spaces
 	#                            3 Characters: [/]
 	#                            2 Gap and ellipsis (…)
-	max_filename_length="$(( $(__columns) - ${#iteration} - ${total_flacs_length} - 34 ))"
+	max_filename_length="$(( $(__columns) - ${#iteration} - total_flacs_length - 34 ))"
 
 	# Create and cull filename if needed returned as ${filename}
 	__filename
@@ -1239,7 +1239,7 @@ __print_aucdtect_skip () {
 	#
 	#           $(__columns):  Width of terminal
 	#          ${#iteration}:  Length of the # of FLACs processed
-	#  ${total_flacs_length}:  Length of the total # of FLAC files
+	#     total_flacs_length:  Length of the total # of FLAC files
 	#                     21:  Length of:
 	#                            [ Skipped ] (11)
 	#                            7 Spaces
@@ -1261,13 +1261,13 @@ __print_ok_tag () {
 	#
 	#           $(__columns):  Width of terminal
 	#          ${#iteration}:  Length of the # of FLACs processed
-	#  ${total_flacs_length}:  Length of the total # of FLAC files
+	#     total_flacs_length:  Length of the total # of FLAC files
 	#                     18:  Length of:
 	#                            [ ok ] (6)
 	#                            7 Spaces
 	#                            3 Characters: [/]
 	#                            2 Gap and ellipsis (…)
-	max_filename_length="$(( $(__columns) - ${#iteration} - ${total_flacs_length} - 18 ))"
+	max_filename_length="$(( $(__columns) - ${#iteration} - total_flacs_length - 18 ))"
 
 	# Create and cull filename if needed returned as ${filename}
 	__filename
@@ -1283,13 +1283,13 @@ __print_level_same_compression () {
 	#
 	#           $(__columns):  Width of terminal
 	#          ${#iteration}:  Length of the # of FLACs processed
-	#  ${total_flacs_length}:  Length of the total # of FLAC files
+	#     total_flacs_length:  Length of the total # of FLAC files
 	#                     32:  Length of:
 	#                            [ Already At Level ${compression_level} ] (22)
 	#                            5 Spaces
 	#                            3 Characters: [/]
 	#                            2 Gap and ellipsis (…)
-	max_filename_length="$(( $(__columns) - ${#iteration} - ${total_flacs_length} - 32 ))"
+	max_filename_length="$(( $(__columns) - ${#iteration} - total_flacs_length - 32 ))"
 
 	# Create and cull filename if needed returned as ${filename}
 	__filename
@@ -1305,13 +1305,13 @@ __print_analyzing_tags () {
 	#
 	#           $(__columns):  Width of terminal
 	#          ${#iteration}:  Length of the # of FLACs processed
-	#  ${total_flacs_length}:  Length of the total # of FLAC files
+	#     total_flacs_length:  Length of the total # of FLAC files
 	#                     30:  Length of:
 	#                            [ Analyzing Tags ] (18)
 	#                            7 Spaces
 	#                            3 Characters: [/]
 	#                            2 Gap and ellipsis (…)
-	max_filename_length="$(( $(__columns) - ${#iteration} - ${total_flacs_length} - 30 ))"
+	max_filename_length="$(( $(__columns) - ${#iteration} - total_flacs_length - 30 ))"
 
 	# Create and cull filename if needed returned as ${filename}
 	__filename
@@ -1327,13 +1327,13 @@ __print_applying_tags () {
 	#
 	#           $(__columns):  Width of terminal
 	#          ${#iteration}:  Length of the # of FLACs processed
-	#  ${total_flacs_length}:  Length of the total # of FLAC files
+	#     total_flacs_length:  Length of the total # of FLAC files
 	#                     29:  Length of:
 	#                            [ Applying Tags ] (17)
 	#                            7 Spaces
 	#                            3 Characters: [/]
 	#                            2 Gap and ellipsis (…)
-	max_filename_length="$(( $(__columns) - ${#iteration} - ${total_flacs_length} - 29 ))"
+	max_filename_length="$(( $(__columns) - ${#iteration} - total_flacs_length - 29 ))"
 
 	# Create and cull filename if needed returned as ${filename}
 	__filename
@@ -1349,13 +1349,13 @@ __print_prune_flac () {
 	#
 	#           $(__columns):  Width of terminal
 	#          ${#iteration}:  Length of the # of FLACs processed
-	#  ${total_flacs_length}:  Length of the total # of FLAC files
+	#     total_flacs_length:  Length of the total # of FLAC files
 	#                     30:  Length of:
 	#                            [ Pruning Metadata ] (20)
 	#                            5 Spaces
 	#                            3 Characters: [/]
 	#                            2 Gap and ellipsis (…)
-	max_filename_length="$(( $(__columns) - ${#iteration} - ${total_flacs_length} - 30 ))"
+	max_filename_length="$(( $(__columns) - ${#iteration} - total_flacs_length - 30 ))"
 
 	# Create and cull filename if needed returned as ${filename}
 	__filename
@@ -1371,13 +1371,13 @@ __print_retag_analyze_interrupt () {
 	#
 	#           $(__columns):  Width of terminal
 	#          ${#iteration}:  Length of the # of FLACs processed
-	#  ${total_flacs_length}:  Length of the total # of FLAC files
+	#     total_flacs_length:  Length of the total # of FLAC files
 	#                     27:  Length of:
 	#                            [ Interrupted ] (15)
 	#                            7 Spaces
 	#                            3 Characters: [/]
 	#                            2 Gap and ellipsis (…)
-	max_filename_length="$(( $(__columns) - ${#iteration} - ${total_flacs_length} - 27 ))"
+	max_filename_length="$(( $(__columns) - ${#iteration} - total_flacs_length - 27 ))"
 
 	# Create and cull filename if needed returned as ${filename}
 	__filename
@@ -1393,13 +1393,13 @@ __print_retag_apply_interrupt () {
 	#
 	#           $(__columns):  Width of terminal
 	#          ${#iteration}:  Length of the # of FLACs processed
-	#  ${total_flacs_length}:  Length of the total # of FLAC files
+	#     total_flacs_length:  Length of the total # of FLAC files
 	#                     27:  Length of:
 	#                            [ Interrupted ] (15)
 	#                            7 Spaces
 	#                            3 Characters: [/]
 	#                            2 Gap and ellipsis (…)
-	max_filename_length="$(( $(__columns) - ${#iteration} - ${total_flacs_length} - 27 ))"
+	max_filename_length="$(( $(__columns) - ${#iteration} - total_flacs_length - 27 ))"
 
 	# Create and cull filename if needed returned as ${filename}
 	__filename
@@ -1415,13 +1415,13 @@ __print_interrupt () {
 	#
 	#           $(__columns):  Width of terminal
 	#          ${#iteration}:  Length of the # of FLACs processed
-	#  ${total_flacs_length}:  Length of the total # of FLAC files
+	#     total_flacs_length:  Length of the total # of FLAC files
 	#                     25:  Length of:
 	#                            [ Interrupted ] (15)
 	#                            5 Spaces
 	#                            3 Characters: [/]
 	#                            2 Gap and ellipsis (…)
-	max_filename_length="$(( $(__columns) - ${#iteration} - ${total_flacs_length} - 25 ))"
+	max_filename_length="$(( $(__columns) - ${#iteration} - total_flacs_length - 25 ))"
 
 	# Create and cull filename if needed returned as ${filename}
 	__filename
@@ -1734,7 +1734,7 @@ __print_version () {
 __new_config () {
 	# Check if configuration file exists based of ${EUID}.  If it doesn't
 	# exist, create one
-	if [[ "${EUID}" -eq 0 ]] ; then
+	if (( EUID == 0 )) ; then
 		# User is root
 		#
 		# Configuration file location
@@ -1771,7 +1771,7 @@ __new_config () {
 	__info "configuration file to your old configuration file" ; __newline
 	__info "name.  Here is the command you could use:" ; __newline
 
-	if [[ "${EUID}" -eq 0 ]] ; then
+	if (( EUID == 0 )) ; then
 		__info "   mv ${config_location} /etc/redoflacs.conf" ; __newline
 	else
 		__info "   mv ${config_location} ${HOME}/.config/redoflacs/config" ; __newline
@@ -1955,7 +1955,7 @@ __parse_config () {
 __check_config_version () {
 	# Check if configuration file exists based of ${EUID}.  If it doesn't
 	# exist, create one
-	if [[ "${EUID}" -eq 0 ]] ; then
+	if (( EUID == 0 )) ; then
 		# User is root
 		#
 		# Configuration file location
@@ -1987,7 +1987,7 @@ __check_config_version () {
 	if [[ "${user_revision}" =~ ^[0-9]+$ ]] ; then
 		# If ${script_revision} is greater than ${user_revision}
 		# warn user and display countdown
-		if [[ "${script_revision}" -gt "${user_revision}" ]] ; then
+		if (( script_revision > user_revision )) ; then
 			# Display warning and countdown
 			__countdown_config ; __newline 2
 		fi
@@ -2066,8 +2066,8 @@ __current_length () {
 	#
 	# Only print out ${current_length} if the current filename length is less
 	# than the maximum file length allowed
-	if [[ "${current_filename_length}" -lt "${max_filename_length}" ]] ; then
-		printf "%s" "$(( ${max_filename_length} - ${current_filename_length} + 1 ))"
+	if (( current_filename_length < max_filename_length )) ; then
+		printf %d $(( max_filename_length - current_filename_length + 1 ))
 	fi
 }
 
@@ -2076,7 +2076,7 @@ __current_length () {
 __find_cores () {
 	# Check if /proc is mounted by comparing device numbers of
 	# /proc and / and see if they don't match (ie, /proc is mounted)
-	if [[ "$(stat -c %d%D /proc)" == "$(stat -c %d%D /)" ]] ; then
+	if (( $(stat -c %d%D /proc) == $(stat -c %d%D /) )) ; then
 		# /proc is not mounted, default to 2 jobs
 		jobs_display="(Default)"
 		jobs=2
@@ -2122,7 +2122,7 @@ __newline () {
 	fi
 
 	# Print the number of newlines specified
-	for (( count=0; count < ${newlines}; count++ )) ; do
+	for (( count=0; count < newlines; count++ )) ; do
 		printf "\n"
 	done
 }
@@ -2200,7 +2200,7 @@ __top_banner () {
 	"            Log Directory " "|" " " "${error_log}/"
 
 	# Configuration directory
-	if [[ "${EUID}" -eq 0 ]] ; then
+	if (( EUID == 0 )) ; then
 		# Root: System-wide configuration
 		config_directory="/etc/"
 	else
@@ -2241,7 +2241,7 @@ __processed_flacs_ok () {
 	#
 	#  ' * Finding FLAC files to process...'  (35 characters)
 	#                              '[ ok ] '  ( 7 characters)
-	printf "${normal}%$(( ${columns} - 42 ))s${blue}%s${normal}%s${green}%s${normal}%s${blue}%s${normal}" \
+	printf "${normal}%$((columns - 42))s${blue}%s${normal}%s${green}%s${normal}%s${blue}%s${normal}" \
 	"" "[" " " "ok" " " "]"
 }
 
@@ -2278,7 +2278,7 @@ __countdown_metadata () {
 	__info "Starting in: "
 
 	# 10 second countdown
-	for (( count=10; count>0; count-- )); do
+	for (( count=10; count > 0; count-- )); do
 		printf "${red}%s${normal}%s" "$count" " "
 		sleep 1
 	done
@@ -2307,7 +2307,7 @@ __countdown_config () {
 	__info "Starting in: "
 
 	# 10 second countdown
-	for (( count=10; count>0; count-- )); do
+	for (( count=10; count > 0; count-- )); do
 		printf "${red}%s${normal}%s" "$count" " "
 		sleep 1
 	done
@@ -2391,13 +2391,13 @@ __kill_jobs () {
 # with the script
 __process_positional_parameters () {
 	# If no arguments are made to the script show usage & short help
-	if [[ "${#}" -eq 0 ]] ; then
+	if (( ${#} == 0 )) ; then
 		__short_help
 		exit 1
 	fi
 
 	# Add case where only one argument is specified
-	if [[ "${#}" -eq 1 ]] ; then
+	if (( ${#} == 1 )) ; then
 		case "${1}" in
 			--version|-v)
 				__print_version
@@ -2432,7 +2432,7 @@ __process_positional_parameters () {
 
 	# Add case where two arguments are specified and the
 	# arguments called are not to have anything after them
-	if [[ "${#}" -eq 2 ]] ; then
+	if (( ${#} == 2 )) ; then
 		case "${1}" in
 			--jobs=[0-9]*|-j[0-9]*)
 				__usage >&2
@@ -2471,7 +2471,7 @@ __process_positional_parameters () {
 	done
 
 	# If there are 0 (zero) directories or more than 1, exit script
-	if [[ "${#non_arguments_array[@]}" -eq 0 || "${#non_arguments_array[@]}" -gt 1 ]] ; then
+	if (( ${#non_arguments_array[@]} == 0 || ${#non_arguments_array[@]} > 1 )) ; then
 		__usage >&2
 		exit 1
 	fi
@@ -3069,7 +3069,7 @@ __operation_summary () {
 
 				# If ${#fail_count} is one, change the message
 				# to singular
-				if [[ "${#fail_count}" -eq 1 ]] ; then
+				if (( ${#fail_count} == 1 )) ; then
 					fail_count_message="${#fail_count} File Failed"
 				else
 					fail_count_message="${#fail_count} Files Failed"
@@ -3323,14 +3323,14 @@ __run_parallel_files () {
 
 	# If the FLAC files to process are greater than the # of ${jobs}
 	# available, continue processing them, else quit
-	if [[ "${#total_flacs_array[@]}" -gt "${jobs}" ]] ; then
+	if (( ${#total_flacs_array[@]} > jobs )) ; then
 
 		# After each newline is read from FIFO, start a new process
 		while read ; do
 
 			# If current number of FLACs to process is less than total FLACs
 			# found, add another FLAC to process
-			if [[ "${iteration}" -lt "$(( ${#total_flacs_array[@]} - 1 ))" ]] ; then
+			if (( iteration < (${#total_flacs_array[@]} - 1) )) ; then
 				i="${total_flacs_array[${iteration}]}"
 				((iteration++))
 
@@ -3377,14 +3377,14 @@ __run_parallel_directories () {
 
 	# If the directories to process are greater than the # of ${jobs}
 	# available, continue processing them, else quit
-	if [[ "${#flac_directories_array[@]}" -gt "${jobs}" ]] ; then
+	if (( ${#flac_directories_array[@]} > jobs )) ; then
 
 		# After each newline is read from FIFO, start a new process
 		while read ; do
 
 			# If current number of directories to process is less than total
 			# directories found, add another directory to process
-			if [[ "${iteration}" -lt "$(( ${#flac_directories_array[@]} - 1 ))" ]] ; then
+			if (( iteration < (${#flac_directories_array[@]} - 1) )) ; then
 				i="${flac_directories_array[${iteration}]}"
 				((iteration++))
 
@@ -3435,7 +3435,7 @@ __operation_test_replaygain () {
 	wait "${!}"
 
 	# Exit code 130 is SIGINT so only check for exit code '1'
-	if [[ "${?}" -eq "1" ]] ; then
+	if (( ${?} == 1 )) ; then
 
 		# File is not a FLAC file, display failed
 		__print_failed_flac
@@ -3487,7 +3487,7 @@ __operation_replaygain_noforce () {
 
 		# Test if any ReplayGain values are empty (if there are less
 		# than 5 values in the replaygain array)
-		if [[ "${#replaygain_array[@]}" -lt 5 ]] ; then
+		if (( ${#replaygain_array[@]} < 5 )) ; then
 			# At _least_ one tag is missing from current file, so
 			# apply new ReplayGain values
 			#
@@ -3502,7 +3502,7 @@ __operation_replaygain_noforce () {
 			wait "${!}"
 
 			# Exit code 130 is SIGINT so only check for exit code '1'
-			if [[ "${?}" -eq 1 ]] ; then
+			if (( ${?} == 1 )) ; then
 
 				# Print failed applying replaygain values to FLAC file diretory
 				__print_failed_replaygain
@@ -3557,7 +3557,7 @@ __operation_replaygain_force () {
 	wait "${!}"
 
 	# Exit code 130 is SIGINT so only check for exit code '1'
-	if [[ "${?}" -eq 1 ]] ; then
+	if (( ${?} == 1 )) ; then
 
 		# Print failed applying replaygain values to FLAC file diretory
 		__print_failed_replaygain
@@ -3596,7 +3596,7 @@ __operation_compress () {
 	COMPRESSION="$(metaflac --show-tag=COMPRESSION "${i}" 2> /dev/null)"
 	COMPRESSION="${COMPRESSION#*=}"
 
-	if [[ "${COMPRESSION}" != "${compression_level}" ]] ; then
+	if (( COMPRESSION != compression_level )) ; then
 		__print_compressing_flac
 
 		# Compress FLAC file with user defined COMPRESSION and send to
@@ -3608,7 +3608,7 @@ __operation_compress () {
 		wait "${!}"
 
 		# Exit code 130 is SIGINT so only check for exit code '1'
-		if [[ "${?}" -eq 1 ]] ; then
+		if (( ${?} == 1 )) ; then
 
 			# File is not a FLAC file, display failed
 			__print_failed_flac
@@ -3649,7 +3649,7 @@ __operation_compress () {
 			wait "${!}"
 
 			# Exit code 130 is SIGINT so only check for exit code '1'
-			if [[ "${?}" -eq 1 ]] ; then
+			if (( ${?} == 1 )) ; then
 
 				# File is not a FLAC file, display failed
 				__print_failed_flac
@@ -3694,7 +3694,7 @@ __operation_test () {
 	wait "${!}"
 
 	# Exit code 130 is SIGINT so only check for exit code '1'
-	if [[ "${?}" -eq 1 ]] ; then
+	if (( ${?} == 1 )) ; then
 
 		# File is not a FLAC file, display failed
 		__print_failed_flac
@@ -3732,7 +3732,7 @@ __operation_aucdtect () {
 	bits="$(metaflac --show-bps "${i}" 2> /dev/null)"
 
 	# Exit code 130 is SIGINT so only check for exit code '1'
-	if [[ "${?}" -eq "1" ]] ; then
+	if (( ${?} == 1 )) ; then
 
 		# File is not a FLAC file, display failed
 		__print_failed_flac
@@ -3752,7 +3752,7 @@ __operation_aucdtect () {
 	# Skip the FLAC file if it has a bit depth greater
 	# than 16 since auCDtect doesn't support audio
 	# files with a higher resolution than a CD.
-	elif [[ "${bits}" -gt "16" ]] ; then
+	elif (( bits > 16 )) ; then
 
 		# Print skipped FLAC file and log issue
 		__print_aucdtect_skip
@@ -3787,7 +3787,7 @@ __operation_aucdtect () {
 		# Exit code 130 is SIGINT so only check for exit code '1'
 		# If FLAC file failed decoding to WAV, log error, otherwise
 		# continue processing
-		if [[ "${?}" -eq "1" ]] ; then
+		if (( ${?} == 1 )) ; then
 
 			# Print FLAC failed and log issue
 			__print_failed_flac
@@ -3821,7 +3821,7 @@ __operation_aucdtect () {
 			wait "${!}"
 
 			# Exit code 130 is SIGINT so only check for exit code '1'
-			if [[ "${?}" -eq "1" ]] ; then
+			if (( ${?} == 1 )) ; then
 
 				# Print FLAC failed and log issue
 				__print_failed_flac
@@ -3871,7 +3871,7 @@ __operation_aucdtect () {
 					wait "${!}"
 
 					# Exit code 130 is SIGINT so only check for exit code '1'
-					if [[ "${?}" -eq "1" ]] ; then
+					if (( ${?} == 1 )) ; then
 
 						# Print FLAC failed and log issue
 						__print_failed_flac
@@ -4012,7 +4012,7 @@ __operation_md5_check () {
 	md5_sum="$(metaflac --show-md5sum "${i}" 2> /dev/null)"
 
 	# Exit code 130 is SIGINT so only check for exit code '1'
-	if [[ "${?}" -eq "1" ]] ; then
+	if (( ${?} == 1 )) ; then
 
 		# File is not a FLAC file, display failed
 		__print_failed_flac
@@ -4031,7 +4031,9 @@ __operation_md5_check () {
 		# Add one to fail fd
 		printf '.' >&5
 
-	# FLAC file is real, check for unset MD5 checksum
+	# FLAC file is real, check for unset MD5 checksum.  We cannot use an
+	# arithmetic expression as any amount of 0's will equal the expression
+	# below
 	elif [[ "${md5_sum}" == "00000000000000000000000000000000" ]] ; then
 
 		# File is not a FLAC file, display failed
@@ -4071,7 +4073,7 @@ __operation_analyze_tags () {
 	check_flac="$(metaflac --show-md5sum "${i}" 2>&1)"
 
 	# If above command return anything other than '0', log output
-	if [[ "${?}" -ne "0" ]] ; then
+	if (( ${?} != 0 )) ; then
 
 		# File is not a FLAC file, display failed
 		__print_failed_flac
@@ -4149,7 +4151,7 @@ __operation_analyze_tags () {
 			# If the total # of indices in the temporary tag array is above
 			# 0, continue testing, else store missing tag (${j}) into the
 			# missing tags array
-			if [[ "${#temp_tag_array[@]}" -gt 0 ]] ; then
+			if (( ${#temp_tag_array[@]} > 0 )) ; then
 
 				# Compare each tag field from the temporary array to ${j},
 				# checking if they are equal and if so, check for missing
@@ -4261,7 +4263,7 @@ __operation_analyze_tags_dont_log_coverart () {
 	check_flac="$(metaflac --show-md5sum "${i}" 2>&1)"
 
 	# If above command return anything other than '0', log output
-	if [[ "${?}" -ne "0" ]] ; then
+	if (( ${?} != 0 )) ; then
 
 		# File is not a FLAC file, display failed
 		__print_failed_flac
@@ -4366,7 +4368,7 @@ __operation_analyze_tags_dont_log_coverart () {
 			# If the total # of indices in the temporary tag array is above
 			# 0, continue testing, else store missing tag (${j}) into the
 			# missing tags array
-			if [[ "${#temp_tag_array[@]}" -gt 0 ]] ; then
+			if (( ${#temp_tag_array[@]} > 0 )) ; then
 
 				# Compare each tag field from the temporary array to ${j},
 				# checking if they are equal and if so, check for missing
@@ -4541,7 +4543,7 @@ __operation_set_tags () {
 				# force arithmetic expansion and explicitly specify base 10
 				# in order to prevent octal errors if the value is either '08'
 				# or '09'
-				prepend_tag_value="$(printf "%02d" "$(( 10#${tag_values_array[${j}]} ))")"
+				prepend_tag_value="$( printf %02d $(( 10#${tag_values_array[${j}]} )) )"
 
 				metaflac_tag_array+=(
 					# Tag field (eg. TRACKNUMBER) = Tag value (eg. 03)
@@ -4600,7 +4602,7 @@ __operation_prune () {
 	wait "${!}"
 
 	# Exit code 130 is SIGINT so only check for exit code '1'
-	if [[ "${?}" -eq "1" ]] ; then
+	if (( ${?} == 1 )) ; then
 		# File is not a FLAC file, display failed
 		__print_failed_flac
 
@@ -4676,7 +4678,7 @@ fi
 
 # Check if configuration file exists based of ${EUID}.  If it doesn't
 # exist, create one
-if [[ "${EUID}" -eq 0 ]] ; then
+if (( EUID == 0 )) ; then
 	# User is root
 	#
 	# Configuration file location
@@ -4759,8 +4761,7 @@ if [[ "${no_color}" == "true" ]] ; then
 fi
 
 # Make sure we are running BASH 4 or greater
-bash_version_check="${BASH_VERSION%%.*}"
-if [[ "${bash_version_check}" -lt 4 ]] ; then
+if (( ${BASH_VERSION%%.*} < 4 )) ; then
 	{ __error "You must be running BASH version 4 or greater to use" ; __newline ;} >&2
 	{ __error "this program!" ; __newline ;} >&2
 	exit 1
