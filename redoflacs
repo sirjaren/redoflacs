@@ -26,15 +26,15 @@
 #
 # Please submit requests/changes/patches and/or comments
 #-------------------------------------------------------------------------------
-# File Descriptors used in this script
+# File Descriptors used in this script:
 #    0: STDIN
 #    1: STDOUT
 #    2: STDERR
 #    3: FIFO process manager
 #    4: auCDtect's (STDOUT) output
-#    5: Number of FLAC files that failed
+#    5: Number of FLAC files that failed and/or had issues
 #-------------------------------------------------------------------------------
-#  SCRIPT MESSAGES
+# .: SCRIPT MESSAGES :.
 #-------------------------------------------------------------------------------
 # Bold green message
 __info () {
@@ -425,11 +425,11 @@ __short_help () {
 __usage () {
 	printf "%s\n" " Usage: redoflacs [operations] [options] [target] ..."
 }
-#== END SCRIPT MESSAGES ========================================================
+#== .: END SCRIPT MESSAGES :. ==================================================
 
 
 #-------------------------------------------------------------------------------
-#  LOG MESSAGES
+# .: LOG MESSAGES :.
 #-------------------------------------------------------------------------------
 # ReplayGain test error log message
 __log_replaygain_test () {
@@ -492,11 +492,11 @@ __log_prune () {
 	{ __error "please check:" ; __newline ;} >&2
 	{ __error "\"${prune_errors}\" for details." ; __newline ;} >&2
 }
-#== END LOG MESSAGES ===========================================================
+#== .: END LOG MESSAGES :. =====================================================
 
 
 #-------------------------------------------------------------------------------
-#  LOG HEADERS
+# .: LOG HEADERS :.
 #-------------------------------------------------------------------------------
 # ReplayGain test header
 __header_replaygain_test () {
@@ -802,11 +802,11 @@ __header_prune () {
 		   "${tmp_log_file[@]}" \
 		   > "${prune_errors}"
 }
-#== END LOG HEADERS ============================================================
+#== .: END LOG HEADERS :. ======================================================
 
 
 #-------------------------------------------------------------------------------
-#  TITLE MESSAGES
+# .: TITLE MESSAGES :.
 #-------------------------------------------------------------------------------
 # Compress FLACS & verify
 __title_compress_flac () {
@@ -866,11 +866,11 @@ __title_prune_flac () {
 	__newline
 	__info "Pruning blocks except ${metadata_removed}" ; __newline
 }
-#== END TITLE MESSAGES =========================================================
+#== .: END TITLE MESSAGES :. ===================================================
 
 
 #-------------------------------------------------------------------------------
-#  SUB MESSAGES
+# .: SUB MESSAGES :.
 #-------------------------------------------------------------------------------
 # Test for ReplayGain
 __sub_test_replaygain () {
@@ -895,11 +895,11 @@ __sub_applying_tags () {
 	printf "%s${green}%s${normal}%s${normal}%s${normal}\n" \
 	"   " ">" " " "Applying Tags"
 }
-#== END SUB MESSAGES ===========================================================
+#== .: END SUB MESSAGES :. =====================================================
 
 
 #-------------------------------------------------------------------------------
-#  PROCESSED FILE/DIRECTORY MESSAGES
+# .: PROCESSED FILE/DIRECTORY MESSAGES :.
 #-------------------------------------------------------------------------------
 # Compressing
 __print_compressing_flac () {
@@ -1428,11 +1428,11 @@ __print_interrupt () {
 	printf "\r${normal}%s${magenta}%s${normal}%s%$(__current_length)s${blue}%s${normal}%s${yellow}%s${normal}%s${blue}%s${normal}%s" \
 	"   " "[${iteration}/${#total_flacs_array[@]}]" " ${filename} " "" "[" " " "Interrupted" " " "]" " "
 }
-#== PROCESSED FILE/DIRECTORY MESSAGES ==========================================
+#== .: PROCESSED FILE/DIRECTORY MESSAGES :. ====================================
 
 
 #-------------------------------------------------------------------------------
-#  TRAPS
+# .: TRAPS :.
 #-------------------------------------------------------------------------------
 # Countdown abort
 __countdown_abort () {
@@ -1718,11 +1718,11 @@ __prune_abort () {
 
 	exit 1
 }
-#== END TRAPS ==================================================================
+#== .: END TRAPS :. ============================================================
 
 
 #-------------------------------------------------------------------------------
-#  VARIOUS COMMANDS
+# .: VARIOUS COMMANDS :.
 #-------------------------------------------------------------------------------
 # Display script version
 __print_version () {
@@ -3426,11 +3426,11 @@ __run_parallel_directories () {
 	# Wait for children processes
 	wait
 }
-#== END VARIOUS COMMANDS =======================================================
+#== .: END VARIOUS COMMANDS :. =================================================
 
 
 #-------------------------------------------------------------------------------
-#  OPERATIONS
+# .: OPERATIONS :.
 #-------------------------------------------------------------------------------
 # Test ReplayGain
 __operation_test_replaygain () {
@@ -4667,11 +4667,11 @@ __operation_prune () {
 	# Print newline into FIFO after completion
 	__newline >&3
 }
-#== END OPERATIONS =============================================================
+#== .: END OPERATIONS :. =======================================================
 
 
 #-------------------------------------------------------------------------------
-#  PRE-SCRIPT CHECKS
+# .: PRE-SCRIPT CHECKS :.
 #-------------------------------------------------------------------------------
 # Enable BASH 4 globstar
 shopt -s globstar
@@ -4859,11 +4859,11 @@ if [[ -z "${jobs}" ]] ; then
 else
 	jobs_display="(User Defined)"
 fi
-#== END PRE-SCRIPT CHECKS ======================================================
+#== .: END PRE-SCRIPT CHECKS :. ================================================
 
 
 #-------------------------------------------------------------------------------
-#  START SCRIPT
+# .: START SCRIPT :.
 #-------------------------------------------------------------------------------
 # Store current stty settings
 old_stty="$(stty -g)"
@@ -4915,7 +4915,7 @@ total_flacs_length="${#total_flacs_length}"
 __processed_flacs_ok
 
 #-------------------------------------------------------------------------------
-#  AUCDTECT
+# .: AUCDTECT :.
 #-------------------------------------------------------------------------------
 # The below order is probably the best bet in ensuring time
 # isn't wasted on doing unnecessary operations if the
@@ -4958,11 +4958,11 @@ if [[ "${aucdtect_flac}" == "true" ]] ; then
 	# auCDtect completed successfully
 	aucdtect_complete="true"
 fi
-#== END AUCDTECT ===============================================================
+#== .: END AUCDTECT :. =========================================================
 
 
 #-------------------------------------------------------------------------------
-#  MD5 CHECK
+# .: MD5 CHECK :.
 #-------------------------------------------------------------------------------
 if [[ "${md5check_flac}" == "true" ]] ; then
 	__title_md5check_flac
@@ -4997,11 +4997,11 @@ if [[ "${md5check_flac}" == "true" ]] ; then
 	# MD5 Check completed successfully
 	md5check_complete="true"
 fi
-#== END MD5 CHECK ==============================================================
+#== .: END MD5 CHECK :. ========================================================
 
 
 #-------------------------------------------------------------------------------
-#  COMPRESS/VERIFY
+# .: COMPRESS/VERIFY :.
 #-------------------------------------------------------------------------------
 if [[ "${compress_flac}" == "true" ]] ; then
 
@@ -5048,11 +5048,11 @@ if [[ "${compress_flac}" == "true" ]] ; then
 	# Compress FLACS completed successfully
 	compress_complete="true"
 fi
-#== END COMPRESS/VERIFY ========================================================
+#== .: END COMPRESS/VERIFY :. ==================================================
 
 
 #-------------------------------------------------------------------------------
-#  TEST
+# .: TEST :.
 #-------------------------------------------------------------------------------
 if [[ "${test_flac}" == "true" ]] ; then
 	__title_testing_flac
@@ -5087,11 +5087,11 @@ if [[ "${test_flac}" == "true" ]] ; then
 	# Test FLACS completed successfully
 	test_complete="true"
 fi
-#== END TEST ===================================================================
+#== .: END TEST :. =============================================================
 
 
 #-------------------------------------------------------------------------------
-#  REPLAYGAIN
+# .: REPLAYGAIN :.
 #-------------------------------------------------------------------------------
 if [[ "${replaygain_flac}" == "true" ]] ; then
 
@@ -5112,7 +5112,7 @@ if [[ "${replaygain_flac}" == "true" ]] ; then
 	__metaflac_version
 
 	#---------------------------------------------------------------------------
-	#  TEST REPLAYGAIN
+	# .: TEST REPLAYGAIN :.
 	#---------------------------------------------------------------------------
 	# Trap SIGINT (Control-C) to abort cleanly
 	trap __replaygain_test_abort SIGINT
@@ -5144,11 +5144,11 @@ if [[ "${replaygain_flac}" == "true" ]] ; then
 		__print_ok_replaygain_file
 		testing_replaygain_complete="true"
 	fi
-	#== END TEST REPLAYGAIN ====================================================
+	#== .: END TEST REPLAYGAIN :. ==============================================
 
 
 	#---------------------------------------------------------------------------
-	#  PROCESS REPLAYGAIN
+	# .: PROCESS REPLAYGAIN :.
 	#---------------------------------------------------------------------------
 	# Trap SIGINT (Control-C) to abort cleanly
 	trap __replaygain_process_abort SIGINT
@@ -5191,13 +5191,13 @@ if [[ "${replaygain_flac}" == "true" ]] ; then
 
 	# ReplayGain completed successfully
 	adding_replaygain_complete="true"
-	#== END PROCESS REPLAYGAIN =================================================
+	#== .: END PROCESS REPLAYGAIN :. ===========================================
 fi
-#== END REPLAYGAIN =============================================================
+#== .: END REPLAYGAIN :. =======================================================
 
 
 #-------------------------------------------------------------------------------
-#  RETAG
+# .: RETAG :.
 #-------------------------------------------------------------------------------
 if [[ "${retag_flac}" == "true" ]] ; then
 
@@ -5227,7 +5227,7 @@ if [[ "${retag_flac}" == "true" ]] ; then
 	old_tags=( "${tags[@]}" )
 
 	#---------------------------------------------------------------------------
-	#  ANALYZE TAGS
+	# .: ANALYZE TAGS :.
 	#---------------------------------------------------------------------------
 	# Analyze FLAC tags to ensure none are missing and/or empty
 	#
@@ -5289,11 +5289,11 @@ if [[ "${retag_flac}" == "true" ]] ; then
 		__print_ok_tag
 		analyzing_retag_complete="true"
 	fi
-	#== END ANALYZE TAGS =======================================================
+	#== .: END ANALYZE TAGS :. =================================================
 
 
 	#---------------------------------------------------------------------------
-	#  SET TAGS
+	# .: SET TAGS :.
 	#---------------------------------------------------------------------------
 	# Clear the old tags and re-tag with the kept tags
 	#
@@ -5319,13 +5319,13 @@ if [[ "${retag_flac}" == "true" ]] ; then
 		__print_ok_tag ; __newline
 		applying_retag_complete="true"
 	fi
-	#== END SET TAGS ===========================================================
+	#== .: END SET TAGS :. =====================================================
 fi
-#== END RETAG ==================================================================
+#== .: END RETAG :. ============================================================
 
 
 #-------------------------------------------------------------------------------
-#  PRUNE
+# .: PRUNE :.
 #-------------------------------------------------------------------------------
 if [[ "${prune_flac}" == "true" ]] ; then
 
@@ -5371,7 +5371,7 @@ if [[ "${prune_flac}" == "true" ]] ; then
 	# Prune FLACS completed successfully
 	prune_complete="true"
 fi
-#== END PRUNE ==================================================================
+#== .: END PRUNE :. ============================================================
 
 
 # Display warning about legacy COVERART tag, if applicable
@@ -5381,4 +5381,4 @@ fi
 
 # Display summary of completed tasks
 __operation_summary
-#== END SCRIPT =================================================================
+#== .: END SCRIPT :. ===========================================================
