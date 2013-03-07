@@ -1446,7 +1446,7 @@ __countdown_abort () {
 	# Restore the cursor
 	printf "\033[?25h"
 
-	exit 1
+	exit 130
 }
 
 # ReplayGain test abort
@@ -1470,7 +1470,7 @@ __replaygain_test_abort () {
 	testing_replaygain_complete="interrupt"
 	__operation_summary
 
-	exit 1
+	exit 130
 }
 
 # ReplayGain process abort
@@ -1494,7 +1494,7 @@ __replaygain_process_abort () {
 	adding_replaygain_complete="interrupt"
 	__operation_summary
 
-	exit 1
+	exit 130
 }
 
 # FLAC compress abort and remove temporarily encoded files (if any)
@@ -1522,7 +1522,7 @@ __compress_abort () {
 	compress_complete="interrupt"
 	__operation_summary
 
-	exit 1
+	exit 130
 }
 
 # FLAC test abort
@@ -1546,7 +1546,7 @@ __test_abort () {
 	test_complete="interrupt"
 	__operation_summary
 
-	exit 1
+	exit 130
 }
 
 # auCDtect abort.  Removes temporary WAV files (if any)
@@ -1574,7 +1574,7 @@ __aucdtect_abort () {
 	aucdtect_complete="interrupt"
 	__operation_summary
 
-	exit 1
+	exit 130
 }
 
 # MD5 check abort
@@ -1645,7 +1645,7 @@ __analyzing_tags_abort () {
 	analyzing_retag_complete="interrupt"
 	__operation_summary
 
-	exit 1
+	exit 130
 }
 
 # Applying tags abort
@@ -1692,7 +1692,7 @@ __applying_tags_abort () {
 	applying_retag_complete="interrupt"
 	__operation_summary
 
-	exit 1
+	exit 130
 }
 
 # Prune FLACS abort
@@ -1716,7 +1716,7 @@ __prune_abort () {
 	prune_complete="interrupt"
 	__operation_summary
 
-	exit 1
+	exit 130
 }
 #== .: END TRAPS :. ============================================================
 
@@ -1745,6 +1745,39 @@ __metaflac_version () {
 	# Remove last part of string, leaving only the second integer, example:
 	#    3
 	metaflac_version="${metaflac_version%.*}"
+}
+
+# Determine abort to run based off the operation to run (via ${1})
+__determine_abort () {
+	case "${1}" in
+		__operation_aucdtect)
+			run_abort="__aucdtect_abort"
+		;;
+		__operation_md5_check)
+			run_abort="__md5_check_abort"
+		;;
+		__operation_compress)
+			run_abort="__compress_abort"
+		;;
+		__operation_test)
+			run_abort="__test_abort"
+		;;
+		__operation_test_replaygain)
+			run_abort="__replaygain_test_abort"
+		;;
+		__operation_replaygain_noforce|__operation_replaygain_force)
+			run_abort="__replaygain_process_abort"
+		;;
+		__operation_analyze_tags_dont_log_coverart|__operation_analyze_tags)
+			run_abort="__analyzing_tags_abort"
+		;;
+		__operation_set_tags)
+			run_abort="__applying_tags_abort"
+		;;
+		__operation_prune)
+			run_abort="__prune_abort"
+		;;
+	esac
 }
 
 # Force the creation of a new configuration file
@@ -2401,7 +2434,11 @@ __set_error_fd () {
 # Kill any child processes
 __kill_jobs () {
 	# Hide error output in case there are no children to kill
-	kill $(jobs -rp) 2> /dev/null
+	kill $(jobs -rp) 2>/dev/null
+
+	# Wait on killing the children process, hiding STDERR to disable job control
+	# output
+	wait 2>/dev/null
 }
 
 # Obtain and process the positional parameters invoked
@@ -3323,6 +3360,13 @@ __operation_summary () {
 # Function to run commands/operations that are by
 # files _ONLY_
 __run_parallel_files () {
+	# Determine which function should be run in the `trap' via what is specified
+	# via ${1} (eg, the operation to be run), returned as ${run_abort}
+	__determine_abort "${1}"
+
+	# Run abort function on script exit
+	trap "${run_abort}" SIGINT
+
 	# Forces iteration to start at 0, in the event that
 	# multiple operations are going to be run
 	iteration=0
@@ -3377,6 +3421,13 @@ __run_parallel_files () {
 # Function to run commands/operations that are by
 # directory _ONLY_
 __run_parallel_directories () {
+	# Determine which function should be run in the `trap' via what is specified
+	# via ${1} (eg, the operation to be run), returned as ${run_abort}
+	__determine_abort "${1}"
+
+	# Run abort function on script exit
+	trap "${run_abort}" SIGINT
+
 	# Forces iteration to start at 0, in the event that
 	# multiple operations are going to be run
 	iteration=0
@@ -3434,12 +3485,11 @@ __run_parallel_directories () {
 #-------------------------------------------------------------------------------
 # Test ReplayGain
 __operation_test_replaygain () {
-	# Let's make sure to kill running children if this
-	# function was aborted via SIGINT.  This function
-	# will receive SIGTERM from the kill in previous trap.
-	trap '__kill_jobs ; exit 1' SIGTERM
+	# Let's make sure to kill running children if this function was aborted via
+	# SIGINT.  This function will receive EXIT from the kill in previous trap
+	trap __kill_jobs EXIT
 
-	# Prints current file and operation
+	# Print current FLAC being processed
 	__print_test_replaygain
 
 	# Check if file is a FLAC file (capture output) via obtaining the sample
@@ -3500,12 +3550,11 @@ __operation_test_replaygain () {
 
 # Process Replaygain (only add values if missing)
 __operation_replaygain_noforce () {
-	# Let's make sure to kill running children if this
-	# function was aborted via SIGINT.  This function
-	# will receive SIGTERM from the kill in previous trap
-	trap '__kill_jobs ; exit 1' SIGTERM
+	# Let's make sure to kill running children if this function was aborted via
+	# SIGINT.  This function will receive EXIT from the kill in previous trap
+	trap __kill_jobs EXIT
 
-	# Prints current file and operation
+	# Prints current directory being processed
 	__print_add_replaygain
 
 	# ${i} is the parent directory to the FLAC files
@@ -3532,15 +3581,10 @@ __operation_replaygain_noforce () {
 			# At _least_ one tag is missing from current file, so
 			# apply new ReplayGain values
 			#
-			# Add ReplayGain to FLAC files under directory and send
-			# to background to allow killing on SIGTERM.  Metaflac
-			# automatically removes old ReplayGain values (if any)
-			# before proceeding
-			metaflac --add-replay-gain "${i}"/*${flac_extension} >/dev/null 2>&1 &
-
-			# Wait on background process and return exit code of
-			# said process
-			wait "${!}"
+			# Add ReplayGain to FLAC files under directory.  Metaflac
+			# automatically removes old ReplayGain values (if any) before
+			# proceeding
+			metaflac --add-replay-gain "${i}"/*${flac_extension} >/dev/null 2>&1
 
 			# Exit code 130 is SIGINT so only check for exit code '1'
 			if (( ${?} == 1 )) ; then
@@ -3581,21 +3625,15 @@ __operation_replaygain_noforce () {
 
 # Process ReplayGain (force new values)
 __operation_replaygain_force () {
-	# Let's make sure to kill running children if this
-	# function was aborted via SIGINT.  This function
-	# will receive SIGTERM from the kill in previous trap
-	trap '__kill_jobs ; exit 1' SIGTERM
+	# Let's make sure to kill running children if this function was aborted via
+	# SIGINT.  This function will receive EXIT from the kill in previous trap
+	trap __kill_jobs EXIT
 
-	# Prints current file and operation
+	# Prints current directory being processed
 	__print_add_replaygain
 
-	# Add ReplayGain to FLAC files under directory and send
-	# to background to allow killing on SIGTERM
-	metaflac --add-replay-gain "${i}"/*${flac_extension} >/dev/null 2>&1 &
-
-	# Wait on background process and return exit code of
-	# said process
-	wait "${!}"
+	# Add ReplayGain to FLAC files under directory
+	metaflac --add-replay-gain "${i}"/*${flac_extension} >/dev/null 2>&1
 
 	# Exit code 130 is SIGINT so only check for exit code '1'
 	if (( ${?} == 1 )) ; then
@@ -3627,10 +3665,9 @@ __operation_replaygain_force () {
 
 # Compress FLAC files
 __operation_compress () {
-	# Let's make sure to kill running children if this
-	# function was aborted via SIGINT.  This function
-	# will receive SIGTERM from the kill in previous trap
-	trap '__kill_jobs ; exit 1' SIGTERM
+	# Let's make sure to kill running children if this function was aborted via
+	# SIGINT.  This function will receive EXIT from the kill in previous trap
+	trap __kill_jobs EXIT
 
 	# Test for COMPRESSION level in FLAC file. Hide error output since
 	# we'll be verifying the FLAC file later
@@ -3638,15 +3675,11 @@ __operation_compress () {
 	COMPRESSION="${COMPRESSION#*=}"
 
 	if (( COMPRESSION != compression_level )) ; then
+		# Print current FLAC being processed
 		__print_compressing_flac
 
-		# Compress FLAC file with user defined COMPRESSION and send to
-		# background to allow killing on SIGTERM
-		flac -f -${compression_level} -V --totally-silent "${i}" &
-
-		# Wait on background process and return exit code of
-		# said process
-		wait "${!}"
+		# Compress FLAC file with user defined COMPRESSION
+		flac -f -${compression_level} -V --totally-silent "${i}"
 
 		# Exit code 130 is SIGINT so only check for exit code '1'
 		if (( ${?} == 1 )) ; then
@@ -3676,18 +3709,15 @@ __operation_compress () {
 	# If already at compression_level, test the FLAC file instead
 	# or skip the file if '-C, --compress-notest' was specified
 	else
+		# Print current FLAC has same compression
 		__print_level_same_compression
 
 		if [[ "${skip_test}" != "true" ]] ; then
+			# Print current FLAC being processed
 			__print_testing_flac
 
-			# Test FLAC file and send to background to allow
-			# killing on SIGTERM
-			flac -t --totally-silent "${i}" &
-
-			# Wait on background process and return exit code of
-			# said process
-			wait "${!}"
+			# Test FLAC file
+			flac -t --totally-silent "${i}"
 
 			# Exit code 130 is SIGINT so only check for exit code '1'
 			if (( ${?} == 1 )) ; then
@@ -3719,20 +3749,15 @@ __operation_compress () {
 
 # Test FLAC files
 __operation_test () {
-	# Let's make sure to kill running children if this
-	# function was aborted via SIGINT.  This function
-	# will receive SIGTERM from the kill in previous trap
-	trap '__kill_jobs ; exit 1' SIGTERM
+	# Let's make sure to kill running children if this function was aborted via
+	# SIGINT.  This function will receive EXIT from the kill in previous trap
+	trap __kill_jobs EXIT
 
+	# Print current FLAC being processed
 	__print_testing_flac
 
-	# Test FLAC file and send to background to
-	# allow killing on SIGTERM
-	flac -t --totally-silent "${i}" &
-
-	# Wait on background process and return exit code of
-	# said process
-	wait "${!}"
+	# Test FLAC file
+	flac -t --totally-silent "${i}"
 
 	# Exit code 130 is SIGINT so only check for exit code '1'
 	if (( ${?} == 1 )) ; then
@@ -3761,11 +3786,11 @@ __operation_test () {
 
 # Test FLAC validity with auCDtect
 __operation_aucdtect () {
-	# Let's make sure to kill running children if this
-	# function was aborted via SIGINT.  This function
-	# will receive SIGTERM from the kill in previous trap
-	trap '__kill_jobs ; exit 1' SIGTERM
+	# Let's make sure to kill running children if this function was aborted via
+	# SIGINT.  This function will receive EXIT from the kill in previous trap
+	trap __kill_jobs EXIT
 
+	# Print current FLAC being processed
 	__print_aucdtect_flac
 
 	# Get the bit depth of a FLAC file, also used to check
@@ -3818,16 +3843,10 @@ __operation_aucdtect () {
 		decoded_wav="${i%${flac_extension}}_redoflacs_"$$".wav"
 
 		# Decompress FLAC to WAV so auCDtect can read the audio file
-		# and send to background to allow killing on SIGTERM
-		flac --totally-silent -d "${i}" -o "${decoded_wav}" &
+		flac --totally-silent -d "${i}" -o "${decoded_wav}"
 
-		# Wait on background process and return exit code of
-		# said process
-		wait "${!}"
-
-		# Exit code 130 is SIGINT so only check for exit code '1'
-		# If FLAC file failed decoding to WAV, log error, otherwise
-		# continue processing
+		# Exit code 130 is SIGINT so only check for exit code '1'.  If FLAC file
+		# failed decoding to WAV, log error, otherwise continue processing
 		if (( ${?} == 1 )) ; then
 
 			# Print FLAC failed and log issue
@@ -3847,19 +3866,14 @@ __operation_aucdtect () {
 			printf '.' >&5
 
 		else
-			# 'export MALLOC_CHECK_' allows the dynamic linked version of auCDtect
-			# to run without throwing errors
+			# 'export MALLOC_CHECK_' allows the dynamic linked version of
+			# `auCDTECT' to run without throwing errors
 			export MALLOC_CHECK_="0"
 
 			# The actual auCDtect command with lowest accuracy setting (for
 			# speed) 2> hides the displayed progress to /dev/null disabling the
-			# progress percentage. STDOUT is sent to file descriptor '4' and the
-			# process sent to the background to allow killing via SIGTERM
-			"${aucdtect_command}" -m40 "${decoded_wav}" 2>/dev/null >&4 &
-
-			# Wait on background process and return exit code of
-			# said process
-			wait "${!}"
+			# progress percentage. STDOUT is sent to file descriptor '4'
+			"${aucdtect_command}" -m40 "${decoded_wav}" 2>/dev/null >&4
 
 			# Exit code 130 is SIGINT so only check for exit code '1'
 			if (( ${?} == 1 )) ; then
@@ -3903,13 +3917,7 @@ __operation_aucdtect () {
 					# The actual auCDtect command with highest accuracy setting.
 					# 2> hides the displayed progress to /dev/null disabling the
 					# progress percentage. STDOUT is sent to file descriptor '4'
-					# and the process sent to the background to allow killing
-					# via SIGTERM
-					"${aucdtect_command}" -m0 "${decoded_wav}" 2>/dev/null >&4 &
-
-					# Wait on background process and return exit code of
-					# said process
-					wait "${!}"
+					"${aucdtect_command}" -m0 "${decoded_wav}" 2>/dev/null >&4
 
 					# Exit code 130 is SIGINT so only check for exit code '1'
 					if (( ${?} == 1 )) ; then
@@ -3975,20 +3983,28 @@ __operation_aucdtect () {
 									spectrogram_picture="${spectrogram_location}/[${iteration}] ${flac_file%${flac_extension}}.png"
 								fi
 
-								# Let's create the spectrogram for the failed FLAC file
-								# and output progress
+								# Let's create the spectrogram for the failed
+								# FLAC file and output progress
 								__print_aucdtect_spectrogram
 
-								# SoX command to create the spectrogram and place it in spectrogram_picture,
-								# sent to the background to allow killing via SIGTERM
-								"${sox_command}" "${decoded_wav}" -n spectrogram -c '' -t "${i}" -p1 -z90 -Z0 -q249 -wHann -x1800 -y513 -o "${spectrogram_picture}" &
-
-								# Use the below version of the command to create hi-res spectrograms
-								#"${sox_command}" "${i}" -n spectrogram -c '' -t "${i}" -p1 -z90 -Z0 -q249 -wHann -x5000 -y1025 -o "${spectrogram_picture}"
-
-								# Wait on background process and return exit code of
-								# said process
-								wait "${!}"
+								# SoX command to create the spectrogram and
+								# place it in spectrogram_picture.  Use the
+								# following arguments to create the highest
+								# resolution spectrograms:
+								#   -x 5000
+								#   -y 1025
+								"${sox_command}" "${decoded_wav}" \
+									-n spectrogram \
+									-c '' \
+									-t "${i}" \
+									-p 1 \
+									-z 90 \
+									-Z 0 \
+									-q 249 \
+									-w Hann \
+									-x 1800 \
+									-y 513 \
+									-o "${spectrogram_picture}"
 
 								# Print ISSUE and log issue, and show where to find
 								# the created spectrogram of the processed FLAC file
@@ -4041,11 +4057,11 @@ __operation_aucdtect () {
 
 # Check MD5 in each FLAC file
 __operation_md5_check () {
-	# Let's make sure to kill running children if this
-	# function was aborted via SIGINT.  This function
-	# will receive SIGTERM from the kill in previous trap
-	trap '__kill_jobs ; exit 130' SIGTERM
+	# Let's make sure to kill running children if this function was aborted via
+	# SIGINT.  This function will receive EXIT from the kill in previous trap
+	trap __kill_jobs EXIT
 
+	# Print current FLAC being processed
 	__print_checking_md5
 
 	# Get the MD5 checksum (hide stderr output).  Also
@@ -4103,11 +4119,11 @@ __operation_md5_check () {
 
 # Analyze FLAC tags
 __operation_analyze_tags () {
-	# Let's make sure to kill running children if this
-	# function was aborted via SIGINT.  This function
-	# will receive SIGTERM from the kill in previous trap
-	trap '__kill_jobs ; exit 1' SIGTERM
+	# Let's make sure to kill running children if this function was aborted via
+	# SIGINT.  This function will receive EXIT from the kill in previous trap
+	trap __kill_jobs EXIT
 
+	# Print current FLAC being processed
 	__print_analyzing_tags
 
 	# Check if file is a FLAC file (variable hides output)
@@ -4293,11 +4309,11 @@ __operation_analyze_tags () {
 
 # Analyze FLAC tags (not logging missing COVERART tag)
 __operation_analyze_tags_dont_log_coverart () {
-	# Let's make sure to kill running children if this
-	# function was aborted via SIGINT.  This function
-	# will receive SIGTERM from the kill in previous trap
-	trap '__kill_jobs ; exit 1' SIGTERM
+	# Let's make sure to kill running children if this function was aborted via
+	# SIGINT.  This function will receive EXIT from the kill in previous trap
+	trap __kill_jobs EXIT
 
+	# Print current FLAC being processed
 	__print_analyzing_tags
 
 	# Check if file is a FLAC file (variable hides output)
@@ -4486,7 +4502,6 @@ __operation_analyze_tags_dont_log_coverart () {
 		# If missing_tags_array is not empty, there are missing
 		# tags in the current file so log output
 		if [[ -n "${missing_tags_array[@]}" ]] ; then
-
 			# Create a temporary array housing the missing tags
 			tmp_tag_array=(
 				""
@@ -4512,11 +4527,11 @@ __operation_analyze_tags_dont_log_coverart () {
 
 # Re-tag FLAC files
 __operation_set_tags () {
-	# Let's make sure to kill running children if this
-	# function was aborted via SIGINT.  This function
-	# will receive SIGTERM from the kill in previous trap
-	trap '__kill_jobs ; exit 1' SIGTERM
+	# Let's make sure to kill running children if this function was aborted via
+	# SIGINT.  This function will receive EXIT from the kill in previous trap
+	trap __kill_jobs EXIT
 
+	# Print current FLAC being processed
 	__print_applying_tags
 
 	# Remove and set new tags
@@ -4627,20 +4642,15 @@ __operation_set_tags () {
 
 # Prune FLACS
 __operation_prune () {
-	# Let's make sure to kill running children if this
-	# function was aborted via SIGINT.  This function
-	# will receive SIGTERM from the kill in previous trap
-	trap '__kill_jobs ; exit 1' SIGTERM
+	# Let's make sure to kill running children if this function was aborted via
+	# SIGINT.  This function will receive EXIT from the kill in previous trap
+	trap __kill_jobs EXIT
 
+	# Print current FLAC being processed
 	__print_prune_flac
 
-	# Check if file is a FLAC file (hide output) and send to
-	# background to allow killing on SIGTERM
-	metaflac --show-md5sum "${i}" >/dev/null 2>&1 &
-
-	# Wait on background process and return exit code of
-	# said process
-	wait "${!}"
+	# Check if file is a FLAC file (hide output)
+	metaflac --show-md5sum "${i}" >/dev/null 2>&1
 
 	# Exit code 130 is SIGINT so only check for exit code '1'
 	if (( ${?} == 1 )) ; then
@@ -4922,10 +4932,8 @@ __processed_flacs_ok
 # FLAC files are corrupt or have metadata issues
 if [[ "${aucdtect_flac}" == "true" ]] ; then
 
+	# Prints title message of current operation
 	__title_aucdtect_flac
-
-	# Trap SIGINT (Control-C) to abort cleanly
-	trap __aucdtect_abort SIGINT
 
 	# Make sure to clear file descriptor '3' before proceeding
 	__clear_tmp_fd
@@ -4965,10 +4973,9 @@ fi
 # .: MD5 CHECK :.
 #-------------------------------------------------------------------------------
 if [[ "${md5check_flac}" == "true" ]] ; then
-	__title_md5check_flac
 
-	# Trap SIGINT (Control-C) to abort cleanly
-	trap __md5_check_abort SIGINT
+	# Prints title message of current operation
+	__title_md5check_flac
 
 	# Make sure to clear file descriptor '3' before proceeding
 	__clear_tmp_fd
@@ -5018,9 +5025,6 @@ if [[ "${compress_flac}" == "true" ]] ; then
 	# run determined earlier
 	"${title_compress}"
 
-	# Trap SIGINT (Control-C) to abort cleanly
-	trap __compress_abort SIGINT
-
 	# Make sure to clear file descriptor '3' before proceeding
 	__clear_tmp_fd
 
@@ -5055,10 +5059,9 @@ fi
 # .: TEST :.
 #-------------------------------------------------------------------------------
 if [[ "${test_flac}" == "true" ]] ; then
-	__title_testing_flac
 
-	# Trap SIGINT (Control-C) to abort cleanly
-	trap __test_abort SIGINT
+	# Prints title message of current operation
+	__title_testing_flac
 
 	# Make sure to clear file descriptor '3' before proceeding
 	__clear_tmp_fd
@@ -5114,9 +5117,6 @@ if [[ "${replaygain_flac}" == "true" ]] ; then
 	#---------------------------------------------------------------------------
 	# .: TEST REPLAYGAIN :.
 	#---------------------------------------------------------------------------
-	# Trap SIGINT (Control-C) to abort cleanly
-	trap __replaygain_test_abort SIGINT
-
 	# Prints sub message of current operation
 	__sub_test_replaygain
 
@@ -5150,9 +5150,6 @@ if [[ "${replaygain_flac}" == "true" ]] ; then
 	#---------------------------------------------------------------------------
 	# .: PROCESS REPLAYGAIN :.
 	#---------------------------------------------------------------------------
-	# Trap SIGINT (Control-C) to abort cleanly
-	trap __replaygain_process_abort SIGINT
-
 	# Make printing pretty if specified directory is '.'
 	if [[ "${directory}" == "." ]] ; then
 		directory="${PWD}"
@@ -5230,9 +5227,6 @@ if [[ "${retag_flac}" == "true" ]] ; then
 	# .: ANALYZE TAGS :.
 	#---------------------------------------------------------------------------
 	# Analyze FLAC tags to ensure none are missing and/or empty
-	#
-	# Trap SIGINT (Control-C) to abort cleanly
-	trap __analyzing_tags_abort SIGINT
 
 	# Prints sub message of current operation
 	__sub_analyze_tags
@@ -5296,9 +5290,6 @@ if [[ "${retag_flac}" == "true" ]] ; then
 	# .: SET TAGS :.
 	#---------------------------------------------------------------------------
 	# Clear the old tags and re-tag with the kept tags
-	#
-	# Trap SIGINT (Control-C) to abort cleanly
-	trap __applying_tags_abort SIGINT
 
 	# Restore the original tags array as the script _may_ have
 	# added the COVERART tag.  This way, we ensure that the
@@ -5339,10 +5330,8 @@ if [[ "${prune_flac}" == "true" ]] ; then
 		dont_prune_flac_metadata="STREAMINFO,PICTURE,VORBIS_COMMENT"
 	fi
 
+	# Prints title message of current operation
 	__title_prune_flac
-
-	# Trap SIGINT (Control-C) to abort cleanly	
-	trap __prune_abort SIGINT
 
 	# Make sure to clear file descriptor '3' before proceeding
 	__clear_tmp_fd
