@@ -2652,7 +2652,13 @@ __process_positional_parameters () {
 					# Set number of jobs to run via the required
 					# integer argument after '-j'
 					jobs="${OPTARG}"
-					converted_arguments_array+=( -j )
+
+					if (( jobs == 0 )) ; then
+						# Currently, this is just for '-j' so we can explicity specify it
+						parameter_errors_array+=( "${cyan}-j${normal} requires a non-zero integer after it (eg. ${cyan}-j11${normal})." )
+					else
+						converted_arguments_array+=( -j )
+					fi
 				;;
 				h)
 					converted_arguments_array+=( -h )
@@ -2665,7 +2671,7 @@ __process_positional_parameters () {
 				;;
 				:)
 					# Currently, this is just for '-j' so we can explicity specify it
-					parameter_errors_array+=( "${cyan}-${OPTARG}${normal} requires an integer after it (eg. ${cyan}-${OPTARG}11${normal})." )
+					parameter_errors_array+=( "${cyan}-${OPTARG}${normal} requires a non-zero integer after it (eg. ${cyan}-${OPTARG}11${normal})." )
 				;;
 				?)
 					# Set invalid argument from getopts into
