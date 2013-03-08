@@ -1904,9 +1904,9 @@ __new_config () {
 	__info "name.  Here is the command you could use:\n"
 
 	if (( EUID == 0 )) ; then
-		__info "   mv ${cyan}${config_location}${normal} ${cyan}/etc/redoflacs.conf${normal}\n"
+		__info "${cyan}mv${normal} ${cyan}${config_location}${normal} ${cyan}/etc/redoflacs.conf${normal}\n"
 	else
-		__info "   mv ${cyan}${config_location}${normal} ${cyan}${HOME}/.config/redoflacs/config${normal}\n"
+		__info "${cyan}mv${normal} ${cyan}${config_location}${normal} ${cyan}${HOME}/.config/redoflacs/config${normal}\n"
 	fi
 }
 
@@ -2116,7 +2116,7 @@ __check_config_version () {
 	# Check if ${user_revision} is an integer.  If not, display countdown
 	# and warn user of new config file, else test if the user revision is
 	# less than the script revision
-	if [[ "${user_revision}" =~ ^[0-9]+$ ]] ; then
+	if [[ "${user_revision}" =~ ^[[:digit:]]+$ ]] ; then
 		# If ${script_revision} is greater than ${user_revision}
 		# warn user and display countdown
 		if (( script_revision > user_revision )) ; then
@@ -2632,7 +2632,7 @@ __process_positional_parameters () {
 	# arguments called are not to have anything after them
 	if (( ${#} == 2 )) ; then
 		case "${1}" in
-			--jobs=[0-9]*|-j[0-9]*)
+			--jobs=[[:digit:]]*|-j[[:digit:]]*)
 				__usage >&2
 				exit 1
 			;;
@@ -2721,7 +2721,7 @@ __process_positional_parameters () {
 				--no-color)
 					converted_arguments_array+=( -n )
 				;;
-				--jobs=[0-9]*)
+				--jobs=[[:digit:]]*)
 					# Set number of jobs to run via the required
 					# integer argument after '-j'
 					jobs="${i##*=}"
