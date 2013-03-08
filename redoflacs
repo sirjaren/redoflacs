@@ -67,7 +67,7 @@ __coverart_warning () {
 	__warn "for more details.\n" >&2
 }
 
-# Display (in bold red) message that system is missing vital programs
+# Display message that system is missing vital programs
 __display_missing_commands_header () {
 	__error "You seem to be missing one or more necessary programs\n" >&2
 	__error "to run this script reliably.  Below shows the program(s)\n" >&2
@@ -434,7 +434,7 @@ __log_replaygain_test () {
 	__newline >&2
 	__error "There were issues with some of the FLAC files,\n" >&2
 	__error "please check:\n" >&2
-	__error "  ${cyan}${replay_test_errors}${normal}\n" >&2
+	__error "${cyan}${replay_test_errors}${normal}\n" >&2
 	__error "for details.\n" >&2
 }
 
@@ -443,7 +443,7 @@ __log_replaygain_process () {
 	__newline >&2
 	__error "There were issues adding ReplayGain values,\n" >&2
 	__error "please check:\n" >&2
-	__error "  ${cyan}${replay_add_errors}${normal}\n" >&2
+	__error "${cyan}${replay_add_errors}${normal}\n" >&2
 	__error "for details.\n" >&2
 }
 
@@ -451,7 +451,7 @@ __log_replaygain_process () {
 __log_compress_verify () {
 	__newline >&2
 	__error "Errors found in some FLAC files, please check:\n" >&2
-	__error "  ${cyan}${verify_errors}${normal}\n" >&2
+	__error "${cyan}${verify_errors}${normal}\n" >&2
 	__error "for errors.\n" >&2
 }
 
@@ -459,7 +459,7 @@ __log_compress_verify () {
 __log_test () {
 	__newline >&2
 	__error "Errors found in some FLAC files, please check:\n" >&2
-	__error "  ${cyan}${test_errors}${normal}\n" >&2
+	__error "${cyan}${test_errors}${normal}\n" >&2
 	__error "for errors.\n" >&2
 }
 
@@ -467,7 +467,7 @@ __log_test () {
 __log_aucdtect () {
 	__newline >&2
 	__error "Some FLAC files may be lossy sourced, please check:\n" >&2
-	__error "  ${cyan}${aucdtect_errors}${normal}\n" >&2
+	__error "${cyan}${aucdtect_errors}${normal}\n" >&2
 	__error "for details.\n" >&2
 }
 
@@ -476,7 +476,7 @@ __log_md5_check () {
 	__newline >&2
 	__error "The MD5 Signature is unset for some FLAC files or there were\n" >&2
 	__error "issues with some of the FLAC files, please check:\n" >&2
-	__error "  ${cyan}${md5_errors}${normal}\n" >&2
+	__error "${cyan}${md5_errors}${normal}\n" >&2
 	__error "for details.\n" >&2
 }
 
@@ -485,7 +485,7 @@ __log_missing_tags () {
 	__newline >&2
 	__error "Some FLAC files have missing tags or there were\n" >&2
 	__error "issues with some of the FLAC files, please check:\n" >&2
-	__error "  ${cyan}${metadata_errors}${normal}\n" >&2
+	__error "${cyan}${metadata_errors}${normal}\n" >&2
 	__error "for details.\n" >&2
 }
 
@@ -494,7 +494,7 @@ __log_prune () {
 	__newline >&2
 	__error "There were issues with some of the FLAC files,\n" >&2
 	__error "please check:\n" >&2
-	__error "  ${cyan}${prune_errors}${normal}\n" >&2
+	__error "${cyan}${prune_errors}${normal}\n" >&2
 	__error "for details.\n" >&2
 }
 #== .: END LOG MESSAGES :. =====================================================
@@ -1470,10 +1470,14 @@ __countdown_abort () {
 
 # ReplayGain test abort
 __replaygain_test_abort () {
-	__print_interrupt_replaygain_file
-
-	# Kill running children
+	# Kill running children, must come before __kill_spinner
 	__kill_jobs
+
+	# Kill spinner
+	__kill_spinner
+
+	# Print current FLAC file that is interrupted
+	__print_interrupt_replaygain_file
 
 	__newline
 	__info "Control-C received, generating summary. Please wait..."
@@ -1486,7 +1490,10 @@ __replaygain_test_abort () {
 		__header_replaygain_test
 	fi
 
+	# Store operation status for Summary Of Operations
 	testing_replaygain_complete="interrupt"
+
+	# Display Summary Of Operations
 	__operation_summary
 
 	exit 130
@@ -1494,10 +1501,14 @@ __replaygain_test_abort () {
 
 # ReplayGain process abort
 __replaygain_process_abort () {
-	__print_interrupt_replaygain_dir
-
-	# Kill running children
+	# Kill running children, must come before __kill_spinner
 	__kill_jobs
+
+	# Kill spinner
+	__kill_spinner
+
+	# Print current directory that is interrupted
+	__print_interrupt_replaygain_dir
 
 	__newline
 	__info "Control-C received, generating summary. Please wait...\n"
@@ -1510,7 +1521,10 @@ __replaygain_process_abort () {
 		__header_replaygain_test
 	fi
 
+	# Store operation status for Summary Of Operations
 	adding_replaygain_complete="interrupt"
+
+	# Display Summary Of Operations
 	__operation_summary
 
 	exit 130
@@ -1518,10 +1532,14 @@ __replaygain_process_abort () {
 
 # FLAC compress abort and remove temporarily encoded files (if any)
 __compress_abort () {
-	__print_interrupt
-
-	# Kill running children
+	# Kill running children, must come before __kill_spinner
 	__kill_jobs
+
+	# Kill spinner
+	__kill_spinner
+
+	# Print current FLAC file that is interrupted
+	__print_interrupt
 
 	__newline
 	__info "Control-C received, removing temporary files and\n"
@@ -1538,7 +1556,10 @@ __compress_abort () {
 		__header_compress_verify
 	fi
 
+	# Store operation status for Summary Of Operations
 	compress_complete="interrupt"
+
+	# Display Summary Of Operations
 	__operation_summary
 
 	exit 130
@@ -1546,10 +1567,14 @@ __compress_abort () {
 
 # FLAC test abort
 __test_abort () {
-	__print_interrupt
-
-	# Kill running children
+	# Kill running children, must come before __kill_spinner
 	__kill_jobs
+
+	# Kill spinner
+	__kill_spinner
+
+	# Print current FLAC file that is interrupted
+	__print_interrupt
 
 	__newline
 	__info "Control-C received, generating summary. Please wait...\n"
@@ -1562,7 +1587,10 @@ __test_abort () {
 		__header_test
 	fi
 
+	# Store operation status for Summary Of Operations
 	test_complete="interrupt"
+
+	# Display Summary Of Operations
 	__operation_summary
 
 	exit 130
@@ -1570,10 +1598,14 @@ __test_abort () {
 
 # auCDtect abort.  Removes temporary WAV files (if any)
 __aucdtect_abort () {
-	__print_interrupt
-
-	# Kill running children
+	# Kill running children, must come before __kill_spinner
 	__kill_jobs
+
+	# Kill spinner
+	__kill_spinner
+
+	# Print current FLAC file that is interrupted
+	__print_interrupt
 
 	__newline
 	__info "Control-C received, removing temporary files and\n"
@@ -1590,7 +1622,10 @@ __aucdtect_abort () {
 		__header_aucdtect
 	fi
 
+	# Store operation status for Summary Of Operations
 	aucdtect_complete="interrupt"
+
+	# Display Summary Of Operations
 	__operation_summary
 
 	exit 130
@@ -1598,10 +1633,14 @@ __aucdtect_abort () {
 
 # MD5 check abort
 __md5_check_abort () {
-	__print_interrupt
-
-	# Kill running children
+	# Kill running children, must come before __kill_spinner
 	__kill_jobs
+
+	# Kill spinner
+	__kill_spinner
+
+	# Print current FLAC file that is interrupted
+	__print_interrupt
 
 	__newline
 	__info "Control-C received, generating summary. Please wait...\n"
@@ -1614,7 +1653,10 @@ __md5_check_abort () {
 		__header_md5_check
 	fi
 
+	# Store operation status for Summary Of Operations
 	md5check_complete="interrupt"
+
+	# Display Summary Of Operations
 	__operation_summary
 
 	exit 130
@@ -1622,10 +1664,14 @@ __md5_check_abort () {
 
 # Analyzing tags abort
 __analyzing_tags_abort () {
-	__print_retag_analyze_interrupt
-
-	# Kill running children
+	# Kill running children, must come before __kill_spinner
 	__kill_jobs
+
+	# Kill spinner
+	__kill_spinner
+
+	# Print current FLAC file that is interrupted
+	__print_retag_analyze_interrupt
 
 	__newline
 	__info "Control-C received, generating summary. Please wait...\n"
@@ -1661,7 +1707,10 @@ __analyzing_tags_abort () {
 		__header_retag
 	fi
 
+	# Store operation status for Summary Of Operations
 	analyzing_retag_complete="interrupt"
+
+	# Display Summary Of Operations
 	__operation_summary
 
 	exit 130
@@ -1669,10 +1718,14 @@ __analyzing_tags_abort () {
 
 # Applying tags abort
 __applying_tags_abort () {
-	__print_retag_apply_interrupt
-
-	# Kill running children
+	# Kill running children, must come before __kill_spinner
 	__kill_jobs
+
+	# Kill spinner
+	__kill_spinner
+
+	# Print current FLAC file that is interrupted
+	__print_retag_apply_interrupt
 
 	__newline
 	__info "Control-C received, generating summary. Please wait...\n"
@@ -1708,7 +1761,10 @@ __applying_tags_abort () {
 		__header_retag
 	fi
 
+	# Store operation status for Summary Of Operations
 	applying_retag_complete="interrupt"
+
+	# Display Summary Of Operations
 	__operation_summary
 
 	exit 130
@@ -1716,10 +1772,14 @@ __applying_tags_abort () {
 
 # Prune FLACS abort
 __prune_abort () {
-	__print_interrupt
-
-	# Kill running children
+	# Kill running children, must come before __kill_spinner
 	__kill_jobs
+
+	# Kill spinner
+	__kill_spinner
+
+	# Print current FLAC file that is interrupted
+	__print_interrupt
 
 	__newline
 	__info "Control-C received, generating summary. Please wait...\n"
@@ -1732,7 +1792,10 @@ __prune_abort () {
 		__header_prune
 	fi
 
+	# Store operation status for Summary Of Operations
 	prune_complete="interrupt"
+
+	# Display Summary Of Operations
 	__operation_summary
 
 	exit 130
@@ -1830,7 +1893,7 @@ __new_config () {
 
 	# Explain to user where to find the new configuration file
 	__info "A new configuration file has been created here:\n"
-	__info "   ${cyan}${config_location}${normal}\n\n"
+	__info "${cyan}${config_location}${normal}\n\n"
 
 	__info "It's recommended to review the new configuration file\n"
 	__info "and transfer over any changes you made in your old\n"
@@ -2157,7 +2220,7 @@ __spinner () {
 	done
 }
 
-# Start the spinner on the first FLAC file being processed
+# Start the spinner on the first file/directory being processed
 __start_spinner () {
 	if (( iteration == 1 )) ; then
 		# Display spinner as a separate process (forked to background)
@@ -2170,15 +2233,22 @@ __start_spinner () {
 
 # Kill spinner process
 __kill_spinner () {
-	# Kill spinner process
-	#
-	# Obtain process PID of spinner
-	read -u6 spinner_pid
+	# Print a newline into file descriptor 6, hiding any error output that may
+	# occur if the file descriptor is NOT open yet
+	{ printf "\n" >&6 ;} 2>/dev/null
 
-	# Kill spinner PID
-	kill "${spinner_pid}" 2>/dev/null
+	# If the file descriptor is open, obtain spinner PID and kill it
+	if (( ${?} == 0 )) ; then
+		# Obtain process PID of spinner
+		read -u6 spinner_pid
 
-	wait 2>/dev/null
+		# Kill spinner PID
+		kill "${spinner_pid}" 2>/dev/null
+
+		# Wait on killing the spinner process, hiding STDERR to disable job
+		# control output
+		wait "${!}" 2>/dev/null
+	fi
 }
 
 # Determine number of jobs to run via the number
@@ -2332,26 +2402,7 @@ __top_banner () {
 # line above.  This will be displayed when all the FLAC files
 # have been mapped to an array
 __processed_flacs_ok () {
-	# Grab the first line of 'stty -a' output
-	# Redirecting '/dev/stderr' to 'stty' allows valid arguments
-	read -r columns < <(stty -a < /dev/stderr)
-
-	# Remove superflous information from 'stty -a'
-	# Ends up with the width of terminal
-	columns="${columns/#*columns }"
-	columns="${columns/%;*}"
-
-	# ${processed_flacs_ok_spacing} is the spacing from the number of
-	# ${columns} minus the number of printed characters:
-	#
-	#  * Finding FLAC files to process... <- ${flacs_ok_spacing} -> [ ok ]
-	#                                     ^^^^^^^^^^^^^^^^^^^^^^^^^
-	# 42 is the number of printed characters printed and is what is subtracted
-	# from ${columns} to get ${flacs_ok_spacing}:
-	#
-	#  ' * Finding FLAC files to process...'  (35 characters)
-	#                              '[ ok ] '  ( 7 characters)
-	printf "${normal}%$((columns - 42))s${blue}%s${normal}%s${green}%s${normal}%s${blue}%s${normal}" \
+	printf "${normal}%11s${blue}%s${normal}%s${green}%s${normal}%s${blue}%s${normal}" \
 	"" "[" " " "ok" " " "]"
 }
 
@@ -2376,8 +2427,8 @@ __countdown_metadata () {
 	__error "${cyan}COVERART${normal} tag when re-tagging files.  Change the ${cyan}remove_artwork${normal}\n" >&2
 	__error "option (in the configuration file) to ${cyan}false${normal} to keep the legacy\n" >&2
 	__error "${cyan}COVERART${normal} tag, or add the ${cyan}COVERART${normal} tag to the list of tags to\n" >&2
-	__error "be kept in the ${cyan}TAGGING SECTION${normal} of the configuration file.\n" >&2
-	__error "\n" >&2
+	__error "be kept in the ${cyan}TAGGING SECTION${normal} of the configuration file.\n\n" >&2
+
 	__error "Keep in mind, if the ${cyan}remove_artwork${normal} option is set to ${cyan}false${normal},\n" >&2
 	__error "embedded artwork in the ${cyan}PICTURE${normal} block will be kept when using\n" >&2
 	__error "${cyan}-p, --prune${normal} option as well.\n\n" >&2
@@ -2406,7 +2457,7 @@ __countdown_config () {
 	__warn "file for use with this program.\n\n" >&2
 
 	__warn "To generate a new configuration file, run:\n" >&2
-	__warn "   ${cyan}redoflacs --new-config${normal}\n\n" >&2
+	__warn "${cyan}redoflacs --new-config${normal}\n\n" >&2
 
 	__warn "The above command will _NOT_ overwrite your\n" >&2
 	__warn "current configuration file.\n\n" >&2
@@ -2981,7 +3032,7 @@ __check_missing_programs () {
 			if [[ ! -x "${aucdtect_exists}" ]] ; then
 				__error "It appears ${cyan}auCDtect${normal} is not executable.  In order to make\n" >&2
 				__error "${cyan}auCDtect${normal} executable, run:\n" >&2
-				__error "  ${cyan}chmod +x \"${aucdtect_exists}\"${normal}\n" >&2
+				__error "${cyan}chmod +x \"${aucdtect_exists}\"${normal}\n" >&2
 
 				exit 1
 			fi
@@ -3253,10 +3304,28 @@ __operation_summary () {
 		esac
 	}
 
+	#---------------------------------------------------------------------------
+	# .: CLEANUP SECTION :.
+	#---------------------------------------------------------------------------
+	# This section must come before printing out the Summary Of Operations chart
+	# as this will ensure the spinner is not running and displaying remnants
+	# inside the chart
+	#
+	# Kill spinner
+	__kill_spinner
+
+	# Restore old stty settings, make stty happy
+	# by redirecting /dev/stderr
+	stty ${old_stty} < /dev/stderr
+
+	# Restore the cursor
+	printf "\033[?25h"
+	#== .: END CLEANUP SECTION :. ==============================================
+
 	# Begin printing the table
 
 	# Title
-	printf "  \n${normal}%s${blue}%s${normal}\n" \
+	printf "\n${normal}%s${blue}%s${normal}\n" \
 	" " "---------------------------------------------------"
 	printf "${normal}%s\n" \
 	"                Summary Of Operations"
@@ -3448,20 +3517,6 @@ __operation_summary () {
 
 	printf "${normal}%s${blue}%s${normal}\n" \
 	" " "-------------------------+-------------------------"
-
-	#---------------------------------------------------------------------------
-	# .: CLEANUP SECTION :.
-	#---------------------------------------------------------------------------
-	# Kill spinner
-	__kill_spinner
-
-	# Restore old stty settings, make stty happy
-	# by redirecting /dev/stderr
-	stty ${old_stty} < /dev/stderr
-
-	# Restore the cursor
-	printf "\033[?25h"
-	#== .: END CLEANUP SECTION :. ==============================================
 }
 
 # Function to run commands/operations that are by
@@ -4883,7 +4938,7 @@ if (( EUID == 0 )) ; then
 		# Inform user of created configuration file, reminding them to check
 		# it over before running program
 		__info "A configuration file has been created here:\n"
-		__info "  ${cyan}${config_location}${normal}\n\n"
+		__info "${cyan}${config_location}${normal}\n\n"
 
 		__info "Please review it before running this program.\n"
 
@@ -4909,7 +4964,7 @@ else
 		# Inform user of created configuration file, reminding them to check
 		# it over before running program
 		__info "A configuration file has been created here:\n"
-		__info "  ${cyan}${config_location}${normal}\n\n"
+		__info "${cyan}${config_location}${normal}\n\n"
 
 		__info "Please review it before running this program.\n"
 
