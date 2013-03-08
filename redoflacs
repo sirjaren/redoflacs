@@ -33,6 +33,7 @@
 #    3: FIFO process manager
 #    4: auCDtect's (STDOUT) output
 #    5: Number of FLAC files that failed and/or had issues
+#    6: Spinner PID
 #-------------------------------------------------------------------------------
 # .: SCRIPT MESSAGES :.
 #-------------------------------------------------------------------------------
@@ -814,43 +815,57 @@ __header_prune () {
 #-------------------------------------------------------------------------------
 # Compress FLACS & verify
 __title_compress_flac () {
-	__newline
+	# Special newline to ensure leftover spinner is hidden
+	printf "  \n"
+
 	__info "Compressing & Verifying FLAC Files :: ${cyan}[Compression: ${compression_level}]${normal}\n"
 }
 
 # Compress FLACS & no verify
 __title_compress_notest_flac () {
-	__newline
+	# Special newline to ensure leftover spinner is hidden
+	printf "  \n"
+
 	__info "Compressing FLAC Files :: ${cyan}[Compression: ${compression_level}]${normal}\n"
 }
 
 # Apply ReplayGain to FLACS
 __title_replaygain () {
-	__newline
+	# Special newline to ensure leftover spinner is hidden
+	printf "  \n"
+
 	__info "Generating & Applying ReplayGain\n"
 }
 
 # Retag FLACS
 __title_retag () {
-	__newline
+	# Special newline to ensure leftover spinner is hidden
+	printf "  \n"
+
 	__info "Retagging FLAC Files\n"
 }
 
 # Testing FLACS
 __title_testing_flac () {
-	__newline
+	# Special newline to ensure leftover spinner is hidden
+	printf "  \n"
+
 	__info "Testing FLAC Files\n"
 }
 
 # Validating FLACS with auCDtect
 __title_aucdtect_flac () {
-	__newline
+	# Special newline to ensure leftover spinner is hidden
+	printf "  \n"
+
 	__info "Validating FLAC Files with auCDtect\n"
 }
 
 # Checking MD5 of FLACS
 __title_md5check_flac () {
-	__newline
+	# Special newline to ensure leftover spinner is hidden
+	printf "  \n"
+
 	__info "Checking MD5 Signature\n"
 }
 
@@ -865,7 +880,9 @@ __title_prune_flac () {
 		local metadata_removed="STREAMINFO and VORBIS_COMMENT"
 	fi
 
-	__newline
+	# Special newline to ensure leftover spinner is hidden
+	printf "  \n"
+
 	__info "Pruning blocks except ${metadata_removed}\n"
 }
 #== .: END TITLE MESSAGES :. ===================================================
@@ -2123,6 +2140,47 @@ __current_length () {
 	fi
 }
 
+# Print out spinner
+__spinner () {
+	# Array houses various spinner incarnations
+	spinner=( '|' '/' '-' '\' )
+
+	# Run indefinitely
+	while true; do
+		# Print each index of the spinner array
+		for i in "${spinner[@]}" ; do
+			printf "\r ${cyan}%s${normal} " "${i}"
+
+			# Sleep so the spinner isn't exceptionally fast
+			sleep .1
+		done
+	done
+}
+
+# Start the spinner on the first FLAC file being processed
+__start_spinner () {
+	if (( iteration == 1 )) ; then
+		# Display spinner as a separate process (forked to background)
+		__spinner &
+
+		# Store spinner PID into fd '6'
+		printf "%s\n" "${!}" >&6
+	fi
+}
+
+# Kill spinner process
+__kill_spinner () {
+	# Kill spinner process
+	#
+	# Obtain process PID of spinner
+	read -u6 spinner_pid
+
+	# Kill spinner PID
+	kill "${spinner_pid}" 2>/dev/null
+
+	wait 2>/dev/null
+}
+
 # Determine number of jobs to run via the number
 # of CPUs/cores available
 __find_cores () {
@@ -2432,6 +2490,40 @@ __set_error_fd () {
 	rm -f "${error_fifo}"
 }
 
+# Create spinner file descriptor (6) and create a new FIFO that's tied to file
+# descriptor 6, removing the FIFO upon completion
+__set_spinner_fd () {
+	# Print a newline into file descriptor 6, hiding any error output that may
+	# occur if the file descriptor is NOT open yet
+	{ printf "\n" >&6 ;} 2>/dev/null
+
+	# If the file descriptor isn't open, create the FIFO and open it on fd '6'
+	if (( ${?} != 0 )) ; then
+		# Create temporary FIFO
+		mkfifo "${spinner_fifo}"
+
+		# Open FIFO for reading and writing on file descriptor '6'
+		exec 6<>"${spinner_fifo}"
+
+		# Remove temporary FIFO and leave just the file descriptor available
+		rm -f "${spinner_fifo}"
+
+	# The file descriptor is already open, so kill the spinner and reset the fd
+	else
+		# Kill spinner
+		__kill_spinner
+
+		# Create temporary FIFO
+		mkfifo "${spinner_fifo}"
+
+		# Open FIFO for reading and writing on file descriptor '6'
+		exec 6<>"${spinner_fifo}"
+
+		# Remove temporary FIFO and leave just the file descriptor available
+		rm -f "${spinner_fifo}"
+	fi
+}
+
 # Kill any child processes
 __kill_jobs () {
 	# Hide error output in case there are no children to kill
@@ -2653,8 +2745,10 @@ __process_positional_parameters () {
 					# integer argument after '-j'
 					jobs="${OPTARG}"
 
+					# Do not allow jobs to be '0'
 					if (( jobs == 0 )) ; then
-						# Currently, this is just for '-j' so we can explicity specify it
+						# Currently, this is just for '-j' so we can explicity
+						# specify it
 						parameter_errors_array+=( "${cyan}-j${normal} requires a non-zero integer after it (eg. ${cyan}-j11${normal})." )
 					else
 						converted_arguments_array+=( -j )
@@ -2670,12 +2764,13 @@ __process_positional_parameters () {
 					converted_arguments_array+=( -o )
 				;;
 				:)
-					# Currently, this is just for '-j' so we can explicity specify it
+					# Currently, this is just for '-j' so we can explicity
+					# specify it
 					parameter_errors_array+=( "${cyan}-${OPTARG}${normal} requires a non-zero integer after it (eg. ${cyan}-${OPTARG}11${normal})." )
 				;;
 				?)
-					# Set invalid argument from getopts into
-					# array using ${OPTARG}
+					# Set invalid argument from getopts into array using
+					# ${OPTARG}
 					invalid_arguments_array+=( "-${OPTARG}" )
 				;;
 			esac
@@ -3161,7 +3256,7 @@ __operation_summary () {
 	# Begin printing the table
 
 	# Title
-	printf "\n${normal}%s${blue}%s${normal}\n" \
+	printf "  \n${normal}%s${blue}%s${normal}\n" \
 	" " "---------------------------------------------------"
 	printf "${normal}%s\n" \
 	"                Summary Of Operations"
@@ -3354,7 +3449,11 @@ __operation_summary () {
 	printf "${normal}%s${blue}%s${normal}\n" \
 	" " "-------------------------+-------------------------"
 
-	## CLEANUP SECTION ##
+	#---------------------------------------------------------------------------
+	# .: CLEANUP SECTION :.
+	#---------------------------------------------------------------------------
+	# Kill spinner
+	__kill_spinner
 
 	# Restore old stty settings, make stty happy
 	# by redirecting /dev/stderr
@@ -3362,6 +3461,7 @@ __operation_summary () {
 
 	# Restore the cursor
 	printf "\033[?25h"
+	#== .: END CLEANUP SECTION :. ==============================================
 }
 
 # Function to run commands/operations that are by
@@ -3499,6 +3599,9 @@ __operation_test_replaygain () {
 	# Print current FLAC being processed
 	__print_test_replaygain
 
+	# Start spinner only if this is the first FLAC file being processed
+	__start_spinner
+
 	# Check if file is a FLAC file (capture output) via obtaining the sample
 	# rate of the current file.  The sample rate captured will be tested against
 	# later on.  Hide STDERR as we'll test the exit code instead
@@ -3563,6 +3666,9 @@ __operation_replaygain_noforce () {
 
 	# Prints current directory being processed
 	__print_add_replaygain
+
+	# Start spinner only if this is the first FLAC file being processed
+	__start_spinner
 
 	# ${i} is the parent directory to the FLAC files
 	# ${j} is a FLAC file -> under ${i}
@@ -3639,6 +3745,9 @@ __operation_replaygain_force () {
 	# Prints current directory being processed
 	__print_add_replaygain
 
+	# Start spinner only if this is the first FLAC file being processed
+	__start_spinner
+
 	# Add ReplayGain to FLAC files under directory
 	metaflac --add-replay-gain "${i}"/*${flac_extension} >/dev/null 2>&1
 
@@ -3684,6 +3793,9 @@ __operation_compress () {
 	if (( COMPRESSION != compression_level )) ; then
 		# Print current FLAC being processed
 		__print_compressing_flac
+
+		# Start spinner only if this is the first FLAC file being processed
+		__start_spinner
 
 		# Compress FLAC file with user defined COMPRESSION
 		flac -f -${compression_level} -V --totally-silent "${i}"
@@ -3763,6 +3875,9 @@ __operation_test () {
 	# Print current FLAC being processed
 	__print_testing_flac
 
+	# Start spinner only if this is the first FLAC file being processed
+	__start_spinner
+
 	# Test FLAC file
 	flac -t --totally-silent "${i}"
 
@@ -3799,6 +3914,9 @@ __operation_aucdtect () {
 
 	# Print current FLAC being processed
 	__print_aucdtect_flac
+
+	# Start spinner only if this is the first FLAC file being processed
+	__start_spinner
 
 	# Get the bit depth of a FLAC file, also used to check
 	# if FLAC file is real.  Hide stderr output
@@ -4071,6 +4189,9 @@ __operation_md5_check () {
 	# Print current FLAC being processed
 	__print_checking_md5
 
+	# Start spinner only if this is the first FLAC file being processed
+	__start_spinner
+
 	# Get the MD5 checksum (hide stderr output).  Also
 	# used to check if FLAC file is real
 	md5_sum="$(metaflac --show-md5sum "${i}" 2> /dev/null)"
@@ -4132,6 +4253,9 @@ __operation_analyze_tags () {
 
 	# Print current FLAC being processed
 	__print_analyzing_tags
+
+	# Start spinner only if this is the first FLAC file being processed
+	__start_spinner
 
 	# Check if file is a FLAC file (variable hides output)
 	check_flac="$(metaflac --show-md5sum "${i}" 2>&1)"
@@ -4322,6 +4446,9 @@ __operation_analyze_tags_dont_log_coverart () {
 
 	# Print current FLAC being processed
 	__print_analyzing_tags
+
+	# Start spinner only if this is the first FLAC file being processed
+	__start_spinner
 
 	# Check if file is a FLAC file (variable hides output)
 	check_flac="$(metaflac --show-md5sum "${i}" 2>&1)"
@@ -4541,6 +4668,9 @@ __operation_set_tags () {
 	# Print current FLAC being processed
 	__print_applying_tags
 
+	# Start spinner only if this is the first FLAC file being processed
+	__start_spinner
+
 	# Remove and set new tags
 	#
 	# Iterate through the tag array and set a variable for each tag
@@ -4655,6 +4785,9 @@ __operation_prune () {
 
 	# Print current FLAC being processed
 	__print_prune_flac
+
+	# Start spinner only if this is the first FLAC file being processed
+	__start_spinner
 
 	# Check if file is a FLAC file (hide output)
 	metaflac --show-md5sum "${i}" >/dev/null 2>&1
@@ -4898,6 +5031,9 @@ __check_config_version
 # Temporary FIFO location
 tmp_fifo="/tmp/redoflacs_fifo_$$"
 
+# Temporary spinner FIFO
+spinner_fifo="/tmp/redoflacs_spinner_fifo_$$"
+
 # Set up error file descriptor '5'
 __set_error_fd
 
@@ -4938,6 +5074,9 @@ __processed_flacs_ok
 # isn't wasted on doing unnecessary operations if the
 # FLAC files are corrupt or have metadata issues
 if [[ "${aucdtect_flac}" == "true" ]] ; then
+
+	# Set up spinner file descriptor '6'
+	__set_spinner_fd
 
 	# Prints title message of current operation
 	__title_aucdtect_flac
@@ -4980,6 +5119,9 @@ fi
 # .: MD5 CHECK :.
 #-------------------------------------------------------------------------------
 if [[ "${md5check_flac}" == "true" ]] ; then
+
+	# Set up spinner file descriptor '6'
+	__set_spinner_fd
 
 	# Prints title message of current operation
 	__title_md5check_flac
@@ -5027,6 +5169,9 @@ if [[ "${compress_flac}" == "true" ]] ; then
 		title_compress="__title_compress_flac"
 	fi
 
+	# Set up spinner file descriptor '6'
+	__set_spinner_fd
+
 	# Prints title message of current operation
 	# ${title_compress} is an alias to the command to
 	# run determined earlier
@@ -5066,6 +5211,9 @@ fi
 # .: TEST :.
 #-------------------------------------------------------------------------------
 if [[ "${test_flac}" == "true" ]] ; then
+
+	# Set up spinner file descriptor '6'
+	__set_spinner_fd
 
 	# Prints title message of current operation
 	__title_testing_flac
@@ -5124,6 +5272,9 @@ if [[ "${replaygain_flac}" == "true" ]] ; then
 	#---------------------------------------------------------------------------
 	# .: TEST REPLAYGAIN :.
 	#---------------------------------------------------------------------------
+	# Set up spinner file descriptor '6'
+	__set_spinner_fd
+
 	# Prints sub message of current operation
 	__sub_test_replaygain
 
@@ -5162,6 +5313,9 @@ if [[ "${replaygain_flac}" == "true" ]] ; then
 		directory="${PWD}"
 	fi
 
+	# Set up spinner file descriptor '6'
+	__set_spinner_fd
+
 	# Grab number of directories to process provided as
 	# ${total_directories}
 	__total_directories
@@ -5169,8 +5323,8 @@ if [[ "${replaygain_flac}" == "true" ]] ; then
 	# Prints sub message of current operation
 	__sub_add_replaygain
 
-	# Make sure to clear file descriptor '3' before proceeding
-	__clear_tmp_fd
+	# Set up spinner file descriptor '6'
+	__set_spinner_fd
 
 	# Run parallel operations, that which is specified as ${1}
 	__run_parallel_directories "${process_replaygain}"
@@ -5234,6 +5388,9 @@ if [[ "${retag_flac}" == "true" ]] ; then
 	# .: ANALYZE TAGS :.
 	#---------------------------------------------------------------------------
 	# Analyze FLAC tags to ensure none are missing and/or empty
+
+	# Set up spinner file descriptor '6'
+	__set_spinner_fd
 
 	# Prints sub message of current operation
 	__sub_analyze_tags
@@ -5303,6 +5460,9 @@ if [[ "${retag_flac}" == "true" ]] ; then
 	# COVERART tag was, in fact, temporary.
 	tags=( "${old_tags[@]}" )
 
+	# Set up spinner file descriptor '6'
+	__set_spinner_fd
+
 	# Prints sub message of current operation
 	__sub_applying_tags
 
@@ -5336,6 +5496,9 @@ if [[ "${prune_flac}" == "true" ]] ; then
 		# Don't remove artwork
 		dont_prune_flac_metadata="STREAMINFO,PICTURE,VORBIS_COMMENT"
 	fi
+
+	# Set up spinner file descriptor '6'
+	__set_spinner_fd
 
 	# Prints title message of current operation
 	__title_prune_flac
