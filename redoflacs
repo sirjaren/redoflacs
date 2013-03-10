@@ -874,10 +874,10 @@ __title_prune_flac () {
 	# Change printed title based on whether embedded artwork is to be removed
 	if [[ "${remove_artwork}" != "true" ]] ; then
 		# Keep artwork
-		local metadata_removed="STREAMINFO, VORBIS_COMMENT and PICTURE"
+		local metadata_removed="${cyan}STREAMINFO${normal}, ${cyan}VORBIS_COMMENT${normal} and ${cyan}PICTURE${normal}"
 	else
 		# Remove artwork
-		local metadata_removed="STREAMINFO and VORBIS_COMMENT"
+		local metadata_removed="${cyan}STREAMINFO${normal} and ${cyan}VORBIS_COMMENT${normal}"
 	fi
 
 	# Special newline to ensure leftover spinner is hidden
@@ -3273,8 +3273,7 @@ __operation_summary () {
 				# Store array into a string
 				fail_count="${fail_count[@]}"
 
-				# If ${#fail_count} is one, change the message
-				# to singular
+				# If ${#fail_count} is one, change the message to singular
 				if (( ${#fail_count} == 1 )) ; then
 					fail_count_message="${#fail_count} File Failed"
 				else
@@ -3845,12 +3844,12 @@ __operation_compress () {
 	COMPRESSION="$(metaflac --show-tag=COMPRESSION "${i}" 2> /dev/null)"
 	COMPRESSION="${COMPRESSION#*=}"
 
+	# Start spinner only if this is the first FLAC file being processed
+	__start_spinner
+
 	if (( COMPRESSION != compression_level )) ; then
 		# Print current FLAC being processed
 		__print_compressing_flac
-
-		# Start spinner only if this is the first FLAC file being processed
-		__start_spinner
 
 		# Compress FLAC file with user defined COMPRESSION
 		flac -f -${compression_level} -V --totally-silent "${i}"
@@ -5153,7 +5152,10 @@ if [[ "${aucdtect_flac}" == "true" ]] ; then
 		# Prepend log header to log file
 		__header_aucdtect
 
+		# Store operation status for Summary Of Operations
 		aucdtect_complete="false"
+
+		# Display Summary Of Operations
 		__operation_summary
 
 		exit 1
@@ -5164,8 +5166,11 @@ if [[ "${aucdtect_flac}" == "true" ]] ; then
 		__print_ok_flac ; __newline
 	fi
 
-	# auCDtect completed successfully
+	# Store operation status for Summary Of Operations
 	aucdtect_complete="true"
+
+	# Kill spinner
+	__kill_spinner
 fi
 #== .: END AUCDTECT :. =========================================================
 
@@ -5194,7 +5199,10 @@ if [[ "${md5check_flac}" == "true" ]] ; then
 		# Prepend log header to log file
 		__header_md5_check
 
+		# Store operation status for Summary Of Operations
 		md5check_complete="false"
+
+		# Display Summary Of Operations
 		__operation_summary
 
 		exit 1
@@ -5205,8 +5213,11 @@ if [[ "${md5check_flac}" == "true" ]] ; then
 		__print_ok_flac ; __newline
 	fi
 
-	# MD5 Check completed successfully
+	# Store operation status for Summary Of Operations
 	md5check_complete="true"
+
+	# Kill spinner
+	__kill_spinner
 fi
 #== .: END MD5 CHECK :. ========================================================
 
@@ -5245,7 +5256,10 @@ if [[ "${compress_flac}" == "true" ]] ; then
 		# Prepend log header to log file
 		__header_compress_verify
 
+		# Store operation status for Summary Of Operations
 		compress_complete="false"
+
+		# Display Summary Of Operations
 		__operation_summary
 
 		exit 1
@@ -5256,8 +5270,11 @@ if [[ "${compress_flac}" == "true" ]] ; then
 		__print_ok_flac ; __newline
 	fi
 
-	# Compress FLACS completed successfully
+	# Store operation status for Summary Of Operations
 	compress_complete="true"
+
+	# Kill spinner
+	__kill_spinner
 fi
 #== .: END COMPRESS/VERIFY :. ==================================================
 
@@ -5286,7 +5303,10 @@ if [[ "${test_flac}" == "true" ]] ; then
 		# Prepend log header to log file
 		__header_test
 
+		# Store operation status for Summary Of Operations
 		test_complete="false"
+
+		# Display Summary Of Operations
 		__operation_summary
 
 		exit 1
@@ -5297,8 +5317,11 @@ if [[ "${test_flac}" == "true" ]] ; then
 		__print_ok_flac ; __newline
 	fi
 
-	# Test FLACS completed successfully
+	# Store operation status for Summary Of Operations
 	test_complete="true"
+
+	# Kill spinner
+	__kill_spinner
 fi
 #== .: END TEST :. =============================================================
 
@@ -5346,7 +5369,10 @@ if [[ "${replaygain_flac}" == "true" ]] ; then
 		# Prepend log header to log file
 		__header_replaygain_test
 
+		# Store operation status for Summary Of Operations
 		testing_replaygain_complete="false"
+
+		# Display Summary Of Operations
 		__operation_summary
 
 		exit 1
@@ -5355,8 +5381,13 @@ if [[ "${replaygain_flac}" == "true" ]] ; then
 	if [[ "${last_file}" == "true" ]] ; then
 		# FLAC is okay, so print only if it's the last file
 		__print_ok_replaygain_file
+
+		# Store operation status for Summary Of Operations
 		testing_replaygain_complete="true"
 	fi
+
+	# Kill spinner
+	__kill_spinner
 	#== .: END TEST REPLAYGAIN :. ==============================================
 
 
@@ -5391,7 +5422,10 @@ if [[ "${replaygain_flac}" == "true" ]] ; then
 		# Prepend log header to log file
 		__header_replaygain_test
 
+		# Store operation status for Summary Of Operations
 		adding_replaygain_complete="false"
+
+		# Display Summary Of Operations
 		__operation_summary
 
 		exit 1
@@ -5402,8 +5436,11 @@ if [[ "${replaygain_flac}" == "true" ]] ; then
 		__print_ok_replaygain_dir ; __newline
 	fi
 
-	# ReplayGain completed successfully
+	# Store operation status for Summary Of Operations
 	adding_replaygain_complete="true"
+
+	# Kill spinner
+	__kill_spinner
 	#== .: END PROCESS REPLAYGAIN :. ===========================================
 fi
 #== .: END REPLAYGAIN :. =======================================================
@@ -5480,7 +5517,10 @@ if [[ "${retag_flac}" == "true" ]] ; then
 		# Prepend log header to log file
 		__header_retag
 
+		# Store operation status for Summary Of Operations
 		analyzing_retag_complete="false"
+
+		# Display Summary Of Operations
 		__operation_summary
 
 		exit 1
@@ -5491,7 +5531,10 @@ if [[ "${retag_flac}" == "true" ]] ; then
 		# Prepend log header to log file
 		__header_retag
 
+		# Store operation status for Summary Of Operations
 		analyzing_retag_complete="false"
+
+		# Display Summary Of Operations
 		__operation_summary
 
 		exit 1
@@ -5500,8 +5543,13 @@ if [[ "${retag_flac}" == "true" ]] ; then
 	if [[ "${last_file}" == "true" ]] ; then
 		# FLAC is okay, so print only if it's the last file
 		__print_ok_tag
+
+		# Store operation status for Summary Of Operations
 		analyzing_retag_complete="true"
 	fi
+
+	# Kill spinner
+	__kill_spinner
 	#== .: END ANALYZE TAGS :. =================================================
 
 
@@ -5530,8 +5578,13 @@ if [[ "${retag_flac}" == "true" ]] ; then
 	if [[ "${last_file}" == "true" ]] ; then
 		# FLAC is okay, so print only if it's the last file
 		__print_ok_tag ; __newline
+
+		# Store operation status for Summary Of Operations
 		applying_retag_complete="true"
 	fi
+
+	# Kill spinner
+	__kill_spinner
 	#== .: END SET TAGS :. =====================================================
 fi
 #== .: END RETAG :. ============================================================
@@ -5571,7 +5624,10 @@ if [[ "${prune_flac}" == "true" ]] ; then
 		# Prepend log header to log file
 		__header_prune
 
+		# Store operation status for Summary Of Operations
 		prune_complete="false"
+
+		# Display Summary Of Operations
 		__operation_summary
 
 		exit 1
@@ -5582,8 +5638,11 @@ if [[ "${prune_flac}" == "true" ]] ; then
 		__print_ok_flac ; __newline
 	fi
 
-	# Prune FLACS completed successfully
+	# Store operation status for Summary Of Operations
 	prune_complete="true"
+
+	# Kill spinner
+	__kill_spinner
 fi
 #== .: END PRUNE :. ============================================================
 
@@ -5593,6 +5652,6 @@ if [[ "${coverart_warning}" == "true" ]] ; then
 	__coverart_warning
 fi
 
-# Display summary of completed tasks
+# Display Summary Of Operations
 __operation_summary
 #== .: END SCRIPT :. ===========================================================
