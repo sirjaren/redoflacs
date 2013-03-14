@@ -2256,7 +2256,7 @@ __kill_spinner () {
 __find_cores () {
 	# Check if /proc is mounted by comparing device numbers of
 	# /proc and / and see if they don't match (ie, /proc is mounted)
-	if (( $(stat -c %d%D /proc) == $(stat -c %d%D /) )) ; then
+	if (( $(stat -c %d /proc) == $(stat -c %d /) )) ; then
 		# /proc is not mounted, default to 2 jobs
 		jobs_display="(Default)"
 		jobs=2
