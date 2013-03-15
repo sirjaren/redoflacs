@@ -938,8 +938,8 @@ __print_compressing_flac () {
 	# Create and cull filename if needed returned as ${filename}
 	__filename
 
-	printf "\r${normal}%s${magenta}%s${normal}%s%$(__current_length)s${blue}%s${normal}%s${yellow}%s${normal}%s${blue}%s${normal}%s" \
-	"   " "[${iteration}/${#total_flacs_array[@]}]" " ${filename} " "" "[" " " "Compressing FLAC" " " "]" " "
+	printf "\r\033[3C${magenta}%s${normal}%s%$(__current_length)s${blue}%s${normal}%s${yellow}%s${normal}%s${blue}%s${normal}%s" \
+	"[${iteration}/${#total_flacs_array[@]}]" " ${filename} " "" "[" " " "Compressing FLAC" " " "]" " "
 }
 
 # Testing ReplayGain
@@ -960,8 +960,8 @@ __print_test_replaygain () {
 	# Create and cull filename if needed returned as ${filename}
 	__filename
 
-	printf "\r${normal}%s${magenta}%s${normal}%s%$(__current_length)s${blue}%s${normal}%s${yellow}%s${normal}%s${blue}%s${normal}%s" \
-	"     " "[${iteration}/${#total_flacs_array[@]}]" " ${filename} " "" "[" " " "Testing ReplayGain" " " "]" " "
+	printf "\r\033[3C${normal}%s${magenta}%s${normal}%s%$(__current_length)s${blue}%s${normal}%s${yellow}%s${normal}%s${blue}%s${normal}%s" \
+	"  " "[${iteration}/${#total_flacs_array[@]}]" " ${filename} " "" "[" " " "Testing ReplayGain" " " "]" " "
 }
 
 # Applying ReplayGain
@@ -982,8 +982,8 @@ __print_add_replaygain () {
 	# Create and cull filename if needed returned as ${filename}
 	__filename
 
-	printf "\r${normal}%s${magenta}%s${normal}%s%$(__current_length)s${blue}%s${normal}%s${yellow}%s${normal}%s${blue}%s${normal}%s" \
-	"     " "[${iteration}/${#flac_directories_array[@]}]" " ${filename} " "" "[" " " "Adding ReplayGain" " " "]" " "
+	printf "\r\033[3C${normal}%s${magenta}%s${normal}%s%$(__current_length)s${blue}%s${normal}%s${yellow}%s${normal}%s${blue}%s${normal}%s" \
+	"  " "[${iteration}/${#flac_directories_array[@]}]" " ${filename} " "" "[" " " "Adding ReplayGain" " " "]" " "
 }
 
 # Testing
@@ -1004,8 +1004,8 @@ __print_testing_flac () {
 	# Create and cull filename if needed returned as ${filename}
 	__filename
 
-	printf "\r${normal}%s${magenta}%s${normal}%s%$(__current_length)s${blue}%s${normal}%s${yellow}%s${normal}%s${blue}%s${normal}%s" \
-	"   " "[${iteration}/${#total_flacs_array[@]}]" " ${filename} " "" "[" " " "Testing FLAC" " " "]" " "
+	printf "\r\033[3C${magenta}%s${normal}%s%$(__current_length)s${blue}%s${normal}%s${yellow}%s${normal}%s${blue}%s${normal}%s" \
+	"[${iteration}/${#total_flacs_array[@]}]" " ${filename} " "" "[" " " "Testing FLAC" " " "]" " "
 }
 
 # Failed
@@ -1048,8 +1048,8 @@ __print_checking_md5 () {
 	# Create and cull filename if needed returned as ${filename}
 	__filename
 
-	printf "\r${normal}%s${magenta}%s${normal}%s%$(__current_length)s${blue}%s${normal}%s${yellow}%s${normal}%s${blue}%s${normal}%s" \
-	"   " "[${iteration}/${#total_flacs_array[@]}]" " ${filename} " "" "[" " " "Checking MD5" " " "]" " "
+	printf "\r\033[3C${magenta}%s${normal}%s%$(__current_length)s${blue}%s${normal}%s${yellow}%s${normal}%s${blue}%s${normal}%s" \
+	"[${iteration}/${#total_flacs_array[@]}]" " ${filename} " "" "[" " " "Checking MD5" " " "]" " "
 }
 
 # File ok
@@ -1202,8 +1202,8 @@ __print_aucdtect_flac () {
 	# Create and cull filename if needed returned as ${filename}
 	__filename
 
-	printf "\r${normal}%s${magenta}%s${normal}%s%$(__current_length)s${blue}%s${normal}%s${yellow}%s${normal}%s${blue}%s${normal}%s" \
-	"   " "[${iteration}/${#total_flacs_array[@]}]" " ${filename} " "" "[" " " "Validating FLAC" " " "]" " "
+	printf "\r\033[3C${magenta}%s${normal}%s%$(__current_length)s${blue}%s${normal}%s${yellow}%s${normal}%s${blue}%s${normal}%s" \
+	"[${iteration}/${#total_flacs_array[@]}]" " ${filename} " "" "[" " " "Validating FLAC" " " "]" " "
 }
 
 # FLAC issue
@@ -1246,8 +1246,8 @@ __print_aucdtect_spectrogram () {
 	# Create and cull filename if needed returned as ${filename}
 	__filename
 
-	printf "\r${normal}%s${magenta}%s${normal}%s%$(__current_length)s${blue}%s${normal}%s${yellow}%s${normal}%s${blue}%s${normal}%s" \
-	"   " "[${iteration}/${#total_flacs_array[@]}]" " ${filename} " "" "[" " " "Creating Spectrogram" " " "]" " "
+	printf "\r\033[3C${magenta}%s${normal}%s%$(__current_length)s${blue}%s${normal}%s${yellow}%s${normal}%s${blue}%s${normal}%s" \
+	"[${iteration}/${#total_flacs_array[@]}]" " ${filename} " "" "[" " " "Creating Spectrogram" " " "]" " "
 }
 
 # Skip FLAC file
@@ -1294,28 +1294,6 @@ __print_ok_tag () {
 	"     " "[${iteration}/${#total_flacs_array[@]}]" " ${filename} " "" "[" " " "ok" " " "]" " "
 }
 
-# Compression level the same
-__print_level_same_compression () {
-	# This is the maximum length of a string to be displayed based on column width,
-	# obtained via the number of columns minus the length of displayed characters:
-	#
-	#           $(__columns):  Width of terminal
-	#          ${#iteration}:  Length of the # of FLACs processed
-	#     total_flacs_length:  Length of the total # of FLAC files
-	#                     32:  Length of:
-	#                            [ Already At Level ${compression_level} ] (22)
-	#                            5 Spaces
-	#                            3 Characters: [/]
-	#                            2 Gap and ellipsis (…)
-	max_filename_length="$(( $(__columns) - ${#iteration} - total_flacs_length - 32 ))"
-
-	# Create and cull filename if needed returned as ${filename}
-	__filename
-
-	printf "\r${normal}%s${magenta}%s${normal}%s%$(__current_length)s${blue}%s${normal}%s${yellow}%s${normal}%s${blue}%s${normal}%s" \
-	"   " "[${iteration}/${#total_flacs_array[@]}]" " ${filename} " "" "[" " " "Already At Level ${compression_level}" " " "]" " "
-}
-
 # Analyzing tags
 __print_analyzing_tags () {
 	# This is the maximum length of a string to be displayed based on column width,
@@ -1334,8 +1312,8 @@ __print_analyzing_tags () {
 	# Create and cull filename if needed returned as ${filename}
 	__filename
 
-	printf "\r${normal}%s${magenta}%s${normal}%s%$(__current_length)s${blue}%s${normal}%s${yellow}%s${normal}%s${blue}%s${normal}%s" \
-	"     " "[${iteration}/${#total_flacs_array[@]}]" " ${filename} " "" "[" " " "Analyzing Tags" " " "]" " "
+	printf "\r\033[3C${normal}%s${magenta}%s${normal}%s%$(__current_length)s${blue}%s${normal}%s${yellow}%s${normal}%s${blue}%s${normal}%s" \
+	"  " "[${iteration}/${#total_flacs_array[@]}]" " ${filename} " "" "[" " " "Analyzing Tags" " " "]" " "
 }
 
 # Applying tags
@@ -1356,8 +1334,8 @@ __print_applying_tags () {
 	# Create and cull filename if needed returned as ${filename}
 	__filename
 
-	printf "\r${normal}%s${magenta}%s${normal}%s%$(__current_length)s${blue}%s${normal}%s${yellow}%s${normal}%s${blue}%s${normal}%s" \
-	"     " "[${iteration}/${#total_flacs_array[@]}]" " ${filename} " "" "[" " " "Applying Tags" " " "]" " "
+	printf "\r\033[3C${normal}%s${magenta}%s${normal}%s%$(__current_length)s${blue}%s${normal}%s${yellow}%s${normal}%s${blue}%s${normal}%s" \
+	"  " "[${iteration}/${#total_flacs_array[@]}]" " ${filename} " "" "[" " " "Applying Tags" " " "]" " "
 }
 
 # Pruning
@@ -1378,8 +1356,8 @@ __print_prune_flac () {
 	# Create and cull filename if needed returned as ${filename}
 	__filename
 
-	printf "\r${normal}%s${magenta}%s${normal}%s%$(__current_length)s${blue}%s${normal}%s${yellow}%s${normal}%s${blue}%s${normal}%s" \
-	"   " "[${iteration}/${#total_flacs_array[@]}]" " ${filename} " "" "[" " " "Pruning Metadata" " " "]" " "
+	printf "\r\033[3C${magenta}%s${normal}%s%$(__current_length)s${blue}%s${normal}%s${yellow}%s${normal}%s${blue}%s${normal}%s" \
+	"[${iteration}/${#total_flacs_array[@]}]" " ${filename} " "" "[" " " "Pruning Metadata" " " "]" " "
 }
 
 # Retag analyze interrupted
@@ -3882,9 +3860,6 @@ __operation_compress () {
 	# If already at compression_level, test the FLAC file instead
 	# or skip the file if '-C, --compress-notest' was specified
 	else
-		# Print current FLAC has same compression
-		__print_level_same_compression
-
 		if [[ "${skip_test}" != "true" ]] ; then
 			# Print current FLAC being processed
 			__print_testing_flac
@@ -3912,8 +3887,10 @@ __operation_compress () {
 				# Add one to fail fd
 				printf '.' >&5
 			fi
+		else
+			# Print current FLAC being processed
+			__print_compressing_flac
 		fi
-
 	fi
 
 	# Print newline into FIFO after completion
