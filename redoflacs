@@ -4858,7 +4858,7 @@ __operation_prune () {
 shopt -s globstar
 
 # Version
-version="0.21_pre"
+version="0.21"
 
 # This sets the script revision (used to compare against user revision)
 script_revision="1"
