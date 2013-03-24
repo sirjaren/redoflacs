@@ -1661,7 +1661,7 @@ __analyzing_tags_abort () {
 		while read -r i ; do
 			# Indentation is culled from reading in "${i}"
 			# To change this, set IFS to '\n'
-			if [[ "${i}" == "the new format: METADATA_BLOCK_PICTURE." ]] ; then
+			if [[ "${i}" == *METADATA_BLOCK_PICTURE* ]] ; then
 				coverart_warning="true"
 				break
 			fi
@@ -1715,7 +1715,7 @@ __applying_tags_abort () {
 		while read -r i ; do
 			# Indentation is culled from reading in "${i}"
 			# To change this, set IFS to '\n'
-			if [[ "${i}" == "the new format: METADATA_BLOCK_PICTURE." ]] ; then
+			if [[ "${i}" == *METADATA_BLOCK_PICTURE* ]] ; then
 				coverart_warning="true"
 				break
 			fi
@@ -5477,7 +5477,7 @@ if [[ "${retag_flac}" == "true" ]] ; then
 		while read -r i ; do
 			# Indentation is culled from reading in "${i}"
 			# To change this, set IFS to '\n'
-			if [[ "${i}" == "the new format: METADATA_BLOCK_PICTURE." ]] ; then
+			if [[ "${i}" == *METADATA_BLOCK_PICTURE* ]] ; then
 				coverart_warning="true"
 				break
 			fi
