@@ -994,18 +994,18 @@ __print_testing_flac () {
 	#           $(__columns):  Width of terminal
 	#          ${#iteration}:  Length of the # of FLACs processed
 	#     total_flacs_length:  Length of the total # of FLAC files
-	#                     26:  Length of:
+	#                     29:  Length of:
 	#                            [ Testing FLAC ] (16)
-	#                            5 Spaces
-	#                            3 Characters: [/]
+	#                            8 Spaces
+	#                            2 Characters: []
 	#                            2 Gap and ellipsis (…)
-	max_filename_length="$(( $(__columns) - ${#iteration} - total_flacs_length - 26 ))"
+	max_filename_length="$(( $(__columns) - 26 ))"
 
 	# Create and cull filename if needed returned as ${filename}
 	__filename
 
-	printf "\r\033[3C${magenta}%s${normal}%s%$(__current_length)s${blue}%s${normal}%s${yellow}%s${normal}%s${blue}%s${normal}%s" \
-	"[${iteration}/${#total_flacs_array[@]}]" " ${filename} " "" "[" " " "Testing FLAC" " " "]" " "
+	printf "\033[${placement}H\r\033[6C%s%$(__current_length)s${blue}%s${normal}%s${yellow}%s${normal}%s${blue}%s${normal}%s" \
+	" ${filename} " "" "[" " " "Testing FLAC" " " "]" " "
 }
 
 # Failed
@@ -1805,6 +1805,18 @@ __metaflac_version () {
 	# Remove last part of string, leaving only the second integer, example:
 	#    3
 	metaflac_version="${metaflac_version%.*}"
+}
+
+# Obtain the current cursor row position
+__obtain_row () {
+	exec < /dev/tty
+	tmp_old_stty="$(stty -g)"
+	stty raw -echo min 0
+	printf "\033[6n" > /dev/tty
+	read -r -d R pos
+	pos="${pos%%;*}"
+	pos="${pos:2}"
+	stty "${tmp_old_stty}"
 }
 
 # Determine abort to run based off the operation to run (via ${1})
@@ -3516,7 +3528,10 @@ __run_parallel_files () {
 
 	# Start as many processes as determined by ${jobs}
 	for i in "${total_flacs_array[@]:0:${jobs}}" ; do
+		placement="$((pos + iteration))"
+
 		((iteration++))
+
 		"${parallel_operation}" &
 	done
 
@@ -3533,6 +3548,9 @@ __run_parallel_files () {
 				i="${total_flacs_array[${iteration}]}"
 				((iteration++))
 
+				read -r initial_pos < redo_tmp
+				placement="$((pos + initial_pos))"
+
 				"${parallel_operation}" &
 
 			# Below is processed only if the current directory
@@ -3542,6 +3560,9 @@ __run_parallel_files () {
 
 				i="${total_flacs_array[${iteration}]}"
 				((iteration++))
+
+				read -r initial_pos < redo_tmp
+				placement="$((pos + initial_pos))"
 
 				"${parallel_operation}" &
 
@@ -3907,10 +3928,27 @@ __operation_test () {
 	__print_testing_flac
 
 	# Start spinner only if this is the first FLAC file being processed
-	__start_spinner
+	#__start_spinner
 
 	# Test FLAC file
-	flac -t --totally-silent "${i}"
+	#flac -t --totally-silent "${i}"
+
+	# 27
+	#echo "$max_filename_length :: $current_filename_length"
+
+	while read -d% progress ; do
+		printf "\033[${placement}H${cyan}%5s${normal}" "${progress##* }%"
+
+		current_len=$(( (max_filename_length * ${progress##* }) / 100 ))
+		if (( current_len <= current_filename_length )) ; then
+			printf "\033[${placement}H\033[6C${invert} \033[${placement}H\033[7C%s${normal}" "${filename:0:$(( current_len + 5 ))}"
+		else
+			printf "\033[${placement}H\033[7C${invert}%s%$(( current_len - current_filename_length + 3 ))s${normal}" "${filename}" ""
+		fi
+
+	done < <(flac -t "${i}" 2>&1)
+
+	printf "\033[${placement}H${cyan}%5s${normal}" "100%"
 
 	# Exit code 130 is SIGINT so only check for exit code '1'
 	if (( ${?} == 1 )) ; then
@@ -3931,6 +3969,12 @@ __operation_test () {
 
 		# Add one to fail fd
 		printf '.' >&5
+	fi
+
+	if (( iteration <= jobs )) ; then
+		echo $(( ${iteration} - 1 )) > redo_tmp
+	else
+		echo $initial_pos > redo_tmp
 	fi
 
 	# Print newline into FIFO after completion
@@ -4874,6 +4918,9 @@ red="\033[31m"
 cyan="\033[36m"
 magenta="\033[35m"
 yellow="\033[33m"
+invert="\033[7m"
+white="\033[97m"
+blue_bg="\033[44m"
 normal="\033[0m"
 
 # Set arguments to null
@@ -5267,6 +5314,9 @@ if [[ "${test_flac}" == "true" ]] ; then
 	# Prints title message of current operation
 	__title_testing_flac
 
+	# Obtain the current row
+	__obtain_row
+
 	# Make sure to clear file descriptor '3' before proceeding
 	__clear_tmp_fd
 
@@ -5291,7 +5341,8 @@ if [[ "${test_flac}" == "true" ]] ; then
 
 	if [[ "${last_file}" == "true" ]] ; then
 		# FLAC is okay, so print only if it's the last file
-		__print_ok_flac ; __newline
+		#__print_ok_flac ; __newline
+		__newline
 	fi
 
 	# Store operation status for Summary Of Operations
