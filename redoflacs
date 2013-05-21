@@ -994,18 +994,17 @@ __print_testing_flac () {
 	#           $(__columns):  Width of terminal
 	#          ${#iteration}:  Length of the # of FLACs processed
 	#     total_flacs_length:  Length of the total # of FLAC files
-	#                     29:  Length of:
-	#                            [ Testing FLAC ] (16)
-	#                            8 Spaces
-	#                            2 Characters: []
+	#                      9:  Length of:
+	#                            3 Spaces
 	#                            2 Gap and ellipsis (…)
-	max_filename_length="$(( $(__columns) - 26 ))"
+	#                            4 Percentage: 100%
+	max_filename_length="$(( $(__columns) - ${#number_completed} - 9 ))"
 
 	# Create and cull filename if needed returned as ${filename}
 	__filename
 
-	printf "\033[${placement}H\r\033[6C%s%$(__current_length)s${blue}%s${normal}%s${yellow}%s${normal}%s${blue}%s${normal}%s" \
-	" ${filename} " "" "[" " " "Testing FLAC" " " "]" " "
+	printf "\033[${placement}H\r\033[6C%s%$(__current_length)s" \
+	"${filename} " ""
 }
 
 # Failed
@@ -2565,6 +2564,22 @@ __set_spinner_fd () {
 	fi
 }
 
+# Create a new file descriptor (7) via a FIFO for use with file positioning
+__set_position_fd () {
+	# Position FIFO location
+	position_fifo="/tmp/redoflacs_position_fifo_$$"
+
+	# Create temporary FIFO
+	mkfifo "${position_fifo}"
+
+	# Open FIFO for reading and writing on file descriptor '7'
+	exec 7<>"${position_fifo}"
+
+	# Remove temporary FIFO and leave just the file
+	# descriptor available
+	rm -f "${position_fifo}"
+}
+
 # Kill any child processes
 __kill_jobs () {
 	# Hide error output in case there are no children to kill
@@ -3531,6 +3546,7 @@ __run_parallel_files () {
 		placement="$((pos + iteration))"
 
 		((iteration++))
+		number_completed="[${iteration}/${#total_flacs_array[@]}]"
 
 		"${parallel_operation}" &
 	done
@@ -3547,8 +3563,9 @@ __run_parallel_files () {
 			if (( iteration < (${#total_flacs_array[@]} - 1) )) ; then
 				i="${total_flacs_array[${iteration}]}"
 				((iteration++))
+				number_completed="[${iteration}/${#total_flacs_array[@]}]"
 
-				read -r initial_pos < redo_tmp
+				read -u7 -r initial_pos
 				placement="$((pos + initial_pos))"
 
 				"${parallel_operation}" &
@@ -3560,8 +3577,9 @@ __run_parallel_files () {
 
 				i="${total_flacs_array[${iteration}]}"
 				((iteration++))
+				number_completed="[${iteration}/${#total_flacs_array[@]}]"
 
-				read -r initial_pos < redo_tmp
+				read -u7 -r initial_pos
 				placement="$((pos + initial_pos))"
 
 				"${parallel_operation}" &
@@ -3927,28 +3945,22 @@ __operation_test () {
 	# Print current FLAC being processed
 	__print_testing_flac
 
-	# Start spinner only if this is the first FLAC file being processed
-	#__start_spinner
-
-	# Test FLAC file
-	#flac -t --totally-silent "${i}"
-
-	# 27
-	#echo "$max_filename_length :: $current_filename_length"
+	printf "\033[${placement}H\033[$(( $(__columns) - ${#number_completed} - 1))C${magenta}%s${normal}" "${number_completed}"
 
 	while read -d% progress ; do
-		printf "\033[${placement}H${cyan}%5s${normal}" "${progress##* }%"
-
 		current_len=$(( (max_filename_length * ${progress##* }) / 100 ))
 		if (( current_len <= current_filename_length )) ; then
-			printf "\033[${placement}H\033[6C${invert} \033[${placement}H\033[7C%s${normal}" "${filename:0:$(( current_len + 5 ))}"
+			printf "\033[${placement}H${cyan}%5s${normal} ${invert}%s${normal}%s" "${progress##* }%" "${filename:0:$(( current_len ))}"
 		else
-			printf "\033[${placement}H\033[7C${invert}%s%$(( current_len - current_filename_length + 3 ))s${normal}" "${filename}" ""
+			printf "\033[${placement}H${cyan}%5s${normal} ${invert}%s%$(( current_len - current_filename_length + 3 ))s${normal}" "${progress##* }%" "${filename}" ""
 		fi
-
 	done < <(flac -t "${i}" 2>&1)
 
-	printf "\033[${placement}H${cyan}%5s${normal}" "100%"
+	if (( current_filename_length < max_filename_length )) ; then
+		printf "\033[${placement}H\033[1C${cyan}%s${normal}%s%$(( current_len - current_filename_length + 3 ))s" "100% " "${filename}" ""
+	else
+		printf "\033[${placement}H\033[1C${cyan}%s${normal}%s%$(( current_len - current_filename_length + 6 ))s" "100% " "${filename}" ""
+	fi
 
 	# Exit code 130 is SIGINT so only check for exit code '1'
 	if (( ${?} == 1 )) ; then
@@ -3972,9 +3984,9 @@ __operation_test () {
 	fi
 
 	if (( iteration <= jobs )) ; then
-		echo $(( ${iteration} - 1 )) > redo_tmp
+		printf "$(( iteration - 1 ))\n" >&7
 	else
-		echo $initial_pos > redo_tmp
+		printf "${initial_pos}\n" >&7
 	fi
 
 	# Print newline into FIFO after completion
@@ -5114,6 +5126,9 @@ spinner_fifo="/tmp/redoflacs_spinner_fifo_$$"
 
 # Set up error file descriptor '5'
 __set_error_fd
+
+# Set up position file descriptor '7'
+__set_position_fd
 
 # Display the top banner
 if [[ "${retag_flac}" != "true" ]] ; then
