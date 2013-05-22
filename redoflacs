@@ -988,23 +988,25 @@ __print_add_replaygain () {
 
 # Testing
 __print_testing_flac () {
+	# This stores the current file number processed out of the total files:
+	#  [56/213]
+	number_completed="[${iteration}/${#total_flacs_array[@]}]"
+
 	# This is the maximum length of a string to be displayed based on column width,
 	# obtained via the number of columns minus the length of displayed characters:
 	#
 	#           $(__columns):  Width of terminal
-	#          ${#iteration}:  Length of the # of FLACs processed
-	#     total_flacs_length:  Length of the total # of FLAC files
+	#   ${#number_completed}:  FLACs processed and total FLACs, ie: [56/213]
 	#                      9:  Length of:
-	#                            3 Spaces
-	#                            2 Gap and ellipsis (…)
-	#                            4 Percentage: 100%
+	#                            (3) Spaces
+	#                            (2) Gap and ellipsis: '… '
+	#                            (4) Percentage: '100%' or '  3%'
 	max_filename_length="$(( $(__columns) - ${#number_completed} - 9 ))"
 
 	# Create and cull filename if needed returned as ${filename}
 	__filename
 
-	printf "\033[${placement}H\r\033[6C%s%$(__current_length)s" \
-	"${filename} " ""
+	printf "\033[${placement}H\033[6C%s%$(__current_length)s${magenta}%s${normal}" "${filename} " "" "${number_completed}"
 }
 
 # Failed
@@ -1424,6 +1426,42 @@ __print_interrupt () {
 	printf "\r${normal}%s${magenta}%s${normal}%s%$(__current_length)s${blue}%s${normal}%s${yellow}%s${normal}%s${blue}%s${normal}%s" \
 	"   " "[${iteration}/${#total_flacs_array[@]}]" " ${filename} " "" "[" " " "Interrupted" " " "]" " "
 }
+
+# Display filename and current progress of operation
+__print_progress () {
+	# Remove the first part of the line to leave the resultant percent stored as
+	# an integer (no '%' appended)
+	percent_complete="${percent_complete##* }"
+
+	# This is the length of the progress bar represented as the maxmimum
+	# filename we can use.  The progress bar is displayed by taking the
+	# percentage completed thus far and using the percentage to display that
+	# same percentage of the filename's length (including spaces that may appear
+	# after it)
+	progress_bar_length=$(( ( max_filename_length * ${percent_complete} ) / 100 ))
+
+	# If the progress bar to display is less than or equal to the filename's
+	# length, print out the part of the filename that matches the percentage
+	# completed, inverting the colors.  Otherwise, print out the filename,
+	# inverted as well as the percentage of spacing that may be after the
+	# filename (matching the percentage of completed); also inverted
+	if (( progress_bar_length <= current_filename_length )) ; then
+
+		# Below takes the current filename and 'trims' off the part of the
+		# filename that hasn't doesn't match the percentage length of what's
+		# completed so far (trim meaning, not highlighting that portion of the
+		# filename)
+		printf "\033[${placement}H${yellow}%5s${normal} ${invert}%s${normal}%s" \
+		"${percent_complete}%" "${filename:0:$(( progress_bar_length + 3 ))}"
+	else
+
+		# This prints out the the filename, inverted, as well as the current
+		# progress bar length.  Used only if the filename is less than the width
+		# of the progress bar maximum's length
+		printf "\033[${placement}H${yellow}%5s${normal} ${invert}%s%$(( progress_bar_length - current_filename_length + 2 ))s${normal}" \
+		"${percent_complete}%" "${filename}" ""
+	fi
+}
 #== .: PROCESSED FILE/DIRECTORY MESSAGES :. ====================================
 
 
@@ -1808,14 +1846,27 @@ __metaflac_version () {
 
 # Obtain the current cursor row position
 __obtain_row () {
-	exec < /dev/tty
-	tmp_old_stty="$(stty -g)"
-	stty raw -echo min 0
+	exec < /dev/tty                 # Set a new TTY to read in STDIN
+	row_old_stty="$(stty -g)"       # Store current TTY settings
+	stty raw -echo min 0            # Current TTY set at an absolute minimum
+
+	# Print escape sequence to obtain cursor position into the new TTY
 	printf "\033[6n" > /dev/tty
-	read -r -d R pos
-	pos="${pos%%;*}"
-	pos="${pos:2}"
-	stty "${tmp_old_stty}"
+
+	# Read in escape sequence output from TTY.  The resultant output from the
+	# escape sequence looks like:
+	#  ^[[<num>;<num>R
+	#       ^------------ This is the 'row' we want to obtain
+	# The read then specifies the 'R' is the delimeter to stop reading in from,
+	# storing this string into the $current_row variable
+	read -r -d R current_row
+
+	# Cull the last part of the $current_row variable to form:
+	#  ^[[<num>
+	current_row="${current_row%%;*}"
+
+	current_row="${current_row:2}"  # Cull the first 2 characters leaving: <num>
+	stty "${row_old_stty}"          # Restore the old TTY settings
 }
 
 # Determine abort to run based off the operation to run (via ${1})
@@ -3543,11 +3594,15 @@ __run_parallel_files () {
 
 	# Start as many processes as determined by ${jobs}
 	for i in "${total_flacs_array[@]:0:${jobs}}" ; do
-		placement="$((pos + iteration))"
+		# This is the first set of jobs to run, so the placement of each file to
+		# display is the current row the cursor is on plus the iteration (the
+		# current file [number] being processed), which is zero-based
+		placement=$((current_row + iteration))
 
+		# Add one to the iteration to enforce we print one or more, not zero
 		((iteration++))
-		number_completed="[${iteration}/${#total_flacs_array[@]}]"
 
+		# Run the specified operation in the background
 		"${parallel_operation}" &
 	done
 
@@ -3561,34 +3616,66 @@ __run_parallel_files () {
 			# If current number of FLACs to process is less than total FLACs
 			# found, add another FLAC to process
 			if (( iteration < (${#total_flacs_array[@]} - 1) )) ; then
+				# Set the current filename ($i) to the current file in the array
 				i="${total_flacs_array[${iteration}]}"
+
+				# Add one to the iteration
 				((iteration++))
-				number_completed="[${iteration}/${#total_flacs_array[@]}]"
 
-				read -u7 -r initial_pos
-				placement="$((pos + initial_pos))"
+				# Grab the previous position of the recently finished previous
+				# file.  This is taken from file descriptor '7', which is placed
+				# there after each file is completed, to allow the script to
+				# which file was placed where.  This position is a positive
+				# integer (including 0) relational to the the current row
+				# which is was obtained earlier
+				read -u7 -r previous_file_position
 
+				# Since this is _NOT_ the first set of jobs to run, the
+				# placement of each file to display is the current row the
+				# cursor is on plus the position of the last completed file's
+				# location, which allows us to dynamically place new jobs where
+				# other jobs have completed
+				placement="$((current_row + previous_file_position))"
+
+				# Run the specified operation in the background
 				"${parallel_operation}" &
 
 			# Below is processed only if the current directory
 			# is equal to the last ${flac_directories_array[@]} index
 			else
-				last_file="true"
-
+				# Set the current filename ($i) to the current file in the array
 				i="${total_flacs_array[${iteration}]}"
+
+				# Add one to the iteration
 				((iteration++))
-				number_completed="[${iteration}/${#total_flacs_array[@]}]"
 
-				read -u7 -r initial_pos
-				placement="$((pos + initial_pos))"
+				# Grab the previous position of the recently finished previous
+				# file.  This is taken from file descriptor '7', which is placed
+				# there after each file is completed, to allow the script to
+				# which file was placed where.  This position is a positive
+				# integer (including 0) relational to the the current row
+				# which is was obtained earlier
+				read -u7 -r previous_file_position
 
+				# Since this is _NOT_ the first set of jobs to run, the
+				# placement of each file to display is the current row the
+				# cursor is on plus the position of the last completed file's
+				# location, which allows us to dynamically place new jobs where
+				# other jobs have completed
+				placement="$((current_row + previous_file_position))"
+
+				# Run the specified operation in the background
 				"${parallel_operation}" &
+
+				# Set a variable letting the script know this was the last file
+				last_file="true"
 
 				# Break out of loop to prevent hanging FIFO
 				break
 			fi
 		done <&3
 	else
+		# Set a variable letting the script know this was the last file
 		last_file="true"
 	fi
 
@@ -3945,21 +4032,19 @@ __operation_test () {
 	# Print current FLAC being processed
 	__print_testing_flac
 
-	printf "\033[${placement}H\033[$(( $(__columns) - ${#number_completed} - 1))C${magenta}%s${normal}" "${number_completed}"
-
-	while read -d% progress ; do
-		current_len=$(( (max_filename_length * ${progress##* }) / 100 ))
-		if (( current_len <= current_filename_length )) ; then
-			printf "\033[${placement}H${cyan}%5s${normal} ${invert}%s${normal}%s" "${progress##* }%" "${filename:0:$(( current_len ))}"
-		else
-			printf "\033[${placement}H${cyan}%5s${normal} ${invert}%s%$(( current_len - current_filename_length + 3 ))s${normal}" "${progress##* }%" "${filename}" ""
-		fi
+	# This reads from FLAC's STDERR while testing a FLAC file, stopping at the
+	# first '%'.  This allows us to grab the current percentage complete during
+	# testing which will be displayed in via '__print_progress'
+	while read -d% percent_complete ; do
+		# Display the current file with progress completed thus far via a
+		# percentage and progress bar
+		__print_progress
 	done < <(flac -t "${i}" 2>&1)
 
-	if (( current_filename_length < max_filename_length )) ; then
-		printf "\033[${placement}H\033[1C${cyan}%s${normal}%s%$(( current_len - current_filename_length + 3 ))s" "100% " "${filename}" ""
+	if (( current_filename_length <= max_filename_length )) ; then
+		printf "\033[${placement}H\033[1C${green}%s${normal}%s%$(( progress_bar_length - current_filename_length + 2 ))s" "100% " "${filename}" ""
 	else
-		printf "\033[${placement}H\033[1C${cyan}%s${normal}%s%$(( current_len - current_filename_length + 6 ))s" "100% " "${filename}" ""
+		printf "\033[${placement}H\033[1C${green}%s${normal}%s" "100% " "${filename}"
 	fi
 
 	# Exit code 130 is SIGINT so only check for exit code '1'
@@ -3986,7 +4071,7 @@ __operation_test () {
 	if (( iteration <= jobs )) ; then
 		printf "$(( iteration - 1 ))\n" >&7
 	else
-		printf "${initial_pos}\n" >&7
+		printf "${previous_file_position}\n" >&7
 	fi
 
 	# Print newline into FIFO after completion
