@@ -986,8 +986,8 @@ __print_add_replaygain () {
 	"  " "[${iteration}/${#flac_directories_array[@]}]" " ${filename} " "" "[" " " "Adding ReplayGain" " " "]" " "
 }
 
-# Testing
-__print_testing_flac () {
+# Print the current FLAC file being operated on
+__print_current_flac () {
 	# This stores the current file number processed out of the total files:
 	#  [56/213]
 	number_completed="[${iteration}/${#total_flacs_array[@]}]"
@@ -1006,7 +1006,30 @@ __print_testing_flac () {
 	# Create and cull filename if needed returned as ${filename}
 	__filename
 
-	printf "\033[${placement}H\033[6C%s%$(__current_length)s${magenta}%s${normal}" "${filename}" "" "${number_completed}"
+	printf "\033[${placement};7H%s%$(__current_length)s${magenta}%s${normal}" "${filename}" "" "${number_completed}"
+}
+
+# Print the current FLAC file being operated on with skip message
+__print_skip_flac () {
+	# This stores the current file number processed out of the total files:
+	#  [56/213]
+	number_completed="[${iteration}/${#total_flacs_array[@]}]"
+
+	# This is the maximum length of a string to be displayed based on column width,
+	# obtained via the number of columns minus the length of displayed characters:
+	#
+	#             ${columns}:  Width of terminal
+	#   ${#number_completed}:  FLACs processed and total FLACs, ie: [56/213]
+	#                      9:  Length of:
+	#                            (4) Spaces
+	#                            (1) Gap and ellipsis: '…'
+	#                            (4) Percentage: '100%' or '  3%'
+	max_filename_length="$(( ${columns} - ${#number_completed} - 9 ))"
+
+	# Create and cull filename if needed returned as ${filename}
+	__filename
+
+	printf "\033[${placement};2H${yellow}skip${normal}%s%$(__current_length)s${magenta}%s${normal}" " ${filename}" "" "${number_completed}"
 }
 
 # Failed
@@ -1453,9 +1476,9 @@ __print_progress_failed () {
 
 # Display filename and current progress of operation
 __print_progress () {
-	# Remove the first part of the line to leave the resultant percent stored as
-	# an integer (no '%' appended)
-	percent_complete="${percent_complete##* }"
+	# Obtain the percentage of the current operation, the was it's obtained
+	# was defined earlier and stored in the below variable
+	${obtain_percentage}
 
 	# This is the length of the progress bar represented as the maxmimum
 	# filename we can use.  The progress bar is displayed by taking the
@@ -1578,7 +1601,7 @@ __compress_abort () {
 	__kill_spinner
 
 	# Print current FLAC file that is interrupted
-	__print_interrupt
+	#__print_interrupt
 
 	__newline
 	__info "Control-C received, removing temporary files and\n"
@@ -1913,6 +1936,28 @@ __obtain_row () {
 		# The current row is now set to the difference of the lines to scroll
 		current_row=$(( current_row - lines_to_scroll ))
 	fi
+}
+
+# Obtain the current progress completed percentage while compressing FLAC files
+__obtain_compress_percentage () {
+	# Remove backspace sequences used by the FLAC command line interface
+	percent_complete="${percent_complete///}"
+
+	# Remove the first part of the line leaving only the percent integer as well
+	# as well as other information:
+	#  '0 complete, ratio=0.307'
+	percent_complete="${percent_complete##*: }"
+
+	# Remove the last part part of the percent_complete string, leaving the
+	# percent stored as an integer
+	percent_complete="${percent_complete##*complete, ratio=?.???}"
+}
+
+# Obtain the current progress completed percentage while testing FLAC files
+__obtain_test_percentage () {
+	# Remove the first part of the line to leave the resultant percent stored as
+	# an integer (no '%' appended)
+	percent_complete="${percent_complete##* }"
 }
 
 # Store the position of the current job being displayed
@@ -4013,21 +4058,26 @@ __operation_compress () {
 	COMPRESSION="$(metaflac --show-tag=COMPRESSION "${i}" 2> /dev/null)"
 	COMPRESSION="${COMPRESSION#*=}"
 
-	# Start spinner only if this is the first FLAC file being processed
-	__start_spinner
-
 	if (( COMPRESSION != compression_level )) ; then
 		# Print current FLAC being processed
-		__print_compressing_flac
+		__print_current_flac
 
-		# Compress FLAC file with user defined COMPRESSION
-		flac -f -${compression_level} -V --totally-silent "${i}"
+		# This is a variable to determine which type of process is used to get
+		# the current percentage during the operation
+		obtain_percentage="__obtain_compress_percentage"
+
+		# Compress FLAC file
+		# Display the current file with progress completed thus far via a
+		# percentage and progress bar
+		flac -f -${compression_level} -V "${i}" 2> >(while read -r -d% percent_complete ; do
+			__print_progress
+		done) >/dev/null
 
 		# Exit code 130 is SIGINT so only check for exit code '1'
 		if (( ${?} == 1 )) ; then
 
-			# File is not a FLAC file, display failed
-			__print_failed_flac
+			# Error with FLAC file, display failed/error
+			__print_progress_failed
 
 			# Log FLAC failure
 			printf "\n%s\n%s\n%s\n%s\n%s\n%s\n\n%s\n" \
@@ -4046,6 +4096,9 @@ __operation_compress () {
 			metaflac \
 				--remove-tag=COMPRESSION \
 				--set-tag=COMPRESSION=${compression_level} "${i}"
+
+			# FLAC is ok, display ok
+			__print_progress_ok
 		fi
 
 	# If already at compression_level, test the FLAC file instead
@@ -4053,16 +4106,24 @@ __operation_compress () {
 	else
 		if [[ "${skip_test}" != "true" ]] ; then
 			# Print current FLAC being processed
-			__print_testing_flac
+			__print_current_flac
+
+			# This is a variable to determine which type of process is used to
+			# get the current percentage during the operation
+			obtain_percentage="__obtain_test_percentage"
 
 			# Test FLAC file
-			flac -t --totally-silent "${i}"
+			# Display the current file with progress completed thus far via a
+			# percentage and progress bar
+			flac -t "${i}" 2> >(while read -r -d% percent_complete ; do
+				__print_progress
+			done) >/dev/null
 
 			# Exit code 130 is SIGINT so only check for exit code '1'
 			if (( ${?} == 1 )) ; then
 
-				# File is not a FLAC file, display failed
-				__print_failed_flac
+				# Error with FLAC file, display failed/error
+				__print_progress_failed
 
 				# Log FLAC failure
 				printf "\n%s\n%s\n%s\n%s\n%s\n%s\n\n%s\n" \
@@ -4077,12 +4138,19 @@ __operation_compress () {
 
 				# Add one to fail fd
 				printf '.' >&5
+			else
+				# FLAC is ok, display ok
+				__print_progress_ok
 			fi
 		else
-			# Print current FLAC being processed
-			__print_compressing_flac
+			# Print skipped FLAC
+			__print_skip_flac
 		fi
 	fi
+
+	# Store the position of where the line of the FLAC file is displayed in file
+	# descriptor (7), to be used by the next job
+	__store_position
 
 	# Print newline into FIFO after completion
 	__newline >&3
@@ -4095,8 +4163,13 @@ __operation_test () {
 	trap __kill_jobs EXIT
 
 	# Print current FLAC being processed
-	__print_testing_flac
+	__print_current_flac
 
+	# This is a variable to determine which type of process is used to get the
+	# current percentage during the operation
+	obtain_percentage="__obtain_test_percentage"
+
+	# Test FLAC file
 	# Display the current file with progress completed thus far via a
 	# percentage and progress bar
 	flac -t "${i}" 2> >(while read -r -d% percent_complete ; do
@@ -5416,13 +5489,13 @@ if [[ "${compress_flac}" == "true" ]] ; then
 		title_compress="__title_compress_flac"
 	fi
 
-	# Set up spinner file descriptor '6'
-	__set_spinner_fd
-
 	# Prints title message of current operation
 	# ${title_compress} is an alias to the command to
 	# run determined earlier
 	"${title_compress}"
+
+	# Obtain the current row
+	__obtain_row
 
 	# Make sure to clear file descriptor '3' before proceeding
 	__clear_tmp_fd
@@ -5446,16 +5519,8 @@ if [[ "${compress_flac}" == "true" ]] ; then
 		exit 1
 	fi
 
-	if [[ "${last_file}" == "true" ]] ; then
-		# FLAC is okay, so print only if it's the last file
-		__print_ok_flac ; __newline
-	fi
-
 	# Store operation status for Summary Of Operations
 	compress_complete="true"
-
-	# Kill spinner
-	__kill_spinner
 fi
 #== .: END COMPRESS/VERIFY :. ==================================================
 
@@ -5464,9 +5529,6 @@ fi
 # .: TEST :.
 #-------------------------------------------------------------------------------
 if [[ "${test_flac}" == "true" ]] ; then
-
-	# Set up spinner file descriptor '6'
-	__set_spinner_fd
 
 	# Prints title message of current operation
 	__title_testing_flac
@@ -5496,17 +5558,8 @@ if [[ "${test_flac}" == "true" ]] ; then
 		exit 1
 	fi
 
-	if [[ "${last_file}" == "true" ]] ; then
-		# FLAC is okay, so print only if it's the last file
-		#__print_ok_flac ; __newline
-		__newline
-	fi
-
 	# Store operation status for Summary Of Operations
 	test_complete="true"
-
-	# Kill spinner
-	#__kill_spinner
 fi
 #== .: END TEST :. =============================================================
 
