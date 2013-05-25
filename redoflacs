@@ -431,7 +431,7 @@ __usage () {
 #-------------------------------------------------------------------------------
 # ReplayGain test error log message
 __log_replaygain_test () {
-	__newline >&2
+	printf "\033[${lines}H\n"
 	__error "There were issues with some of the FLAC files,\n" >&2
 	__error "please check:\n" >&2
 	__error "${cyan}${replay_test_errors}${normal}\n" >&2
@@ -440,7 +440,7 @@ __log_replaygain_test () {
 
 # ReplayGain process error log message
 __log_replaygain_process () {
-	__newline >&2
+	printf "\033[${lines}H\n"
 	__error "There were issues adding ReplayGain values,\n" >&2
 	__error "please check:\n" >&2
 	__error "${cyan}${replay_add_errors}${normal}\n" >&2
@@ -449,7 +449,7 @@ __log_replaygain_process () {
 
 # Compress and verify error log message
 __log_compress_verify () {
-	__newline >&2
+	printf "\033[${lines}H\n"
 	__error "Errors found in some FLAC files, please check:\n" >&2
 	__error "${cyan}${verify_errors}${normal}\n" >&2
 	__error "for errors.\n" >&2
@@ -457,7 +457,7 @@ __log_compress_verify () {
 
 # Test error log message
 __log_test () {
-	__newline >&2
+	printf "\033[${lines}H\n"
 	__error "Errors found in some FLAC files, please check:\n" >&2
 	__error "${cyan}${test_errors}${normal}\n" >&2
 	__error "for errors.\n" >&2
@@ -465,7 +465,7 @@ __log_test () {
 
 # auCDtect error log message
 __log_aucdtect () {
-	__newline >&2
+	printf "\033[${lines}H\n"
 	__error "Some FLAC files may be lossy sourced, please check:\n" >&2
 	__error "${cyan}${aucdtect_errors}${normal}\n" >&2
 	__error "for details.\n" >&2
@@ -473,7 +473,7 @@ __log_aucdtect () {
 
 # MD5 check error log message
 __log_md5_check () {
-	__newline >&2
+	printf "\033[${lines}H\n"
 	__error "The MD5 Signature is unset for some FLAC files or there were\n" >&2
 	__error "issues with some of the FLAC files, please check:\n" >&2
 	__error "${cyan}${md5_errors}${normal}\n" >&2
@@ -482,7 +482,7 @@ __log_md5_check () {
 
 # Missing tags error log message
 __log_missing_tags () {
-	__newline >&2
+	printf "\033[${lines}H\n"
 	__error "Some FLAC files have missing tags or there were\n" >&2
 	__error "issues with some of the FLAC files, please check:\n" >&2
 	__error "${cyan}${metadata_errors}${normal}\n" >&2
@@ -491,7 +491,7 @@ __log_missing_tags () {
 
 # Prune error log message
 __log_prune () {
-	__newline >&2
+	printf "\033[${lines}H\n"
 	__error "There were issues with some of the FLAC files,\n" >&2
 	__error "please check:\n" >&2
 	__error "${cyan}${prune_errors}${normal}\n" >&2
@@ -995,18 +995,18 @@ __print_testing_flac () {
 	# This is the maximum length of a string to be displayed based on column width,
 	# obtained via the number of columns minus the length of displayed characters:
 	#
-	#           $(__columns):  Width of terminal
+	#             ${columns}:  Width of terminal
 	#   ${#number_completed}:  FLACs processed and total FLACs, ie: [56/213]
 	#                      9:  Length of:
-	#                            (3) Spaces
-	#                            (2) Gap and ellipsis: '… '
+	#                            (4) Spaces
+	#                            (1) Gap and ellipsis: '…'
 	#                            (4) Percentage: '100%' or '  3%'
-	max_filename_length="$(( $(__columns) - ${#number_completed} - 9 ))"
+	max_filename_length="$(( ${columns} - ${#number_completed} - 9 ))"
 
 	# Create and cull filename if needed returned as ${filename}
 	__filename
 
-	printf "\033[${placement}H\033[6C%s%$(__current_length)s${magenta}%s${normal}" "${filename} " "" "${number_completed}"
+	printf "\033[${placement}H\033[6C%s%$(__current_length)s${magenta}%s${normal}" "${filename}" "" "${number_completed}"
 }
 
 # Failed
@@ -1427,6 +1427,30 @@ __print_interrupt () {
 	"   " "[${iteration}/${#total_flacs_array[@]}]" " ${filename} " "" "[" " " "Interrupted" " " "]" " "
 }
 
+# Display the filename, clearing the progress bar and display the progress
+# percentage as 100% (since FLAC stops at 99%) in green
+__print_progress_ok () {
+	if (( current_filename_length < max_filename_length )) ; then
+		printf "\033[${placement};1H${green}%5s${normal}%s%$(( max_filename_length - current_filename_length + 1 ))s" \
+		"100%" " ${filename}" ""
+	else
+		printf "\033[${placement};1H${green}%5s${normal}%s" \
+		"100%" " ${filename}"
+	fi
+}
+
+# Display the filename, clearing the progress bar and display the progress as an
+# error in red color
+__print_progress_failed () {
+	if (( current_filename_length < max_filename_length )) ; then
+		printf "\033[${placement};1H${red}%5s${normal}%s%$(( max_filename_length - current_filename_length + 1 ))s" \
+		"fail" " ${filename}" ""
+	else
+		printf "\033[${placement};1H${red}%5s${normal}%s" \
+		"fail" " ${filename}"
+	fi
+}
+
 # Display filename and current progress of operation
 __print_progress () {
 	# Remove the first part of the line to leave the resultant percent stored as
@@ -1445,20 +1469,20 @@ __print_progress () {
 	# completed, inverting the colors.  Otherwise, print out the filename,
 	# inverted as well as the percentage of spacing that may be after the
 	# filename (matching the percentage of completed); also inverted
-	if (( progress_bar_length <= current_filename_length )) ; then
+	if (( progress_bar_length < current_filename_length )) ; then
 
 		# Below takes the current filename and 'trims' off the part of the
 		# filename that hasn't doesn't match the percentage length of what's
 		# completed so far (trim meaning, not highlighting that portion of the
 		# filename)
 		printf "\033[${placement}H${yellow}%5s${normal} ${invert}%s${normal}%s" \
-		"${percent_complete}%" "${filename:0:$(( progress_bar_length + 3 ))}"
+		"${percent_complete}%" "${filename:0:$(( progress_bar_length + 1 ))}"
 	else
 
 		# This prints out the the filename, inverted, as well as the current
 		# progress bar length.  Used only if the filename is less than the width
 		# of the progress bar maximum's length
-		printf "\033[${placement}H${yellow}%5s${normal} ${invert}%s%$(( progress_bar_length - current_filename_length + 2 ))s${normal}" \
+		printf "\033[${placement}H${yellow}%5s${normal} ${invert}%s%$(( progress_bar_length - current_filename_length + 1 ))s${normal}" \
 		"${percent_complete}%" "${filename}" ""
 	fi
 }
@@ -1589,7 +1613,7 @@ __test_abort () {
 	__kill_spinner
 
 	# Print current FLAC file that is interrupted
-	__print_interrupt
+	#__print_interrupt
 
 	__newline
 	__info "Control-C received, generating summary. Please wait...\n"
@@ -1846,6 +1870,9 @@ __metaflac_version () {
 
 # Obtain the current cursor row position
 __obtain_row () {
+	# Obtain the lines and columns of the terminal
+	__lines_columns
+
 	exec < /dev/tty                 # Set a new TTY to read in STDIN
 	row_old_stty="$(stty -g)"       # Store current TTY settings
 	stty raw -echo min 0            # Current TTY set at an absolute minimum
@@ -1867,6 +1894,38 @@ __obtain_row () {
 
 	current_row="${current_row:2}"  # Cull the first 2 characters leaving: <num>
 	stty "${row_old_stty}"          # Restore the old TTY settings
+
+	# Obtain the differnce from the total lines available in the current
+	# terminal and the current row obtained
+	lines_difference=$(( lines - current_row ))
+
+	# If the difference in lines is less than the jobs used, the terminal will
+	# not have enough room for the script to place lines, so we will have to
+	# non-descructively scroll the terminal up enough lines to allow for the
+	# current operations to be printed correctly
+	if (( lines_difference < jobs )) ; then
+		# Obtain the number of lines need to equal the current number of jobs
+		lines_to_scroll=$(( jobs - lines_difference ))
+
+		# This scrolls the terminal up by the number of lines to scroll
+		printf "\033[${lines_to_scroll}S"
+
+		# The current row is now set to the difference of the lines to scroll
+		current_row=$(( current_row - lines_to_scroll ))
+	fi
+}
+
+# Store the position of the current job being displayed
+__store_position () {
+	# If the current job(s) are the first set, we'll use the iteration
+	# (starting at 0 -- hence the minus 1) of the job to start
+	if (( iteration <= jobs )) ; then
+		printf "$(( iteration - 1 ))\n" >&7
+	else
+		# Print the position of the current jobs into file descriptor (7) to be
+		# stored by 'read' upon starting the next job
+		printf "${previous_file_position}\n" >&7
+	fi
 }
 
 # Determine abort to run based off the operation to run (via ${1})
@@ -2169,18 +2228,21 @@ __check_config_version () {
 	fi
 }
 
-# Determine the width of the terminal in columns
-__columns () {
+# Determine the width/height of the terminal in
+__lines_columns () {
 	# Grab the first line of 'stty -a' output
 	# Redirecting '/dev/stderr' to 'stty' allows valid arguments
-	read -r columns < <(stty -a < /dev/stderr)
+	read -r rows_columns < <(stty -a < /dev/stderr)
 
 	# Remove superflous information from 'stty -a'
 	# Ends up with the width of terminal
-	columns="${columns/#*columns }"
+	columns="${rows_columns#*columns }"
+	columns="${columns%%;*}"
 
-	# Prints out total columns of terminal
-	printf "%s" "${columns/%;*}"
+	# Remove superflous information from 'stty -a'
+	# Ends up with the height of terminal
+	lines="${rows_columns#*rows }"
+	lines="${lines%%;*}"
 }
 
 # Creates filename of current FLAC and culls it if the length
@@ -2220,7 +2282,10 @@ __filename () {
 
 		# Set the culled filename to display slicing the correct amount of
 		# characters determined from ${max_length}
-		filename="${filename:0:${max_length}}…"
+		filename="${filename:0:${max_length}}… "
+	else
+		# Set the default filename with a gap at the end for spacing
+		filename="${filename} "
 	fi
 }
 
@@ -2238,7 +2303,7 @@ __current_length () {
 	#
 	# Only print out ${current_length} if the current filename length is less
 	# than the maximum file length allowed
-	if (( current_filename_length < max_filename_length )) ; then
+	if (( current_filename_length <= max_filename_length )) ; then
 		printf %d $(( max_filename_length - current_filename_length + 1 ))
 	fi
 }
@@ -4032,26 +4097,17 @@ __operation_test () {
 	# Print current FLAC being processed
 	__print_testing_flac
 
-	# This reads from FLAC's STDERR while testing a FLAC file, stopping at the
-	# first '%'.  This allows us to grab the current percentage complete during
-	# testing which will be displayed in via '__print_progress'
-	while read -d% percent_complete ; do
-		# Display the current file with progress completed thus far via a
-		# percentage and progress bar
+	# Display the current file with progress completed thus far via a
+	# percentage and progress bar
+	flac -t "${i}" 2> >(while read -r -d% percent_complete ; do
 		__print_progress
-	done < <(flac -t "${i}" 2>&1)
-
-	if (( current_filename_length <= max_filename_length )) ; then
-		printf "\033[${placement}H\033[1C${green}%s${normal}%s%$(( progress_bar_length - current_filename_length + 2 ))s" "100% " "${filename}" ""
-	else
-		printf "\033[${placement}H\033[1C${green}%s${normal}%s" "100% " "${filename}"
-	fi
+	done) >/dev/null
 
 	# Exit code 130 is SIGINT so only check for exit code '1'
 	if (( ${?} == 1 )) ; then
 
-		# File is not a FLAC file, display failed
-		__print_failed_flac
+		# Error with FLAC file, display failed/error
+		__print_progress_failed
 
 		# Log FLAC failure
 		printf "\n%s\n%s\n%s\n%s\n%s\n%s\n\n%s\n" \
@@ -4066,13 +4122,14 @@ __operation_test () {
 
 		# Add one to fail fd
 		printf '.' >&5
+	else
+		# FLAC is ok, display ok
+		__print_progress_ok
 	fi
 
-	if (( iteration <= jobs )) ; then
-		printf "$(( iteration - 1 ))\n" >&7
-	else
-		printf "${previous_file_position}\n" >&7
-	fi
+	# Store the position of where the line of the FLAC file is displayed in file
+	# descriptor (7), to be used by the next job
+	__store_position
 
 	# Print newline into FIFO after completion
 	__newline >&3
@@ -5449,7 +5506,7 @@ if [[ "${test_flac}" == "true" ]] ; then
 	test_complete="true"
 
 	# Kill spinner
-	__kill_spinner
+	#__kill_spinner
 fi
 #== .: END TEST :. =============================================================
 
