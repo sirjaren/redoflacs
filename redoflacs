@@ -1474,6 +1474,18 @@ __print_progress_failed () {
 	fi
 }
 
+# Display the filename, clearing the progress bar and display the progress as an
+# error in red color
+__print_progress_issue () {
+	if (( current_filename_length < max_filename_length )) ; then
+		printf "\033[${placement};1H${yellow}%5s${normal}%s%$(( max_filename_length - current_filename_length + 1 ))s" \
+		"chck" " ${filename}" ""
+	else
+		printf "\033[${placement};1H${yellow}%5s${normal}%s" \
+		"chck" " ${filename}"
+	fi
+}
+
 # Display filename and current progress of operation
 __print_progress () {
 	# Obtain the percentage of the current operation, the was it's obtained
@@ -1597,9 +1609,6 @@ __compress_abort () {
 	# Kill running children, must come before __kill_spinner
 	__kill_jobs
 
-	# Kill spinner
-	__kill_spinner
-
 	# Print current FLAC file that is interrupted
 	#__print_interrupt
 
@@ -1632,9 +1641,6 @@ __test_abort () {
 	# Kill running children, must come before __kill_spinner
 	__kill_jobs
 
-	# Kill spinner
-	__kill_spinner
-
 	# Print current FLAC file that is interrupted
 	#__print_interrupt
 
@@ -1663,11 +1669,8 @@ __aucdtect_abort () {
 	# Kill running children, must come before __kill_spinner
 	__kill_jobs
 
-	# Kill spinner
-	__kill_spinner
-
 	# Print current FLAC file that is interrupted
-	__print_interrupt
+	#__print_interrupt
 
 	__newline
 	__info "Control-C received, removing temporary files and\n"
@@ -1944,7 +1947,7 @@ __obtain_compress_percentage () {
 	percent_complete="${percent_complete///}"
 
 	# Remove the first part of the line leaving only the percent integer as well
-	# as well as other information:
+	# as other information:
 	#  '0 complete, ratio=0.307'
 	percent_complete="${percent_complete##*: }"
 
@@ -1953,11 +1956,44 @@ __obtain_compress_percentage () {
 	percent_complete="${percent_complete##*complete, ratio=?.???}"
 }
 
-# Obtain the current progress completed percentage while testing FLAC files
+# Obtain the current progress completed percentage while testing FLAC file
 __obtain_test_percentage () {
 	# Remove the first part of the line to leave the resultant percent stored as
 	# an integer (no '%' appended)
 	percent_complete="${percent_complete##* }"
+}
+
+# Obtain the current progress completed percentage while decoding FLAC file
+__obtain_decode_percentage () {
+	# Remove backspace sequences used by the FLAC command line interface
+	percent_complete="${percent_complete///}"
+
+	# Remove the first part of the line leaving only the percent integer as well
+	# as well as other information:
+	#  'complete0
+	percent_complete="${percent_complete##*: }"
+
+	# Remove the last part part of the percent_complete string, leaving the
+	# percent stored as an integer
+	percent_complete="${percent_complete##*complete}"
+}
+
+# Obtain the current progress completed percentage while using auCDtect
+__obtain_aucdtect_percentage () {
+	# Remove the first part of the line to leave the resultant percent stored as
+	# an integer (no '%' appended)
+	percent_complete="${percent_complete##*[}"
+}
+
+# Obtain the current progress completed percentage while using auCDtect
+__obtain_spectrogram_percentage () {
+	# Remove the first part of the line leaving only the percent which is
+	# represented as a floating point number:
+	#  '32.3'
+	percent_complete="${percent_complete##*In:}"
+
+	# Remove the floating point part of the percentage to leave only an integer
+	percent_complete="${percent_complete%%.*}"
 }
 
 # Store the position of the current job being displayed
@@ -4215,10 +4251,7 @@ __operation_aucdtect () {
 	trap __kill_jobs EXIT
 
 	# Print current FLAC being processed
-	__print_aucdtect_flac
-
-	# Start spinner only if this is the first FLAC file being processed
-	__start_spinner
+	__print_current_flac
 
 	# Get the bit depth of a FLAC file, also used to check
 	# if FLAC file is real.  Hide stderr output
@@ -4227,8 +4260,8 @@ __operation_aucdtect () {
 	# Exit code 130 is SIGINT so only check for exit code '1'
 	if (( ${?} == 1 )) ; then
 
-		# File is not a FLAC file, display failed
-		__print_failed_flac
+		# Error with FLAC file, display failed/error
+		__print_progress_failed
 
 		# Log FLAC failure
 		printf "\n%s\n%s\n%s\n%s\n\n%s\n" \
@@ -4247,8 +4280,8 @@ __operation_aucdtect () {
 	# files with a higher resolution than a CD.
 	elif (( bits > 16 )) ; then
 
-		# Print skipped FLAC file and log issue
-		__print_skip
+		# Print skipped FLAC
+		__print_skip_flac
 
 		# Log skipped FLAC file
 		printf "\n%s\n%s\n%s\n%s\n%s\n%s\n\n%s\n" \
@@ -4269,15 +4302,23 @@ __operation_aucdtect () {
 		# The WAV file to be created from current FLAC file
 		decoded_wav="${i%${flac_extension}}_redoflacs_"$$".wav"
 
+		# This is a variable to determine which type of process is used to get
+		# the current percentage during the operation
+		obtain_percentage="__obtain_decode_percentage"
+
 		# Decompress FLAC to WAV so auCDtect can read the audio file
-		flac --totally-silent -d "${i}" -o "${decoded_wav}"
+		# Display the current file with progress completed thus far via a
+		# percentage and progress bar
+		flac -d "${i}" -o "${decoded_wav}" 2> >(while read -r -d% percent_complete ; do
+			__print_progress
+		done) >/dev/null
 
 		# Exit code 130 is SIGINT so only check for exit code '1'.  If FLAC file
 		# failed decoding to WAV, log error, otherwise continue processing
 		if (( ${?} == 1 )) ; then
 
-			# Print FLAC failed and log issue
-			__print_failed_flac
+			# Error with FLAC file, display failed/error
+			__print_progress_failed
 
 			# Log FLAC failure
 			printf "\n%s\n%s\n%s\n%s\n%s\n\n%s\n" \
@@ -4293,20 +4334,30 @@ __operation_aucdtect () {
 			printf '.' >&5
 
 		else
+			# Decoded FLAC is ok, display ok
+			__print_progress_ok
+
+			# This is a variable to determine which type of process is used to get
+			# the current percentage during the operation
+			obtain_percentage="__obtain_aucdtect_percentage"
+
 			# 'export MALLOC_CHECK_' allows the dynamic linked version of
 			# `auCDTECT' to run without throwing errors
 			export MALLOC_CHECK_="0"
 
 			# The actual auCDtect command with lowest accuracy setting (for
-			# speed) 2> hides the displayed progress to /dev/null disabling the
-			# progress percentage. STDOUT is sent to file descriptor '4'
-			"${aucdtect_command}" -m40 "${decoded_wav}" 2>/dev/null >&4
+			# speed).  STDOUT is sent to file descriptor '4'
+			"${aucdtect_command}" -m40 "${decoded_wav}" 2> >(while read -r -d% percent_complete ; do
+				# Display the current file with progress completed thus far via
+				# a percentage and progress bar
+				__print_progress
+			done) >&4
 
 			# Exit code 130 is SIGINT so only check for exit code '1'
 			if (( ${?} == 1 )) ; then
 
-				# Print FLAC failed and log issue
-				__print_failed_flac
+				# Error with FLAC file, display failed/error
+				__print_progress_failed
 
 				# Log FLAC failure
 				printf "\n%s\n%s\n%s\n%s\n%s\n%s\n%s\n%s\n%s\n%s\n\n%s\n" \
@@ -4327,6 +4378,9 @@ __operation_aucdtect () {
 				printf '.' >&5
 
 			else
+				# Possible issue with FLAC file, display issue
+				__print_progress_issue
+
 				# Grab the conclusion of auCDtect's command
 				# Below options prevents hanging FIFO by only reading
 				# what is necessary:
@@ -4342,15 +4396,18 @@ __operation_aucdtect () {
 				if [[ "${aucdtect_check_array[0]}" != "This track looks like CDDA with probability 100%" ]] ; then
 
 					# The actual auCDtect command with highest accuracy setting.
-					# 2> hides the displayed progress to /dev/null disabling the
-					# progress percentage. STDOUT is sent to file descriptor '4'
-					"${aucdtect_command}" -m0 "${decoded_wav}" 2>/dev/null >&4
+					# STDOUT is sent to file descriptor '4'
+					"${aucdtect_command}" -m0 "${decoded_wav}" 2> >(while read -r -d% percent_complete ; do
+						# Display the current file with progress completed thus far via
+						# a percentage and progress bar
+						__print_progress
+					done) >&4
 
 					# Exit code 130 is SIGINT so only check for exit code '1'
 					if (( ${?} == 1 )) ; then
 
-						# Print FLAC failed and log issue
-						__print_failed_flac
+						# Error with FLAC file, display failed/error
+						__print_progress_failed
 
 						# Log FLAC failure
 						printf "\n%s\n%s\n%s\n%s\n%s\n%s\n%s\n%s\n%s\n%s\n\n%s\n" \
@@ -4410,9 +4467,13 @@ __operation_aucdtect () {
 									spectrogram_picture="${spectrogram_location}/[${iteration}] ${flac_file%${flac_extension}}.png"
 								fi
 
-								# Let's create the spectrogram for the failed
-								# FLAC file and output progress
-								__print_aucdtect_spectrogram
+								# Print current FLAC being processed
+								__print_current_flac
+
+								# This is a variable to determine which type of
+								# process is used to get the current percentage
+								# during the operation
+								obtain_percentage="__obtain_spectrogram_percentage"
 
 								# SoX command to create the spectrogram and
 								# place it in spectrogram_picture.  Use the
@@ -4421,6 +4482,7 @@ __operation_aucdtect () {
 								#   -x 5000
 								#   -y 1025
 								"${sox_command}" "${decoded_wav}" \
+									-S \
 									-n spectrogram \
 									-c '' \
 									-t "${i}" \
@@ -4431,11 +4493,17 @@ __operation_aucdtect () {
 									-w Hann \
 									-x 1800 \
 									-y 513 \
-									-o "${spectrogram_picture}"
+									-o "${spectrogram_picture}" 2> >(
+										while read -r -d% percent_complete ; do
+											# Display the current file with
+											# progress completed thus far via a
+											# percentage and progress bar
+											__print_progress
+										done
+									) >/dev/null
 
-								# Print ISSUE and log issue, and show where to find
-								# the created spectrogram of the processed FLAC file
-								__print_issue
+								# Error with FLAC file, display failed/error
+								__print_progress_issue
 
 								# Log auCDtect report
 								printf "\n%s\n%s\n%s\n%s\n%s\n%s\n%s\n\n%s\n" \
@@ -4453,8 +4521,8 @@ __operation_aucdtect () {
 								printf '.' >&5
 
 							else
-								# Print ISSUE and log issue
-								__print_issue
+								# Error with FLAC file, display failed/error
+								__print_progress_issue
 
 								# Log auCDtect report
 								printf "\n%s\n%s\n%s\n%s\n\n%s\n" \
@@ -4468,8 +4536,14 @@ __operation_aucdtect () {
 								# Add one to fail fd
 								printf '.' >&5
 							fi
+						else
+							# FLAC is ok, display ok
+							__print_progress_ok
 						fi
 					fi
+				else
+					# FLAC is ok, display ok
+					__print_progress_ok
 				fi
 
 				# Remove temporary WAV file
@@ -4477,6 +4551,10 @@ __operation_aucdtect () {
 			fi
 		fi
 	fi
+
+	# Store the position of where the line of the FLAC file is displayed in file
+	# descriptor (7), to be used by the next job
+	__store_position
 
 	# Print newline into FIFO after completion
 	__newline >&3
@@ -4489,10 +4567,7 @@ __operation_md5_check () {
 	trap __kill_jobs EXIT
 
 	# Print current FLAC being processed
-	__print_checking_md5
-
-	# Start spinner only if this is the first FLAC file being processed
-	__start_spinner
+	__print_current_flac
 
 	# Get the MD5 checksum (hide stderr output).  Also
 	# used to check if FLAC file is real
@@ -4501,8 +4576,8 @@ __operation_md5_check () {
 	# Exit code 130 is SIGINT so only check for exit code '1'
 	if (( ${?} == 1 )) ; then
 
-		# File is not a FLAC file, display failed
-		__print_failed_flac
+		# Error with FLAC file, display failed/error
+		__print_progress_failed
 
 		# Log FLAC failure
 		printf "\n%s\n%s\n%s\n%s\n%s\n%s\n\n%s\n" \
@@ -4523,8 +4598,8 @@ __operation_md5_check () {
 	# below
 	elif [[ "${md5_sum}" == "00000000000000000000000000000000" ]] ; then
 
-		# File is not a FLAC file, display failed
-		__print_failed_flac
+		# Error with FLAC file, display failed/error
+		__print_progress_failed
 
 		# Log FLAC failure
 		printf "\n%s\n%s\n%s\n%s\n%s\n%s\n%s\n%s\n\n%s\n" \
@@ -4541,7 +4616,14 @@ __operation_md5_check () {
 
 		# Add one to fail fd
 		printf '.' >&5
+	else
+		# FLAC is ok, display ok
+		__print_progress_ok
 	fi
+
+	# Store the position of where the line of the FLAC file is displayed in file
+	# descriptor (7), to be used by the next job
+	__store_position
 
 	# Print newline into FIFO after completion
 	__newline >&3
@@ -5383,11 +5465,11 @@ __processed_flacs_ok
 # FLAC files are corrupt or have metadata issues
 if [[ "${aucdtect_flac}" == "true" ]] ; then
 
-	# Set up spinner file descriptor '6'
-	__set_spinner_fd
-
 	# Prints title message of current operation
 	__title_aucdtect_flac
+
+	# Obtain the current row
+	__obtain_row
 
 	# Make sure to clear file descriptor '3' before proceeding
 	__clear_tmp_fd
@@ -5415,16 +5497,8 @@ if [[ "${aucdtect_flac}" == "true" ]] ; then
 		exit 1
 	fi
 
-	if [[ "${last_file}" == "true" ]] ; then
-		# FLAC is okay, so print only if it's the last file
-		__print_ok_flac ; __newline
-	fi
-
 	# Store operation status for Summary Of Operations
 	aucdtect_complete="true"
-
-	# Kill spinner
-	__kill_spinner
 fi
 #== .: END AUCDTECT :. =========================================================
 
@@ -5434,11 +5508,11 @@ fi
 #-------------------------------------------------------------------------------
 if [[ "${md5check_flac}" == "true" ]] ; then
 
-	# Set up spinner file descriptor '6'
-	__set_spinner_fd
-
 	# Prints title message of current operation
 	__title_md5check_flac
+
+	# Obtain the current row
+	__obtain_row
 
 	# Make sure to clear file descriptor '3' before proceeding
 	__clear_tmp_fd
@@ -5462,16 +5536,8 @@ if [[ "${md5check_flac}" == "true" ]] ; then
 		exit 1
 	fi
 
-	if [[ "${last_file}" == "true" ]] ; then
-		# FLAC is okay, so print only if it's the last file
-		__print_ok_flac ; __newline
-	fi
-
 	# Store operation status for Summary Of Operations
 	md5check_complete="true"
-
-	# Kill spinner
-	__kill_spinner
 fi
 #== .: END MD5 CHECK :. ========================================================
 
