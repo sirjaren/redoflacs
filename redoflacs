@@ -815,18 +815,18 @@ __header_prune () {
 #-------------------------------------------------------------------------------
 # Compress FLACS & verify
 __title_compress_flac () {
-	# Special newline to ensure leftover spinner is hidden
-	printf "  \n"
+	# Obtain the current cursor row position
+	__obtain_row
 
-	__info "Compressing & Verifying FLAC Files :: ${cyan}[Compression: ${compression_level}]${normal}\n"
+	printf "\033[${current_row}H ${green}*${normal} Compressing & Verifying FLAC Files :: ${cyan}[Compression: ${compression_level}]${normal}\n"
 }
 
 # Compress FLACS & no verify
 __title_compress_notest_flac () {
-	# Special newline to ensure leftover spinner is hidden
-	printf "  \n"
+	# Obtain the current cursor row position
+	__obtain_row
 
-	__info "Compressing FLAC Files :: ${cyan}[Compression: ${compression_level}]${normal}\n"
+	printf "\033[${current_row}H ${green}*${normal} Compressing FLAC Files :: ${cyan}[Compression: ${compression_level}]${normal}\n"
 }
 
 # Apply ReplayGain to FLACS
@@ -847,26 +847,26 @@ __title_retag () {
 
 # Testing FLACS
 __title_testing_flac () {
-	# Special newline to ensure leftover spinner is hidden
-	printf "  \n"
+	# Obtain the current cursor row position
+	__obtain_row
 
-	__info "Testing FLAC Files\n"
+	printf "\033[${current_row}H ${green}*${normal} Testing FLAC Files\n"
 }
 
 # Validating FLACS with auCDtect
 __title_aucdtect_flac () {
-	# Special newline to ensure leftover spinner is hidden
-	printf "  \n"
+	# Obtain the current cursor row position
+	__obtain_row
 
-	__info "Validating FLAC Files with auCDtect\n"
+	printf "\033[${current_row}H ${green}*${normal} Validating FLAC Files with auCDtect\n"
 }
 
 # Checking MD5 of FLACS
 __title_md5check_flac () {
-	# Special newline to ensure leftover spinner is hidden
-	printf "  \n"
+	# Obtain the current cursor row position
+	__obtain_row
 
-	__info "Checking MD5 Signature\n"
+	printf "\033[${current_row}H ${green}*${normal} Checking MD5 Signature\n"
 }
 
 # Pruning FLACS
@@ -880,10 +880,10 @@ __title_prune_flac () {
 		local metadata_removed="${cyan}STREAMINFO${normal} and ${cyan}VORBIS_COMMENT${normal}"
 	fi
 
-	# Special newline to ensure leftover spinner is hidden
-	printf "  \n"
+	# Obtain the current cursor row position
+	__obtain_row
 
-	__info "Pruning blocks except ${metadata_removed}\n"
+	printf "\033[${current_row}H ${green}*${normal} Pruning blocks except ${metadata_removed}\n"
 }
 #== .: END TITLE MESSAGES :. ===================================================
 
@@ -1920,7 +1920,11 @@ __obtain_row () {
 
 	current_row="${current_row:2}"  # Cull the first 2 characters leaving: <num>
 	stty "${row_old_stty}"          # Restore the old TTY settings
+}
 
+# Check if we need to scroll the terminal up depending on how much room is left,
+# relative to the number of jobs to process
+__scroll_terminal () {
 	# Obtain the differnce from the total lines available in the current
 	# terminal and the current row obtained
 	lines_difference=$(( lines - current_row ))
@@ -2577,7 +2581,7 @@ __top_banner () {
 	"         Config Directory " "|" " " "${config_directory}"
 
 	# Bottom banner line
-	printf "${normal}%s${blue}%s${normal}\n\n" \
+	printf "${normal}%s${blue}%s${normal}\n" \
 	" " "-------------------------+-------------------------"
 
 	# Message indicating the searching of FLAC files
@@ -2588,7 +2592,7 @@ __top_banner () {
 # line above.  This will be displayed when all the FLAC files
 # have been mapped to an array
 __processed_flacs_ok () {
-	printf "${normal}%11s${blue}%s${normal}%s${green}%s${normal}%s${blue}%s${normal}" \
+	printf "${normal}%11s${blue}%s${normal}%s${green}%s${normal}%s${blue}%s${normal}\n" \
 	"" "[" " " "ok" " " "]"
 }
 
@@ -3526,7 +3530,7 @@ __operation_summary () {
 	# Begin printing the table
 
 	# Title
-	printf "\n${normal}%s${blue}%s${normal}\n" \
+	printf "\033[$(( current_row + jobs ))H${normal}%s${blue}%s${normal}\n" \
 	" " "---------------------------------------------------"
 	printf "${normal}%s\n" \
 	"                Summary Of Operations"
@@ -5168,18 +5172,15 @@ __operation_prune () {
 	trap __kill_jobs EXIT
 
 	# Print current FLAC being processed
-	__print_prune_flac
-
-	# Start spinner only if this is the first FLAC file being processed
-	__start_spinner
+	__print_current_flac
 
 	# Check if file is a FLAC file (hide output)
 	metaflac --show-md5sum "${i}" >/dev/null 2>&1
 
 	# Exit code 130 is SIGINT so only check for exit code '1'
 	if (( ${?} == 1 )) ; then
-		# File is not a FLAC file, display failed
-		__print_failed_flac
+		# Error with FLAC file, display failed/error
+		__print_progress_failed
 
 		# Log FLAC failure
 		printf "\n%s\n%s\n%s\n%s\n\n%s\n" \
@@ -5196,7 +5197,14 @@ __operation_prune () {
 		# Remove all information but STREAMINFO,VORBIS_COMMENTs, and
 		# possibly METADATA_BLOCK_PICTURE
 		metaflac --remove --dont-use-padding --except-block-type="${dont_prune_flac_metadata}" "${i}"
+
+		# FLAC is ok, display ok
+		__print_progress_ok
 	fi
+
+	# Store the position of where the line of the FLAC file is displayed in file
+	# descriptor (7), to be used by the next job
+	__store_position
 
 	# Print newline into FIFO after completion
 	__newline >&3
@@ -5465,11 +5473,14 @@ __processed_flacs_ok
 # FLAC files are corrupt or have metadata issues
 if [[ "${aucdtect_flac}" == "true" ]] ; then
 
+	# Obtain the current row
+	__obtain_row
+
 	# Prints title message of current operation
 	__title_aucdtect_flac
 
-	# Obtain the current row
-	__obtain_row
+	# Scroll terminal, if applicable
+	__scroll_terminal
 
 	# Make sure to clear file descriptor '3' before proceeding
 	__clear_tmp_fd
@@ -5480,6 +5491,10 @@ if [[ "${aucdtect_flac}" == "true" ]] ; then
 
 	# Run parallel operations, that which is specified as ${1}
 	__run_parallel_files __operation_aucdtect
+
+	# Place cursor on the last line, to allow the current row to be read in
+	# correctly
+	printf "\033[$(( current_row + jobs))H"
 
 	if [[ -f "${aucdtect_errors}" ]] ; then
 		# Print out log exists to STDERR
@@ -5514,11 +5529,18 @@ if [[ "${md5check_flac}" == "true" ]] ; then
 	# Obtain the current row
 	__obtain_row
 
+	# Scroll terminal, if applicable
+	__scroll_terminal
+
 	# Make sure to clear file descriptor '3' before proceeding
 	__clear_tmp_fd
 
 	# Run parallel operations, that which is specified as ${1}
 	__run_parallel_files __operation_md5_check
+
+	# Place cursor on the last line, to allow the current row to be read in
+	# correctly
+	printf "\033[$(( current_row + jobs))H"
 
 	if [[ -f "${md5_errors}" ]] ; then
 		# Print out log exists to STDERR
@@ -5550,24 +5572,26 @@ if [[ "${compress_flac}" == "true" ]] ; then
 	# Set the correct title operation to print depending
 	# what was called
 	if [[ "${skip_test}" == "true" ]] ; then
-		title_compress="__title_compress_notest_flac"
+		__title_compress_notest_flac
 	else
-		title_compress="__title_compress_flac"
+		__title_compress_flac
 	fi
-
-	# Prints title message of current operation
-	# ${title_compress} is an alias to the command to
-	# run determined earlier
-	"${title_compress}"
 
 	# Obtain the current row
 	__obtain_row
+
+	# Scroll terminal, if applicable
+	__scroll_terminal
 
 	# Make sure to clear file descriptor '3' before proceeding
 	__clear_tmp_fd
 
 	# Run parallel operations, that which is specified as ${1}
 	__run_parallel_files __operation_compress
+
+	# Place cursor on the last line, to allow the current row to be read in
+	# correctly
+	printf "\033[$(( current_row + jobs))H"
 
 	if [[ -f "${verify_errors}" ]] ; then
 		# Print out log exists to STDERR
@@ -5602,11 +5626,18 @@ if [[ "${test_flac}" == "true" ]] ; then
 	# Obtain the current row
 	__obtain_row
 
+	# Scroll terminal, if applicable
+	__scroll_terminal
+
 	# Make sure to clear file descriptor '3' before proceeding
 	__clear_tmp_fd
 
 	# Run parallel operations, that which is specified as ${1}
 	__run_parallel_files __operation_test
+
+	# Place cursor on the last line, to allow the current row to be read in
+	# correctly
+	printf "\033[$(( current_row + jobs))H"
 
 	if [[ -f "${test_errors}" ]] ; then
 		# Print out log exists to STDERR
@@ -5666,6 +5697,10 @@ if [[ "${replaygain_flac}" == "true" ]] ; then
 	# Run parallel operations, that which is specified as ${1}
 	__run_parallel_files __operation_test_replaygain
 
+	# Place cursor on the last line, to allow the current row to be read in
+	# correctly
+	printf "\033[$(( current_row + jobs))H"
+
 	if [[ -f "${replay_test_errors}" ]] ; then
 		# Print out log exists to STDERR
 		__log_replaygain_test
@@ -5718,6 +5753,10 @@ if [[ "${replaygain_flac}" == "true" ]] ; then
 
 	# Run parallel operations, that which is specified as ${1}
 	__run_parallel_directories "${process_replaygain}"
+
+	# Place cursor on the last line, to allow the current row to be read in
+	# correctly
+	printf "\033[$(( current_row + jobs))H"
 
 	if [[ -f "${replay_add_errors}" ]] ; then
 		# Print out log exists to STDERR
@@ -5796,6 +5835,10 @@ if [[ "${retag_flac}" == "true" ]] ; then
 
 	# Run parallel operations, that which is specified as ${1}
 	__run_parallel_files "${analyze_tags}"
+
+	# Place cursor on the last line, to allow the current row to be read in
+	# correctly
+	printf "\033[$(( current_row + jobs))H"
 
 	# Test for DEPRECATED tag, COVERART in METADATA_ERROR log.  If it
 	# exists, set coverart_warning variable to make script output
@@ -5879,6 +5922,10 @@ if [[ "${retag_flac}" == "true" ]] ; then
 	# Run parallel operations, that which is specified as ${1}
 	__run_parallel_files __operation_set_tags
 
+	# Place cursor on the last line, to allow the current row to be read in
+	# correctly
+	printf "\033[$(( current_row + jobs))H"
+
 	if [[ "${last_file}" == "true" ]] ; then
 		# FLAC is okay, so print only if it's the last file
 		__print_ok_tag ; __newline
@@ -5909,17 +5956,24 @@ if [[ "${prune_flac}" == "true" ]] ; then
 		dont_prune_flac_metadata="STREAMINFO,PICTURE,VORBIS_COMMENT"
 	fi
 
-	# Set up spinner file descriptor '6'
-	__set_spinner_fd
-
 	# Prints title message of current operation
 	__title_prune_flac
+
+	# Obtain the current row
+	__obtain_row
+
+	# Scroll terminal, if applicable
+	__scroll_terminal
 
 	# Make sure to clear file descriptor '3' before proceeding
 	__clear_tmp_fd
 
 	# Run parallel operations, that which is specified as ${1}
 	__run_parallel_files __operation_prune
+
+	# Place cursor on the last line, to allow the current row to be read in
+	# correctly
+	printf "\033[$(( current_row + jobs))H"
 
 	if [[ -f "${prune_errors}" ]] ; then
 		# Print out log exists to STDERR
@@ -5937,16 +5991,8 @@ if [[ "${prune_flac}" == "true" ]] ; then
 		exit 1
 	fi
 
-	if [[ "${last_file}" == "true" ]] ; then
-		# FLAC is okay, so print only if it's the last file
-		__print_ok_flac ; __newline
-	fi
-
 	# Store operation status for Summary Of Operations
 	prune_complete="true"
-
-	# Kill spinner
-	__kill_spinner
 fi
 #== .: END PRUNE :. ============================================================
 
