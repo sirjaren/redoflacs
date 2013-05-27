@@ -920,28 +920,6 @@ __sub_applying_tags () {
 #-------------------------------------------------------------------------------
 # .: PROCESSED FILE/DIRECTORY MESSAGES :.
 #-------------------------------------------------------------------------------
-# Compressing
-__print_compressing_flac () {
-	# This is the maximum length of a string to be displayed based on column width,
-	# obtained via the number of columns minus the length of displayed characters:
-	#
-	#           $(__columns):  Width of terminal
-	#          ${#iteration}:  Length of the # of FLACs processed
-	#     total_flacs_length:  Length of the total # of FLAC files
-	#                     30:  Length of:
-	#                            [ Compressing FLAC ] (20)
-	#                            5 Spaces
-	#                            3 Characters: [/]
-	#                            2 Gap and ellipsis (…)
-	max_filename_length="$(( $(__columns) - ${#iteration} - total_flacs_length - 30 ))"
-
-	# Create and cull filename if needed returned as ${filename}
-	__filename
-
-	printf "\r\033[3C${magenta}%s${normal}%s%$(__current_length)s${blue}%s${normal}%s${yellow}%s${normal}%s${blue}%s${normal}%s" \
-	"[${iteration}/${#total_flacs_array[@]}]" " ${filename} " "" "[" " " "Compressing FLAC" " " "]" " "
-}
-
 # Testing ReplayGain
 __print_test_replaygain () {
 	# This is the maximum length of a string to be displayed based on column width,
@@ -997,16 +975,16 @@ __print_current_flac () {
 	#
 	#             ${columns}:  Width of terminal
 	#   ${#number_completed}:  FLACs processed and total FLACs, ie: [56/213]
-	#                      9:  Length of:
+	#                     11:  Length of:
 	#                            (4) Spaces
 	#                            (1) Gap and ellipsis: '…'
-	#                            (4) Percentage: '100%' or '  3%'
-	max_filename_length="$(( ${columns} - ${#number_completed} - 9 ))"
+	#                            (6) Percentage: '  100%' or '    3%'
+	max_filename_length="$(( ${columns} - ${#number_completed} - 11 ))"
 
 	# Create and cull filename if needed returned as ${filename}
 	__filename
 
-	printf "\033[${placement};7H%s%$(__current_length)s${magenta}%s${normal}" "${filename}" "" "${number_completed}"
+	printf "\033[${placement};9H%s%$(__current_length)s${magenta}%s${normal}" "${filename}" "" "${number_completed}"
 }
 
 # Print the current FLAC file being operated on with skip message
@@ -1020,82 +998,16 @@ __print_skip_flac () {
 	#
 	#             ${columns}:  Width of terminal
 	#   ${#number_completed}:  FLACs processed and total FLACs, ie: [56/213]
-	#                      9:  Length of:
+	#                     11:  Length of:
 	#                            (4) Spaces
 	#                            (1) Gap and ellipsis: '…'
-	#                            (4) Percentage: '100%' or '  3%'
-	max_filename_length="$(( ${columns} - ${#number_completed} - 9 ))"
+	#                            (6) Percentage: '100%' or '  3%'
+	max_filename_length="$(( ${columns} - ${#number_completed} - 11 ))"
 
 	# Create and cull filename if needed returned as ${filename}
 	__filename
 
-	printf "\033[${placement};2H${yellow}skip${normal}%s%$(__current_length)s${magenta}%s${normal}" " ${filename}" "" "${number_completed}"
-}
-
-# Failed
-__print_failed_flac () {
-	# This is the maximum length of a string to be displayed based on column width,
-	# obtained via the number of columns minus the length of displayed characters:
-	#
-	#           $(__columns):  Width of terminal
-	#          ${#iteration}:  Length of the # of FLACs processed
-	#     total_flacs_length:  Length of the total # of FLAC files
-	#                     20:  Length of:
-	#                            [ Failed ] (10)
-	#                            7 Spaces
-	#                            1 Asterisk: *
-	#                            2 Gap and ellipsis (…)
-	max_filename_length="$(( $(__columns) - 20 ))"
-
-	# Create and cull filename if needed returned as ${filename}
-	__filename
-
-	printf "\r${normal}%s${red}%s${normal}%s%$(__current_length)s${blue}%s${normal}%s${red}%s${normal}%s${blue}%s${normal}%s\n" \
-	"     " "*" " ${filename} " "" "[" " " "Failed" " " "]" " "
-}
-
-# Checking MD5
-__print_checking_md5 () {
-	# This is the maximum length of a string to be displayed based on column width,
-	# obtained via the number of columns minus the length of displayed characters:
-	#
-	#           $(__columns):  Width of terminal
-	#          ${#iteration}:  Length of the # of FLACs processed
-	#     total_flacs_length:  Length of the total # of FLAC files
-	#                     26:  Length of:
-	#                            [ Checking MD5 ] (16)
-	#                            5 Spaces
-	#                            3 Characters: [/]
-	#                            2 Gap and ellipsis (…)
-	max_filename_length="$(( $(__columns) - ${#iteration} - total_flacs_length - 26 ))"
-
-	# Create and cull filename if needed returned as ${filename}
-	__filename
-
-	printf "\r\033[3C${magenta}%s${normal}%s%$(__current_length)s${blue}%s${normal}%s${yellow}%s${normal}%s${blue}%s${normal}%s" \
-	"[${iteration}/${#total_flacs_array[@]}]" " ${filename} " "" "[" " " "Checking MD5" " " "]" " "
-}
-
-# File ok
-__print_ok_flac () {
-	# This is the maximum length of a string to be displayed based on column width,
-	# obtained via the number of columns minus the length of displayed characters:
-	#
-	#           $(__columns):  Width of terminal
-	#          ${#iteration}:  Length of the # of FLACs processed
-	#     total_flacs_length:  Length of the total # of FLAC files
-	#                     16:  Length of:
-	#                            [ ok ] (6)
-	#                            5 Spaces
-	#                            3 Characters: [/]
-	#                            2 Gap and ellipsis (…)
-	max_filename_length="$(( $(__columns) - ${#iteration} - total_flacs_length - 16 ))"
-
-	# Create and cull filename if needed returned as ${filename}
-	__filename
-
-	printf "\r${normal}%s${magenta}%s${normal}%s%$(__current_length)s${blue}%s${normal}%s${green}%s${normal}%s${blue}%s${normal}%s" \
-	"   " "[${iteration}/${#total_flacs_array[@]}]" " ${filename} " "" "[" " " "ok" " " "]" " "
+	printf "\033[${placement};4H${yellow}skip${normal}%s%$(__current_length)s${magenta}%s${normal}" " ${filename}" "" "${number_completed}"
 }
 
 # ReplayGain file ok
@@ -1207,95 +1119,6 @@ __print_failed_replaygain () {
 	printf "\r${normal}%s${red}%s${normal}%s%$(__current_length)s${blue}%s${normal}%s${red}%s${normal}%s${blue}%s${normal}%s\n" \
 	"     " "*" " ${filename} " "" "[" " " "Failed" " " "]" " "
 }
-
-# Validating with auCDtect
-__print_aucdtect_flac () {
-	# This is the maximum length of a string to be displayed based on column width,
-	# obtained via the number of columns minus the length of displayed characters:
-	#
-	#           $(__columns):  Width of terminal
-	#          ${#iteration}:  Length of the # of FLACs processed
-	#     total_flacs_length:  Length of the total # of FLAC files
-	#                     29:  Length of:
-	#                            [ Validating FLAC ] (19)
-	#                            5 Spaces
-	#                            3 Characters: [/]
-	#                            2 Gap and ellipsis (…)
-	max_filename_length="$(( $(__columns) - ${#iteration} - total_flacs_length - 29 ))"
-
-	# Create and cull filename if needed returned as ${filename}
-	__filename
-
-	printf "\r\033[3C${magenta}%s${normal}%s%$(__current_length)s${blue}%s${normal}%s${yellow}%s${normal}%s${blue}%s${normal}%s" \
-	"[${iteration}/${#total_flacs_array[@]}]" " ${filename} " "" "[" " " "Validating FLAC" " " "]" " "
-}
-
-# FLAC issue
-__print_issue () {
-	# This is the maximum length of a string to be displayed based on column width,
-	# obtained via the number of columns minus the length of displayed characters:
-	#
-	#           $(__columns):  Width of terminal
-	#          ${#iteration}:  Length of the # of FLACs processed
-	#     total_flacs_length:  Length of the total # of FLAC files
-	#                     19:  Length of:
-	#                            [ Issue ] (9)
-	#                            7 Spaces
-	#                            1 Asterisk: *
-	#                            2 Gap and ellipsis (…)
-	max_filename_length="$(( $(__columns) - 19 ))"
-
-	# Create and cull filename if needed returned as ${filename}
-	__filename
-
-	printf "\r${normal}%s${yellow}%s${normal}%s%$(__current_length)s${blue}%s${normal}%s${yellow}%s${normal}%s${blue}%s${normal}%s\n" \
-	"     " "*" " ${filename} " "" "[" " " "Issue" " " "]" " "
-}
-
-# auCDtect spectrogram
-__print_aucdtect_spectrogram () {
-	# This is the maximum length of a string to be displayed based on column width,
-	# obtained via the number of columns minus the length of displayed characters:
-	#
-	#           $(__columns):  Width of terminal
-	#          ${#iteration}:  Length of the # of FLACs processed
-	#     total_flacs_length:  Length of the total # of FLAC files
-	#                     34:  Length of:
-	#                            [ Creating Spectrogram ] (24)
-	#                            5 Spaces
-	#                            3 Characters: [/]
-	#                            2 Gap and ellipsis (…)
-	max_filename_length="$(( $(__columns) - ${#iteration} - total_flacs_length - 34 ))"
-
-	# Create and cull filename if needed returned as ${filename}
-	__filename
-
-	printf "\r\033[3C${magenta}%s${normal}%s%$(__current_length)s${blue}%s${normal}%s${yellow}%s${normal}%s${blue}%s${normal}%s" \
-	"[${iteration}/${#total_flacs_array[@]}]" " ${filename} " "" "[" " " "Creating Spectrogram" " " "]" " "
-}
-
-# Skip FLAC file
-__print_skip () {
-	# This is the maximum length of a string to be displayed based on column width,
-	# obtained via the number of columns minus the length of displayed characters:
-	#
-	#           $(__columns):  Width of terminal
-	#          ${#iteration}:  Length of the # of FLACs processed
-	#     total_flacs_length:  Length of the total # of FLAC files
-	#                     21:  Length of:
-	#                            [ Skipped ] (11)
-	#                            7 Spaces
-	#                            1 Asterisk: *
-	#                            2 Gap and ellipsis (…)
-	max_filename_length="$(( $(__columns) - 21 ))"
-
-	# Create and cull filename if needed returned as ${filename}
-	__filename
-
-	printf "\r${normal}%s${yellow}%s${normal}%s%$(__current_length)s${blue}%s${normal}%s${yellow}%s${normal}%s${blue}%s${normal}%s\n" \
-	"     " "*" " ${filename} " "" "[" " " "Skipped" " " "]" " "
-}
-
 # Tag ok
 __print_ok_tag () {
 	# This is the maximum length of a string to be displayed based on column width,
@@ -1361,29 +1184,6 @@ __print_applying_tags () {
 	printf "\r\033[3C${normal}%s${magenta}%s${normal}%s%$(__current_length)s${blue}%s${normal}%s${yellow}%s${normal}%s${blue}%s${normal}%s" \
 	"  " "[${iteration}/${#total_flacs_array[@]}]" " ${filename} " "" "[" " " "Applying Tags" " " "]" " "
 }
-
-# Pruning
-__print_prune_flac () {
-	# This is the maximum length of a string to be displayed based on column width,
-	# obtained via the number of columns minus the length of displayed characters:
-	#
-	#           $(__columns):  Width of terminal
-	#          ${#iteration}:  Length of the # of FLACs processed
-	#     total_flacs_length:  Length of the total # of FLAC files
-	#                     30:  Length of:
-	#                            [ Pruning Metadata ] (20)
-	#                            5 Spaces
-	#                            3 Characters: [/]
-	#                            2 Gap and ellipsis (…)
-	max_filename_length="$(( $(__columns) - ${#iteration} - total_flacs_length - 30 ))"
-
-	# Create and cull filename if needed returned as ${filename}
-	__filename
-
-	printf "\r\033[3C${magenta}%s${normal}%s%$(__current_length)s${blue}%s${normal}%s${yellow}%s${normal}%s${blue}%s${normal}%s" \
-	"[${iteration}/${#total_flacs_array[@]}]" " ${filename} " "" "[" " " "Pruning Metadata" " " "]" " "
-}
-
 # Retag analyze interrupted
 __print_retag_analyze_interrupt () {
 	# This is the maximum length of a string to be displayed based on column width,
@@ -1454,10 +1254,10 @@ __print_interrupt () {
 # percentage as 100% (since FLAC stops at 99%) in green
 __print_progress_ok () {
 	if (( current_filename_length < max_filename_length )) ; then
-		printf "\033[${placement};1H${green}%5s${normal}%s%$(( max_filename_length - current_filename_length + 1 ))s" \
+		printf "\033[${placement};4H${green}%4s${normal}%s%$(( max_filename_length - current_filename_length + 1 ))s" \
 		"100%" " ${filename}" ""
 	else
-		printf "\033[${placement};1H${green}%5s${normal}%s" \
+		printf "\033[${placement};4H${green}%4s${normal}%s" \
 		"100%" " ${filename}"
 	fi
 }
@@ -1466,10 +1266,10 @@ __print_progress_ok () {
 # error in red color
 __print_progress_failed () {
 	if (( current_filename_length < max_filename_length )) ; then
-		printf "\033[${placement};1H${red}%5s${normal}%s%$(( max_filename_length - current_filename_length + 1 ))s" \
+		printf "\033[${placement};4H${red}%4s${normal}%s%$(( max_filename_length - current_filename_length + 1 ))s" \
 		"fail" " ${filename}" ""
 	else
-		printf "\033[${placement};1H${red}%5s${normal}%s" \
+		printf "\033[${placement};4H${red}%4s${normal}%s" \
 		"fail" " ${filename}"
 	fi
 }
@@ -1478,10 +1278,10 @@ __print_progress_failed () {
 # error in red color
 __print_progress_issue () {
 	if (( current_filename_length < max_filename_length )) ; then
-		printf "\033[${placement};1H${yellow}%5s${normal}%s%$(( max_filename_length - current_filename_length + 1 ))s" \
+		printf "\033[${placement};4H${yellow}%4s${normal}%s%$(( max_filename_length - current_filename_length + 1 ))s" \
 		"chck" " ${filename}" ""
 	else
-		printf "\033[${placement};1H${yellow}%5s${normal}%s" \
+		printf "\033[${placement};4H${yellow}%4s${normal}%s" \
 		"chck" " ${filename}"
 	fi
 }
@@ -1510,14 +1310,14 @@ __print_progress () {
 		# filename that hasn't doesn't match the percentage length of what's
 		# completed so far (trim meaning, not highlighting that portion of the
 		# filename)
-		printf "\033[${placement}H${yellow}%5s${normal} ${invert}%s${normal}%s" \
+		printf "\033[${placement};4H${yellow}%4s${normal} ${invert}%s${normal}%s" \
 		"${percent_complete}%" "${filename:0:$(( progress_bar_length + 1 ))}"
 	else
 
 		# This prints out the the filename, inverted, as well as the current
 		# progress bar length.  Used only if the filename is less than the width
 		# of the progress bar maximum's length
-		printf "\033[${placement}H${yellow}%5s${normal} ${invert}%s%$(( progress_bar_length - current_filename_length + 1 ))s${normal}" \
+		printf "\033[${placement};4H${yellow}%4s${normal} ${invert}%s%$(( progress_bar_length - current_filename_length + 1 ))s${normal}" \
 		"${percent_complete}%" "${filename}" ""
 	fi
 }
@@ -5473,11 +5273,11 @@ __processed_flacs_ok
 # FLAC files are corrupt or have metadata issues
 if [[ "${aucdtect_flac}" == "true" ]] ; then
 
-	# Obtain the current row
-	__obtain_row
-
 	# Prints title message of current operation
 	__title_aucdtect_flac
+
+	# Obtain the current row
+	__obtain_row
 
 	# Scroll terminal, if applicable
 	__scroll_terminal
