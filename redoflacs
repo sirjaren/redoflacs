@@ -831,10 +831,10 @@ __title_compress_notest_flac () {
 
 # Apply ReplayGain to FLACS
 __title_replaygain () {
-	# Special newline to ensure leftover spinner is hidden
-	printf "  \n"
+	# Obtain the current cursor row position
+	__obtain_row
 
-	__info "Generating & Applying ReplayGain\n"
+	printf "\033[${current_row}H ${green}*${normal} Generating & Applying ReplayGain\n"
 }
 
 # Retag FLACS
@@ -893,14 +893,16 @@ __title_prune_flac () {
 #-------------------------------------------------------------------------------
 # Test for ReplayGain
 __sub_test_replaygain () {
-	printf "%s${green}%s${normal}%s${normal}%s${normal}\n" \
-	"   " ">" " " "Testing ReplayGain"
+	# No need to obtain the row, since it's done already after the title message
+	printf "\033[${current_row};4H${green}>${normal} Testing ReplayGain\n"
 }
 
 # Adding ReplayGain values
 __sub_add_replaygain () {
-	printf "%s${green}%s${normal}%s${normal}%s${normal}\n" \
-	"   " ">" " " "Adding ReplayGain"
+	# Obtain the current row
+	__obtain_row
+
+	printf "\033[${current_row};4H${green}>${normal} Adding ReplayGain\n"
 }
 
 # Analyze FLAC tags
@@ -920,50 +922,6 @@ __sub_applying_tags () {
 #-------------------------------------------------------------------------------
 # .: PROCESSED FILE/DIRECTORY MESSAGES :.
 #-------------------------------------------------------------------------------
-# Testing ReplayGain
-__print_test_replaygain () {
-	# This is the maximum length of a string to be displayed based on column width,
-	# obtained via the number of columns minus the length of displayed characters:
-	#
-	#           $(__columns):  Width of terminal
-	#          ${#iteration}:  Length of the # of FLACs processed
-	#     total_flacs_length:  Length of the total # of FLAC files
-	#                     34:  Length of:
-	#                            [ Testing ReplayGain ] (22)
-	#                            7 Spaces
-	#                            3 Characters: [/]
-	#                            2 Gap and ellipsis (…)
-	max_filename_length="$(( $(__columns) - ${#iteration} - total_flacs_length - 34 ))"
-
-	# Create and cull filename if needed returned as ${filename}
-	__filename
-
-	printf "\r\033[3C${normal}%s${magenta}%s${normal}%s%$(__current_length)s${blue}%s${normal}%s${yellow}%s${normal}%s${blue}%s${normal}%s" \
-	"  " "[${iteration}/${#total_flacs_array[@]}]" " ${filename} " "" "[" " " "Testing ReplayGain" " " "]" " "
-}
-
-# Applying ReplayGain
-__print_add_replaygain () {
-	# This is the maximum length of a string to be displayed based on column width,
-	# obtained via the number of columns minus the length of displayed characters:
-	#
-	#           $(__columns):  Width of terminal
-	#          ${#iteration}:  Length of the # processed directories
-	#  ${#total_directories}:  Length of the total # of directories
-	#                     33:  Length of:
-	#                            [ Adding ReplayGain ] (21)
-	#                            7 Spaces
-	#                            3 Characters: [/]
-	#                            2 Gap and ellipsis (…)
-	max_filename_length="$(( $(__columns) - ${#iteration} - ${#total_directories} - 33 ))"
-
-	# Create and cull filename if needed returned as ${filename}
-	__filename
-
-	printf "\r\033[3C${normal}%s${magenta}%s${normal}%s%$(__current_length)s${blue}%s${normal}%s${yellow}%s${normal}%s${blue}%s${normal}%s" \
-	"  " "[${iteration}/${#flac_directories_array[@]}]" " ${filename} " "" "[" " " "Adding ReplayGain" " " "]" " "
-}
-
 # Print the current FLAC file being operated on
 __print_current_flac () {
 	# This stores the current file number processed out of the total files:
@@ -985,6 +943,53 @@ __print_current_flac () {
 	__filename
 
 	printf "\033[${placement};9H%s%$(__current_length)s${magenta}%s${normal}" "${filename}" "" "${number_completed}"
+}
+
+# Print the current directory being operated on
+__print_current_directory () {
+	# This stores the current directory number processed out of the total
+	# number of directories:
+	#  [6/34]
+	number_completed="[${iteration}/${#flac_directories_array[@]}]"
+
+	# This is the maximum length of a string to be displayed based on column width,
+	# obtained via the number of columns minus the length of displayed characters:
+	#
+	#             ${columns}:  Width of terminal
+	#   ${#number_completed}:  Dirs processed and total dirs, ie: [6/34]
+	#                     13:  Length of:
+	#                            (4) Spaces
+	#                            (1) Gap and ellipsis: '…'
+	#                            (8) Percentage: '    100%' or '      3%'
+	max_filename_length="$(( ${columns} - ${#number_completed} - 13 ))"
+
+	# Create and cull filename if needed returned as ${filename}
+	__filename
+
+	printf "\033[${placement};11H%s%$(__current_length)s${magenta}%s${normal}" "${filename}" "" "${number_completed}"
+}
+
+# Print the current FLAC file being operated on (for sub messages)
+__print_sub_current_flac () {
+	# This stores the current file number processed out of the total files:
+	#  [56/213]
+	number_completed="[${iteration}/${#total_flacs_array[@]}]"
+
+	# This is the maximum length of a string to be displayed based on column width,
+	# obtained via the number of columns minus the length of displayed characters:
+	#
+	#             ${columns}:  Width of terminal
+	#   ${#number_completed}:  FLACs processed and total FLACs, ie: [56/213]
+	#                     11:  Length of:
+	#                            (4) Spaces
+	#                            (1) Gap and ellipsis: '…'
+	#                            (8) Percentage: '  100%' or '    3%'
+	max_filename_length="$(( ${columns} - ${#number_completed} - 13 ))"
+
+	# Create and cull filename if needed returned as ${filename}
+	__filename
+
+	printf "\033[${placement};11H%s%$(__current_length)s${magenta}%s${normal}" "${filename}" "" "${number_completed}"
 }
 
 # Print the current FLAC file being operated on with skip message
@@ -1010,115 +1015,6 @@ __print_skip_flac () {
 	printf "\033[${placement};4H${yellow}skip${normal}%s%$(__current_length)s${magenta}%s${normal}" " ${filename}" "" "${number_completed}"
 }
 
-# ReplayGain file ok
-__print_ok_replaygain_file () {
-	# This is the maximum length of a string to be displayed based on column width,
-	# obtained via the number of columns minus the length of displayed characters:
-	#
-	#           $(__columns):  Width of terminal
-	#          ${#iteration}:  Length of the # of FLACs processed
-	#     total_flacs_length:  Length of the total # of FLAC files
-	#                     18:  Length of:
-	#                            [ ok ] (6)
-	#                            7 Spaces
-	#                            3 Characters: [/]
-	#                            2 Gap and ellipsis (…)
-	max_filename_length="$(( $(__columns) - ${#iteration} - total_flacs_length - 18 ))"
-
-	# Create and cull filename if needed returned as ${filename}
-	__filename
-
-	printf "\r${normal}%s${magenta}%s${normal}%s%$(__current_length)s${blue}%s${normal}%s${green}%s${normal}%s${blue}%s${normal}%s" \
-	"     " "[${iteration}/${#total_flacs_array[@]}]" " ${filename} " "" "[" " " "ok" " " "]" " "
-}
-
-# ReplayGain file interrupted
-__print_interrupt_replaygain_file () {
-	# This is the maximum length of a string to be displayed based on column width,
-	# obtained via the number of columns minus the length of displayed characters:
-	#
-	#           $(__columns):  Width of terminal
-	#          ${#iteration}:  Length of the # of FLACs processed
-	#     total_flacs_length:  Length of the total # of FLAC files
-	#                     27:  Length of:
-	#                            [ Interrupted ] (15)
-	#                            7 Spaces
-	#                            3 Characters: [/]
-	#                            2 Gap and ellipsis (…)
-	max_filename_length="$(( $(__columns) - ${#iteration} - total_flacs_length - 27 ))"
-
-	# Create and cull filename if needed returned as ${filename}
-	__filename
-
-	printf "\r${normal}%s${magenta}%s${normal}%s%$(__current_length)s${blue}%s${normal}%s${yellow}%s${normal}%s${blue}%s${normal}%s" \
-	"     " "[${iteration}/${#total_flacs_array[@]}]" " ${filename} " "" "[" " " "Interrupted" " " "]" " "
-}
-
-# ReplayGain directory ok
-__print_ok_replaygain_dir () {
-	# This is the maximum length of a string to be displayed based on column width,
-	# obtained via the number of columns minus the length of displayed characters:
-	#
-	#           $(__columns):  Width of terminal
-	#          ${#iteration}:  Length of the # of processed directories
-	#  ${#total_directories}:  Length of the total # of directories
-	#                     18:  Length of:
-	#                            [ ok ] (6)
-	#                            7 Spaces
-	#                            3 Characters: [/]
-	#                            2 Gap and ellipsis (…)
-	max_filename_length="$(( $(__columns) - ${#iteration} - ${#total_directories} - 18 ))"
-
-	# Create and cull filename if needed returned as ${filename}
-	__filename
-
-	printf "\r${normal}%s${magenta}%s${normal}%s%$(__current_length)s${blue}%s${normal}%s${green}%s${normal}%s${blue}%s${normal}%s" \
-	"     " "[${iteration}/${#flac_directories_array[@]}]" " ${filename} " "" "[" " " "ok" " " "]" " "
-}
-
-# ReplayGain directory interrupted
-__print_interrupt_replaygain_dir () {
-	# This is the maximum length of a string to be displayed based on column width,
-	# obtained via the number of columns minus the length of displayed characters:
-	#
-	#           $(__columns):  Width of terminal
-	#          ${#iteration}:  Length of the # processed directories
-	#  ${#total_directories}:  Length of the total # of directories
-	#                     27:  Length of:
-	#                            [ Interrupted ] (15)
-	#                            7 Spaces
-	#                            3 Characters: [/]
-	#                            2 Gap and ellipsis (…)
-	max_filename_length="$(( $(__columns) - ${#iteration} - ${#total_directories} - 27 ))"
-
-	# Create and cull filename if needed returned as ${filename}
-	__filename
-
-	printf "\r${normal}%s${magenta}%s${normal}%s%$(__current_length)s${blue}%s${normal}%s${yellow}%s${normal}%s${blue}%s${normal}%s" \
-	"     " "[${iteration}/${#flac_directories_array[@]}]" " ${filename} " "" "[" " " "Interrupted" " " "]" " "
-}
-
-# ReplayGain directory failed
-__print_failed_replaygain () {
-	# This is the maximum length of a string to be displayed based on column width,
-	# obtained via the number of columns minus the length of displayed characters:
-	#
-	#           $(__columns):  Width of terminal
-	#          ${#iteration}:  Length of the # processed directories
-	#  ${#total_directories}:  Length of the total # of directories
-	#                     20:  Length of:
-	#                            [ Failed ] (10)
-	#                            7 Spaces
-	#                            1 Characters: *
-	#                            2 Gap and ellipsis (…)
-	max_filename_length="$(( $(__columns) - ${#iteration} - ${#total_directories} - 20 ))"
-
-	# Create and cull filename if needed returned as ${filename}
-	__filename
-
-	printf "\r${normal}%s${red}%s${normal}%s%$(__current_length)s${blue}%s${normal}%s${red}%s${normal}%s${blue}%s${normal}%s\n" \
-	"     " "*" " ${filename} " "" "[" " " "Failed" " " "]" " "
-}
 # Tag ok
 __print_ok_tag () {
 	# This is the maximum length of a string to be displayed based on column width,
@@ -1262,6 +1158,19 @@ __print_progress_ok () {
 	fi
 }
 
+# Display the filename, clearing the progress bar and display the progress
+# percentage as 100% (since FLAC stops at 99%) in green (for sub messages)
+__print_sub_progress_ok () {
+	if (( current_filename_length < max_filename_length )) ; then
+		printf "\033[${placement};6H${green}%4s${normal}%s%$(( max_filename_length - current_filename_length ))s" \
+		"100%" " ${filename}" ""
+	else
+		printf "\033[${placement};6H${green}%4s${normal}%s" \
+		"100%" " ${filename}"
+	fi
+}
+
+
 # Display the filename, clearing the progress bar and display the progress as an
 # error in red color
 __print_progress_failed () {
@@ -1275,6 +1184,18 @@ __print_progress_failed () {
 }
 
 # Display the filename, clearing the progress bar and display the progress as an
+# error in red color (for sub messages)
+__print_sub_progress_failed () {
+	if (( current_filename_length < max_filename_length )) ; then
+		printf "\033[${placement};6H${red}%4s${normal}%s%$(( max_filename_length - current_filename_length + 1 ))s" \
+		"fail" " ${filename}" ""
+	else
+		printf "\033[${placement};6H${red}%4s${normal}%s" \
+		"fail" " ${filename}"
+	fi
+}
+
+# Display the filename, clearing the progress bar and display the progress as an
 # error in red color
 __print_progress_issue () {
 	if (( current_filename_length < max_filename_length )) ; then
@@ -1282,6 +1203,18 @@ __print_progress_issue () {
 		"chck" " ${filename}" ""
 	else
 		printf "\033[${placement};4H${yellow}%4s${normal}%s" \
+		"chck" " ${filename}"
+	fi
+}
+
+# Display the filename, clearing the progress bar and display the progress as an
+# error in red color (for sub messages)
+__print_sub_progress_issue () {
+	if (( current_filename_length < max_filename_length )) ; then
+		printf "\033[${placement};6H${yellow}%4s${normal}%s%$(( max_filename_length - current_filename_length + 1 ))s" \
+		"chck" " ${filename}" ""
+	else
+		printf "\033[${placement};6H${yellow}%4s${normal}%s" \
 		"chck" " ${filename}"
 	fi
 }
@@ -1347,11 +1280,8 @@ __replaygain_test_abort () {
 	# Kill running children, must come before __kill_spinner
 	__kill_jobs
 
-	# Kill spinner
-	__kill_spinner
-
 	# Print current FLAC file that is interrupted
-	__print_interrupt_replaygain_file
+	#__print_interrupt_replaygain_file
 
 	__newline
 	__info "Control-C received, generating summary. Please wait..."
@@ -1378,11 +1308,8 @@ __replaygain_process_abort () {
 	# Kill running children, must come before __kill_spinner
 	__kill_jobs
 
-	# Kill spinner
-	__kill_spinner
-
 	# Print current directory that is interrupted
-	__print_interrupt_replaygain_dir
+	#__print_interrupt_replaygain_dir
 
 	__newline
 	__info "Control-C received, generating summary. Please wait...\n"
@@ -1501,11 +1428,8 @@ __md5_check_abort () {
 	# Kill running children, must come before __kill_spinner
 	__kill_jobs
 
-	# Kill spinner
-	__kill_spinner
-
 	# Print current FLAC file that is interrupted
-	__print_interrupt
+	#__print_interrupt
 
 	__newline
 	__info "Control-C received, generating summary. Please wait...\n"
@@ -1532,11 +1456,8 @@ __analyzing_tags_abort () {
 	# Kill running children, must come before __kill_spinner
 	__kill_jobs
 
-	# Kill spinner
-	__kill_spinner
-
 	# Print current FLAC file that is interrupted
-	__print_retag_analyze_interrupt
+	#__print_retag_analyze_interrupt
 
 	__newline
 	__info "Control-C received, generating summary. Please wait...\n"
@@ -1586,11 +1507,8 @@ __applying_tags_abort () {
 	# Kill running children, must come before __kill_spinner
 	__kill_jobs
 
-	# Kill spinner
-	__kill_spinner
-
 	# Print current FLAC file that is interrupted
-	__print_retag_apply_interrupt
+	#__print_retag_apply_interrupt
 
 	__newline
 	__info "Control-C received, generating summary. Please wait...\n"
@@ -1640,11 +1558,8 @@ __prune_abort () {
 	# Kill running children, must come before __kill_spinner
 	__kill_jobs
 
-	# Kill spinner
-	__kill_spinner
-
 	# Print current FLAC file that is interrupted
-	__print_interrupt
+	#__print_interrupt
 
 	__newline
 	__info "Control-C received, generating summary. Please wait...\n"
@@ -1696,19 +1611,17 @@ __metaflac_version () {
 
 # Obtain the current cursor row position
 __obtain_row () {
-	# Obtain the lines and columns of the terminal
-	__lines_columns
-
-	exec < /dev/tty                 # Set a new TTY to read in STDIN
-	row_old_stty="$(stty -g)"       # Store current TTY settings
-	stty raw -echo min 0            # Current TTY set at an absolute minimum
+	__lines_columns              # Obtain the lines and columns of the terminals
+	exec < /dev/tty              # Set a new TTY to read in STDIN
+	row_old_stty="$(stty -g)"    # Store current TTY settings
+	stty raw -echo min 0         # Current TTY set at an absolute minimum
 
 	# Print escape sequence to obtain cursor position into the new TTY
 	printf "\033[6n" > /dev/tty
 
 	# Read in escape sequence output from TTY.  The resultant output from the
 	# escape sequence looks like:
-	#  ^[[<num>;<num>R
+	#  ^[<num>;<num>R
 	#       ^------------ This is the 'row' we want to obtain
 	# The read then specifies the 'R' is the delimeter to stop reading in from,
 	# storing this string into the $current_row variable
@@ -1723,7 +1636,11 @@ __obtain_row () {
 }
 
 # Check if we need to scroll the terminal up depending on how much room is left,
-# relative to the number of jobs to process
+# relative to the number of jobs to process.  There is the special value of ${1}
+# which signifies a number to remove from the total lines to scroll.  This
+# number will only occur if the number of files/directories to process is less
+# than the jobs specified to run.  This allows us to _NOT_ have extra gaps in
+# our output
 __scroll_terminal () {
 	# Obtain the differnce from the total lines available in the current
 	# terminal and the current row obtained
@@ -1735,7 +1652,7 @@ __scroll_terminal () {
 	# current operations to be printed correctly
 	if (( lines_difference < jobs )) ; then
 		# Obtain the number of lines need to equal the current number of jobs
-		lines_to_scroll=$(( jobs - lines_difference ))
+		lines_to_scroll=$(( jobs - lines_difference ${1} ))
 
 		# This scrolls the terminal up by the number of lines to scroll
 		printf "\033[${lines_to_scroll}S"
@@ -1809,7 +1726,7 @@ __store_position () {
 	else
 		# Print the position of the current jobs into file descriptor (7) to be
 		# stored by 'read' upon starting the next job
-		printf "${previous_file_position}\n" >&7
+		printf "${previous_operation_position}\n" >&7
 	fi
 }
 
@@ -3312,13 +3229,6 @@ __operation_summary () {
 	#---------------------------------------------------------------------------
 	# .: CLEANUP SECTION :.
 	#---------------------------------------------------------------------------
-	# This section must come before printing out the Summary Of Operations chart
-	# as this will ensure the spinner is not running and displaying remnants
-	# inside the chart
-	#
-	# Kill spinner
-	__kill_spinner
-
 	# Restore old stty settings, make stty happy
 	# by redirecting /dev/stderr
 	stty ${old_stty} < /dev/stderr
@@ -3329,13 +3239,27 @@ __operation_summary () {
 
 	# Begin printing the table
 
+	#if [[ "${replaygain_flac}" == "true" && -n "${adding_replaygain_complete}" ]] ; then
+	#	if (( ${#flac_directories_array[@]} < jobs )) ; then
+	#		summary_placement=$(( current_row + ${#flac_directories_array[@]} ))
+	#	else
+	#		summary_placement=$(( current_row + jobs ))
+	#	fi
+	#fi
+#
+#	if [[ "${prune_flac}" == "true" && -n "${prune_complete}" ]] ; then
+#		if (( ${#total_flacs_array[@]} < jobs )) ; then
+#			summary_placement=$(( current_row + ${#total_flacs_array[@]} ))
+#		else
+#			summary_placement=$(( current_row + jobs ))
+#		fi
+#	fi
+
 	# Title
-	printf "\033[$(( current_row + jobs ))H${normal}%s${blue}%s${normal}\n" \
-	" " "---------------------------------------------------"
-	printf "${normal}%s\n" \
-	"                Summary Of Operations"
-	printf "${normal}%s${blue}%s${normal}\n" \
-	" " "-------------------------+-------------------------"
+	printf "\033[$(( current_row ));2H${blue}%s${normal}\n" \
+	"---------------------------------------------------"
+	printf "                Summary Of Operations\n"
+	printf "${normal} ${blue}-------------------------+-------------------------${normal}\n" \
 
 	# auCDtect operations
 	if [[ "${aucdtect_flac}" == "true" && "${aucdtect_complete}" == "true" ]] ; then
@@ -3575,17 +3499,17 @@ __run_parallel_files () {
 				# Grab the previous position of the recently finished previous
 				# file.  This is taken from file descriptor '7', which is placed
 				# there after each file is completed, to allow the script to
-				# which file was placed where.  This position is a positive
-				# integer (including 0) relational to the the current row
-				# which is was obtained earlier
-				read -u7 -r previous_file_position
+				# know which file was placed where.  This position is a positive
+				# integer (including 0), relational to the the current row
+				# which was obtained earlier
+				read -u7 -r previous_operation_position
 
 				# Since this is _NOT_ the first set of jobs to run, the
 				# placement of each file to display is the current row the
-				# cursor is on plus the position of the last completed file's
-				# location, which allows us to dynamically place new jobs where
-				# other jobs have completed
-				placement="$((current_row + previous_file_position))"
+				# cursor is on plus the position of the last completed location
+				# of the file, which allows us to dynamically place new jobs
+				# where other jobs have completed
+				placement="$((current_row + previous_operation_position))"
 
 				# Run the specified operation in the background
 				"${parallel_operation}" &
@@ -3602,31 +3526,25 @@ __run_parallel_files () {
 				# Grab the previous position of the recently finished previous
 				# file.  This is taken from file descriptor '7', which is placed
 				# there after each file is completed, to allow the script to
-				# which file was placed where.  This position is a positive
-				# integer (including 0) relational to the the current row
-				# which is was obtained earlier
-				read -u7 -r previous_file_position
+				# know which file was placed where.  This position is a positive
+				# integer (including 0), relational to the the current row
+				# which was obtained earlier
+				read -u7 -r previous_operation_position
 
 				# Since this is _NOT_ the first set of jobs to run, the
 				# placement of each file to display is the current row the
-				# cursor is on plus the position of the last completed file's
-				# location, which allows us to dynamically place new jobs where
-				# other jobs have completed
-				placement="$((current_row + previous_file_position))"
+				# cursor is on plus the position of the last completed location
+				# of the file, which allows us to dynamically place new jobs
+				# where other jobs have completed
+				placement="$((current_row + previous_operation_position))"
 
 				# Run the specified operation in the background
 				"${parallel_operation}" &
-
-				# Set a variable letting the script know this was the last file
-				last_file="true"
 
 				# Break out of loop to prevent hanging FIFO
 				break
 			fi
 		done <&3
-	else
-		# Set a variable letting the script know this was the last file
-		last_file="true"
 	fi
 
 	# Wait for children processes
@@ -3653,7 +3571,15 @@ __run_parallel_directories () {
 
 	# Start as many processes as determined by ${jobs}
 	for i in "${flac_directories_array[@]:0:${jobs}}" ; do
+		# This is the first set of jobs to run, so the placement of each file to
+		# display is the current row the cursor is on plus the iteration (the
+		# current file [number] being processed), which is zero-based
+		placement=$((current_row + iteration))
+
+		# Add one to the iteration to enforce we print one or more, not zero
 		((iteration++))
+
+		# Run the specified operation in the background
 		"${parallel_operation}" &
 	done
 
@@ -3667,26 +3593,63 @@ __run_parallel_directories () {
 			# If current number of directories to process is less than total
 			# directories found, add another directory to process
 			if (( iteration < (${#flac_directories_array[@]} - 1) )) ; then
+				# Set the current directory ($i) to the current directory in the
+				# array
 				i="${flac_directories_array[${iteration}]}"
+
+				# Add one to the iteration
 				((iteration++))
 
+				# Grab the previous position of the recently finished previous
+				# directory.  This is taken from file descriptor '7', which is
+				# placed there after each directory is completed, to allow the
+				# script to know which directory was placed where.  This
+				# position is a positive integer (including 0), relational to
+				# the the current row which was obtained earlier
+				read -u7 -r previous_operation_position
+
+				# Since this is _NOT_ the first set of jobs to run, the
+				# placement of each directory to display is the current row the
+				# cursor is on plus the position of the last completed location
+				# of the directory, which allows us to dynamically place new
+				# jobs where other jobs have completed
+				placement="$((current_row + previous_operation_position))"
+
+				# Run the specified operation in the background
 				"${parallel_operation}" &
 
 			# Below is processed only if the current directory
 			# is equal to the last ${flac_directories_array[@]} index
 			else
-				last_directory="true"
-
+				# Set the current directory ($i) to the current directory in the
+				# array
 				i="${flac_directories_array[${iteration}]}"
+
+				# Add one to the iteration
 				((iteration++))
+
+				# Grab the previous position of the recently finished previous
+				# directory.  This is taken from file descriptor '7', which is
+				# placed there after each directory is completed, to allow the
+				# script to know which directory was placed where.  This
+				# position is a positive integer (including 0), relational to
+				# the the current row which was obtained earlier
+				read -u7 -r previous_operation_position
+
+				# Since this is _NOT_ the first set of jobs to run, the
+				# placement of each directory to display is the current row the
+				# cursor is on plus the position of the last completed location
+				# of the directory, which allows us to dynamically place new
+				# jobs where other jobs have completed
+				placement="$((current_row + previous_operation_position))"
+
+				# Run the specified operation in the background
 				"${parallel_operation}" &
 
 				# Break out of loop to prevent hanging FIFO
 				break
 			fi
 		done <&3
-	else
-		last_directory="true"
 	fi
 
 	# Wait for children processes
@@ -3705,10 +3668,7 @@ __operation_test_replaygain () {
 	trap __kill_jobs EXIT
 
 	# Print current FLAC being processed
-	__print_test_replaygain
-
-	# Start spinner only if this is the first FLAC file being processed
-	__start_spinner
+	__print_sub_current_flac
 
 	# Check if file is a FLAC file (capture output) via obtaining the sample
 	# rate of the current file.  The sample rate captured will be tested against
@@ -3718,8 +3678,8 @@ __operation_test_replaygain () {
 	# Exit code 130 is SIGINT so only check for exit code '1'
 	if (( ${?} == 1 )) ; then
 
-		# File is not a FLAC file, display failed
-		__print_failed_flac
+		# Error with FLAC file, display failed/error
+		__print_sub_progress_failed
 
 		# Log FLAC failure
 		printf "\n%s\n%s\n%s\n%s\n\n%s\n" \
@@ -3741,7 +3701,7 @@ __operation_test_replaygain () {
 			# version of `metaflac' is greater than 1.2.1
 			if (( metaflac_version < 3 )) ; then
 				# Old version of `metaflac' installed, display skipped
-				__print_issue
+				__print_sub_progress_issue
 
 				# The `metaflac' version installed is NOT greater than 1.2.1 so
 				# skip processing current FLAC file, logging why it was skipped
@@ -3758,9 +3718,19 @@ __operation_test_replaygain () {
 
 				# Add one to fail fd
 				printf '.' >&5
+			else
+				# FLAC is ok, display ok
+				__print_sub_progress_ok
 			fi
+		else
+			# FLAC is ok, display ok
+			__print_sub_progress_ok
 		fi
 	fi
+
+	# Store the position of where the line of the FLAC file is displayed in file
+	# descriptor (7), to be used by the next job
+	__store_position
 
 	# Print newline into FIFO after completion
 	__newline >&3
@@ -3772,11 +3742,8 @@ __operation_replaygain_noforce () {
 	# SIGINT.  This function will receive EXIT from the kill in previous trap
 	trap __kill_jobs EXIT
 
-	# Prints current directory being processed
-	__print_add_replaygain
-
-	# Start spinner only if this is the first FLAC file being processed
-	__start_spinner
+	# Print current directory being processed
+	__print_current_directory
 
 	# ${i} is the parent directory to the FLAC files
 	# ${j} is a FLAC file -> under ${i}
@@ -3810,8 +3777,8 @@ __operation_replaygain_noforce () {
 			# Exit code 130 is SIGINT so only check for exit code '1'
 			if (( ${?} == 1 )) ; then
 
-				# Print failed applying replaygain values to FLAC file diretory
-				__print_failed_replaygain
+				# Failed applyig replaygain values, display failed/error
+				__print_sub_progress_failed
 
 				# Log ReplayGain error
 				printf "\n%s\n%s\n%s\n%s\n%s\n%s\n%s\n%s\n%s\n\n%s\n" \
@@ -3836,9 +3803,19 @@ __operation_replaygain_noforce () {
 
 				# Break out of loop and on to next directory
 				break
+			else
+				# FLAC is ok, display ok
+				__print_sub_progress_ok
 			fi
+		else
+			# FLAC is ok, display ok
+			__print_sub_progress_ok
 		fi
 	done
+
+	# Store the position of where the line of the FLAC file is displayed in file
+	# descriptor (7), to be used by the next job
+	__store_position
 
 	# Print newline into FIFO after completion
 	__newline >&3
@@ -3850,11 +3827,8 @@ __operation_replaygain_force () {
 	# SIGINT.  This function will receive EXIT from the kill in previous trap
 	trap __kill_jobs EXIT
 
-	# Prints current directory being processed
-	__print_add_replaygain
-
-	# Start spinner only if this is the first FLAC file being processed
-	__start_spinner
+	# Print current directory being processed
+	__print_current_directory
 
 	# Add ReplayGain to FLAC files under directory
 	metaflac --add-replay-gain "${i}"/*${flac_extension} >/dev/null 2>&1
@@ -3862,8 +3836,8 @@ __operation_replaygain_force () {
 	# Exit code 130 is SIGINT so only check for exit code '1'
 	if (( ${?} == 1 )) ; then
 
-		# Print failed applying replaygain values to FLAC file diretory
-		__print_failed_replaygain
+		# Error with FLAC file, display failed/error
+		__print_sub_progress_failed
 
 		# Log ReplayGain error
 		printf "\n%s\n%s\n%s\n%s\n%s\n%s\n%s\n%s\n%s\n\n%s\n" \
@@ -3881,7 +3855,14 @@ __operation_replaygain_force () {
 
 		# Add one to fail fd
 		printf '.' >&5
+	else
+		# FLAC is ok, display ok
+		__print_sub_progress_ok
 	fi
+
+	# Store the position of where the line of the FLAC file is displayed in file
+	# descriptor (7), to be used by the next job
+	__store_position
 
 	# Print newline into FIFO after completion
 	__newline >&3
@@ -5036,8 +5017,6 @@ cyan="\033[36m"
 magenta="\033[35m"
 yellow="\033[33m"
 invert="\033[7m"
-white="\033[97m"
-blue_bg="\033[44m"
 normal="\033[0m"
 
 # Set arguments to null
@@ -5132,10 +5111,10 @@ prune_errors="${error_log}/redoflacs_prune_errors_$$.log"
 # handles it's own positional parameters
 __process_positional_parameters "${@}"
 
-# Check if user set '-n, --no-color'
-# This must come before everything (and after
-# the positional parameters) to ensure color
-# is set/unset
+# Check if user set '-n, --no-color'.  This must come before everything (and
+# after the positional parameters) to ensure color is set/unset.  The normal
+# variable is always set, to reset the inverted colors (color or no-color)
+# during progress bar output
 if [[ "${no_color}" == "true" ]] ; then
 	blue=""
 	green=""
@@ -5143,7 +5122,6 @@ if [[ "${no_color}" == "true" ]] ; then
 	cyan=""
 	magenta=""
 	yellow=""
-	normal=""
 fi
 
 # Make sure we are running BASH 4 or greater
@@ -5279,8 +5257,16 @@ if [[ "${aucdtect_flac}" == "true" ]] ; then
 	# Obtain the current row
 	__obtain_row
 
+	# If the total number of directories to process is less than jobs specified,
+	# then set the number of lines to remove from the terminal scroll as the
+	# difference of the number of jobs minus the total number of directories
+	if (( ${#total_flacs_array[@]} < jobs )) ; then
+		# This variable will be used for '__scroll_terminal' as ${1}
+		remove_from_scroll="- $(( jobs - ${#total_flacs_array[@]} ))"
+	fi
+
 	# Scroll terminal, if applicable
-	__scroll_terminal
+	__scroll_terminal "${remove_from_scroll}"
 
 	# Make sure to clear file descriptor '3' before proceeding
 	__clear_tmp_fd
@@ -5292,9 +5278,15 @@ if [[ "${aucdtect_flac}" == "true" ]] ; then
 	# Run parallel operations, that which is specified as ${1}
 	__run_parallel_files __operation_aucdtect
 
+	if (( ${#total_flacs_array[@]} < jobs )) ; then
+		current_row=$(( current_row + ${#total_flacs_array[@]} ))
+	else
+		current_row=$(( current_row + jobs ))
+	fi
+
 	# Place cursor on the last line, to allow the current row to be read in
 	# correctly
-	printf "\033[$(( current_row + jobs))H"
+	printf "\033[${current_row}H"
 
 	if [[ -f "${aucdtect_errors}" ]] ; then
 		# Print out log exists to STDERR
@@ -5329,8 +5321,16 @@ if [[ "${md5check_flac}" == "true" ]] ; then
 	# Obtain the current row
 	__obtain_row
 
+	# If the total number of directories to process is less than jobs specified,
+	# then set the number of lines to remove from the terminal scroll as the
+	# difference of the number of jobs minus the total number of directories
+	if (( ${#total_flacs_array[@]} < jobs )) ; then
+		# This variable will be used for '__scroll_terminal' as ${1}
+		remove_from_scroll="- $(( jobs - ${#total_flacs_array[@]} ))"
+	fi
+
 	# Scroll terminal, if applicable
-	__scroll_terminal
+	__scroll_terminal "${remove_from_scroll}"
 
 	# Make sure to clear file descriptor '3' before proceeding
 	__clear_tmp_fd
@@ -5338,9 +5338,15 @@ if [[ "${md5check_flac}" == "true" ]] ; then
 	# Run parallel operations, that which is specified as ${1}
 	__run_parallel_files __operation_md5_check
 
+	if (( ${#total_flacs_array[@]} < jobs )) ; then
+		current_row=$(( current_row + ${#total_flacs_array[@]} ))
+	else
+		current_row=$(( current_row + jobs ))
+	fi
+
 	# Place cursor on the last line, to allow the current row to be read in
 	# correctly
-	printf "\033[$(( current_row + jobs))H"
+	printf "\033[${current_row}H"
 
 	if [[ -f "${md5_errors}" ]] ; then
 		# Print out log exists to STDERR
@@ -5369,8 +5375,7 @@ fi
 #-------------------------------------------------------------------------------
 if [[ "${compress_flac}" == "true" ]] ; then
 
-	# Set the correct title operation to print depending
-	# what was called
+	# Set the correct title operation to print depending on what was called
 	if [[ "${skip_test}" == "true" ]] ; then
 		__title_compress_notest_flac
 	else
@@ -5380,8 +5385,16 @@ if [[ "${compress_flac}" == "true" ]] ; then
 	# Obtain the current row
 	__obtain_row
 
+	# If the total number of directories to process is less than jobs specified,
+	# then set the number of lines to remove from the terminal scroll as the
+	# difference of the number of jobs minus the total number of directories
+	if (( ${#total_flacs_array[@]} < jobs )) ; then
+		# This variable will be used for '__scroll_terminal' as ${1}
+		remove_from_scroll="- $(( jobs - ${#total_flacs_array[@]} ))"
+	fi
+
 	# Scroll terminal, if applicable
-	__scroll_terminal
+	__scroll_terminal "${remove_from_scroll}"
 
 	# Make sure to clear file descriptor '3' before proceeding
 	__clear_tmp_fd
@@ -5389,9 +5402,15 @@ if [[ "${compress_flac}" == "true" ]] ; then
 	# Run parallel operations, that which is specified as ${1}
 	__run_parallel_files __operation_compress
 
+	if (( ${#total_flacs_array[@]} < jobs )) ; then
+		current_row=$(( current_row + ${#total_flacs_array[@]} ))
+	else
+		current_row=$(( current_row + jobs ))
+	fi
+
 	# Place cursor on the last line, to allow the current row to be read in
 	# correctly
-	printf "\033[$(( current_row + jobs))H"
+	printf "\033[${current_row}H"
 
 	if [[ -f "${verify_errors}" ]] ; then
 		# Print out log exists to STDERR
@@ -5426,8 +5445,16 @@ if [[ "${test_flac}" == "true" ]] ; then
 	# Obtain the current row
 	__obtain_row
 
+	# If the total number of directories to process is less than jobs specified,
+	# then set the number of lines to remove from the terminal scroll as the
+	# difference of the number of jobs minus the total number of directories
+	if (( ${#total_flacs_array[@]} < jobs )) ; then
+		# This variable will be used for '__scroll_terminal' as ${1}
+		remove_from_scroll="- $(( jobs - ${#total_flacs_array[@]} ))"
+	fi
+
 	# Scroll terminal, if applicable
-	__scroll_terminal
+	__scroll_terminal "${remove_from_scroll}"
 
 	# Make sure to clear file descriptor '3' before proceeding
 	__clear_tmp_fd
@@ -5435,9 +5462,15 @@ if [[ "${test_flac}" == "true" ]] ; then
 	# Run parallel operations, that which is specified as ${1}
 	__run_parallel_files __operation_test
 
+	if (( ${#total_flacs_array[@]} < jobs )) ; then
+		current_row=$(( current_row + ${#total_flacs_array[@]} ))
+	else
+		current_row=$(( current_row + jobs ))
+	fi
+
 	# Place cursor on the last line, to allow the current row to be read in
 	# correctly
-	printf "\033[$(( current_row + jobs))H"
+	printf "\033[${current_row}H"
 
 	if [[ -f "${test_errors}" ]] ; then
 		# Print out log exists to STDERR
@@ -5476,6 +5509,9 @@ if [[ "${replaygain_flac}" == "true" ]] ; then
 	# Prints title message of current operation
 	__title_replaygain
 
+	# Obtain the current row
+	__obtain_row
+
 	# Obtain `metaflac' version information to test on.  Example:
 	#   metaflac 1.3.0pre1
 	#   -----------^
@@ -5485,11 +5521,22 @@ if [[ "${replaygain_flac}" == "true" ]] ; then
 	#---------------------------------------------------------------------------
 	# .: TEST REPLAYGAIN :.
 	#---------------------------------------------------------------------------
-	# Set up spinner file descriptor '6'
-	__set_spinner_fd
-
 	# Prints sub message of current operation
 	__sub_test_replaygain
+
+	# Obtain the current row
+	__obtain_row
+
+	# If the total number of directories to process is less than jobs specified,
+	# then set the number of lines to remove from the terminal scroll as the
+	# difference of the number of jobs minus the total number of directories
+	if (( ${#total_flacs_array[@]} < jobs )) ; then
+		# This variable will be used for '__scroll_terminal' as ${1}
+		remove_from_scroll="- $(( jobs - ${#total_flacs_array[@]} ))"
+	fi
+
+	# Scroll terminal, if applicable
+	__scroll_terminal "${remove_from_scroll}"
 
 	# Make sure to clear file descriptor '3' before proceeding
 	__clear_tmp_fd
@@ -5497,9 +5544,15 @@ if [[ "${replaygain_flac}" == "true" ]] ; then
 	# Run parallel operations, that which is specified as ${1}
 	__run_parallel_files __operation_test_replaygain
 
+	if (( ${#total_flacs_array[@]} < jobs )) ; then
+		current_row=$(( current_row + ${#total_flacs_array[@]} ))
+	else
+		current_row=$(( current_row + jobs ))
+	fi
+
 	# Place cursor on the last line, to allow the current row to be read in
 	# correctly
-	printf "\033[$(( current_row + jobs))H"
+	printf "\033[${current_row}H"
 
 	if [[ -f "${replay_test_errors}" ]] ; then
 		# Print out log exists to STDERR
@@ -5517,16 +5570,8 @@ if [[ "${replaygain_flac}" == "true" ]] ; then
 		exit 1
 	fi
 
-	if [[ "${last_file}" == "true" ]] ; then
-		# FLAC is okay, so print only if it's the last file
-		__print_ok_replaygain_file
-
-		# Store operation status for Summary Of Operations
-		testing_replaygain_complete="true"
-	fi
-
-	# Kill spinner
-	__kill_spinner
+	# Store operation status for Summary Of Operations
+	testing_replaygain_complete="true"
 	#== .: END TEST REPLAYGAIN :. ==============================================
 
 
@@ -5538,9 +5583,6 @@ if [[ "${replaygain_flac}" == "true" ]] ; then
 		directory="${PWD}"
 	fi
 
-	# Set up spinner file descriptor '6'
-	__set_spinner_fd
-
 	# Grab number of directories to process provided as
 	# ${total_directories}
 	__total_directories
@@ -5548,15 +5590,32 @@ if [[ "${replaygain_flac}" == "true" ]] ; then
 	# Prints sub message of current operation
 	__sub_add_replaygain
 
-	# Set up spinner file descriptor '6'
-	__set_spinner_fd
+	# Obtain the current row
+	__obtain_row
+
+	# If the total number of directories to process is less than jobs specified,
+	# then set the number of lines to remove from the terminal scroll as the
+	# difference of the number of jobs minus the total number of directories
+	if (( ${#flac_directories_array[@]} < jobs )) ; then
+		# This variable will be used for '__scroll_terminal' as ${1}
+		remove_from_scroll="- $(( jobs - ${#flac_directories_array[@]} ))"
+	fi
+
+	# Scroll terminal, if applicable
+	__scroll_terminal "${remove_from_scroll}"
 
 	# Run parallel operations, that which is specified as ${1}
 	__run_parallel_directories "${process_replaygain}"
 
+	if (( ${#flac_directories_array[@]} < jobs )) ; then
+		current_row=$(( current_row + ${#flac_directories_array[@]} ))
+	else
+		current_row=$(( current_row + jobs ))
+	fi
+
 	# Place cursor on the last line, to allow the current row to be read in
 	# correctly
-	printf "\033[$(( current_row + jobs))H"
+	printf "\033[${current_row}H"
 
 	if [[ -f "${replay_add_errors}" ]] ; then
 		# Print out log exists to STDERR
@@ -5574,16 +5633,8 @@ if [[ "${replaygain_flac}" == "true" ]] ; then
 		exit 1
 	fi
 
-	if [[ "${last_directory}" == "true" ]] ; then
-		# Directory is okay, so print only if it's the last directory
-		__print_ok_replaygain_dir ; __newline
-	fi
-
 	# Store operation status for Summary Of Operations
 	adding_replaygain_complete="true"
-
-	# Kill spinner
-	__kill_spinner
 	#== .: END PROCESS REPLAYGAIN :. ===========================================
 fi
 #== .: END REPLAYGAIN :. =======================================================
@@ -5638,7 +5689,7 @@ if [[ "${retag_flac}" == "true" ]] ; then
 
 	# Place cursor on the last line, to allow the current row to be read in
 	# correctly
-	printf "\033[$(( current_row + jobs))H"
+	printf "\033[${current_row}H"
 
 	# Test for DEPRECATED tag, COVERART in METADATA_ERROR log.  If it
 	# exists, set coverart_warning variable to make script output
@@ -5724,7 +5775,7 @@ if [[ "${retag_flac}" == "true" ]] ; then
 
 	# Place cursor on the last line, to allow the current row to be read in
 	# correctly
-	printf "\033[$(( current_row + jobs))H"
+	printf "\033[${current_row}H"
 
 	if [[ "${last_file}" == "true" ]] ; then
 		# FLAC is okay, so print only if it's the last file
@@ -5762,8 +5813,16 @@ if [[ "${prune_flac}" == "true" ]] ; then
 	# Obtain the current row
 	__obtain_row
 
+	# If the total number of directories to process is less than jobs specified,
+	# then set the number of lines to remove from the terminal scroll as the
+	# difference of the number of jobs minus the total number of directories
+	if (( ${#total_flacs_array[@]} < jobs )) ; then
+		# This variable will be used for '__scroll_terminal' as ${1}
+		remove_from_scroll="- $(( jobs - ${#total_flacs_array[@]} ))"
+	fi
+
 	# Scroll terminal, if applicable
-	__scroll_terminal
+	__scroll_terminal "${remove_from_scroll}"
 
 	# Make sure to clear file descriptor '3' before proceeding
 	__clear_tmp_fd
@@ -5771,9 +5830,15 @@ if [[ "${prune_flac}" == "true" ]] ; then
 	# Run parallel operations, that which is specified as ${1}
 	__run_parallel_files __operation_prune
 
+	if (( ${#total_flacs_array[@]} < jobs )) ; then
+		current_row=$(( current_row + ${#total_flacs_array[@]} ))
+	else
+		current_row=$(( current_row + jobs ))
+	fi
+
 	# Place cursor on the last line, to allow the current row to be read in
 	# correctly
-	printf "\033[$(( current_row + jobs))H"
+	printf "\033[${current_row}H"
 
 	if [[ -f "${prune_errors}" ]] ; then
 		# Print out log exists to STDERR
