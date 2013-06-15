@@ -1467,11 +1467,15 @@ __replaygain_test_abort () {
 	# Kill running children
 	__kill_jobs
 
-	# Print current FLAC file that is interrupted
-	#__print_interrupt_replaygain_file
+	# Determine where to print out the interrupt message
+	__set_abort_file_cursor
 
-	__newline
-	__info "Control-C received, generating summary. Please wait..."
+	# Print interrupt message
+	printf "\033[$current_row;2H${green}*${normal} Control-C received, generating summary. Please wait...\n"
+
+	# Increment the current row by one to allow the Summary Of Operations table
+	# to display correctly
+	(( current_row++ ))
 
 	if [[ -f "${replay_test_errors}" ]] ; then
 		# Print out log exists to STDERR
@@ -1495,11 +1499,15 @@ __replaygain_process_abort () {
 	# Kill running children
 	__kill_jobs
 
-	# Print current directory that is interrupted
-	#__print_interrupt_replaygain_dir
+	# Determine where to print out the interrupt message
+	__set_abort_directory_cursor
 
-	__newline
-	__info "Control-C received, generating summary. Please wait...\n"
+	# Print interrupt message
+	printf "\033[$current_row;2H${green}*${normal} Control-C received, generating summary. Please wait...\n"
+
+	# Increment the current row by one to allow the Summary Of Operations table
+	# to display correctly
+	(( current_row++ ))
 
 	if [[ -f "${replay_add_errors}" ]] ; then
 		# Print out log exists to STDERR
@@ -1523,12 +1531,16 @@ __compress_abort () {
 	# Kill running children
 	__kill_jobs
 
-	# Print current FLAC file that is interrupted
-	#__print_interrupt
+	# Determine where to print out the interrupt message
+	__set_abort_file_cursor
 
-	__newline
-	__info "Control-C received, removing temporary files and\n"
-	__info "generating summary. Please wait...\n"
+	# Print interrupt message
+	printf "\033[$current_row;2H${green}*${normal} Control-C received, removing temporary files and\n"
+	printf " ${green}*${normal} generating summary. Please wait...\n"
+
+	# Increment the current row by two to allow the Summary Of Operations table
+	# to display correctly
+	current_row=$(( current_row + 2 ))
 
 	# Remove temporarily encoded FLAC files
 	rm -f "${directory}"/**/*.tmp,fl-ac+en\'c
@@ -1555,11 +1567,15 @@ __test_abort () {
 	# Kill running children
 	__kill_jobs
 
-	# Print current FLAC file that is interrupted
-	#__print_interrupt
+	# Determine where to print out the interrupt message
+	__set_abort_file_cursor
 
-	__newline
-	__info "Control-C received, generating summary. Please wait...\n"
+	# Print interrupt message
+	printf "\033[$current_row;2H${green}*${normal} Control-C received, generating summary. Please wait...\n"
+
+	# Increment the current row by one to allow the Summary Of Operations table
+	# to display correctly
+	(( current_row++ ))
 
 	if [[ -f "${test_errors}" ]] ; then
 		# Print out log exists to STDERR
@@ -1583,12 +1599,16 @@ __aucdtect_abort () {
 	# Kill running children
 	__kill_jobs
 
-	# Print current FLAC file that is interrupted
-	#__print_interrupt
+	# Determine where to print out the interrupt message
+	__set_abort_file_cursor
 
-	__newline
-	__info "Control-C received, removing temporary files and\n"
-	__info "generating summary. Please wait...\n"
+	# Print interrupt message
+	printf "\033[$current_row;2H${green}*${normal} Control-C received, removing temporary files and\n"
+	printf " ${green}*${normal} generating summary. Please wait...\n"
+
+	# Increment the current row by two to allow the Summary Of Operations table
+	# to display correctly
+	current_row=$(( current_row + 2 ))
 
 	# Remove temporarily created WAV files (if any)
 	rm -f "${directory}"/**/*_redoflacs_"$$".wav
@@ -1615,11 +1635,15 @@ __md5_check_abort () {
 	# Kill running children
 	__kill_jobs
 
-	# Print current FLAC file that is interrupted
-	#__print_interrupt
+	# Determine where to print out the interrupt message
+	__set_abort_file_cursor
 
-	__newline
-	__info "Control-C received, generating summary. Please wait...\n"
+	# Print interrupt message
+	printf "\033[$current_row;2H${green}*${normal} Control-C received, generating summary. Please wait...\n"
+
+	# Increment the current row by one to allow the Summary Of Operations table
+	# to display correctly
+	(( current_row++ ))
 
 	if [[ -f "${md5_errors}" ]] ; then
 		# Print out log exists to STDERR
@@ -1643,11 +1667,15 @@ __analyzing_tags_abort () {
 	# Kill running children
 	__kill_jobs
 
-	# Print current FLAC file that is interrupted
-	#__print_retag_analyze_interrupt
+	# Determine where to print out the interrupt message
+	__set_abort_file_cursor
 
-	__newline
-	__info "Control-C received, generating summary. Please wait...\n"
+	# Print interrupt message
+	printf "\033[$current_row;2H${green}*${normal} Control-C received, generating summary. Please wait...\n"
+
+	# Increment the current row by one to allow the Summary Of Operations table
+	# to display correctly
+	(( current_row++ ))
 
 	# Test for DEPRECATED tag, COVERART in METADATA_ERROR log.  If it
 	# exists, set coverart_warning variable to make script output
@@ -1694,11 +1722,15 @@ __applying_tags_abort () {
 	# Kill running children
 	__kill_jobs
 
-	# Print current FLAC file that is interrupted
-	#__print_retag_apply_interrupt
+	# Determine where to print out the interrupt message
+	__set_abort_file_cursor
 
-	__newline
-	__info "Control-C received, generating summary. Please wait...\n"
+	# Print interrupt message
+	printf "\033[$current_row;2H${green}*${normal} Control-C received, generating summary. Please wait...\n"
+
+	# Increment the current row by one to allow the Summary Of Operations table
+	# to display correctly
+	(( current_row++ ))
 
 	# Test for DEPRECATED tag, COVERART in METADATA_ERROR log.  If it
 	# exists, set coverart_warning variable to make script output
@@ -1745,11 +1777,15 @@ __prune_abort () {
 	# Kill running children
 	__kill_jobs
 
-	# Print current FLAC file that is interrupted
-	#__print_interrupt
+	# Determine where to print out the interrupt message
+	__set_abort_file_cursor
 
-	__newline
-	__info "Control-C received, generating summary. Please wait...\n"
+	# Print interrupt message
+	printf "\033[$current_row;2H${green}*${normal} Control-C received, generating summary. Please wait...\n"
+
+	# Increment the current row by one to allow the Summary Of Operations table
+	# to display correctly
+	(( current_row++ ))
 
 	if [[ -f "${prune_errors}" ]] ; then
 		# Print out log exists to STDERR
@@ -1839,7 +1875,7 @@ __scroll_terminal () {
 		# of directories
 		if (( ${#flac_directories_array[@]} < jobs )) ; then
 			# This variable will be used for '__scroll_terminal' as ${1}
-			remove_from_scroll="$(( jobs - ${#flac_directories_array[@]} ))"
+			local remove_from_scroll="$(( jobs - ${#flac_directories_array[@]} ))"
 		fi
 	else
 		# If the total number of files to process is less than jobs specified,
@@ -1847,21 +1883,32 @@ __scroll_terminal () {
 		# difference of the number of jobs minus the total number of files
 		if (( ${#total_flacs_array[@]} < jobs )) ; then
 			# This variable will be used for '__scroll_terminal' as ${1}
-			remove_from_scroll="$(( jobs - ${#total_flacs_array[@]} ))"
+			local remove_from_scroll="$(( jobs - ${#total_flacs_array[@]} ))"
 		fi
 	fi
 
-	# Obtain the difference from the total lines available in the current
-	# terminal and the current row obtained
-	lines_difference=$(( lines - current_row ))
+	# If ${remove_from_scroll} is NULL, then the remaing lines we have left is
+	# the number of lines available (in the terminal) minus the row we are
+	# currently on.  If ${remove_from_scroll} is _NOT_ NULL, the remaining lines
+	# we have left is the same with the addition of ${remove_from_scroll}.  This
+	# enforce we are able to scroll the terminal correctly in the event the user
+	# specified more jobs than there are files/directories to process
+	if [[ -z "${remove_from_scroll}" ]] ; then
+		# Obtain the remaining lines left in the current terminal
+		remaining_lines=$(( lines - current_row ))
+	else
+		# Obtain the remaining lines left in the current terminal as well as
+		# adding in the the number of lines we don't want to scroll
+		remaining_lines=$(( lines - current_row + remove_from_scroll ))
+	fi
 
-	# If the difference in lines is less than the jobs used, the terminal will
-	# not have enough room for the script to place lines, so we will have to
+	# If the remaining lines is less than the jobs used, the terminal will not
+	# have enough room for the script to place lines, so we will have to
 	# non-descructively scroll the terminal up enough lines to allow for the
 	# current operations to be printed correctly
-	if (( lines_difference < jobs )) ; then
+	if (( remaining_lines < jobs )) ; then
 		# Obtain the number of lines need to equal the current number of jobs
-		lines_to_scroll=$(( jobs - lines_difference - remove_from_scroll ))
+		local lines_to_scroll=$(( jobs - remaining_lines ))
 
 		# This scrolls the terminal up by the number of lines to scroll
 		printf "\033[${lines_to_scroll}S"
@@ -1869,10 +1916,62 @@ __scroll_terminal () {
 		# The current row is now set to the difference of the lines to scroll
 		current_row=$(( current_row - lines_to_scroll ))
 	fi
-
-	# Unset $remove_from_scroll so it doesn't pollute other operations
-	unset -v remove_from_scroll
 }
+
+# This sets the current row to allow the interrupt message and the Summary Of
+# Operations table to print out correctly.  This is for 'file' operations
+__set_abort_file_cursor () {
+	# Set the cursor to the correct row depending on whether there were more
+	# or less files to process than the number of jobs to run
+	if (( ${#total_flacs_array[@]} < jobs )) ; then
+		# Less files than jobs to run, so only add the number of files
+		# processed
+		current_row=$(( current_row + ${#total_flacs_array[@]} ))
+	else
+		# More files than jobs to run, so add the number of jobs processed
+		current_row=$(( current_row + jobs ))
+	fi
+
+	# Obtain the remaining lines left in the current terminal
+	local remaining_lines=$(( lines - current_row ))
+
+	# Scroll the terminal up by 1 if we do not have any remaining lines
+	if (( remaining_lines == 0 )) ; then
+		# This scrolls the terminal up by 1
+		printf "\033[1S"
+
+		# Since we've scrolled the terminal, the current row is one less
+		(( --current_row ))
+	fi
+}
+
+# This sets the current row to allow the interrupt message and the Summary Of
+# Operations table to print out correctly.  This is for 'directory' operations
+__set_abort_directory_cursor () {
+	# Set the cursor to the correct row depending on whether there were more
+	# or less directories to process than the number of jobs to run
+	if (( ${#flac_directories_array[@]} < jobs )) ; then
+		# Less directories than jobs to run, so only add the number of
+		# directories processed
+		current_row=$(( current_row + ${#flac_directories_array[@]} ))
+	else
+		# More directories than jobs to run, so add the number of jobs processed
+		current_row=$(( current_row + jobs ))
+	fi
+
+	# Obtain the remaining lines left in the current terminal
+	local remaining_lines=$(( lines - current_row ))
+
+	# Scroll the terminal up by 1 if we do not have any remaining lines
+	if (( remaining_lines == 0 )) ; then
+		# This scrolls the terminal up by 1
+		printf "\033[1S"
+
+		# Since we've scrolled the terminal, the current row is one less
+		(( --current_row ))
+	fi
+}
+
 
 # Obtain the current progress completed percentage while compressing FLAC files
 __obtain_compress_percentage () {
