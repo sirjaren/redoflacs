@@ -430,71 +430,119 @@ __usage () {
 #-------------------------------------------------------------------------------
 # ReplayGain test error log message
 __log_replaygain_test () {
-	printf "\033[${lines}H\n"
+	# Place a newline to separate interrupt message and log message
+	printf "\n" >&2
+
 	__error "There were issues with some of the FLAC files,\n" >&2
 	__error "please check:\n" >&2
 	__error "${cyan}${replay_test_errors}${normal}\n" >&2
 	__error "for details.\n" >&2
+
+	# Increment the current row by five to allow the Summary Of Operations table
+	# to display correctly
+	current_row=$(( current_row + 5 ))
 }
 
 # ReplayGain process error log message
 __log_replaygain_process () {
-	printf "\033[${lines}H\n"
+	# Place a newline to separate interrupt message and log message
+	printf "\n" >&2
+
 	__error "There were issues adding ReplayGain values,\n" >&2
 	__error "please check:\n" >&2
 	__error "${cyan}${replay_add_errors}${normal}\n" >&2
 	__error "for details.\n" >&2
+
+	# Increment the current row by five to allow the Summary Of Operations table
+	# to display correctly
+	current_row=$(( current_row + 5 ))
 }
 
 # Compress and verify error log message
 __log_compress_verify () {
-	printf "\033[${lines}H\n"
+	# Place a newline to separate interrupt message and log message
+	printf "\n" >&2
+
 	__error "Errors found in some FLAC files, please check:\n" >&2
 	__error "${cyan}${verify_errors}${normal}\n" >&2
 	__error "for errors.\n" >&2
+
+	# Increment the current row by four to allow the Summary Of Operations
+	# table to display correctly
+	current_row=$(( current_row + 4 ))
 }
 
 # Test error log message
 __log_test () {
-	printf "\033[${lines}H\n"
+	# Place a newline to separate interrupt message and log message
+	printf "\n" >&2
+
 	__error "Errors found in some FLAC files, please check:\n" >&2
 	__error "${cyan}${test_errors}${normal}\n" >&2
 	__error "for errors.\n" >&2
+
+	# Increment the current row by four to allow the Summary Of Operations
+	# table to display correctly
+	current_row=$(( current_row + 4 ))
 }
 
 # auCDtect error log message
 __log_aucdtect () {
-	printf "\033[${lines}H\n"
+	# Place a newline to separate interrupt message and log message
+	printf "\n" >&2
+
 	__error "Some FLAC files may be lossy sourced, please check:\n" >&2
 	__error "${cyan}${aucdtect_errors}${normal}\n" >&2
 	__error "for details.\n" >&2
+
+	# Increment the current row by four to allow the Summary Of Operations
+	# table to display correctly
+	current_row=$(( current_row + 4 ))
 }
 
 # MD5 check error log message
 __log_md5_check () {
-	printf "\033[${lines}H\n"
+	# Place a newline to separate interrupt message and log message
+	printf "\n" >&2
+
 	__error "The MD5 Signature is unset for some FLAC files or there were\n" >&2
 	__error "issues with some of the FLAC files, please check:\n" >&2
 	__error "${cyan}${md5_errors}${normal}\n" >&2
 	__error "for details.\n" >&2
+
+	# Increment the current row by five to allow the Summary Of Operations table
+	# to display correctly
+	current_row=$(( current_row + 5 ))
 }
 
 # Missing tags error log message
 __log_missing_tags () {
-	printf "\033[${lines}H\n"
+	# Place a newline to separate interrupt message and log message
+	printf "\n" >&2
+
 	__error "Some FLAC files have missing tags or there were\n" >&2
 	__error "issues with some of the FLAC files, please check:\n" >&2
 	__error "${cyan}${metadata_errors}${normal}\n" >&2
 	__error "for details.\n" >&2
+
+	# Increment the current row by five to allow the Summary Of Operations table
+	# to display correctly
+	current_row=$(( current_row + 5 ))
 }
 
 # Prune error log message
 __log_prune () {
-	printf "\033[${lines}H\n"
+	# Place a newline to separate interrupt message and log message
+	printf "\n" >&2
+
 	__error "There were issues with some of the FLAC files,\n" >&2
 	__error "please check:\n" >&2
 	__error "${cyan}${prune_errors}${normal}\n" >&2
 	__error "for details.\n" >&2
+
+	# Increment the current row by five to allow the Summary Of Operations table
+	# to display correctly
+	current_row=$(( current_row + 5 ))
 }
 #== .: END LOG MESSAGES :. =====================================================
 
@@ -1448,7 +1496,7 @@ __print_sub_progress_failed () {
 # .: TRAPS :.
 #-------------------------------------------------------------------------------
 # Countdown abort
-__countdown_abort () {
+__trap_countdown () {
 	__newline
 	__info "Control-C received, exiting. Please wait...\n"
 
@@ -1463,7 +1511,7 @@ __countdown_abort () {
 }
 
 # ReplayGain test abort
-__replaygain_test_abort () {
+__trap_replaygain_test () {
 	# Kill running children
 	__kill_jobs
 
@@ -1495,7 +1543,7 @@ __replaygain_test_abort () {
 }
 
 # ReplayGain process abort
-__replaygain_process_abort () {
+__trap_replaygain_process () {
 	# Kill running children
 	__kill_jobs
 
@@ -1527,7 +1575,7 @@ __replaygain_process_abort () {
 }
 
 # FLAC compress abort and remove temporarily encoded files (if any)
-__compress_abort () {
+__trap_compress () {
 	# Kill running children
 	__kill_jobs
 
@@ -1563,7 +1611,7 @@ __compress_abort () {
 }
 
 # FLAC test abort
-__test_abort () {
+__trap_test () {
 	# Kill running children
 	__kill_jobs
 
@@ -1595,7 +1643,7 @@ __test_abort () {
 }
 
 # auCDtect abort.  Removes temporary WAV files (if any)
-__aucdtect_abort () {
+__trap_aucdtect () {
 	# Kill running children
 	__kill_jobs
 
@@ -1631,7 +1679,7 @@ __aucdtect_abort () {
 }
 
 # MD5 check abort
-__md5_check_abort () {
+__trap_md5check () {
 	# Kill running children
 	__kill_jobs
 
@@ -1663,7 +1711,7 @@ __md5_check_abort () {
 }
 
 # Analyzing tags abort
-__analyzing_tags_abort () {
+__trap_analyzing_tags () {
 	# Kill running children
 	__kill_jobs
 
@@ -1718,7 +1766,7 @@ __analyzing_tags_abort () {
 }
 
 # Applying tags abort
-__applying_tags_abort () {
+__trap_applying_tags () {
 	# Kill running children
 	__kill_jobs
 
@@ -1773,7 +1821,7 @@ __applying_tags_abort () {
 }
 
 # Prune FLACS abort
-__prune_abort () {
+__trap_prune () {
 	# Kill running children
 	__kill_jobs
 
@@ -1887,11 +1935,11 @@ __scroll_terminal () {
 		fi
 	fi
 
-	# If ${remove_from_scroll} is NULL, then the remaing lines we have left is
+	# If ${remove_from_scroll} is NULL, then the remaining lines we have left is
 	# the number of lines available (in the terminal) minus the row we are
 	# currently on.  If ${remove_from_scroll} is _NOT_ NULL, the remaining lines
 	# we have left is the same with the addition of ${remove_from_scroll}.  This
-	# enforce we are able to scroll the terminal correctly in the event the user
+	# enforces we are able to scroll the terminal correctly in the event the user
 	# specified more jobs than there are files/directories to process
 	if [[ -z "${remove_from_scroll}" ]] ; then
 		# Obtain the remaining lines left in the current terminal
@@ -2045,31 +2093,31 @@ __store_position () {
 __determine_abort () {
 	case "${1}" in
 		__operation_aucdtect)
-			run_abort="__aucdtect_abort"
+			run_abort="__trap_aucdtect"
 		;;
-		__operation_md5_check)
-			run_abort="__md5_check_abort"
+		__operation_md5check)
+			run_abort="__trap_md5check"
 		;;
 		__operation_compress)
-			run_abort="__compress_abort"
+			run_abort="__trap_compress"
 		;;
 		__operation_test)
-			run_abort="__test_abort"
+			run_abort="__trap_test"
 		;;
 		__operation_test_replaygain)
-			run_abort="__replaygain_test_abort"
+			run_abort="__trap_replaygain_test"
 		;;
 		__operation_replaygain_noforce|__operation_replaygain_force)
-			run_abort="__replaygain_process_abort"
+			run_abort="__trap_replaygain_process"
 		;;
 		__operation_analyze_tags_dont_log_coverart|__operation_analyze_tags)
-			run_abort="__analyzing_tags_abort"
+			run_abort="__trap_analyzing_tags"
 		;;
 		__operation_set_tags)
-			run_abort="__applying_tags_abort"
+			run_abort="__trap_applying_tags"
 		;;
 		__operation_prune)
-			run_abort="__prune_abort"
+			run_abort="__trap_prune"
 		;;
 	esac
 }
@@ -2580,7 +2628,7 @@ __processed_flacs_ok () {
 # to allow user to quit script safely
 __countdown_metadata () {
 	# Trap SIGINT (Control-C) to abort cleanly
-	trap __countdown_abort SIGINT
+	trap __trap_countdown SIGINT
 
 	# Warning message
 	__error "${yellow}CAUTION!${normal} These are the tag fields that will be kept\n" >&2
@@ -2618,7 +2666,7 @@ __countdown_metadata () {
 # the user has.  Allows user to quit script before proceeding
 __countdown_config () {
 	# Trap SIGINT (Control-C) to abort cleanly
-	trap __countdown_abort SIGINT
+	trap __trap_countdown SIGINT
 
 	# Warning message
 	__info "There is a newer configuration file available!\n\n"
@@ -4494,7 +4542,7 @@ __operation_aucdtect () {
 }
 
 # Check MD5 in each FLAC file
-__operation_md5_check () {
+__operation_md5check () {
 	# Let's make sure to kill running children if this function was aborted via
 	# SIGINT.  This function will receive EXIT from the kill in previous trap
 	trap __kill_jobs EXIT
@@ -5478,7 +5526,7 @@ if [[ "${md5check_flac}" == "true" ]] ; then
 	__clear_tmp_fd
 
 	# Run parallel operations, that which is specified as ${1}
-	__run_parallel_files __operation_md5_check
+	__run_parallel_files __operation_md5check
 
 	# Set the cursor to the correct row depending on whether there were more
 	# or less files to process than the number of jobs to run
