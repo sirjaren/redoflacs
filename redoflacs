@@ -678,6 +678,7 @@ __header_aucdtect () {
 		"#              FLAC FILE  :  The basename of the FLAC file                     #"
 		"#                    WAV  :  The basename of the WAV file                      #"
 		"#                  ERROR  :  Message describing what went wrong with the file  #"
+		"#                SKIPPED  :  Message describing why the FLAC was skipped       #"
 		"#        AUCDTECT REPORT  :  auCDtect's findings on the FLAC file              #"
 		"#     FLAC FILE LOCATION  :  The path where the FLAC file is located           #"
 		"#      SPECTROGRAM IMAGE  :  The basename of the created spectrogram           #"
@@ -2223,7 +2224,7 @@ remove_artwork=\"true\"
 #  SET COMPRESSION
 #~~~~~~~~~~~~~~~~~~~
 # Set the type of COMPRESSION to compress the FLAC files.  Numbers range from
-# '1-8', with '1' being the lowest compression and 8 being the highest
+# '1-8', with '1' being the lowest compression and '8' being the highest
 # compression.  The default is '8'.
 compression_level=\"8\"
 
@@ -2271,17 +2272,17 @@ spectrogram_location=\"\"
 #
 # For example, if you had:
 #    TRACKNUMBER=4
-#    TRACKTOTAL=9
+#     TRACKTOTAL=9
 #
 # You would end up with:
 #    TRACKNUMBER=04
-#    TRACKTOTAL=09
+#     TRACKTOTAL=09
 #
 # This is enabled by setting 'prepend_zero' option as 'true'.  All other values
 # are interpreted as 'false'.
 prepend_zero=\"false\"
 
-#== :: END OPTIONS :: ====================================== :: REVISION 1 :: =="
+#== :: END OPTIONS :: ====== DO NOT DELETE THIS LINE! ====== :: REVISION 2 :: =="
 
 	# Print out the configuration file to the specified location (either system-
 	# wide or local)
@@ -4217,9 +4218,11 @@ __operation_aucdtect () {
 	# SIGINT.  This function will receive EXIT from the kill in previous trap
 	trap __kill_jobs EXIT
 
-	# Get the bit depth of a FLAC file, also used to check
-	# if FLAC file is real.  Hide stderr output
-	bits="$(metaflac --show-bps "${i}" 2> /dev/null)"
+	# Get the bit depth and MASTERING tag of a FLAC file.  Also used to check if
+	# FLAC file is real.  Hide STDERR output.  The array indices are:
+	#   bits_mastering[0] = bit depth (eg, 16)
+	#   bits_mastering[1] = MASTERING tag value (eg, MASTERING=Lossy)
+	bits_mastering=( $(metaflac --show-bps --show-tag=MASTERING "${i}" 2>/dev/null) )
 
 	# Exit code 130 is SIGINT so only check for exit code '1'
 	if (( ${?} == 1 )) ; then
@@ -4242,7 +4245,7 @@ __operation_aucdtect () {
 	# Skip the FLAC file if it has a bit depth greater
 	# than 16 since auCDtect doesn't support audio
 	# files with a higher resolution than a CD.
-	elif (( bits > 16 )) ; then
+	elif (( ${bits_mastering[0]} > 16 )) ; then
 
 		# Print skipped FLAC
 		__print_skip_flac
@@ -4252,9 +4255,32 @@ __operation_aucdtect () {
 			   "            FLAC FILE  :  ${i##*/}" \
 			   "   FLAC FILE LOCATION  :  ${i%/*}" \
 			   "                       :" \
-			   "                ERROR  :  FLAC file has a bit depth greater than 16 and was" \
+			   "              SKIPPED  :  FLAC file has a bit depth greater than 16 and was" \
 			   "                       :  subsequently skipped.  auCDtect only supports CD" \
 			   "                       :  quality FLAC files (16bit or lower)." \
+			   "--------------------------------------------------------------------------------" \
+			   >> "${aucdtect_errors}"
+
+		# Add one to fail fd
+		printf '.' >&5
+
+	# Skip the FLAC file if it already has the 'Lossy' value set for the
+	# MASTERING tag.  This is only done if the value of 'skip_lossy' is 'true',
+	# set in the configuration file.  We make sure to remove 'MASTERING=' before
+	# testing the tag field
+	elif [[ "${bits_mastering[1]#*=}" == "Lossy" ]] ; then
+
+		# Print skipped FLAC
+		__print_skip_flac
+
+		# Log skipped FLAC file
+		printf "\n%s\n%s\n%s\n%s\n%s\n%s\n\n%s\n" \
+			   "            FLAC FILE  :  ${i##*/}" \
+			   "   FLAC FILE LOCATION  :  ${i%/*}" \
+			   "                       :" \
+			   "              SKIPPED  :  FLAC file has 'Lossy' as the value for the MASTERING" \
+			   "                       :  tag and was subsequently skipped.  This is action was" \
+			   "                       :  determined by the 'skip_lossy' configuration option." \
 			   "--------------------------------------------------------------------------------" \
 			   >> "${aucdtect_errors}"
 
@@ -5199,7 +5225,7 @@ version="0.21"
 
 # This sets the script configuration revision (used to compare against the user
 # configuration revision)
-script_config_revision="1"
+script_config_revision="2"
 
 # Set FLAC extension for easy use later
 flac_extension=".[Ff][Ll][Aa][Cc]"
