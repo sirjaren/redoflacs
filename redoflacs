@@ -2234,6 +2234,15 @@ compression_level=\"8\"
 # placed in the user's HOME directory.
 error_log=\"\${HOME}\"
 
+#~~~~~~~~~~~~~~~~~~~~~~~
+#  AUCDTECT SKIP LOSSY
+#~~~~~~~~~~~~~~~~~~~~~~~
+# Set whether FLAC files should be skipped if the MASTERING tag is already set
+# as 'Lossy' when analyzed with auCDtect.  Set 'skip_lossy' as 'true' to to skip
+# FLAC files that have the tag: 'MASTERING=Lossy'.  All other values are
+# intepreted as 'false'.
+skip_lossy=\"true\"
+
 #~~~~~~~~~~~~~~~~~~~~~~~~~
 #  SPECTROGRAM DIRECTORY
 #~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -2347,17 +2356,17 @@ __check_config_version () {
 	#
 	# Below leaves:
 	#  '<revision number> :: =='
-	user_revision="${config_last_line#*REVISION }"
+	user_config_revision="${config_last_line#*REVISION }"
 	# Obtains REVISION number
-	user_revision="${user_revision% ::*}"
+	user_config_revision="${user_config_revision% ::*}"
 
-	# Check if ${user_revision} is an integer.  If not, display countdown
-	# and warn user of new config file, else test if the user revision is
-	# less than the script revision
-	if [[ "${user_revision}" =~ ^[[:digit:]]+$ ]] ; then
-		# If ${script_revision} is greater than ${user_revision}
+	# Check if ${user_config_revision} is an integer.  If not, display countdown
+	# and warn user of new config file, else test if the user config revision is
+	# less than the script config revision
+	if [[ "${user_config_revision}" =~ ^[[:digit:]]+$ ]] ; then
+		# If ${script_config_revision} is greater than ${user_config_revision}
 		# warn user and display countdown
-		if (( script_revision > user_revision )) ; then
+		if (( script_config_revision > user_config_revision )) ; then
 			# Display warning and countdown
 			__countdown_config ; __newline 2
 		fi
@@ -5188,8 +5197,9 @@ shopt -s globstar
 # Version
 version="0.21"
 
-# This sets the script revision (used to compare against user revision)
-script_revision="1"
+# This sets the script configuration revision (used to compare against the user
+# configuration revision)
+script_config_revision="1"
 
 # Set FLAC extension for easy use later
 flac_extension=".[Ff][Ll][Aa][Cc]"
