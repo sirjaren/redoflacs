@@ -4218,6 +4218,9 @@ __operation_aucdtect () {
 	# SIGINT.  This function will receive EXIT from the kill in previous trap
 	trap __kill_jobs EXIT
 
+	# Print current FLAC being processed
+	__print_current_flac
+
 	# Get the bit depth and MASTERING tag of a FLAC file.  Also used to check if
 	# FLAC file is real.  Hide STDERR output.  The array indices are:
 	#   bits_mastering[0] = bit depth (eg, 16)
