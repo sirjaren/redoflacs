@@ -2914,7 +2914,7 @@ __countdown_metadata () {
 	__info "Starting in: "
 
 	# 10 second countdown
-	for (( count=10; count > 0; count-- )); do
+	for count in {10..1} ; do
 		printf "${red}%s${normal}%s" "$count" " "
 		read -t1 # Sleep 1
 	done
@@ -2943,7 +2943,7 @@ __countdown_config () {
 	__info "Starting in: "
 
 	# 10 second countdown
-	for (( count=10; count > 0; count-- )); do
+	for count in {10..1} ; do
 		printf "${red}%s${normal}%s" "$count" " "
 		read -t1 # Sleep 1
 	done
