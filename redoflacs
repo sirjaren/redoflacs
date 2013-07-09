@@ -292,7 +292,7 @@ retagging the file.  The default tags kept are:
 If any FLAC files have missing tags (from those configured to be kept), the file
 and the missing tag will be recorded in a log.
 
-The tags that can be kept are eseentially infinite, as long as the tags to be
+The tags that can be kept are essentially infinite, as long as the tags to be
 kept are set in the TAGGING SECTION of the configuration file.
 
 If this option is specified, a warning will appear upon script execution.  This
@@ -2322,7 +2322,7 @@ compression_level=\"8\"
 #~~~~~~~~~~~~~~~~~~~~~~~
 #  ERROR LOG DIRECTORY
 #~~~~~~~~~~~~~~~~~~~~~~~
-# Set the where you want the error logs to be placed. By default, they are
+# Set the where you want the error logs to be placed.  By default, they are
 # placed in the user's HOME directory.
 error_log=\"\${HOME}\"
 
@@ -2338,7 +2338,7 @@ skip_lossy=\"true\"
 #~~~~~~~~~~~~~~~~~~~~~~~~~
 #  SPECTROGRAM DIRECTORY
 #~~~~~~~~~~~~~~~~~~~~~~~~~
-# Set where the created spectrogram files should be placed. By default, the
+# Set where the created spectrogram files should be placed.  By default, the
 # spectrogram images will be placed in the same directory as the tested FLAC
 # files. Each image will have the same name as the tested FLAC file but with
 # the extension '.png'.
@@ -2351,6 +2351,37 @@ skip_lossy=\"true\"
 #
 # See '--help' or '-h' for more information.
 spectrogram_location=\"\"
+
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+#  EXTRACTED ARTWORK DIRECTORY
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+# Set where the extracted artwork images should be placed.  By default, the
+# extracted images will be placed in a subdirectory where the FLAC file is
+# located.  The subdirectory has the same name as the FLAC file that's processed
+# with a unique string appended to it:
+#
+#    [ Default directory example ]
+#    /path/to/music/01_file.flac                          # FLAC with artwork
+#    /path/to/music/01_file.flac_[redoflacs_art]_4342/    # Example subdirectory
+#
+# All values for 'artwork_location' are interpreted as a directory.  If left
+# blank, the default location will be used.
+#
+# If there is a user-defined location, the extracted images will be placed in a
+# subdirectory in that location with a naming scheme similar to the above
+# example, but prefaced with the current number of FLAC files being processed:
+#
+#    [ User-defined location ]
+#    artwork_location=\"\${HOME}/artwork\"
+#
+#    [ FLAC file to be processed ]
+#    /path/to/music/01_file.flac
+#
+#    [ Resultant subdirectory with extracted artwork ]
+#    \${HOME}/artwork/[1] 01_file.flac_[redoflacs_art]_4342/
+#
+# See '--help' or '-h' for more information.
+artwork_location=\"\"
 
 #~~~~~~~~~~~~~~~~~~~~~~~~
 #  PREPEND TRACK NUMBER
@@ -2786,6 +2817,7 @@ __find_artwork () {
 # Extract artwork image from the specified artwork block ID in the PICTURE block
 # of the current FLAC file
 __extract_artwork () {
+	# $@ is the name of the artwork filename with the extension
 	metaflac \
 		--block-number="${artwork_block_id}" \
 		--export-picture-to="${artwork_directory}/${@}" \
@@ -5470,11 +5502,21 @@ __operation_extract_artwork () {
 		# Add one to fail fd
 		printf '.' >&5
 	else
-		# The directory where the extracted artwork will be placed
-		artwork_directory="${i}_[redoflacs_extracted_artwork]_$$"
-
 		# Find all the artwork blocks available in the current FLAC file
 		__find_artwork
+
+		# If the user chose a location to store extracted artwork, then prepend
+		# a counter in front of the directory to prevent clobbering since all
+		# the artwork will be housed in one directory.  Otherwise the artwork
+		# will be placed in a subdirectory where the current FLAC file is
+		# located
+		if [[ -n "${artwork_location}" ]] ; then
+			# Example: /artwork_location/[1] 01.flac_[redoflacs_art]_8792
+			artwork_directory="${artwork_location}/[${iteration}] ${i##*/}_[redoflacs_art]_$$"
+		else
+			# Example: /path/to/current/flac/01.flac_[redoflacs_art]_8792
+			artwork_directory="${i}_[redoflacs_art]_$$"
+		fi
 
 		#~~~~~~~
 		# Other
@@ -5482,7 +5524,7 @@ __operation_extract_artwork () {
 		# Only extact the artwork if any was found
 		if [[ -n "${artwork_other[@]}" ]] ; then
 			# Create the directory where extracted artwork will be placed
-			mkdir -p "${artwork_directory}"
+			mkdir -p "${numbered_art}${artwork_directory}"
 
 			# If there was only one image for the given artwork type, then
 			# extract it, otherwise make sure to add a number at the end of the
@@ -5508,7 +5550,7 @@ __operation_extract_artwork () {
 		# Only extact the artwork if any was found
 		if [[ -n "${artwork_file_icon[@]}" ]] ; then
 			# Create the directory where extracted artwork will be placed
-			mkdir -p "${artwork_directory}"
+			mkdir -p "${numbered_art}${artwork_directory}"
 
 			# If there was only one image for the given artwork type, then
 			# extract it, otherwise make sure to add a number at the end of the
@@ -5534,7 +5576,7 @@ __operation_extract_artwork () {
 		# Only extact the artwork if any was found
 		if [[ -n "${artwork_other_file_icon[@]}" ]] ; then
 			# Create the directory where extracted artwork will be placed
-			mkdir -p "${artwork_directory}"
+			mkdir -p "${numbered_art}${artwork_directory}"
 
 			# If there was only one image for the given artwork type, then
 			# extract it, otherwise make sure to add a number at the end of the
@@ -5560,7 +5602,7 @@ __operation_extract_artwork () {
 		# Only extact the artwork if any was found
 		if [[ -n "${artwork_cover_front[@]}" ]] ; then
 			# Create the directory where extracted artwork will be placed
-			mkdir -p "${artwork_directory}"
+			mkdir -p "${numbered_art}${artwork_directory}"
 
 			# If there was only one image for the given artwork type, then
 			# extract it, otherwise make sure to add a number at the end of the
@@ -5586,7 +5628,7 @@ __operation_extract_artwork () {
 		# Only extact the artwork if any was found
 		if [[ -n "${artwork_cover_back[@]}" ]] ; then
 			# Create the directory where extracted artwork will be placed
-			mkdir -p "${artwork_directory}"
+			mkdir -p "${numbered_art}${artwork_directory}"
 
 			# If there was only one image for the given artwork type, then
 			# extract it, otherwise make sure to add a number at the end of the
@@ -5612,7 +5654,7 @@ __operation_extract_artwork () {
 		# Only extact the artwork if any was found
 		if [[ -n "${artwork_leaflet[@]}" ]] ; then
 			# Create the directory where extracted artwork will be placed
-			mkdir -p "${artwork_directory}"
+			mkdir -p "${numbered_art}${artwork_directory}"
 
 			# If there was only one image for the given artwork type, then
 			# extract it, otherwise make sure to add a number at the end of the
@@ -5638,7 +5680,7 @@ __operation_extract_artwork () {
 		# Only extact the artwork if any was found
 		if [[ -n "${artwork_media_label[@]}" ]] ; then
 			# Create the directory where extracted artwork will be placed
-			mkdir -p "${artwork_directory}"
+			mkdir -p "${numbered_art}${artwork_directory}"
 
 			# If there was only one image for the given artwork type, then
 			# extract it, otherwise make sure to add a number at the end of the
@@ -5664,7 +5706,7 @@ __operation_extract_artwork () {
 		# Only extact the artwork if any was found
 		if [[ -n "${artwork_lead_artist[@]}" ]] ; then
 			# Create the directory where extracted artwork will be placed
-			mkdir -p "${artwork_directory}"
+			mkdir -p "${numbered_art}${artwork_directory}"
 
 			# If there was only one image for the given artwork type, then
 			# extract it, otherwise make sure to add a number at the end of the
@@ -5690,7 +5732,7 @@ __operation_extract_artwork () {
 		# Only extact the artwork if any was found
 		if [[ -n "${artwork_artist[@]}" ]] ; then
 			# Create the directory where extracted artwork will be placed
-			mkdir -p "${artwork_directory}"
+			mkdir -p "${numbered_art}${artwork_directory}"
 
 			# If there was only one image for the given artwork type, then
 			# extract it, otherwise make sure to add a number at the end of the
@@ -5716,7 +5758,7 @@ __operation_extract_artwork () {
 		# Only extact the artwork if any was found
 		if [[ -n "${artwork_conductor[@]}" ]] ; then
 			# Create the directory where extracted artwork will be placed
-			mkdir -p "${artwork_directory}"
+			mkdir -p "${numbered_art}${artwork_directory}"
 
 			# If there was only one image for the given artwork type, then
 			# extract it, otherwise make sure to add a number at the end of the
@@ -5742,7 +5784,7 @@ __operation_extract_artwork () {
 		# Only extact the artwork if any was found
 		if [[ -n "${artwork_band[@]}" ]] ; then
 			# Create the directory where extracted artwork will be placed
-			mkdir -p "${artwork_directory}"
+			mkdir -p "${numbered_art}${artwork_directory}"
 
 			# If there was only one image for the given artwork type, then
 			# extract it, otherwise make sure to add a number at the end of the
@@ -5768,7 +5810,7 @@ __operation_extract_artwork () {
 		# Only extact the artwork if any was found
 		if [[ -n "${artwork_composer[@]}" ]] ; then
 			# Create the directory where extracted artwork will be placed
-			mkdir -p "${artwork_directory}"
+			mkdir -p "${numbered_art}${artwork_directory}"
 
 			# If there was only one image for the given artwork type, then
 			# extract it, otherwise make sure to add a number at the end of the
@@ -5794,7 +5836,7 @@ __operation_extract_artwork () {
 		# Only extact the artwork if any was found
 		if [[ -n "${artwork_lyricist[@]}" ]] ; then
 			# Create the directory where extracted artwork will be placed
-			mkdir -p "${artwork_directory}"
+			mkdir -p "${numbered_art}${artwork_directory}"
 
 			# If there was only one image for the given artwork type, then
 			# extract it, otherwise make sure to add a number at the end of the
@@ -5820,7 +5862,7 @@ __operation_extract_artwork () {
 		# Only extact the artwork if any was found
 		if [[ -n "${artwork_recording_location[@]}" ]] ; then
 			# Create the directory where extracted artwork will be placed
-			mkdir -p "${artwork_directory}"
+			mkdir -p "${numbered_art}${artwork_directory}"
 
 			# If there was only one image for the given artwork type, then
 			# extract it, otherwise make sure to add a number at the end of the
@@ -5846,7 +5888,7 @@ __operation_extract_artwork () {
 		# Only extact the artwork if any was found
 		if [[ -n "${artwork_during_recording[@]}" ]] ; then
 			# Create the directory where extracted artwork will be placed
-			mkdir -p "${artwork_directory}"
+			mkdir -p "${numbered_art}${artwork_directory}"
 
 			# If there was only one image for the given artwork type, then
 			# extract it, otherwise make sure to add a number at the end of the
@@ -5872,7 +5914,7 @@ __operation_extract_artwork () {
 		# Only extact the artwork if any was found
 		if [[ -n "${artwork_during_performance[@]}" ]] ; then
 			# Create the directory where extracted artwork will be placed
-			mkdir -p "${artwork_directory}"
+			mkdir -p "${numbered_art}${artwork_directory}"
 
 			# If there was only one image for the given artwork type, then
 			# extract it, otherwise make sure to add a number at the end of the
@@ -5898,7 +5940,7 @@ __operation_extract_artwork () {
 		# Only extact the artwork if any was found
 		if [[ -n "${artwork_movie[@]}" ]] ; then
 			# Create the directory where extracted artwork will be placed
-			mkdir -p "${artwork_directory}"
+			mkdir -p "${numbered_art}${artwork_directory}"
 
 			# If there was only one image for the given artwork type, then
 			# extract it, otherwise make sure to add a number at the end of the
@@ -5924,7 +5966,7 @@ __operation_extract_artwork () {
 		# Only extact the artwork if any was found
 		if [[ -n "${artwork_fish[@]}" ]] ; then
 			# Create the directory where extracted artwork will be placed
-			mkdir -p "${artwork_directory}"
+			mkdir -p "${numbered_art}${artwork_directory}"
 
 			# If there was only one image for the given artwork type, then
 			# extract it, otherwise make sure to add a number at the end of the
@@ -5950,7 +5992,7 @@ __operation_extract_artwork () {
 		# Only extact the artwork if any was found
 		if [[ -n "${artwork_illustration[@]}" ]] ; then
 			# Create the directory where extracted artwork will be placed
-			mkdir -p "${artwork_directory}"
+			mkdir -p "${numbered_art}${artwork_directory}"
 
 			# If there was only one image for the given artwork type, then
 			# extract it, otherwise make sure to add a number at the end of the
@@ -5976,7 +6018,7 @@ __operation_extract_artwork () {
 		# Only extact the artwork if any was found
 		if [[ -n "${artwork_band_logo[@]}" ]] ; then
 			# Create the directory where extracted artwork will be placed
-			mkdir -p "${artwork_directory}"
+			mkdir -p "${numbered_art}${artwork_directory}"
 
 			# If there was only one image for the given artwork type, then
 			# extract it, otherwise make sure to add a number at the end of the
@@ -6002,7 +6044,7 @@ __operation_extract_artwork () {
 		# Only extact the artwork if any was found
 		if [[ -n "${artwork_publisher_logo[@]}" ]] ; then
 			# Create the directory where extracted artwork will be placed
-			mkdir -p "${artwork_directory}"
+			mkdir -p "${numbered_art}${artwork_directory}"
 
 			# If there was only one image for the given artwork type, then
 			# extract it, otherwise make sure to add a number at the end of the
@@ -6267,15 +6309,33 @@ if [[ ! -f "${find_flacs}" ]] ; then
 	exit 1
 fi
 
-# If "-A, --aucdtect-spectrogram" was called, make sure
-# spectrogram_location is a valid location, if user defined
+# If "-e, --extract-artwork" was called, make sure artwork_location is a valid
+# location, if user-defined
+if [[ "${extract_artwork}" == "true" ]] ; then
+
+	# Check if artwork_location is user-defined
+	if [[ -n "${artwork_location}" ]] ; then
+
+		# Put extracted artwork in user-defined location, testing to make sure
+		# the directory exists
+		if [[ ! -d "${artwork_location}" ]] ; then
+			__error "${cyan}${artwork_location}${normal} doesn't exist!\n" >&2
+			__error "Please set a valid directory in the configuration file!\n" >&2
+
+			exit 1
+		fi
+	fi
+fi
+
+# If "-A, --aucdtect-spectrogram" was called, make sure spectrogram_location is
+# a valid location, if user-defined
 if [[ "${create_spectrogram}" == "true" ]] ; then
 
 	# Check if spectrogram_location is user-defined
 	if [[ -n "${spectrogram_location}" ]] ; then
 
-		# Put spectrograms in user-defined location
-		# Test to make sure directory exists
+		# Put spectrograms in user-defined location, testing to make sure the
+		# directory exists
 		if [[ ! -d "${spectrogram_location}" ]] ; then
 			__error "${cyan}${spectrogram_location}${normal} doesn't exist!\n" >&2
 			__error "Please set a valid directory in the configuration file!\n" >&2
