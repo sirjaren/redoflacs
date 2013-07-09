@@ -2916,7 +2916,7 @@ __countdown_metadata () {
 	# 10 second countdown
 	for (( count=10; count > 0; count-- )); do
 		printf "${red}%s${normal}%s" "$count" " "
-		sleep 1
+		read -t1 # Sleep 1
 	done
 }
 
@@ -2945,7 +2945,7 @@ __countdown_config () {
 	# 10 second countdown
 	for (( count=10; count > 0; count-- )); do
 		printf "${red}%s${normal}%s" "$count" " "
-		sleep 1
+		read -t1 # Sleep 1
 	done
 }
 
@@ -3406,7 +3406,6 @@ __process_positional_parameters () {
 __check_missing_programs () {
 	# Check if each command can be found in $PATH
 	rm_exists="$(type -P rm)"
-	sleep_exists="$(type -P sleep)"
 	stty_exists="$(type -P stty)"
 	stat_exists="$(type -P stat)"
 	mkfifo_exists="$(type -P mkfifo)"
@@ -3418,10 +3417,6 @@ __check_missing_programs () {
 	# it's empty, add where you can find the package to an array to be displayed.
 	if [[ -z "${rm_exists}" ]] ; then
 		command_exists_array+=( "   Missing ${cyan}rm${normal}        ->  Part of ${cyan}coreutils${normal}" )
-	fi
-
-	if [[ -z "${sleep_exists}" ]] ; then
-		command_exists_array+=( "   Missing ${cyan}sleep${normal}     ->  Part of ${cyan}coreutils${normal}" )
 	fi
 
 	if [[ -z "${stty_exists}" ]] ; then
@@ -5524,7 +5519,7 @@ __operation_extract_artwork () {
 		# Only extact the artwork if any was found
 		if [[ -n "${artwork_other[@]}" ]] ; then
 			# Create the directory where extracted artwork will be placed
-			mkdir -p "${numbered_art}${artwork_directory}"
+			mkdir -p "${artwork_directory}"
 
 			# If there was only one image for the given artwork type, then
 			# extract it, otherwise make sure to add a number at the end of the
@@ -5550,7 +5545,7 @@ __operation_extract_artwork () {
 		# Only extact the artwork if any was found
 		if [[ -n "${artwork_file_icon[@]}" ]] ; then
 			# Create the directory where extracted artwork will be placed
-			mkdir -p "${numbered_art}${artwork_directory}"
+			mkdir -p "${artwork_directory}"
 
 			# If there was only one image for the given artwork type, then
 			# extract it, otherwise make sure to add a number at the end of the
@@ -5576,7 +5571,7 @@ __operation_extract_artwork () {
 		# Only extact the artwork if any was found
 		if [[ -n "${artwork_other_file_icon[@]}" ]] ; then
 			# Create the directory where extracted artwork will be placed
-			mkdir -p "${numbered_art}${artwork_directory}"
+			mkdir -p "${artwork_directory}"
 
 			# If there was only one image for the given artwork type, then
 			# extract it, otherwise make sure to add a number at the end of the
@@ -5602,7 +5597,7 @@ __operation_extract_artwork () {
 		# Only extact the artwork if any was found
 		if [[ -n "${artwork_cover_front[@]}" ]] ; then
 			# Create the directory where extracted artwork will be placed
-			mkdir -p "${numbered_art}${artwork_directory}"
+			mkdir -p "${artwork_directory}"
 
 			# If there was only one image for the given artwork type, then
 			# extract it, otherwise make sure to add a number at the end of the
@@ -5628,7 +5623,7 @@ __operation_extract_artwork () {
 		# Only extact the artwork if any was found
 		if [[ -n "${artwork_cover_back[@]}" ]] ; then
 			# Create the directory where extracted artwork will be placed
-			mkdir -p "${numbered_art}${artwork_directory}"
+			mkdir -p "${artwork_directory}"
 
 			# If there was only one image for the given artwork type, then
 			# extract it, otherwise make sure to add a number at the end of the
@@ -5654,7 +5649,7 @@ __operation_extract_artwork () {
 		# Only extact the artwork if any was found
 		if [[ -n "${artwork_leaflet[@]}" ]] ; then
 			# Create the directory where extracted artwork will be placed
-			mkdir -p "${numbered_art}${artwork_directory}"
+			mkdir -p "${artwork_directory}"
 
 			# If there was only one image for the given artwork type, then
 			# extract it, otherwise make sure to add a number at the end of the
@@ -5680,7 +5675,7 @@ __operation_extract_artwork () {
 		# Only extact the artwork if any was found
 		if [[ -n "${artwork_media_label[@]}" ]] ; then
 			# Create the directory where extracted artwork will be placed
-			mkdir -p "${numbered_art}${artwork_directory}"
+			mkdir -p "${artwork_directory}"
 
 			# If there was only one image for the given artwork type, then
 			# extract it, otherwise make sure to add a number at the end of the
@@ -5706,7 +5701,7 @@ __operation_extract_artwork () {
 		# Only extact the artwork if any was found
 		if [[ -n "${artwork_lead_artist[@]}" ]] ; then
 			# Create the directory where extracted artwork will be placed
-			mkdir -p "${numbered_art}${artwork_directory}"
+			mkdir -p "${artwork_directory}"
 
 			# If there was only one image for the given artwork type, then
 			# extract it, otherwise make sure to add a number at the end of the
@@ -5732,7 +5727,7 @@ __operation_extract_artwork () {
 		# Only extact the artwork if any was found
 		if [[ -n "${artwork_artist[@]}" ]] ; then
 			# Create the directory where extracted artwork will be placed
-			mkdir -p "${numbered_art}${artwork_directory}"
+			mkdir -p "${artwork_directory}"
 
 			# If there was only one image for the given artwork type, then
 			# extract it, otherwise make sure to add a number at the end of the
@@ -5758,7 +5753,7 @@ __operation_extract_artwork () {
 		# Only extact the artwork if any was found
 		if [[ -n "${artwork_conductor[@]}" ]] ; then
 			# Create the directory where extracted artwork will be placed
-			mkdir -p "${numbered_art}${artwork_directory}"
+			mkdir -p "${artwork_directory}"
 
 			# If there was only one image for the given artwork type, then
 			# extract it, otherwise make sure to add a number at the end of the
@@ -5784,7 +5779,7 @@ __operation_extract_artwork () {
 		# Only extact the artwork if any was found
 		if [[ -n "${artwork_band[@]}" ]] ; then
 			# Create the directory where extracted artwork will be placed
-			mkdir -p "${numbered_art}${artwork_directory}"
+			mkdir -p "${artwork_directory}"
 
 			# If there was only one image for the given artwork type, then
 			# extract it, otherwise make sure to add a number at the end of the
@@ -5810,7 +5805,7 @@ __operation_extract_artwork () {
 		# Only extact the artwork if any was found
 		if [[ -n "${artwork_composer[@]}" ]] ; then
 			# Create the directory where extracted artwork will be placed
-			mkdir -p "${numbered_art}${artwork_directory}"
+			mkdir -p "${artwork_directory}"
 
 			# If there was only one image for the given artwork type, then
 			# extract it, otherwise make sure to add a number at the end of the
@@ -5836,7 +5831,7 @@ __operation_extract_artwork () {
 		# Only extact the artwork if any was found
 		if [[ -n "${artwork_lyricist[@]}" ]] ; then
 			# Create the directory where extracted artwork will be placed
-			mkdir -p "${numbered_art}${artwork_directory}"
+			mkdir -p "${artwork_directory}"
 
 			# If there was only one image for the given artwork type, then
 			# extract it, otherwise make sure to add a number at the end of the
@@ -5862,7 +5857,7 @@ __operation_extract_artwork () {
 		# Only extact the artwork if any was found
 		if [[ -n "${artwork_recording_location[@]}" ]] ; then
 			# Create the directory where extracted artwork will be placed
-			mkdir -p "${numbered_art}${artwork_directory}"
+			mkdir -p "${artwork_directory}"
 
 			# If there was only one image for the given artwork type, then
 			# extract it, otherwise make sure to add a number at the end of the
@@ -5888,7 +5883,7 @@ __operation_extract_artwork () {
 		# Only extact the artwork if any was found
 		if [[ -n "${artwork_during_recording[@]}" ]] ; then
 			# Create the directory where extracted artwork will be placed
-			mkdir -p "${numbered_art}${artwork_directory}"
+			mkdir -p "${artwork_directory}"
 
 			# If there was only one image for the given artwork type, then
 			# extract it, otherwise make sure to add a number at the end of the
@@ -5914,7 +5909,7 @@ __operation_extract_artwork () {
 		# Only extact the artwork if any was found
 		if [[ -n "${artwork_during_performance[@]}" ]] ; then
 			# Create the directory where extracted artwork will be placed
-			mkdir -p "${numbered_art}${artwork_directory}"
+			mkdir -p "${artwork_directory}"
 
 			# If there was only one image for the given artwork type, then
 			# extract it, otherwise make sure to add a number at the end of the
@@ -5940,7 +5935,7 @@ __operation_extract_artwork () {
 		# Only extact the artwork if any was found
 		if [[ -n "${artwork_movie[@]}" ]] ; then
 			# Create the directory where extracted artwork will be placed
-			mkdir -p "${numbered_art}${artwork_directory}"
+			mkdir -p "${artwork_directory}"
 
 			# If there was only one image for the given artwork type, then
 			# extract it, otherwise make sure to add a number at the end of the
@@ -5966,7 +5961,7 @@ __operation_extract_artwork () {
 		# Only extact the artwork if any was found
 		if [[ -n "${artwork_fish[@]}" ]] ; then
 			# Create the directory where extracted artwork will be placed
-			mkdir -p "${numbered_art}${artwork_directory}"
+			mkdir -p "${artwork_directory}"
 
 			# If there was only one image for the given artwork type, then
 			# extract it, otherwise make sure to add a number at the end of the
@@ -5992,7 +5987,7 @@ __operation_extract_artwork () {
 		# Only extact the artwork if any was found
 		if [[ -n "${artwork_illustration[@]}" ]] ; then
 			# Create the directory where extracted artwork will be placed
-			mkdir -p "${numbered_art}${artwork_directory}"
+			mkdir -p "${artwork_directory}"
 
 			# If there was only one image for the given artwork type, then
 			# extract it, otherwise make sure to add a number at the end of the
@@ -6018,7 +6013,7 @@ __operation_extract_artwork () {
 		# Only extact the artwork if any was found
 		if [[ -n "${artwork_band_logo[@]}" ]] ; then
 			# Create the directory where extracted artwork will be placed
-			mkdir -p "${numbered_art}${artwork_directory}"
+			mkdir -p "${artwork_directory}"
 
 			# If there was only one image for the given artwork type, then
 			# extract it, otherwise make sure to add a number at the end of the
@@ -6044,7 +6039,7 @@ __operation_extract_artwork () {
 		# Only extact the artwork if any was found
 		if [[ -n "${artwork_publisher_logo[@]}" ]] ; then
 			# Create the directory where extracted artwork will be placed
-			mkdir -p "${numbered_art}${artwork_directory}"
+			mkdir -p "${artwork_directory}"
 
 			# If there was only one image for the given artwork type, then
 			# extract it, otherwise make sure to add a number at the end of the
