@@ -6345,7 +6345,7 @@ metadata_errors="${error_log}/redoflacs_metadata_errors_$$.log"
 replay_test_errors="${error_log}/redoflacs_replaygain_test_errors_$$.log"
 replay_add_errors="${error_log}/redoflacs_replaygain_add_errors_$$.log"
 aucdtect_errors="${error_log}/redoflacs_aucdtect_errors_$$.log"
-prune_errors="${error_log}/redoflacs_extract_artwork_errors_$$.log"
+extract_artwork_errors="${error_log}/redoflacs_extract_artwork_errors_$$.log"
 prune_errors="${error_log}/redoflacs_prune_errors_$$.log"
 
 # Process positional parameters, allowing script to see
