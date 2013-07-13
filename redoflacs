@@ -172,13 +172,11 @@ FLAC file name as follows:
 
 An example of this:
 
-        FLAC file (7th file processed):
-.br
-                03 - Some FLAC File.flac
+        [ FLAC file (7th file processed) ]
+              03 - Some FLAC File.flac
 
-        Spectrogram Image:
-.br
-                [7] 03 - Some FLAC File.png
+        [ Spectrogram Image ]
+              [7] 03 - Some FLAC File.png
 
 The user can change the location of where to store the created spectrogram
 images by changing the value of 'spectrogram_location' defined in the
@@ -197,6 +195,85 @@ missing and exit.
 Check the FLAC files for unset MD5 Signatures and log the output of any unset
 signatures.  An unset MD5 signature doesn't necessarily mean a FLAC file is
 corrupt, and MAY be repaired with a re-encoding of said FLAC file.
+.TP
+.BI -e, --extract-artwork
+Run through each FLAC file and extract any and all artwork that's embedded
+within the PICTURE block.  This is useful in the event a user wants to save any
+artwork before using the '-p, --prune' option to remove the artwork.
+
+By default, each extracted image will be placed in a subdirectory where the FLAC
+file is located.  The subdirectory will have the same name as the current FLAC
+being processed with a fairly unique string appended to it.  For example:
+
+        [ Current FLAC file ]
+              /path/to/music/01_file.flac
+
+        [ Example subdirectory ]
+              /path/to/music/01_file.flac_[redoflacs_art]_4342/
+
+The user can change the location of where to store the extracted images by
+changing the value of 'artwork_location' defined in the configuration file.  The
+location defined by the user will be tested to see if it exists before starting
+the script.  If the location does not exist, the script will warn the user and
+exit.
+
+This operation supports all the various types of embedded artwork types that
+\`metaflac' supports:
+
+         0: Other
+.br
+         1: 32x32 pixels 'file icon' (PNG only)
+.br
+         2: Other file icon
+.br
+         3: Cover (front)
+.br
+         4: Cover (back)
+.br
+         5: Leaflet page
+.br
+         6: Media (e.g. label side of CD)
+.br
+         7: Lead artist/lead performer/soloist
+.br
+         8: Artist/performer
+.br
+         9: Conductor
+.br
+        10: Band/Orchestra
+.br
+        11: Composer
+.br
+        12: Lyricist/text writer
+.br
+        13: Recording Location
+.br
+        14: During recording
+.br
+        15: During performance
+.br
+        16: Movie/video screen capture
+.br
+        17: A bright coloured fish
+.br
+        18: Illustration
+.br
+        19: Band/artist logotype
+.br
+        20: Publisher/Studio logotype
+
+If there is more than one image of the same type, this operation will append a
+number after the image filename to prevent clobbering:
+
+        [ Example subdirectory ]
+              /path/to/music/01_file.flac_[redoflacs_art]_4342/
+
+        [ More than image in subdirectory ]
+              Cover (front) (1).jpg
+              Cover (front) (2).jpg
+              Cover (front) (3).jpg
+              Cover (front) (4).jpg
+              Cover (front) (5).jpg
 .TP
 .BI -p, --prune
 Delete every METADATA block in each FLAC file except the STREAMINFO and
@@ -365,7 +442,7 @@ Jaren Stangret <sirjaren@gmail.com>
 Thanks to all the people whom have provided feedback and support!
 .br
 .SH REVISION
-[ 3 ]"
+[ 4 ]"
 
 	# Print out help to temporary file which will read by 'man'
 	printf "%s\n" "${long_help}" > "${tmp_man_page}"
