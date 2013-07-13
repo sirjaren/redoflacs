@@ -2101,6 +2101,10 @@ __obtain_compress_percentage () {
 	# Remove the last part part of the percent_complete string, leaving the
 	# percent stored as an integer
 	percent_complete="${percent_complete##*complete, ratio=?.???}"
+
+	# Enforce an integer for ${percent_complete}, defaulting to '0' if not an
+	# integer
+	[[ "${percent_complete}" =~ ^[[:digit:]]+$ ]] || percent_complete=0
 }
 
 # Obtain the current progress completed percentage while testing FLAC file
@@ -2108,6 +2112,10 @@ __obtain_test_percentage () {
 	# Remove the first part of the line to leave the resultant percent stored as
 	# an integer (no '%' appended)
 	percent_complete="${percent_complete##* }"
+
+	# Enforce an integer for ${percent_complete}, defaulting to '0' if not an
+	# integer
+	[[ "${percent_complete}" =~ ^[[:digit:]]+$ ]] || percent_complete=0
 }
 
 # Obtain the current progress completed percentage while decoding FLAC file
@@ -2123,6 +2131,10 @@ __obtain_decode_percentage () {
 	# Remove the last part part of the percent_complete string, leaving the
 	# percent stored as an integer
 	percent_complete="${percent_complete##*complete}"
+
+	# Enforce an integer for ${percent_complete}, defaulting to '0' if not an
+	# integer
+	[[ "${percent_complete}" =~ ^[[:digit:]]+$ ]] || percent_complete=0
 }
 
 # Obtain the current progress completed percentage while using auCDtect
@@ -2130,6 +2142,10 @@ __obtain_aucdtect_percentage () {
 	# Remove the first part of the line to leave the resultant percent stored as
 	# an integer (no '%' appended)
 	percent_complete="${percent_complete##*[}"
+
+	# Enforce an integer for ${percent_complete}, defaulting to '0' if not an
+	# integer
+	[[ "${percent_complete}" =~ ^[[:digit:]]+$ ]] || percent_complete=0
 }
 
 # Obtain the current progress completed percentage while using auCDtect
@@ -2141,6 +2157,10 @@ __obtain_spectrogram_percentage () {
 
 	# Remove the floating point part of the percentage to leave only an integer
 	percent_complete="${percent_complete%%.*}"
+
+	# Enforce an integer for ${percent_complete}, defaulting to '0' if not an
+	# integer
+	[[ "${percent_complete}" =~ ^[[:digit:]]+$ ]] || percent_complete=0
 }
 
 # Store the position of the current job being displayed
