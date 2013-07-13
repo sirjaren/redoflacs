@@ -3505,6 +3505,7 @@ __check_missing_programs () {
 	rm_exists="$(type -P rm)"
 	stty_exists="$(type -P stty)"
 	stat_exists="$(type -P stat)"
+	mkdir_exists="$(type -P mkdir)"
 	mkfifo_exists="$(type -P mkfifo)"
 	wc_exists="$(type -P wc)"
 	metaflac_exists="$(type -P metaflac)"
@@ -3522,6 +3523,10 @@ __check_missing_programs () {
 
 	if [[ -z "${stat_exists}" ]] ; then
 		command_exists_array+=( "   Missing ${cyan}stat${normal}      ->  Part of ${cyan}coreutils${normal}" )
+	fi
+
+	if [[ -z "${mkdir_exists}" ]] ; then
+		command_exists_array+=( "   Missing ${cyan}mkdir${normal}     ->  Part of ${cyan}coreutils${normal}" )
 	fi
 
 	if [[ -z "${mkfifo_exists}" ]] ; then
