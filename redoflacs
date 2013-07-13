@@ -217,7 +217,7 @@ location defined by the user will be tested to see if it exists before starting
 the script.  If the location does not exist, the script will warn the user and
 exit.
 
-This operation supports all the various types of embedded artwork types that
+This operation supports all the various types of embedded artwork that
 \`metaflac' supports:
 
          0: Other
