@@ -58,8 +58,7 @@ __no_flacs () {
 
 # Display why COVERART tag should not be used
 __coverart_warning () {
-	__newline >&2
-	__warn "The ${cyan}COVERART${normal} tag is deprecated and should not be\n" >&2
+	__warn "\nThe ${cyan}COVERART${normal} tag is deprecated and should not be\n" >&2
 	__warn "used. Instead, consider migrating over to the new format:\n" >&2
 	__warn "${cyan}METADATA_BLOCK_PICTURE${normal}, using modern tag editors. Read:\n" >&2
 	__warn "${cyan}http://wiki.xiph.org/VorbisComment#Unofficial_COVERART_field_.28deprecated.29${normal}\n" >&2
@@ -450,33 +449,33 @@ Thanks to all the people whom have provided feedback and support!
 
 # Display short help
 __short_help () {
-	printf "%s\n" " Usage: redoflacs [operations] [options] [target] ..."
-	printf "%s\n" " Operations:"
-	printf "%s\n" "   -c, --compress"
-	printf "%s\n" "   -C, --compress-notest"
-	printf "%s\n" "   -t, --test"
-	printf "%s\n" "   -m, --md5check"
-	printf "%s\n" "   -a, --aucdtect"
-	printf "%s\n" "   -A, --aucdtect-spectrogram"
-	printf "%s\n" "   -e, --extract-artwork"
-	printf "%s\n" "   -p, --prune"
-	printf "%s\n" "   -g, --replaygain"
-	printf "%s\n" "   -G, --replaygain-noforce"
-	printf "%s\n" "   -r, --retag"
-	printf "%s\n" "   -l, --all"
-	printf "%s\n" "   -L, --reallyall"
-	printf "%s\n" " Options:"
-	printf "%s\n" "   -j[N], --jobs[=N]"
-	printf "%s\n" "   -n, --no-color"
-	printf "%s\n" "   -o, --new-config"
-	printf "%s\n" "   -v, --version"
-	printf "%s\n" "   -h, --help"
-	printf "%s\n" " This is the short help; for details use 'redoflacs --help' or 'redoflacs -h'"
+	printf " Usage: redoflacs [operations] [options] [target] ...\n"
+	printf " Operations:\n"
+	printf "   -c, --compress\n"
+	printf "   -C, --compress-notest\n"
+	printf "   -t, --test\n"
+	printf "   -m, --md5check\n"
+	printf "   -a, --aucdtect\n"
+	printf "   -A, --aucdtect-spectrogram\n"
+	printf "   -e, --extract-artwork\n"
+	printf "   -p, --prune\n"
+	printf "   -g, --replaygain\n"
+	printf "   -G, --replaygain-noforce\n"
+	printf "   -r, --retag\n"
+	printf "   -l, --all\n"
+	printf "   -L, --reallyall\n"
+	printf " Options:\n"
+	printf "   -j[N], --jobs[=N]\n"
+	printf "   -n, --no-color\n"
+	printf "   -o, --new-config\n"
+	printf "   -v, --version\n"
+	printf "   -h, --help\n"
+	printf " This is the short help; for details use 'redoflacs --help' or 'redoflacs -h'\n"
 }
 
 # Display usage
 __usage () {
-	printf "%s\n" " Usage: redoflacs [operations] [options] [target] ..."
+	printf " Usage: redoflacs [operations] [options] [target] ...\n"
 }
 #== .: END SCRIPT MESSAGES :. ==================================================
 
@@ -487,9 +486,7 @@ __usage () {
 # ReplayGain test error log message
 __log_replaygain_test () {
 	# Place a newline to separate interrupt message and log message
-	printf "\n" >&2
-
-	__error "There were issues with some of the FLAC files,\n" >&2
+	__error "\nThere were issues with some of the FLAC files,\n" >&2
 	__error "please check:\n" >&2
 	__error "${cyan}${replay_test_errors}${normal}\n" >&2
 	__error "for details.\n" >&2
@@ -502,9 +499,7 @@ __log_replaygain_test () {
 # ReplayGain process error log message
 __log_replaygain_process () {
 	# Place a newline to separate interrupt message and log message
-	printf "\n" >&2
-
-	__error "There were issues adding ReplayGain values,\n" >&2
+	__error "\nThere were issues adding ReplayGain values,\n" >&2
 	__error "please check:\n" >&2
 	__error "${cyan}${replay_add_errors}${normal}\n" >&2
 	__error "for details.\n" >&2
@@ -517,9 +512,7 @@ __log_replaygain_process () {
 # Compress and verify error log message
 __log_compress_verify () {
 	# Place a newline to separate interrupt message and log message
-	printf "\n" >&2
-
-	__error "Errors found in some FLAC files, please check:\n" >&2
+	__error "\nErrors found in some FLAC files, please check:\n" >&2
 	__error "${cyan}${verify_errors}${normal}\n" >&2
 	__error "for errors.\n" >&2
 
@@ -531,9 +524,7 @@ __log_compress_verify () {
 # Test error log message
 __log_test () {
 	# Place a newline to separate interrupt message and log message
-	printf "\n" >&2
-
-	__error "Errors found in some FLAC files, please check:\n" >&2
+	__error "\nErrors found in some FLAC files, please check:\n" >&2
 	__error "${cyan}${test_errors}${normal}\n" >&2
 	__error "for errors.\n" >&2
 
@@ -545,9 +536,7 @@ __log_test () {
 # auCDtect error log message
 __log_aucdtect () {
 	# Place a newline to separate interrupt message and log message
-	printf "\n" >&2
-
-	__error "Some FLAC files may be lossy sourced, please check:\n" >&2
+	__error "\nSome FLAC files may be lossy sourced, please check:\n" >&2
 	__error "${cyan}${aucdtect_errors}${normal}\n" >&2
 	__error "for details.\n" >&2
 
@@ -559,9 +548,7 @@ __log_aucdtect () {
 # MD5 check error log message
 __log_md5_check () {
 	# Place a newline to separate interrupt message and log message
-	printf "\n" >&2
-
-	__error "The MD5 Signature is unset for some FLAC files or there were\n" >&2
+	__error "\nThe MD5 Signature is unset for some FLAC files or there were\n" >&2
 	__error "issues with some of the FLAC files, please check:\n" >&2
 	__error "${cyan}${md5_errors}${normal}\n" >&2
 	__error "for details.\n" >&2
@@ -574,9 +561,7 @@ __log_md5_check () {
 # Missing tags error log message
 __log_missing_tags () {
 	# Place a newline to separate interrupt message and log message
-	printf "\n" >&2
-
-	__error "Some FLAC files have missing tags or there were\n" >&2
+	__error "\nSome FLAC files have missing tags or there were\n" >&2
 	__error "issues with some of the FLAC files, please check:\n" >&2
 	__error "${cyan}${metadata_errors}${normal}\n" >&2
 	__error "for details.\n" >&2
@@ -589,9 +574,7 @@ __log_missing_tags () {
 # Extract artwork error log message
 __log_extract_artwork () {
 	# Place a newline to separate interrupt message and log message
-	printf "\n" >&2
-
-	__error "There were issues with some of the FLAC files,\n" >&2
+	__error "\nThere were issues with some of the FLAC files,\n" >&2
 	__error "please check:\n" >&2
 	__error "${cyan}${extract_artwork_errors}${normal}\n" >&2
 	__error "for details.\n" >&2
@@ -604,9 +587,7 @@ __log_extract_artwork () {
 # Prune error log message
 __log_prune () {
 	# Place a newline to separate interrupt message and log message
-	printf "\n" >&2
-
-	__error "There were issues with some of the FLAC files,\n" >&2
+	__error "\nThere were issues with some of the FLAC files,\n" >&2
 	__error "please check:\n" >&2
 	__error "${cyan}${prune_errors}${normal}\n" >&2
 	__error "for details.\n" >&2
@@ -1052,7 +1033,7 @@ __print_current_flac () {
 	#                            (4) Spaces
 	#                            (1) Gap and ellipsis: '…'
 	#                            (6) Percentage: '  100%' or '    3%'
-	max_filename_length="$(( ${columns} - ${#number_completed} - 11 ))"
+	max_filename_length="$(( columns - ${#number_completed} - 11 ))"
 
 	# Create and cull filename if needed returned as ${filename}
 	__filename
@@ -1076,7 +1057,7 @@ __print_current_half () {
 	#                            (4) Spaces
 	#                            (1) Gap and ellipsis: '…'
 	#                            (6) Percentage: '  100%' or '    3%'
-	max_filename_length="$(( ${columns} - ${#number_completed} - 11 ))"
+	max_filename_length="$(( columns - ${#number_completed} - 11 ))"
 
 	# Create and cull filename if needed returned as ${filename}
 	__filename
@@ -1101,7 +1082,7 @@ __print_current_directory () {
 	#                            (4) Spaces
 	#                            (1) Gap and ellipsis: '…'
 	#                            (8) Percentage: '    100%' or '      3%'
-	max_filename_length="$(( ${columns} - ${#number_completed} - 13 ))"
+	max_filename_length="$(( columns - ${#number_completed} - 13 ))"
 
 	# Create and cull filename if needed returned as ${filename}
 	__filename
@@ -1125,7 +1106,7 @@ __print_sub_current_flac () {
 	#                            (4) Spaces
 	#                            (1) Gap and ellipsis: '…'
 	#                            (8) Percentage: '  100%' or '    3%'
-	max_filename_length="$(( ${columns} - ${#number_completed} - 13 ))"
+	max_filename_length="$(( columns - ${#number_completed} - 13 ))"
 
 	# Create and cull filename if needed returned as ${filename}
 	__filename
@@ -1149,7 +1130,7 @@ __print_skip_flac () {
 	#                            (4) Spaces
 	#                            (1) Gap and ellipsis: '…'
 	#                            (6) Percentage: '100%' or '  3%'
-	max_filename_length="$(( ${columns} - ${#number_completed} - 11 ))"
+	max_filename_length="$(( columns - ${#number_completed} - 11 ))"
 
 	# Create and cull filename if needed returned as ${filename}
 	__filename
@@ -1178,7 +1159,7 @@ __print_decoding_flac () {
 	#                            (1) Gap and ellipsis: '…'
 	#                            (6) Percentage: '  100%' or '    3%'
 	#                            (11) '[Decoding] '
-	max_filename_length="$(( ${columns} - ${#number_completed} - 22 ))"
+	max_filename_length="$(( columns - ${#number_completed} - 22 ))"
 
 	# Create and cull filename if needed returned as ${filename}
 	__filename
@@ -1227,7 +1208,7 @@ __print_current_aucdtect_fast () {
 	#                            (1) Gap and ellipsis: '…'
 	#                            (6) Percentage: '  100%' or '    3%'
 	#                            (17) '[auCDtect: fast] '
-	max_filename_length="$(( ${columns} - ${#number_completed} - 28 ))"
+	max_filename_length="$(( columns - ${#number_completed} - 28 ))"
 
 	# Create and cull filename if needed returned as ${filename}
 	__filename
@@ -1275,7 +1256,7 @@ __print_current_aucdtect_slow () {
 	#                            (1) Gap and ellipsis: '…'
 	#                            (6) Percentage: '  100%' or '    3%'
 	#                            (17) '[auCDtect: slow] '
-	max_filename_length="$(( ${columns} - ${#number_completed} - 28 ))"
+	max_filename_length="$(( columns - ${#number_completed} - 28 ))"
 
 	# Create and cull filename if needed returned as ${filename}
 	__filename
@@ -1336,7 +1317,7 @@ __print_current_spectrogram () {
 	#                            (1) Gap and ellipsis: '…'
 	#                            (6) Percentage: '  100%' or '    3%'
 	#                            (14) '[Spectrogram] '
-	max_filename_length="$(( ${columns} - ${#number_completed} - 25 ))"
+	max_filename_length="$(( columns - ${#number_completed} - 25 ))"
 
 	# Create and cull filename if needed returned as ${filename}
 	__filename
@@ -1371,7 +1352,7 @@ __print_progress () {
 	# percentage completed thus far and using the percentage to display that
 	# same percentage of the filename's length (including spaces that may appear
 	# after it)
-	progress_bar_length=$(( ( max_filename_length * ${percent_complete} ) / 100 ))
+	progress_bar_length=$(( ( max_filename_length * percent_complete ) / 100 ))
 
 	# If the progress bar to display is less than or equal to the filename's
 	# length, print out the part of the filename that matches the percentage
@@ -1407,7 +1388,7 @@ __print_decoding_progress () {
 	# percentage completed thus far and using the percentage to display that
 	# same percentage of the filename's length (including spaces that may appear
 	# after it)
-	progress_bar_length=$(( ( max_filename_length * ${percent_complete} ) / 100 ))
+	progress_bar_length=$(( ( max_filename_length * percent_complete ) / 100 ))
 
 	# If the progress bar to display is less than or equal to the filename's
 	# length, print out the part of the filename that matches the percentage
@@ -1443,7 +1424,7 @@ __print_progress_aucdtect_fast () {
 	# percentage completed thus far and using the percentage to display that
 	# same percentage of the filename's length (including spaces that may appear
 	# after it)
-	progress_bar_length=$(( ( max_filename_length * ${percent_complete} ) / 100 ))
+	progress_bar_length=$(( ( max_filename_length * percent_complete ) / 100 ))
 
 	# If the progress bar to display is less than or equal to the filename's
 	# length, print out the part of the filename that matches the percentage
@@ -1479,7 +1460,7 @@ __print_progress_aucdtect_slow () {
 	# percentage completed thus far and using the percentage to display that
 	# same percentage of the filename's length (including spaces that may appear
 	# after it)
-	progress_bar_length=$(( ( max_filename_length * ${percent_complete} ) / 100 ))
+	progress_bar_length=$(( ( max_filename_length * percent_complete ) / 100 ))
 
 	# If the progress bar to display is less than or equal to the filename's
 	# length, print out the part of the filename that matches the percentage
@@ -1515,7 +1496,7 @@ __print_progress_spectrogram () {
 	# percentage completed thus far and using the percentage to display that
 	# same percentage of the filename's length (including spaces that may appear
 	# after it)
-	progress_bar_length=$(( ( max_filename_length * ${percent_complete} ) / 100 ))
+	progress_bar_length=$(( ( max_filename_length * percent_complete ) / 100 ))
 
 	# If the progress bar to display is less than or equal to the filename's
 	# length, print out the part of the filename that matches the percentage
@@ -1609,8 +1590,7 @@ __print_sub_progress_failed () {
 #-------------------------------------------------------------------------------
 # Countdown abort
 __trap_countdown () {
-	__newline
-	__info "Control-C received, exiting. Please wait...\n"
+	__info "\nControl-C received, exiting. Please wait...\n"
 
 	# Restore old stty settings, make stty happy
 	# by redirecting /dev/stderr
@@ -1853,7 +1833,7 @@ __trap_analyzing_tags () {
 
 	if [[ -f "${metadata_errors}"  && "${coverart_warning}" == "true" ]] ; then
 		# Display COVERART warning function and metadata issues
-		__newline >&2 ; __coverart_warning
+		printf '\n' >&2 ; __coverart_warning
 
 		# Print out log exists to STDERR
 		__log_missing_tags
@@ -1908,7 +1888,7 @@ __trap_applying_tags () {
 
 	if [[ -f "${metadata_errors}"  && "${coverart_warning}" == "true" ]] ; then
 		# Display COVERART warning function and metadata issues
-		__newline >&2 ; __coverart_warning
+		printf '\n' >&2 ; __coverart_warning
 
 		# Print out log exists to STDERR
 		__log_missing_tags
@@ -2271,10 +2251,10 @@ __determine_abort () {
 		__operation_test_replaygain)
 			run_abort="__trap_replaygain_test"
 		;;
-		__operation_replaygain_noforce|__operation_replaygain_force)
+		__operation_replaygain_noforce | __operation_replaygain_force)
 			run_abort="__trap_replaygain_process"
 		;;
-		__operation_analyze_tags_dont_log_coverart|__operation_analyze_tags)
+		__operation_analyze_tags_dont_log_coverart | __operation_analyze_tags)
 			run_abort="__trap_analyzing_tags"
 		;;
 		__operation_set_tags)
@@ -2301,7 +2281,7 @@ __new_config () {
 
 		# If there already is a configuration file, do not overwrite it
 		if [[ -f "${config_location}" ]] ; then
-			config_location="/etc/_${$}.redoflacs.conf"
+			config_location="/etc/_$$.redoflacs.conf"
 		fi
 	else
 		# User is _NOT_ root
@@ -2311,7 +2291,7 @@ __new_config () {
 
 		# If there already is a configuration file, do not overwrite it
 		if [[ -f "${config_location}" ]] ; then
-			config_location="${HOME}/.config/redoflacs/_${$}.config"
+			config_location="${HOME}/.config/redoflacs/_$$.config"
 		fi
 	fi
 
@@ -2588,11 +2568,11 @@ __check_config_version () {
 		# warn user and display countdown
 		if (( script_config_revision > user_config_revision )) ; then
 			# Display warning and countdown
-			__countdown_config ; __newline 2
+			__countdown_config ; printf '\n\n'
 		fi
 	else
 		# Display warning and countdown
-		__countdown_config ; __newline 2
+		__countdown_config ; printf '\n\n'
 	fi
 }
 
@@ -2715,23 +2695,6 @@ __find_cores () {
 	fi
 }
 
-# Prints the number of newlines specified
-# by ${1}
-__newline () {
-	newlines="${1}"
-
-	# If ${newlines} is empty, set to 1 in order
-	# to allow one newline to be printed
-	if [[ -z "${newlines}" ]] ; then
-		newlines="1"
-	fi
-
-	# Print the number of newlines specified
-	for (( count=0; count < newlines; count++ )) ; do
-		printf "\n"
-	done
-}
-
 # If COVERART tag is kept and remove_artwork is set to 'true'
 # display conflict and exit
 __coverart_remove_conflict () {
@@ -2750,8 +2713,7 @@ __coverart_remove_conflict () {
 				# Display COVERART tag warning
 				__coverart_warning
 
-				__newline >&2
-				__error "It appears you have ${cyan}remove_artwork${normal} set to ${cyan}true${normal} in the\n" >&2
+				__error "\nIt appears you have ${cyan}remove_artwork${normal} set to ${cyan}true${normal} in the\n" >&2
 				__error "configuration file, yet ${cyan}COVERART${normal} is specified as one\n" >&2
 				__error "(or more) of the FLAC tags to be kept. Please choose either\n" >&2
 				__error "to keep album artwork (ie ${cyan}remove_artwork=\"false\"${normal}) or remove\n" >&2
@@ -2795,9 +2757,7 @@ __find_artwork () {
 			artwork_extension="${artwork_blocks[$(( j + 1 ))]##  MIME type: */}"
 
 			# If the image found is 'jpeg', use 'jpg' instead for consistency
-			if [[ "${artwork_extension}" == "jpeg" ]] ; then
-				artwork_extension="jpg"
-			fi
+			artwork_extension="${artwork_extension/jpeg/jpg}"
 
 			# Obtain the PICTURE type, represented as a number
 			artwork_type_number="${artwork_blocks[${j}]#  type: }"
@@ -2925,7 +2885,7 @@ __extract_artwork () {
 __top_banner () {
 	# If Redo Tags is called, create the necessary spacing
 	if [[ "${retag_flac}" == "true" ]] ; then
-		__newline 2
+		printf '\n\n'
 	fi
 
 	# Top title line
@@ -2995,8 +2955,7 @@ __countdown_metadata () {
 	done
 
 	# Warning message about embedded coverart
-	__newline >&2
-	__error "By default, this script will ${cyan}REMOVE${normal} the legacy (deprecated)\n" >&2
+	__error "\nBy default, this script will ${cyan}REMOVE${normal} the legacy (deprecated)\n" >&2
 	__error "${cyan}COVERART${normal} tag when re-tagging files.  Change the ${cyan}remove_artwork${normal}\n" >&2
 	__error "option (in the configuration file) to ${cyan}false${normal} to keep the legacy\n" >&2
 	__error "${cyan}COVERART${normal} tag, or add the ${cyan}COVERART${normal} tag to the list of tags to\n" >&2
@@ -3221,53 +3180,25 @@ __process_positional_parameters () {
 	if [[ -n "${long_style_arguments_array[@]}" ]] ; then
 		for i in "${long_style_arguments_array[@]}" ; do
 			case "${i}" in
-				--compress)
-					converted_arguments_array+=( -c )
-				;;
-				--compress-notest)
-					converted_arguments_array+=( -C )
-				;;
-				--test)
-					converted_arguments_array+=( -t )
-				;;
-				--md5check)
-					converted_arguments_array+=( -m )
-				;;
-				--aucdtect)
-					converted_arguments_array+=( -a )
-				;;
-				--aucdtect-spectrogram)
-					converted_arguments_array+=( -A )
-				;;
-				--extract-artwork)
-					converted_arguments_array+=( -e )
-				;;
-				--prune)
-					converted_arguments_array+=( -p )
-				;;
-				--replaygain)
-					converted_arguments_array+=( -g )
-				;;
-				--replaygain-noforce)
-					converted_arguments_array+=( -G )
-				;;
-				--retag)
-					converted_arguments_array+=( -r )
-				;;
-				--all)
-					converted_arguments_array+=( -l )
-				;;
-				--reallyall)
-					converted_arguments_array+=( -L )
-				;;
-				--no-color)
-					converted_arguments_array+=( -n )
-				;;
-				--jobs=[[:digit:]]*)
-					# Set number of jobs to run via the required
-					# integer argument after '-j'
-					jobs="${i##*=}"
-				;;
+				--compress)             converted_arguments_array+=( -c )   ;;
+				--compress-notest)      converted_arguments_array+=( -C )   ;;
+				--test)                 converted_arguments_array+=( -t )   ;;
+				--md5check)             converted_arguments_array+=( -m )   ;;
+				--aucdtect)             converted_arguments_array+=( -a )   ;;
+				--aucdtect-spectrogram) converted_arguments_array+=( -A )   ;;
+				--extract-artwork)      converted_arguments_array+=( -e )   ;;
+				--prune)                converted_arguments_array+=( -p )   ;;
+				--replaygain)           converted_arguments_array+=( -g )   ;;
+				--replaygain-noforce)   converted_arguments_array+=( -G )   ;;
+				--retag)                converted_arguments_array+=( -r )   ;;
+				--all)                  converted_arguments_array+=( -l )   ;;
+				--reallyall)            converted_arguments_array+=( -L )   ;;
+				--no-color)             converted_arguments_array+=( -n )   ;;
+
+				# Set number of jobs to run via the required
+				# integer argument after '-j'
+				--jobs=[[:digit:]]*)    jobs="${i##*=}"                     ;;
+
 				--version)
 					__usage >&2
 					exit 1
@@ -3294,48 +3225,21 @@ __process_positional_parameters () {
 	if [[ -n "${short_style_arguments_array[@]}" ]] ; then
 		while getopts ":LlcCtgGaAmeprnj:hvo" arguments "${short_style_arguments_array[@]}" ; do
 			case "${arguments}" in
-				l)
-					converted_arguments_array+=( -l )
-				;;
-				L)
-					converted_arguments_array+=( -L )
-				;;
-				c)
-					converted_arguments_array+=( -c )
-				;;
-				C)
-					converted_arguments_array+=( -C )
-				;;
-				t)
-					converted_arguments_array+=( -t )
-				;;
-				g)
-					converted_arguments_array+=( -g )
-				;;
-				G)
-					converted_arguments_array+=( -G )
-				;;
-				a)
-					converted_arguments_array+=( -a )
-				;;
-				A)
-					converted_arguments_array+=( -A )
-				;;
-				m)
-					converted_arguments_array+=( -m )
-				;;
-				e)
-					converted_arguments_array+=( -e )
-				;;
-				p)
-					converted_arguments_array+=( -p )
-				;;
-				r)
-					converted_arguments_array+=( -r )
-				;;
-				n)
-					converted_arguments_array+=( -n )
-				;;
+				l) converted_arguments_array+=( -l ) ;;
+				L) converted_arguments_array+=( -L ) ;;
+				c) converted_arguments_array+=( -c ) ;;
+				C) converted_arguments_array+=( -C ) ;;
+				t) converted_arguments_array+=( -t ) ;;
+				g) converted_arguments_array+=( -g ) ;;
+				G) converted_arguments_array+=( -G ) ;;
+				a) converted_arguments_array+=( -a ) ;;
+				A) converted_arguments_array+=( -A ) ;;
+				m) converted_arguments_array+=( -m ) ;;
+				e) converted_arguments_array+=( -e ) ;;
+				p) converted_arguments_array+=( -p ) ;;
+				r) converted_arguments_array+=( -r ) ;;
+				n) converted_arguments_array+=( -n ) ;;
+
 				j)
 					# Set number of jobs to run via the required
 					# integer argument after '-j'
@@ -3350,15 +3254,11 @@ __process_positional_parameters () {
 						converted_arguments_array+=( -j )
 					fi
 				;;
-				h)
-					converted_arguments_array+=( -h )
-				;;
-				v)
-					converted_arguments_array+=( -v )
-				;;
-				o)
-					converted_arguments_array+=( -o )
-				;;
+
+				h) converted_arguments_array+=( -h ) ;;
+				v) converted_arguments_array+=( -v ) ;;
+				o) converted_arguments_array+=( -o ) ;;
+
 				:)
 					# Currently, this is just for '-j' so we can explicity
 					# specify it
@@ -3379,18 +3279,17 @@ __process_positional_parameters () {
 		__usage >&2
 
 		if [[ -n "${invalid_arguments_array[@]}" ]] ; then
-			__newline >&2
-			__error "Invalid options:" >&2
+			__error "\nInvalid options:" >&2
 
 			for i in "${invalid_arguments_array[@]}" ; do
 				printf " ${cyan}${i}${normal}" >&2
 			done
 
-			__newline >&2
+			printf '\n' >&2
 		fi
 
 		if [[ -n "${parameter_errors_array[@]}" ]] ; then
-			__newline >&2
+			printf '\n' >&2
 
 			for i in "${parameter_errors_array[@]}" ; do
 				__error "${i}\n" >&2
@@ -3406,63 +3305,26 @@ __process_positional_parameters () {
 	# functions
 	for i in "${converted_arguments_array[@]}" ; do
 		case "${i}" in
-			-l)
-				all="true"
-			;;
-			-L)
-				reallyall="true"
-			;;
-			-c)
-				compress_flac="true"
-				compress_test="true"
-			;;
-			-C)
-				compress_flac="true"
-				skip_test="true"
-			;;
-			-t)
-				test_flac="true"
-			;;
-			-g)
-				replaygain_flac="true"
-				# Below used only once to test for
-				# command compatibility
-				replaygain_force="true"
-			;;
-			-G)
-				replaygain_flac="true"
-				replaygain_noforce="true"
-			;;
-			-a)
-				aucdtect_flac="true"
-				no_spectrogram="true"
-			;;
-			-A)
-				aucdtect_flac="true"
-				create_spectrogram="true"
-			;;
-			-m)
-				md5check_flac="true"
-			;;
-			-e)
-				extract_artwork="true"
-			;;
-			-p)
-				prune_flac="true"
-			;;
-			-r)
-				retag_flac="true"
-			;;
-			-n)
-				no_color="true"
-			;;
+			-l) all="true"                                        ;;
+			-L) reallyall="true"                                  ;;
+			-c) compress_flac="true"    compress_test="true"      ;;
+			-C) compress_flac="true"    skip_test="true"          ;;
+			-t) test_flac="true"                                  ;;
+			-g) replaygain_flac="true"  replaygain_force="true"   ;;
+			-G) replaygain_flac="true"  replaygain_noforce="true" ;;
+			-a) aucdtect_flac="true"    no_spectrogram="true"     ;;
+			-A) aucdtect_flac="true"    create_spectrogram="true" ;;
+			-m) md5check_flac="true"                              ;;
+			-e) extract_artwork="true"                            ;;
+			-p) prune_flac="true"                                 ;;
+			-r) retag_flac="true"                                 ;;
+			-n) no_color="true"                                   ;;
 			-j)
 				# Do nothing, ${jobs} has already been stored
 				# in previous getopts loop
 				:
 			;;
-			-v)
-				__usage >&2
+			-v) __usage >&2
 				exit 1
 			;;
 			-h)
@@ -3816,13 +3678,10 @@ __operation_summary () {
 
 			"failed")
 				# Add a newline into file descriptor 5 (makes one line total)
-				__newline >&5
+				printf '\n' >&5
 
-				# Store everything in fd 5 into an array.  We only grab one line
+				# Store everything in fd 5 into a string  We only grab one line
 				read -u5 fail_count
-
-				# Store array into a string
-				fail_count="${fail_count[@]}"
 
 				# If ${#fail_count} is one, change the message to singular
 				if (( ${#fail_count} == 1 )) ; then
@@ -3846,10 +3705,6 @@ __operation_summary () {
 				# Set up the printed string with colors
 				printf "%s${yellow}%s${normal}%s${blue}%s${normal}%s${magenta}%s${normal}\n" \
 				"${operation_spacing}" "${operation}" " " "|" " " "Operation Did Not Run"
-			;;
-
-			*)
-				# Should not ever happen!
 			;;
 		esac
 	}
@@ -4475,9 +4330,10 @@ __operation_compress () {
 		# Compress FLAC file
 		# Display the current file with progress completed thus far via a
 		# percentage and progress bar
-		flac -f -${compression_level} -V "${i}" 2> >(while read -r -d% percent_complete ; do
+		flac --no-error-on-compression-fail -f -${compression_level} -V "${i}" 2> >(while read -r -d% percent_complete ; do
 			__print_progress
 		done) >/dev/null
+
 
 		# Exit code 130 is SIGINT so only check for exit code '1'
 		if (( ${?} == 1 )) ; then
@@ -6965,7 +6821,7 @@ if [[ "${retag_flac}" == "true" ]] ; then
 
 	if [[ -f "${metadata_errors}"  && "${coverart_warning}" == "true" ]] ; then
 		# Display COVERART warning function and metadata issues
-		__newline >&2 ; __coverart_warning
+		printf '\n' >&2 ; __coverart_warning
 
 		# Print out log exists to STDERR
 		__log_missing_tags
