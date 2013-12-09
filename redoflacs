@@ -622,99 +622,77 @@ __create_log () {
 	# Set up header array indices
 	header_aucdtect=(
 		"--------------------------------------------------------------------------------"
-		""
 		"                           AUCDTECT ERROR/REPORT LOG"
 		"                           -------------------------"
-		""
 		"      This log details which FLAC files have errors when running auCDtect"
-		""
 		"--------------------------------------------------------------------------------"
 	)
 
 	header_compress=(
 		"--------------------------------------------------------------------------------"
-		""
 		"                          COMPRESS & VERIFY ERROR LOG"
 		"                          ---------------------------"
-		""
 		"    This log details which FLAC files have errors when compressing and/or"
 		"  verifying"
-		""
 		"--------------------------------------------------------------------------------"
 	)
 
 	header_extract_artwork=(
 		"--------------------------------------------------------------------------------"
-		""
 		"                           EXTRACT ARTWORK ERROR LOG"
 		"                           -------------------------"
 		"  This log details which FLAC files have errors when extracting artwork images"
-		""
 		"--------------------------------------------------------------------------------"
 	)
 
 	header_md5=(
 		"--------------------------------------------------------------------------------"
-		""
 		"                              MD5 CHECK ERROR LOG"
 		"                              -------------------"
 		"    This log details which FLAC files have errors when checking the MD5"
 		"  signature"
-		""
 		"--------------------------------------------------------------------------------"
 	)
 
 	header_prune=(
 		"--------------------------------------------------------------------------------"
-		""
 		"                                PRUNE ERROR LOG"
 		"                                ---------------"
 		"   This log details which FLAC files have errors when pruning METADATA blocks"
-		""
 		"--------------------------------------------------------------------------------"
 	)
 
 	header_replay_add=(
 		"--------------------------------------------------------------------------------"
-		""
 		"                           REPLAYGAIN ADD ERROR LOG"
 		"                           ------------------------"
-		""
-		"    This log details which FLAC files have errors when applying ReplayGain"
-		"  values"
-		""
+		"    This log details which directories have FLAC files that have errors when"
+		"  applying ReplayGain values"
 		"--------------------------------------------------------------------------------"
 	)
 
 	header_replay_test=(
 		"--------------------------------------------------------------------------------"
-		""
 		"                           REPLAYGAIN TEST ERROR LOG"
 		"                           -------------------------"
-		""
 		"    This log details which FLAC files have errors when testing for ReplayGain"
 		"  compatability"
-		""
 		"--------------------------------------------------------------------------------"
 	)
 
 	header_retag=(
 		"--------------------------------------------------------------------------------"
-		""
 		"                                RETAG ERROR LOG"
 		"                                ---------------"
 		"         This log details which FLAC files have errors when retagging"
-		""
 		"--------------------------------------------------------------------------------"
 	)
 
 	header_test=(
 		"--------------------------------------------------------------------------------"
-		""
 		"                             TEST FLACS ERROR LOG"
 		"                             --------------------"
 		"          This log details which FLAC files have errors when testing"
-		""
 		"--------------------------------------------------------------------------------"
 	)
 
