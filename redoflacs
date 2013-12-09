@@ -706,7 +706,7 @@ __create_log () {
 			log_file="${compress_errors}"         header=( "${header_compress[@]}" )
 		;;
 		extract_artwork)
-			log_file="${extract_artwork_errors}"  header=( "${header_extrac_artwork[@]}" )
+			log_file="${extract_artwork_errors}"  header=( "${header_extract_artwork[@]}" )
 		;;
 		md5_check)
 			log_file="${md5_errors}"              header=( "${header_md5[@]}" )
