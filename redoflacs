@@ -1464,6 +1464,10 @@ __trap_countdown () {
 	# Restore the cursor
 	printf "\033[?25h"
 
+	# Remove temporary FIFO and leave just the file
+	# descriptor available
+	rm -f "${tmp_fifo}"
+
 	exit 130
 }
 
@@ -2887,18 +2891,13 @@ __total_directories () {
 }
 
 # Clear old file descriptor (3) and create a new
-# FIFO that's tied to file discriptor 3, removing
-# the FIFO upon completion
+# FIFO that's tied to file discriptor 3
 __clear_tmp_fd () {
-	# Create temporary FIFO
-	mkfifo "${tmp_fifo}"
+	# Close FIFO (if already open)
+	exec 3<&- 3>&-
 
 	# Open FIFO for reading and writing on file descriptor '3'
 	exec 3<>"${tmp_fifo}"
-
-	# Remove temporary FIFO and leave just the file
-	# descriptor available
-	rm -f "${tmp_fifo}"
 }
 
 # Clear old file descriptor (4) and create a new
@@ -2923,20 +2922,13 @@ __create_aucdtect_fd () {
 	rm -f "${tmp_aucdtect_fd}"
 }
 
-# Create a new file descriptor (5) via a FIFO
+# Create a new file descriptor (5) via a temporary file
 __set_error_fd () {
 	# Error FIFO location
-	error_fifo="/tmp/redoflacs_error_fifo_$$"
-
-	# Create temporary FIFO
-	mkfifo "${error_fifo}"
+	error_count="/tmp/redoflacs_error_file_$$"
 
 	# Open FIFO for reading and writing on file descriptor '5'
-	exec 5<>"${error_fifo}"
-
-	# Remove temporary FIFO and leave just the file
-	# descriptor available
-	rm -f "${error_fifo}"
+	exec 5<>"${error_count}"
 }
 
 # Kill any child processes
@@ -3543,11 +3535,8 @@ __operation_summary () {
 			;;
 
 			"failed")
-				# Add a newline into file descriptor 5 (makes one line total)
-				printf '\n' >&5
-
-				# Store everything in fd 5 into a string  We only grab one line
-				read -u5 fail_count
+				# Read in error ticks
+				read -r fail_count < "${error_count}"
 
 				# If ${#fail_count} is one, change the message to singular
 				if (( ${#fail_count} == 1 )) ; then
@@ -3798,6 +3787,14 @@ __operation_summary () {
 
 	printf "${normal}%s${blue}%s${normal}\n" \
 	" " "-------------------------+-------------------------"
+
+	# Remove temporary FIFO and leave just the file
+	# descriptor available
+	rm -f "${tmp_fifo}"
+
+	# Remove temporary FIFO and leave just the file
+	# descriptor available
+	rm -f "${error_count}"
 }
 
 # Function to run commands/operations that are by
@@ -5966,6 +5963,8 @@ __check_config_version
 
 # Temporary FIFO location
 tmp_fifo="/tmp/redoflacs_fifo_$$"
+
+mkfifo "${tmp_fifo}"
 
 # Set up error file descriptor '5'
 __set_error_fd
