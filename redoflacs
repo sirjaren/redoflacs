@@ -483,118 +483,85 @@ __usage () {
 #-------------------------------------------------------------------------------
 # .: LOG MESSAGES :.
 #-------------------------------------------------------------------------------
-# ReplayGain test error log message
-__message_replaygain_test () {
-	printf "\n"
-	__error "There were issues with some of the FLAC files,\n"
-	__error "please check:\n"
-	__error "${cyan}${replay_test_errors}${normal}\n"
+__message_log_exists () {
+	#---------------------------------------------------------------------------
+	# Print out the correct operational message regarding a log file's existence
+	# and what infomration that log may contain
+	#
+	# $1 determines the log file to use, as well as how many lines are printed
+	# out to correctly set the current row.  Possible values:
+	#   aucdtect          compress   extract_artwork
+	#   md5_check         prune      replaygain_add
+	#   replaygain_test   retag      test
+	#---------------------------------------------------------------------------
+	# Set up local variables
+	declare log_file
+
+	case "$1" in
+		aucdtect)
+			__error "Some FLAC files may be lossy sourced, please check:\n"
+
+			log_file="${aucdtect_errors}"
+			current_row=$(( current_row + 4 ))
+		;;
+		compress)
+			__error "Errors found in some FLAC files, please check:\n"
+
+			log_file="${compress_errors}"
+			current_row=$(( current_row + 4 ))
+		;;
+		extract_artwork)
+			__error "There were issues with some of the FLAC files,\n"
+			__error "please check:\n"
+
+			log_file="${extract_artwork_errors}"
+			current_row=$(( current_row + 5 ))
+		;;
+		md5_check)
+			__error "The MD5 Signature is unset for some FLAC files or there were\n"
+			__error "issues with some of the FLAC files, please check:\n"
+
+			log_file="${md5_errors}"
+			current_row=$(( current_row + 5 ))
+		;;
+		prune)
+			__error "There were issues with some of the FLAC files,\n"
+			__error "please check:\n"
+
+			log_file="${prune_errors}"
+			current_row=$(( current_row + 5 ))
+		;;
+		replaygain_add)
+			__error "There were issues adding ReplayGain values,\n"
+			__error "please check:\n"
+
+			log_file="${replay_add_errors}"
+			current_row=$(( current_row + 5 ))
+		;;
+		replaygain_test)
+			__error "There were issues with some of the FLAC files,\n"
+			__error "please check:\n"
+
+			log_file="${replay_test_errors}"
+		;;
+		retag)
+			__error "Some FLAC files have missing tags or there were\n"
+			__error "issues with some of the FLAC files, please check:\n"
+
+			log_file="${retag_errors}"
+			current_row=$(( current_row + 5 ))
+		;;
+		test)
+			__error "Errors found in some FLAC files, please check:\n"
+
+			log_file="${test_errors}"
+			current_row=$(( current_row + 4 ))
+		;;
+	esac
+
+	# Print the bottom half of the message (uniform across all operations)
+	__error "${cyan}${log_file}${normal}\n"
 	__error "for details.\n"
-
-	# Increment the current row by five to allow the Summary Of Operations table
-	# to display correctly
-	current_row=$(( current_row + 5 ))
-} >&2
-
-# ReplayGain process error log message
-__message_replaygain_add () {
-	printf "\n"
-	__error "There were issues adding ReplayGain values,\n"
-	__error "please check:\n"
-	__error "${cyan}${replay_add_errors}${normal}\n"
-	__error "for details.\n"
-
-	# Increment the current row by five to allow the Summary Of Operations table
-	# to display correctly
-	current_row=$(( current_row + 5 ))
-} >&2
-
-# Compress and verify error log message
-__message_compress () {
-	printf "\n"
-	__error "Errors found in some FLAC files, please check:\n"
-	__error "${cyan}${compress_errors}${normal}\n"
-	__error "for errors.\n"
-
-	# Increment the current row by four to allow the Summary Of Operations
-	# table to display correctly
-	current_row=$(( current_row + 4 ))
-} >&2
-
-# Test error log message
-__message_test () {
-	printf "\n"
-	__error "Errors found in some FLAC files, please check:\n"
-	__error "${cyan}${test_errors}${normal}\n"
-	__error "for errors.\n"
-
-	# Increment the current row by four to allow the Summary Of Operations
-	# table to display correctly
-	current_row=$(( current_row + 4 ))
-} >&2
-
-# auCDtect error log message
-__message_aucdtect () {
-	printf "\n"
-	__error "Some FLAC files may be lossy sourced, please check:\n"
-	__error "${cyan}${aucdtect_errors}${normal}\n"
-	__error "for details.\n"
-
-	# Increment the current row by four to allow the Summary Of Operations
-	# table to display correctly
-	current_row=$(( current_row + 4 ))
-} >&2
-
-# MD5 check error log message
-__message_md5_check () {
-	printf "\n"
-	__error "The MD5 Signature is unset for some FLAC files or there were\n"
-	__error "issues with some of the FLAC files, please check:\n"
-	__error "${cyan}${md5_errors}${normal}\n"
-	__error "for details.\n"
-
-	# Increment the current row by five to allow the Summary Of Operations table
-	# to display correctly
-	current_row=$(( current_row + 5 ))
-} >&2
-
-# Missing tags error log message
-__message_missing_tags () {
-	printf "\n"
-	__error "Some FLAC files have missing tags or there were\n"
-	__error "issues with some of the FLAC files, please check:\n"
-	__error "${cyan}${retag_errors}${normal}\n"
-	__error "for details.\n"
-
-	# Increment the current row by five to allow the Summary Of Operations table
-	# to display correctly
-	current_row=$(( current_row + 5 ))
-} >&2
-
-# Extract artwork error log message
-__message_extract_artwork () {
-	printf "\n"
-	__error "There were issues with some of the FLAC files,\n"
-	__error "please check:\n"
-	__error "${cyan}${extract_artwork_errors}${normal}\n"
-	__error "for details.\n"
-
-	# Increment the current row by five to allow the Summary Of Operations table
-	# to display correctly
-	current_row=$(( current_row + 5 ))
-} >&2
-
-# Prune error log message
-__message_prune () {
-	printf "\n"
-	__error "There were issues with some of the FLAC files,\n"
-	__error "please check:\n"
-	__error "${cyan}${prune_errors}${normal}\n"
-	__error "for details.\n"
-
-	# Increment the current row by five to allow the Summary Of Operations table
-	# to display correctly
-	current_row=$(( current_row + 5 ))
 } >&2
 #== .: END LOG MESSAGES :. =====================================================
 
@@ -1488,7 +1455,7 @@ __trap_replaygain_test () {
 
 	if [[ -f "${replay_test_errors}" ]] ; then
 		# Print out log exists to STDERR
-		__message_replaygain_test
+		__message_log_exists 'replaygain_test'
 
 		# Create and format log
 		__create_log 'replaygain_test'
@@ -1520,7 +1487,7 @@ __trap_replaygain_process () {
 
 	if [[ -f "${replay_add_errors}" ]] ; then
 		# Print out log exists to STDERR
-		__message_replaygain_add
+		__message_log_exists 'replaygain_add'
 
 		# Create and format log
 		__create_log 'replaygain_add'
@@ -1556,7 +1523,7 @@ __trap_compress () {
 
 	if [[ -f "${compress_errors}" ]] ; then
 		# Print out log exists to STDERR
-		__message_compress
+		__message_log_exists 'compress'
 
 		# Create and format log
 		__create_log 'compress'
@@ -1588,7 +1555,7 @@ __trap_test () {
 
 	if [[ -f "${test_errors}" ]] ; then
 		# Print out log exists to STDERR
-		__message_test
+		__message_log_exists 'test'
 
 		# Create and format log
 		__create_log 'test'
@@ -1624,7 +1591,7 @@ __trap_aucdtect () {
 
 	if [[ -f "${aucdtect_errors}" ]] ; then
 		# Print out log exists to STDERR
-		__message_aucdtect
+		__message_log_exists 'aucdtect'
 
 		# Create and format log
 		__create_log 'aucdtect'
@@ -1656,7 +1623,7 @@ __trap_md5check () {
 
 	if [[ -f "${md5_errors}" ]] ; then
 		# Print out log exists to STDERR
-		__message_md5_check
+		__message_log_exists 'md5_check'
 
 		# Create and format log
 		__create_log 'md5_check'
@@ -1705,13 +1672,13 @@ __trap_analyzing_tags () {
 		printf '\n' >&2 ; __coverart_warning
 
 		# Print out log exists to STDERR
-		__message_missing_tags
+		__message_log_exists 'retag'
 
 		# Create and format log
 		__create_log 'retag'
 	elif [[ -f "${retag_errors}" ]] ; then
 		# Print out log exists to STDERR
-		__message_missing_tags
+		__message_log_exists 'retag'
 
 		# Create and format log
 		__create_log 'retag'
@@ -1760,13 +1727,13 @@ __trap_applying_tags () {
 		printf '\n' >&2 ; __coverart_warning
 
 		# Print out log exists to STDERR
-		__message_missing_tags
+		__message_log_exists 'retag'
 
 		# Create and format log
 		__create_log 'retag'
 	elif [[ -f "${retag_errors}" ]] ; then
 		# Print out log exists to STDERR
-		__message_missing_tags
+		__message_log_exists 'retag'
 
 		# Create and format log
 		__create_log 'retag'
@@ -1798,7 +1765,7 @@ __trap_extract_artwork () {
 
 	if [[ -f "${extract_artwork_errors}" ]] ; then
 		# Print out log exists to STDERR
-		__message_extract_artwork
+		__message_log_exists 'extract_artwork'
 
 		# Create and format log
 		__create_log 'extract_artwork'
@@ -1830,7 +1797,7 @@ __trap_prune () {
 
 	if [[ -f "${prune_errors}" ]] ; then
 		# Print out log exists to STDERR
-		__message_prune
+		__message_log_exists 'prune'
 
 		# Create and format log
 		__create_log 'prune'
@@ -6043,7 +6010,7 @@ if [[ "${aucdtect_flac}" == "true" ]] ; then
 
 	if [[ -f "${aucdtect_errors}" ]] ; then
 		# Print out log exists to STDERR
-		__message_aucdtect
+		__message_log_exists 'aucdtect'
 
 		# Create and format log
 		__create_log 'aucdtect'
@@ -6100,7 +6067,7 @@ if [[ "${md5check_flac}" == "true" ]] ; then
 
 	if [[ -f "${md5_errors}" ]] ; then
 		# Print out log exists to STDERR
-		__message_md5_check
+		__message_log_exists 'md5_check'
 
 		# Prepend log header to log file
 		__create_log 'md5_check'
@@ -6157,7 +6124,7 @@ if [[ "${compress_flac}" == "true" ]] ; then
 
 	if [[ -f "${compress_errors}" ]] ; then
 		# Print out log exists to STDERR
-		__message_compress
+		__message_log_exists 'compress'
 
 		# Prepend log header to log file
 		__create_log 'compress'
@@ -6214,7 +6181,7 @@ if [[ "${test_flac}" == "true" ]] ; then
 
 	if [[ -f "${test_errors}" ]] ; then
 		# Print out log exists to STDERR
-		__message_test
+		__message_log_exists 'test'
 
 		# Prepend log header to log file
 		__create_log 'test'
@@ -6293,7 +6260,7 @@ if [[ "${replaygain_flac}" == "true" ]] ; then
 
 	if [[ -f "${replay_test_errors}" ]] ; then
 		# Print out log exists to STDERR
-		__message_replaygain_test
+		__message_log_exists 'replaygain_test'
 
 		# Prepend log header to log file
 		__create_log 'replaygain_test'
@@ -6355,7 +6322,7 @@ if [[ "${replaygain_flac}" == "true" ]] ; then
 
 	if [[ -f "${replay_add_errors}" ]] ; then
 		# Print out log exists to STDERR
-		__message_replaygain_add
+		__message_log_exists 'replaygain_add'
 
 		# Prepend log header to log file
 		__create_log 'replaygain_add'
@@ -6463,7 +6430,7 @@ if [[ "${retag_flac}" == "true" ]] ; then
 		printf '\n' >&2 ; __coverart_warning
 
 		# Print out log exists to STDERR
-		__message_missing_tags
+		__message_log_exists 'retag'
 
 		# Prepend log header to log file
 		__create_log 'retag'
@@ -6477,7 +6444,7 @@ if [[ "${retag_flac}" == "true" ]] ; then
 		exit 1
 	elif [[ -f "${retag_errors}" ]] ; then
 		# Print out log exists to STDERR
-		__message_missing_tags
+		__message_log_exists 'retag'
 
 		# Prepend log header to log file
 		__create_log 'retag'
@@ -6579,7 +6546,7 @@ if [[ "${extract_artwork}" == "true" ]] ; then
 
 	if [[ -f "${extract_artwork_errors}" ]] ; then
 		# Print out log exists to STDERR
-		__message_extract_artwork
+		__message_log_exists 'extract_artwork'
 
 		# Prepend log header to log file
 		__create_log 'extract_artwork'
@@ -6646,7 +6613,7 @@ if [[ "${prune_flac}" == "true" ]] ; then
 
 	if [[ -f "${prune_errors}" ]] ; then
 		# Print out log exists to STDERR
-		__message_prune
+		__message_log_exists 'prune'
 
 		# Prepend log header to log file
 		__create_log 'prune'
