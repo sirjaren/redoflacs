@@ -479,10 +479,8 @@ __usage () {
 }
 #== .: END SCRIPT MESSAGES :. ==================================================
 
+#-------------------------------------------------------------------------------
 
-#-------------------------------------------------------------------------------
-# .: LOG MESSAGES :.
-#-------------------------------------------------------------------------------
 __message_log_exists () {
 	#---------------------------------------------------------------------------
 	# Print out the correct operational message regarding a log file's existence
@@ -563,12 +561,9 @@ __message_log_exists () {
 	__error "${cyan}${log_file}${normal}\n"
 	__error "for details.\n"
 } >&2
-#== .: END LOG MESSAGES :. =====================================================
-
 
 #-------------------------------------------------------------------------------
-# .: LOG HEADERS :.
-#-------------------------------------------------------------------------------
+
 __create_log () {
 	#---------------------------------------------------------------------------
 	# Take log file from the current operation, prepending a header to it as
@@ -730,119 +725,85 @@ __create_log () {
 		printf "%s%$((length - filename_length))s  ->  %s\n" "${filename}" "" "${error_msg}" >> "${log_file}"
 	done
 }
-#== .: END LOG HEADERS :. ======================================================
-
 
 #-------------------------------------------------------------------------------
-# .: TITLE MESSAGES :.
-#-------------------------------------------------------------------------------
-# Compress FLACS & verify
-__title_compress_flac () {
-	# Obtain the current cursor row position
-	__obtain_row
 
-	printf "\033[${current_row}H ${green}*${normal} Compressing & Verifying ${magenta}[Level 8]${normal}\n"
+__operation_message () {
+	#---------------------------------------------------------------------------
+	# Print out current operation title message.
+	#
+	# $1 determines which message to print.  Possible values:
+	#   aucdtect          compress   extract_artwork
+	#   md5_check         prune      replaygain
+	#   retag             test
+	#---------------------------------------------------------------------------
+	# Set up local variables
+	declare message
+
+	# Define message to print based off of $1
+	case "${1}" in
+		aucdtect)
+			message="auCDtect Analysis"
+		;;
+		compress)
+			message="Compressing & Verifying ${magenta}[Level 8]${normal}"
+		;;
+		extract_artwork)
+			message="Extracting Artwork"
+		;;
+		md5_check)
+			message="MD5 Check"
+		;;
+		prune)
+			if [[ "${remove_artwork}" != "true" ]] ; then
+				# Keep artwork
+				message="Pruning All Blocks [Except: ${cyan}STREAMINFO${normal}, ${cyan}VORBIS_COMMENT${normal} & ${cyan}PICTURE${normal}"
+			else
+				# Remove artwork
+				message="Pruning All Blocks [Except: ${cyan}STREAMINFO${normal} & ${cyan}VORBIS_COMMENT${normal}"
+			fi
+		;;
+		replaygain)
+			message="Applying ReplayGain"
+		;;
+		retag)
+			message="Re-Tagging"
+		;;
+		test)
+			message="Testing"
+		;;
+	esac
+
+	# Print title message
+	printf "\033[$(__row)H ${green}*${normal} ${message}\n"
 }
-
-# Apply ReplayGain to FLACS
-__title_replaygain () {
-	# Obtain the current cursor row position
-	__obtain_row
-
-	printf "\033[${current_row}H ${green}*${normal} Applying ReplayGain\n"
-}
-
-# Retag FLACS
-__title_retag () {
-	# Obtain the current cursor row position
-	__obtain_row
-
-	printf "\033[${current_row}H ${green}*${normal} Re-Tagging\n"
-}
-
-# Testing FLACS
-__title_testing_flac () {
-	# Obtain the current cursor row position
-	__obtain_row
-
-	printf "\033[${current_row}H ${green}*${normal} Testing\n"
-}
-
-# Validating FLACS with auCDtect
-__title_aucdtect_flac () {
-	# Obtain the current cursor row position
-	__obtain_row
-
-	printf "\033[${current_row}H ${green}*${normal} auCDtect Analysis\n"
-}
-
-# Checking MD5 of FLACS
-__title_md5check_flac () {
-	# Obtain the current cursor row position
-	__obtain_row
-
-	printf "\033[${current_row}H ${green}*${normal} MD5 Check\n"
-}
-
-# Extract artwork from FLACS
-__title_extract_artwork () {
-	# Obtain the current cursor row position
-	__obtain_row
-
-	printf "\033[${current_row}H ${green}*${normal} Extracting Artwork\n"
-}
-
-# Pruning FLACS
-__title_prune_flac () {
-	# Change printed title based on whether embedded artwork is to be removed
-	if [[ "${remove_artwork}" != "true" ]] ; then
-		# Keep artwork
-		local metadata_removed="${cyan}STREAMINFO${normal}, ${cyan}VORBIS_COMMENT${normal} & ${cyan}PICTURE${normal}"
-	else
-		# Remove artwork
-		local metadata_removed="${cyan}STREAMINFO${normal} & ${cyan}VORBIS_COMMENT${normal}"
-	fi
-
-	# Obtain the current cursor row position
-	__obtain_row
-
-	printf "\033[${current_row}H ${green}*${normal} Pruning All Blocks [Except: ${metadata_removed}]\n"
-}
-#== .: END TITLE MESSAGES :. ===================================================
-
 
 #-------------------------------------------------------------------------------
-# .: SUB MESSAGES :.
+
+__operation_sub_message () {
+	#---------------------------------------------------------------------------
+	# Print out current operation title sub message.
+	#
+	# $1 determines which message to print.  Possible values:
+	#   replaygain_add    replaygain_test
+	#   retag_analyze     retag_apply
+	#---------------------------------------------------------------------------
+	# Set up local variables
+	declare message
+
+	# Define sub message to print based off of $1
+	case "${1}" in
+		replaygain_test)  message="Testing"      ;;
+		replaygain_add)   message="Applying"     ;;
+		retag_analyze)    message="Analyzing"    ;;
+		retag_apply)      message="Re-Applying"  ;;
+	esac
+
+	# Print title sub message
+	printf "\033[$(__row);4H${green}>${normal} ${message}\n"
+}
+
 #-------------------------------------------------------------------------------
-# Test for ReplayGain
-__sub_test_replaygain () {
-	# No need to obtain the row, since it's done already after the title message
-	printf "\033[${current_row};4H${green}>${normal} Testing\n"
-}
-
-# Adding ReplayGain values
-__sub_add_replaygain () {
-	# Obtain the current row
-	__obtain_row
-
-	printf "\033[${current_row};4H${green}>${normal} Applying\n"
-}
-
-# Analyze FLAC tags
-__sub_analyze_tags () {
-	# No need to obtain the row, since it's done already after the title message
-	printf "\033[${current_row};4H${green}>${normal} Analyzing\n"
-}
-
-# Applying new tags
-__sub_applying_tags () {
-	# Obtain the current row
-	__obtain_row
-
-	printf "\033[${current_row};4H${green}>${normal} Re-Applying\n"
-}
-#== .: END SUB MESSAGES :. =====================================================
-
 
 #-------------------------------------------------------------------------------
 # .: PROCESSED FILE/DIRECTORY MESSAGES :.
@@ -1840,9 +1801,10 @@ __metaflac_version () {
 	metaflac_version="${metaflac_version%.*}"
 }
 
-# Obtain the current cursor row position
-__obtain_row () {
-	__lines_columns              # Obtain the lines and columns of the terminals
+__row () {
+	#---------------------------------------------------------------------------
+	# Print out the current cursor row position
+	#---------------------------------------------------------------------------
 	exec < /dev/tty              # Set a new TTY to read in STDIN
 	row_old_stty="$(stty -g)"    # Store current TTY settings
 	stty raw -echo min 0         # Current TTY set at an absolute minimum
@@ -1852,18 +1814,16 @@ __obtain_row () {
 
 	# Read in escape sequence output from TTY.  The resultant output from the
 	# escape sequence looks like:
-	#  ^[<num>;<num>R
+	#  ^[<integer>;<integer>R
 	#       ^------------ This is the 'row' we want to obtain
 	# The read then specifies the 'R' is the delimeter to stop reading in from,
 	# storing this string into the $current_row variable
-	read -r -d R current_row
+	IFS=';' read -r -d R current_row _
 
-	# Cull the last part of the $current_row variable to form:
-	#  ^[[<num>
-	current_row="${current_row%%;*}"
-
-	current_row="${current_row:2}"  # Cull the first 2 characters leaving: <num>
 	stty "${row_old_stty}"          # Restore the old TTY settings
+
+	# Return current row position (integer)
+	printf "%s" "${current_row#??}"
 }
 
 # Check if we need to scroll the terminal up depending on how much room is left,
@@ -1873,6 +1833,18 @@ __obtain_row () {
 # than the jobs specified to run.  This allows us to _NOT_ have extra gaps in
 # our output
 __scroll_terminal () {
+	# Grab the first line of 'stty -a' output
+	# Redirecting '/dev/stderr' to 'stty' allows valid arguments
+	read -r _ _ _ _ lines _ columns _ < <(stty -a < /dev/stderr)
+
+	# Remove semicolons from obtain columns and lines
+	#--
+	# Terminal width
+	columns="${columns%;}"
+
+	# Terminal height
+	lines="${lines%;}"
+
 	# If 'directory' is specified as ${1}, we will process the number of lines
 	# to remove as the total number of directories, else we'll use the total
 	# number of files
@@ -1903,11 +1875,11 @@ __scroll_terminal () {
 	# specified more jobs than there are files/directories to process
 	if [[ -z "${remove_from_scroll}" ]] ; then
 		# Obtain the remaining lines left in the current terminal
-		remaining_lines=$(( lines - current_row ))
+		remaining_lines=$(( lines - $(__row) ))
 	else
 		# Obtain the remaining lines left in the current terminal as well as
 		# adding in the the number of lines we don't want to scroll
-		remaining_lines=$(( lines - current_row + remove_from_scroll ))
+		remaining_lines=$(( lines - $(__row) + remove_from_scroll ))
 	fi
 
 	# If the remaining lines is less than the jobs used, the terminal will not
@@ -1921,8 +1893,8 @@ __scroll_terminal () {
 		# This scrolls the terminal up by the number of lines to scroll
 		printf "\033[${lines_to_scroll}S"
 
-		# The current row is now set to the difference of the lines to scroll
-		current_row=$(( current_row - lines_to_scroll ))
+		# The cursor is set to the difference of the lines to scroll
+		printf "\033[$(( $(__row) - lines_to_scroll ))H"
 	fi
 }
 
@@ -1934,14 +1906,14 @@ __set_abort_file_cursor () {
 	if (( ${#total_flacs_array[@]} < jobs )) ; then
 		# Less files than jobs to run, so only add the number of files
 		# processed
-		current_row=$(( current_row + ${#total_flacs_array[@]} ))
+		current_row=$(( $(__row) + ${#total_flacs_array[@]} ))
 	else
 		# More files than jobs to run, so add the number of jobs processed
-		current_row=$(( current_row + jobs ))
+		current_row=$(( $(__row) + jobs ))
 	fi
 
 	# Obtain the remaining lines left in the current terminal
-	local remaining_lines=$(( lines - current_row ))
+	local remaining_lines=$(( lines - $(__row) ))
 
 	# Scroll the terminal up by 1 if we do not have any remaining lines
 	if (( remaining_lines == 0 )) ; then
@@ -1961,14 +1933,14 @@ __set_abort_directory_cursor () {
 	if (( ${#flac_directories_array[@]} < jobs )) ; then
 		# Less directories than jobs to run, so only add the number of
 		# directories processed
-		current_row=$(( current_row + ${#flac_directories_array[@]} ))
+		current_row=$(( $(__row) + ${#flac_directories_array[@]} ))
 	else
 		# More directories than jobs to run, so add the number of jobs processed
-		current_row=$(( current_row + jobs ))
+		current_row=$(( $(__row) + jobs ))
 	fi
 
 	# Obtain the remaining lines left in the current terminal
-	local remaining_lines=$(( lines - current_row ))
+	local remaining_lines=$(( lines - $(__row) ))
 
 	# Scroll the terminal up by 1 if we do not have any remaining lines
 	if (( remaining_lines == 0 )) ; then
@@ -2410,23 +2382,6 @@ __check_config_version () {
 		# Display warning and countdown
 		__countdown_config ; printf '\n\n'
 	fi
-}
-
-# Determine the width/height of the terminal in
-__lines_columns () {
-	# Grab the first line of 'stty -a' output
-	# Redirecting '/dev/stderr' to 'stty' allows valid arguments
-	read -r rows_columns < <(stty -a < /dev/stderr)
-
-	# Remove superflous information from 'stty -a'
-	# Ends up with the width of terminal
-	columns="${rows_columns#*columns }"
-	columns="${columns%%;*}"
-
-	# Remove superflous information from 'stty -a'
-	# Ends up with the height of terminal
-	lines="${rows_columns#*rows }"
-	lines="${lines%%;*}"
 }
 
 # Creates filename of current FLAC and culls it if the length
@@ -3545,7 +3500,7 @@ __operation_summary () {
 	# Begin printing the table
 
 	# Title
-	printf "\033[${current_row};2H${blue}%s${normal}\n" \
+	printf "\033[$(__row);2H${blue}%s${normal}\n" \
 	"---------------------------------------------------"
 	printf "                Summary Of Operations\n"
 	printf "${normal} ${blue}-------------------------+-------------------------${normal}\n" \
@@ -3782,12 +3737,14 @@ __run_parallel_files () {
 	# specified by ${1} when calling this function
 	parallel_operation="${1}"
 
+	row_state=$(__row)
+
 	# Start as many processes as determined by ${jobs}
 	for i in "${total_flacs_array[@]:0:${jobs}}" ; do
 		# This is the first set of jobs to run, so the placement of each file to
 		# display is the current row the cursor is on plus the iteration (the
 		# current file [number] being processed), which is zero-based
-		placement=$((current_row + iteration))
+		placement=$((row_state + iteration))
 
 		# Add one to the iteration to enforce we print one or more, not zero
 		((iteration++))
@@ -3811,7 +3768,7 @@ __run_parallel_files () {
 			# cursor is on plus the position of the last completed location
 			# of the file, which allows us to dynamically place new jobs
 			# where other jobs have completed
-			placement="$((current_row + previous_operation_position))"
+			placement=$((row_state + previous_operation_position))
 
 			# If current number of FLACs to process is less than total FLACs
 			# found, add another FLAC to process
@@ -5973,14 +5930,10 @@ __processed_flacs_ok
 # isn't wasted on doing unnecessary operations if the
 # FLAC files are corrupt or have metadata issues
 if [[ "${aucdtect_flac}" == "true" ]] ; then
-
 	# Prints title message of current operation
-	__title_aucdtect_flac
+	__operation_message 'aucdtect'
 
-	# Obtain the current row
-	__obtain_row
-
-	# Scroll terminal, if applicable
+	# Scroll terminal, if needed
 	__scroll_terminal
 
 	# Make sure to clear file descriptor '3' before proceeding
@@ -5990,6 +5943,9 @@ if [[ "${aucdtect_flac}" == "true" ]] ; then
 	# STDOUT to
 	__create_aucdtect_fd
 
+	# Save the row position before starting the operation
+	pre_operation_row_position=$(__row)
+
 	# Run parallel operations, that which is specified as ${1}
 	__run_parallel_files __operation_aucdtect
 
@@ -5998,15 +5954,11 @@ if [[ "${aucdtect_flac}" == "true" ]] ; then
 	if (( ${#total_flacs_array[@]} < jobs )) ; then
 		# Less files than jobs to run, so only add the number of files
 		# processed
-		current_row=$(( current_row + ${#total_flacs_array[@]} ))
+		printf "\033[$(( pre_operation_row_position + ${#total_flacs_array[@]} ))H"
 	else
 		# More files than jobs to run, so add the number of jobs processed
-		current_row=$(( current_row + jobs ))
+		printf "\033[$(( pre_operation_row_position + jobs ))H"
 	fi
-
-	# Place cursor on the last line, to allow the current row to be read in
-	# correctly
-	printf "\033[${current_row}H"
 
 	if [[ -f "${aucdtect_errors}" ]] ; then
 		# Print out log exists to STDERR
@@ -6034,18 +5986,17 @@ fi
 # .: MD5 CHECK :.
 #-------------------------------------------------------------------------------
 if [[ "${md5check_flac}" == "true" ]] ; then
-
 	# Prints title message of current operation
-	__title_md5check_flac
+	__operation_message 'md5_check'
 
-	# Obtain the current row
-	__obtain_row
-
-	# Scroll terminal, if applicable
+	# Scroll terminal, if needed
 	__scroll_terminal
 
 	# Make sure to clear file descriptor '3' before proceeding
 	__clear_tmp_fd
+
+	# Save the row position before starting the operation
+	pre_operation_row_position=$(__row)
 
 	# Run parallel operations, that which is specified as ${1}
 	__run_parallel_files __operation_md5check
@@ -6055,15 +6006,11 @@ if [[ "${md5check_flac}" == "true" ]] ; then
 	if (( ${#total_flacs_array[@]} < jobs )) ; then
 		# Less files than jobs to run, so only add the number of files
 		# processed
-		current_row=$(( current_row + ${#total_flacs_array[@]} ))
+		printf "\033[$(( pre_operation_row_position + ${#total_flacs_array[@]} ))H"
 	else
 		# More files than jobs to run, so add the number of jobs processed
-		current_row=$(( current_row + jobs ))
+		printf "\033[$(( pre_operation_row_position + jobs ))H"
 	fi
-
-	# Place cursor on the last line, to allow the current row to be read in
-	# correctly
-	printf "\033[${current_row}H"
 
 	if [[ -f "${md5_errors}" ]] ; then
 		# Print out log exists to STDERR
@@ -6091,18 +6038,17 @@ fi
 # .: COMPRESS/VERIFY :.
 #-------------------------------------------------------------------------------
 if [[ "${compress_flac}" == "true" ]] ; then
-
 	# Prints title message of current operation
-	__title_compress_flac
+	__operation_message 'compress'
 
-	# Obtain the current row
-	__obtain_row
-
-	# Scroll terminal, if applicable
+	# Scroll terminal, if needed
 	__scroll_terminal
 
 	# Make sure to clear file descriptor '3' before proceeding
 	__clear_tmp_fd
+
+	# Save the row position before starting the operation
+	pre_operation_row_position=$(__row)
 
 	# Run parallel operations, that which is specified as ${1}
 	__run_parallel_files __operation_compress
@@ -6112,15 +6058,11 @@ if [[ "${compress_flac}" == "true" ]] ; then
 	if (( ${#total_flacs_array[@]} < jobs )) ; then
 		# Less files than jobs to run, so only add the number of files
 		# processed
-		current_row=$(( current_row + ${#total_flacs_array[@]} ))
+		printf "\033[$(( pre_operation_row_position + ${#total_flacs_array[@]} ))H"
 	else
 		# More files than jobs to run, so add the number of jobs processed
-		current_row=$(( current_row + jobs ))
+		printf "\033[$(( pre_operation_row_position + jobs ))H"
 	fi
-
-	# Place cursor on the last line, to allow the current row to be read in
-	# correctly
-	printf "\033[${current_row}H"
 
 	if [[ -f "${compress_errors}" ]] ; then
 		# Print out log exists to STDERR
@@ -6148,18 +6090,17 @@ fi
 # .: TEST :.
 #-------------------------------------------------------------------------------
 if [[ "${test_flac}" == "true" ]] ; then
-
 	# Prints title message of current operation
-	__title_testing_flac
+	__operation_message 'test'
 
-	# Obtain the current row
-	__obtain_row
-
-	# Scroll terminal, if applicable
+	# Scroll terminal, if needed
 	__scroll_terminal
 
 	# Make sure to clear file descriptor '3' before proceeding
 	__clear_tmp_fd
+
+	# Save the row position before starting the operation
+	pre_operation_row_position=$(__row)
 
 	# Run parallel operations, that which is specified as ${1}
 	__run_parallel_files __operation_test
@@ -6169,15 +6110,11 @@ if [[ "${test_flac}" == "true" ]] ; then
 	if (( ${#total_flacs_array[@]} < jobs )) ; then
 		# Less files than jobs to run, so only add the number of files
 		# processed
-		current_row=$(( current_row + ${#total_flacs_array[@]} ))
+		printf "\033[$(( pre_operation_row_position + ${#total_flacs_array[@]} ))H"
 	else
 		# More files than jobs to run, so add the number of jobs processed
-		current_row=$(( current_row + jobs ))
+		printf "\033[$(( pre_operation_row_position + jobs ))H"
 	fi
-
-	# Place cursor on the last line, to allow the current row to be read in
-	# correctly
-	printf "\033[${current_row}H"
 
 	if [[ -f "${test_errors}" ]] ; then
 		# Print out log exists to STDERR
@@ -6205,7 +6142,6 @@ fi
 # .: REPLAYGAIN :.
 #-------------------------------------------------------------------------------
 if [[ "${replaygain_flac}" == "true" ]] ; then
-
 	# Check if "-G, --replaygain-noforce" was called
 	if [[ "${replaygain_noforce}" == "true" ]] ; then
 		process_replaygain="__operation_replaygain_noforce"
@@ -6214,10 +6150,7 @@ if [[ "${replaygain_flac}" == "true" ]] ; then
 	fi
 
 	# Prints title message of current operation
-	__title_replaygain
-
-	# Obtain the current row
-	__obtain_row
+	__operation_message 'replaygain'
 
 	# Obtain `metaflac' version information to test on.  Example:
 	#   metaflac 1.3.0pre1
@@ -6229,16 +6162,16 @@ if [[ "${replaygain_flac}" == "true" ]] ; then
 	# .: TEST REPLAYGAIN :.
 	#---------------------------------------------------------------------------
 	# Prints sub message of current operation
-	__sub_test_replaygain
+	__operation_sub_message 'replaygain_test'
 
-	# Obtain the current row
-	__obtain_row
-
-	# Scroll terminal, if applicable
+	# Scroll terminal, if needed
 	__scroll_terminal
 
 	# Make sure to clear file descriptor '3' before proceeding
 	__clear_tmp_fd
+
+	# Save the row position before starting the operation
+	pre_operation_row_position=$(__row)
 
 	# Run parallel operations, that which is specified as ${1}
 	__run_parallel_files __operation_test_replaygain
@@ -6248,15 +6181,11 @@ if [[ "${replaygain_flac}" == "true" ]] ; then
 	if (( ${#total_flacs_array[@]} < jobs )) ; then
 		# Less files than jobs to run, so only add the number of files
 		# processed
-		current_row=$(( current_row + ${#total_flacs_array[@]} ))
+		printf "\033[$(( pre_operation_row_position + ${#total_flacs_array[@]} ))H"
 	else
 		# More files than jobs to run, so add the number of jobs processed
-		current_row=$(( current_row + jobs ))
+		printf "\033[$(( pre_operation_row_position + jobs ))H"
 	fi
-
-	# Place cursor on the last line, to allow the current row to be read in
-	# correctly
-	printf "\033[${current_row}H"
 
 	if [[ -f "${replay_test_errors}" ]] ; then
 		# Print out log exists to STDERR
@@ -6292,15 +6221,15 @@ if [[ "${replaygain_flac}" == "true" ]] ; then
 	__total_directories
 
 	# Prints sub message of current operation
-	__sub_add_replaygain
+	__operation_sub_message 'replaygain_add'
 
-	# Obtain the current row
-	__obtain_row
-
-	# Scroll terminal, if applicable; we are specifying 'directory' to all the
+	# Scroll terminal, if needed; we are specifying 'directory' to all the
 	# '__scroll_terminal' function to apply logic on directories as opposed to
 	# files
-	__scroll_terminal directory
+	__scroll_terminal 'directory'
+
+	# Save the row position before starting the operation
+	pre_operation_row_position=$(__row)
 
 	# Run parallel operations, that which is specified as ${1}
 	__run_parallel_directories "${process_replaygain}"
@@ -6310,15 +6239,11 @@ if [[ "${replaygain_flac}" == "true" ]] ; then
 	if (( ${#flac_directories_array[@]} < jobs )) ; then
 		# Less directories than jobs to run, so only add the number of
 		# directories processed
-		current_row=$(( current_row + ${#flac_directories_array[@]} ))
+		printf "\033[$(( pre_operation_row_position + ${#flac_directories_array[@]} ))H"
 	else
 		# More directories than jobs to run, so add the number of jobs processed
-		current_row=$(( current_row + jobs ))
+		printf "\033[$(( pre_operation_row_position + jobs ))H"
 	fi
-
-	# Place cursor on the last line, to allow the current row to be read in
-	# correctly
-	printf "\033[${current_row}H"
 
 	if [[ -f "${replay_add_errors}" ]] ; then
 		# Print out log exists to STDERR
@@ -6347,7 +6272,6 @@ fi
 # .: RETAG :.
 #-------------------------------------------------------------------------------
 if [[ "${retag_flac}" == "true" ]] ; then
-
 	# If COVERART tag doesn't appear in any of the FLAC files'
 	# tags, and if the user wants artwork to be kept, don't log
 	# missing COVERART tags (in the event that the script adds
@@ -6366,10 +6290,7 @@ if [[ "${retag_flac}" == "true" ]] ; then
 	fi
 
 	# Prints title message of current operation
-	__title_retag
-
-	# Obtain the current row
-	__obtain_row
+	__operation_message 'retag'
 
 	# Copy the tag array because we will need to use it
 	# later as we are _may_ add a temporary element to the
@@ -6382,16 +6303,16 @@ if [[ "${retag_flac}" == "true" ]] ; then
 	# Analyze FLAC tags to ensure none are missing and/or empty
 
 	# Prints sub message of current operation
-	__sub_analyze_tags
+	__operation_sub_message 'retag_analyze'
 
-	# Obtain the current row
-	__obtain_row
-
-	# Scroll terminal, if applicable
+	# Scroll terminal, if needed
 	__scroll_terminal
 
 	# Make sure to clear file descriptor '3' before proceeding
 	__clear_tmp_fd
+
+	# Save the row position before starting the operation
+	pre_operation_row_position=$(__row)
 
 	# Run parallel operations, that which is specified as ${1}
 	__run_parallel_files "${analyze_tags}"
@@ -6401,15 +6322,11 @@ if [[ "${retag_flac}" == "true" ]] ; then
 	if (( ${#total_flacs_array[@]} < jobs )) ; then
 		# Less files than jobs to run, so only add the number of files
 		# processed
-		current_row=$(( current_row + ${#total_flacs_array[@]} ))
+		printf "\033[$(( pre_operation_row_position + ${#total_flacs_array[@]} ))H"
 	else
 		# More files than jobs to run, so add the number of jobs processed
-		current_row=$(( current_row + jobs ))
+		printf "\033[$(( pre_operation_row_position + jobs ))H"
 	fi
-
-	# Place cursor on the last line, to allow the current row to be read in
-	# correctly
-	printf "\033[${current_row}H"
 
 	# Test for DEPRECATED tag, COVERART in METADATA_ERROR log.  If it
 	# exists, set coverart_warning variable to make script output
@@ -6474,16 +6391,16 @@ if [[ "${retag_flac}" == "true" ]] ; then
 	tags=( "${old_tags[@]}" )
 
 	# Prints sub message of current operation
-	__sub_applying_tags
+	__operation_sub_message 'retag_apply'
 
-	# Obtain the current row
-	__obtain_row
-
-	# Scroll terminal, if applicable
+	# Scroll terminal, if needed
 	__scroll_terminal
 
 	# Make sure to clear file descriptor '3' before proceeding
 	__clear_tmp_fd
+
+	# Save the row position before starting the operation
+	pre_operation_row_position=$(__row)
 
 	# Run parallel operations, that which is specified as ${1}
 	__run_parallel_files __operation_set_tags
@@ -6493,15 +6410,11 @@ if [[ "${retag_flac}" == "true" ]] ; then
 	if (( ${#total_flacs_array[@]} < jobs )) ; then
 		# Less files than jobs to run, so only add the number of files
 		# processed
-		current_row=$(( current_row + ${#total_flacs_array[@]} ))
+		printf "\033[$(( pre_operation_row_position + ${#total_flacs_array[@]} ))H"
 	else
 		# More files than jobs to run, so add the number of jobs processed
-		current_row=$(( current_row + jobs ))
+		printf "\033[$(( pre_operation_row_position + jobs ))H"
 	fi
-
-	# Place cursor on the last line, to allow the current row to be read in
-	# correctly
-	printf "\033[${current_row}H"
 
 	# Store operation status for Summary Of Operations
 	applying_retag_complete="true"
@@ -6515,16 +6428,16 @@ fi
 #-------------------------------------------------------------------------------
 if [[ "${extract_artwork}" == "true" ]] ; then
 	# Prints title message of current operation
-	__title_extract_artwork
+	__operation_message 'extract_artwork'
 
-	# Obtain the current row
-	__obtain_row
-
-	# Scroll terminal, if applicable
+	# Scroll terminal, if needed
 	__scroll_terminal
 
 	# Make sure to clear file descriptor '3' before proceeding
 	__clear_tmp_fd
+
+	# Save the row position before starting the operation
+	pre_operation_row_position=$(__row)
 
 	# Run parallel operations, that which is specified as ${1}
 	__run_parallel_files __operation_extract_artwork
@@ -6534,15 +6447,11 @@ if [[ "${extract_artwork}" == "true" ]] ; then
 	if (( ${#total_flacs_array[@]} < jobs )) ; then
 		# Less files than jobs to run, so only add the number of files
 		# processed
-		current_row=$(( current_row + ${#total_flacs_array[@]} ))
+		printf "\033[$(( pre_operation_row_position + ${#total_flacs_array[@]} ))H"
 	else
 		# More files than jobs to run, so add the number of jobs processed
-		current_row=$(( current_row + jobs ))
+		printf "\033[$(( pre_operation_row_position + jobs ))H"
 	fi
-
-	# Place cursor on the last line, to allow the current row to be read in
-	# correctly
-	printf "\033[${current_row}H"
 
 	if [[ -f "${extract_artwork_errors}" ]] ; then
 		# Print out log exists to STDERR
@@ -6570,7 +6479,6 @@ fi
 # .: PRUNE :.
 #-------------------------------------------------------------------------------
 if [[ "${prune_flac}" == "true" ]] ; then
-
 	# Don't remove artwork if user wants it kept.  We don't have to check
 	# for the legacy COVERART tag as we are NOT removing any VORBIS_COMMENTs.
 	if [[ "${remove_artwork}" == "true" ]] ; then
@@ -6582,16 +6490,16 @@ if [[ "${prune_flac}" == "true" ]] ; then
 	fi
 
 	# Prints title message of current operation
-	__title_prune_flac
+	__operation_message 'prune'
 
-	# Obtain the current row
-	__obtain_row
-
-	# Scroll terminal, if applicable
+	# Scroll terminal, if needed
 	__scroll_terminal
 
 	# Make sure to clear file descriptor '3' before proceeding
 	__clear_tmp_fd
+
+	# Save the row position before starting the operation
+	pre_operation_row_position=$(__row)
 
 	# Run parallel operations, that which is specified as ${1}
 	__run_parallel_files __operation_prune
@@ -6601,15 +6509,11 @@ if [[ "${prune_flac}" == "true" ]] ; then
 	if (( ${#total_flacs_array[@]} < jobs )) ; then
 		# Less files than jobs to run, so only add the number of files
 		# processed
-		current_row=$(( current_row + ${#total_flacs_array[@]} ))
+		printf "\033[$(( pre_operation_row_position + ${#total_flacs_array[@]} ))H"
 	else
 		# More files than jobs to run, so add the number of jobs processed
-		current_row=$(( current_row + jobs ))
+		printf "\033[$(( pre_operation_row_position + jobs ))H"
 	fi
-
-	# Place cursor on the last line, to allow the current row to be read in
-	# correctly
-	printf "\033[${current_row}H"
 
 	if [[ -f "${prune_errors}" ]] ; then
 		# Print out log exists to STDERR
