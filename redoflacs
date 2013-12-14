@@ -732,28 +732,27 @@ __operation_message () {
 	#---------------------------------------------------------------------------
 	# Print out current operation title message.
 	#
-	# $1 determines which message to print.  Possible values:
+	# $1 determines which title message to print.  Possible values:
 	#   aucdtect          compress   extract_artwork
 	#   md5_check         prune      replaygain
-	#   retag             test
+	#   retag             test       '' (NULL)
+	#
+	# $2 determines which sub message to print (if any).  Possible values:
+	#   replaygain_add    replaygain_test
+	#   retag_analyze     retag_apply
 	#---------------------------------------------------------------------------
 	# Set up local variables
 	declare message
 
 	# Define message to print based off of $1
 	case "${1}" in
-		aucdtect)
-			message="auCDtect Analysis"
-		;;
-		compress)
-			message="Compressing & Verifying ${magenta}[Level 8]${normal}"
-		;;
-		extract_artwork)
-			message="Extracting Artwork"
-		;;
-		md5_check)
-			message="MD5 Check"
-		;;
+		aucdtect)         message="auCDtect Analysis"    ;;
+		compress)         message="Compressing & Verifying ${magenta}[Level 8]${normal}"  ;;
+		extract_artwork)  message="Extracting Artwork"   ;;
+		md5_check)        message="MD5 Check"            ;;
+		replaygain)       message="Applying ReplayGain"  ;;
+		retag)            message="Re-Tagging"           ;;
+		test)             message="Testing"              ;;
 		prune)
 			if [[ "${remove_artwork}" != "true" ]] ; then
 				# Keep artwork
@@ -763,44 +762,22 @@ __operation_message () {
 				message="Pruning All Blocks [Except: ${cyan}STREAMINFO${normal} & ${cyan}VORBIS_COMMENT${normal}"
 			fi
 		;;
-		replaygain)
-			message="Applying ReplayGain"
-		;;
-		retag)
-			message="Re-Tagging"
-		;;
-		test)
-			message="Testing"
-		;;
 	esac
 
-	# Print title message
-	printf "\033[$(__row)H ${green}*${normal} ${message}\n"
-}
+	# Print title message if $1 is not NULL
+	[[ -n "${1}" ]] && printf "\033[$(__row)H ${green}*${normal} ${message}\n"
 
-#-------------------------------------------------------------------------------
-
-__operation_sub_message () {
-	#---------------------------------------------------------------------------
-	# Print out current operation title sub message.
-	#
-	# $1 determines which message to print.  Possible values:
-	#   replaygain_add    replaygain_test
-	#   retag_analyze     retag_apply
-	#---------------------------------------------------------------------------
-	# Set up local variables
-	declare message
-
-	# Define sub message to print based off of $1
-	case "${1}" in
+	# Define sub message to print based off of $2
+	case "${2}" in
 		replaygain_test)  message="Testing"      ;;
 		replaygain_add)   message="Applying"     ;;
 		retag_analyze)    message="Analyzing"    ;;
 		retag_apply)      message="Re-Applying"  ;;
 	esac
 
-	# Print title sub message
-	printf "\033[$(__row);4H${green}>${normal} ${message}\n"
+	# Print sub message if $2 is not NULL
+	[[ -n "${2}" ]] && printf "\033[$(__row);4H${green}>${normal} ${message}\n"
+
 }
 
 #-------------------------------------------------------------------------------
@@ -6166,7 +6143,7 @@ if [[ "${replaygain_flac}" == "true" ]] ; then
 	# .: TEST REPLAYGAIN :.
 	#---------------------------------------------------------------------------
 	# Prints sub message of current operation
-	__operation_sub_message 'replaygain_test'
+	__operation_message '' 'replaygain_test'
 
 	# Scroll terminal, if needed
 	__scroll_terminal
@@ -6225,7 +6202,7 @@ if [[ "${replaygain_flac}" == "true" ]] ; then
 	__total_directories
 
 	# Prints sub message of current operation
-	__operation_sub_message 'replaygain_add'
+	__operation_message '' 'replaygain_add'
 
 	# Scroll terminal, if needed; we are specifying 'directory' to all the
 	# '__scroll_terminal' function to apply logic on directories as opposed to
@@ -6307,7 +6284,7 @@ if [[ "${retag_flac}" == "true" ]] ; then
 	# Analyze FLAC tags to ensure none are missing and/or empty
 
 	# Prints sub message of current operation
-	__operation_sub_message 'retag_analyze'
+	__operation_message '' 'retag_analyze'
 
 	# Scroll terminal, if needed
 	__scroll_terminal
@@ -6395,7 +6372,7 @@ if [[ "${retag_flac}" == "true" ]] ; then
 	tags=( "${old_tags[@]}" )
 
 	# Prints sub message of current operation
-	__operation_sub_message 'retag_apply'
+	__operation_message '' 'retag_apply'
 
 	# Scroll terminal, if needed
 	__scroll_terminal
