@@ -555,9 +555,10 @@ __create_log () {
 	#   replaygain_test   retag      test
 	#---------------------------------------------------------------------------
 	# Set up local variables/arrays
-	declare -a header_array  header_compress  header_extract_artwork  header_md5 \
-               header_prune  header_replay_add  header_replay_test  header_retag \
-               header_test
+	declare -a header_array        header_compress   header_extract_artwork \
+               header_md5          header_prune      header_replay_add \
+               header_replay_test  header_retag      header_test \
+               log_array
 
 	declare    error_msg  filename  length  line
 
