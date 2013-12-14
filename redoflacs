@@ -1891,7 +1891,11 @@ __scroll_terminal () {
 		local lines_to_scroll=$(( jobs - remaining_lines ))
 
 		# This scrolls the terminal up by the number of lines to scroll
-		printf "\033[${lines_to_scroll}S"
+		# This can be accomplished via (not very portable):
+		#   printf "\033[<integer>S"    # Doesn't work in screen/tmux
+		for ((i=1 ; i<=lines_to_scroll ; i++)) ; do
+			printf "\n"
+		done
 
 		# The cursor is set to the difference of the lines to scroll
 		printf "\033[$(( $(__row) - lines_to_scroll ))H"
