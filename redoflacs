@@ -5267,7 +5267,7 @@ fi
 # Ensure we don't overwrite an existing log file by incrementing the current
 # PID by 1 until the log file, that's to be set, doesn't exist
 pid="$$"
-log_file="${error_log}/redoflacs_log_${pid}.log"
+log_file="${error_log}/redoflacs_${pid}.log"
 
 until [[ ! -f "${log_file}" ]] ; do
 	log_file="${error_log}/redoflacs_log_$((pid++)).log"
