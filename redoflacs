@@ -714,7 +714,7 @@ __operation_message () {
 		compress)         message="Compressing & Verifying ${magenta}[Level 8]${normal}"  ;;
 		extract_artwork)  message="Extracting Artwork"   ;;
 		md5_check)        message="MD5 Check"            ;;
-		replaygain)       message="Applying ReplayGain"  ;;
+		replaygain)       message="Generating & Applying ReplayGain"  ;;
 		retag)            message="Re-Tagging"           ;;
 		test)             message="Testing"              ;;
 		prune)
@@ -1329,13 +1329,12 @@ __trap_sigint () {
 	#
 	# $2 determines which additional cleanup may need to be performed when
 	# starting '__exit_cleanup'.  Possible values:
-	#   aucdtect          compress   extract_artwork
-	#   md5_check         prune      replaygain_add
-	#   replaygain_test   retag      test
+	#   aucdtect          compress        extract_artwork
+	#   md5_check         prune           replaygain_add
+	#   replaygain_test   retag_analyze   retag_apply
+	#   test
 	#---------------------------------------------------------------------------
-	kill $(jobs -rp) 2>/dev/null   # Don't show any output
-
-	wait 2>/dev/null               # Hide possible job control output
+	__kill_jobs "$(jobs -rp)"
 
 	# If $1 is NULL, it means that the user invoked SIGINT before any operation
 	# started (eg, retag countdown or config countdown)
@@ -1345,7 +1344,7 @@ __trap_sigint () {
 		printf "\n ${green}*${normal} Control-C received, generating summary. Please wait...\n"
 	fi
 
-	__exit_cleanup "${2}"          # Additional cleanup before exiting
+	__exit_cleanup "${2}"
 }
 
 #-------------------------------------------------------------------------------
@@ -1358,20 +1357,38 @@ __exit_cleanup () {
 	# $1 determines which operation requires additional cleanup.  This value is
 	# normally obtained from $2 in the '__trap_sigint' function.  Possible
 	# values:
-	#   aucdtect          compress   extract_artwork
-	#   md5_check         prune      replaygain_add
-	#   replaygain_test   retag      test
+	#   aucdtect          compress        extract_artwork
+	#   md5_check         prune           replaygain_add
+	#   replaygain_test   retag_analyze   retag_apply
+	#   test
 	#---------------------------------------------------------------------------
 	case "${1}" in
-		compress)
-			# Remove temporarily encoded FLAC files
-			rm -f "${directory}"/**/*.tmp,fl-ac+en\'c
-		;;
 		aucdtect)
 			# Remove temporarily created WAV files (if any)
 			rm -f "${directory}"/**/*_redoflacs_"$$".wav
+			operation_summary['Validate with auCDtect']='Operation Interrupted'
 		;;
-		retag)
+		compress)
+			# Remove temporarily encoded FLAC files
+			rm -f "${directory}"/**/*.tmp,fl-ac+en\'c
+			operation_summary['Compress FLACs']='Operation Interrupted'
+		;;
+		extract_artwork)
+			operation_summary['Extracting Artwork']='Operation Interrupted'
+		;;
+		md5_check)
+			operation_summary['Check MD5 Signature']='Operation Interrupted'
+		;;
+		prune)
+			operation_summary['Prune METADATA Blocks']='Operation Interrupted'
+		;;
+		replaygain_add)
+			operation_summary['> Adding']='Operation Interrupted'
+		;;
+		replaygain_test)
+			operation_summary['> Testing']='Operation Interrupted'
+		;;
+		retag_*)
 			# Test for deprecated tag, COVERART, in log file.  If it
 			# exists, set coverart_warning variable to make script output
 			# warning upon completion
@@ -1385,6 +1402,15 @@ __exit_cleanup () {
 					fi
 				done < "${log_file}"
 			fi
+
+			if [[ "$1" == 'retag_analyze' ]] ; then
+				operation_summary['> Analyzing']='Operation Interrupted'
+			elif [[ "$1" == 'retag_apply' ]] ; then
+				operation_summary['> Applying']='Operation Interrupted'
+			fi
+		;;
+		test)
+			operation_summary['Test FLACs']='Operation Interrupted'
 		;;
 	esac
 
@@ -1419,11 +1445,8 @@ __exit_cleanup () {
 	# descriptor available
 	rm -f "${tmp_fifo}"
 
-	# Store operation status for Summary Of Operations
-	test_complete="interrupt"
-
 	# Display Summary Of Operations
-	__operation_summary
+	__summary
 
 	exit 130
 }
@@ -1456,6 +1479,21 @@ __metaflac_version () {
 	metaflac_version="${metaflac_version%.*}"
 }
 
+#-------------------------------------------------------------------------------
+
+__kill_jobs () {
+	#---------------------------------------------------------------------------
+	# Kill any children process (obtained via $@), hiding any error output from
+	# 'kill' and supressing the shell's notification of terminated jobs
+	#---------------------------------------------------------------------------
+	for pid in $@ ; do
+		kill $pid 2>/dev/null
+		wait $pid 2>/dev/null
+	done
+}
+
+#-------------------------------------------------------------------------------
+
 __row () {
 	#---------------------------------------------------------------------------
 	# Print out the current cursor row position
@@ -1480,6 +1518,8 @@ __row () {
 	# Return current row position (integer)
 	printf "%s" "${current_row#??}"
 }
+
+#-------------------------------------------------------------------------------
 
 # Check if we need to scroll the terminal up depending on how much room is left,
 # relative to the number of jobs to process.  There is the special value of ${1}
@@ -2412,13 +2452,19 @@ __create_aucdtect_fd () {
 	rm -f "${tmp_aucdtect_fd}"
 }
 
-# Create a new file descriptor (5) via a temporary file
-__set_error_fd () {
-	# Error FIFO location
-	error_count="/tmp/redoflacs_error_file_$$"
+__msg_num_issues () {
+	#---------------------------------------------------------------------------
+	# Display the number of issues an operation may have by reading in the
+	# number of ticks from the temporary issues_count file, returning the proper
+	# message for use with the Summary Of Operations table
+	#---------------------------------------------------------------------------
+	read -r fail_count < "${issue_ticks}"   # Read in number of issue ticks
 
-	# Open FIFO for reading and writing on file descriptor '5'
-	exec 5<>"${error_count}"
+	if (( ${#fail_count} == 1 )) ; then
+		printf "%s Issue\n" "${#fail_count}"
+	else
+		printf "%s Issues\n" "${#fail_count}"
+	fi
 }
 
 # Obtain and process the positional parameters invoked
@@ -2652,7 +2698,7 @@ __process_positional_parameters () {
 			-G) replaygain_flac="true"  replaygain_noforce="true" ;;
 			-a) aucdtect_flac="true"    no_spectrogram="true"     ;;
 			-A) aucdtect_flac="true"    create_spectrogram="true" ;;
-			-m) md5check_flac="true"                              ;;
+			-m) md5_check_flac="true"                              ;;
 			-e) extract_artwork="true"                            ;;
 			-p) prune_flac="true"                                 ;;
 			-r) retag_flac="true"                                 ;;
@@ -2838,7 +2884,7 @@ __check_conflicting_operations () {
 		fi
 
 		# Check for "-m, --md5check".  If used add it to array
-		if [[ "${md5check_flac}" == "true" ]] ; then
+		if [[ "${md5_check_flac}" == "true" ]] ; then
 			argument_conflict_array+=( "-m, --md5check" )
 		fi
 
@@ -2926,13 +2972,13 @@ __check_conflicting_operations () {
 	# run them
 	if [[ "${all}" == "true" ]] ; then
 		compress_flac="true"
-		md5check_flac="true"
+		md5_check_flac="true"
 		prune_flac="true"
 		replaygain_flac="true"
 		retag_flac="true"
 	elif [[ "${reallyall}" == "true" ]] ; then
 		compress_flac="true"
-		md5check_flac="true"
+		md5_check_flac="true"
 		prune_flac="true"
 		replaygain_flac="true"
 		retag_flac="true"
@@ -2944,326 +2990,58 @@ __check_conflicting_operations () {
 }
 
 # Display the summary of operations chart
-__operation_summary () {
-	# Build the operation line in the Summary Of Operations
-	__summary_line () {
-		# Set up spacing for Operation
-		case "${operation}" in
-			"Validate with auCDtect")
-				operation_spacing="   "
-			;;
-			"Check MD5 Signature")
-				operation_spacing="      "
-			;;
-			"Compress FLACS")
-				operation_spacing="           "
-			;;
-			"Test Flacs")
-				operation_spacing="               "
-			;;
-			"Testing ReplayGain")
-				# Print the outer operation, with the sub operations
-				# to follow (from the below case statement)
-				printf "%s${yellow}%s${normal}%s${blue}%s${normal}\n" \
-				"      " "Applying ReplayGain" " " "|" 
-
-				# Change yellow color to cyan, but leave the yellow
-				# name to keep the below case statement sane
-				if [[ "${no_color}" != "true" ]] ; then
-					yellow="${magenta}"
-				fi
-
-				operation="> Testing"
-				operation_spacing="                "
-			;;
-			"Adding ReplayGain")
-				operation="> Adding"
-				operation_spacing="                 "
-			;;
-			"Analyzing Tags")
-				# Print the outer operation, with the sub operations
-				# to follow (from the below case statement)
-				printf "%s${yellow}%s${normal}%s${blue}%s${normal}\n" \
-				"          " "Retagging Files" " " "|"
-
-				# Change yellow color to cyan, but leave the yellow
-				# name to keep the below case statement sane
-				if [[ "${no_color}" != "true" ]] ; then
-					yellow="${magenta}"
-				fi
-
-				operation="> Analyzing"
-				operation_spacing="              "
-			;;
-			"Applying Tags")
-				operation="> Applying"
-				operation_spacing="               "
-			;;
-			"Extracting Artwork")
-				operation_spacing="       "
-			;;
-			"Prune METADATA Blocks")
-				operation_spacing="    "
-			;;
-		esac
-
-		case "${operation_summary}" in
-			"complete")
-				# Set up the printed string with colors
-				printf "%s${yellow}%s${normal}%s${blue}%s${normal}%s${green}%s${normal}\n" \
-				"${operation_spacing}" "${operation}" " " "|" " " "Operation Completed"
-			;;
-
-			"failed")
-				# Read in error ticks
-				read -r fail_count < "${error_count}"
-
-				# If ${#fail_count} is one, change the message to singular
-				if (( ${#fail_count} == 1 )) ; then
-					fail_count_message="${#fail_count} File Failed"
-				else
-					fail_count_message="${#fail_count} Files Failed"
-				fi
-
-				# Set up the printed string with colors
-				printf "%s${yellow}%s${normal}%s${blue}%s${normal}%s${red}%s${normal}\n" \
-				"${operation_spacing}" "${operation}" " " "|" " " "${fail_count_message}"
-			;;
-
-			"interrupted")
-				# Set up the printed string with colors
-				printf "%s${yellow}%s${normal}%s${blue}%s${normal}%s${cyan}%s${normal}\n" \
-				"${operation_spacing}" "${operation}" " " "|" " " "Operation Interrupted"
-			;;
-
-			"did not run")
-				# Set up the printed string with colors
-				printf "%s${yellow}%s${normal}%s${blue}%s${normal}%s${magenta}%s${normal}\n" \
-				"${operation_spacing}" "${operation}" " " "|" " " "Operation Did Not Run"
-			;;
-		esac
-	}
-
-	#---------------------------------------------------------------------------
-	# .: CLEANUP SECTION :.
-	#---------------------------------------------------------------------------
-	# Restore old stty settings, make stty happy
-	# by redirecting /dev/stderr
-	stty ${old_stty} < /dev/stderr
-
-	# Restore the cursor
-	printf "\033[?25h"
-	#== .: END CLEANUP SECTION :. ==============================================
-
+__summary () {
 	# Begin printing the table
-
+	#--
 	# Title
 	printf "\033[$(__row);2H${blue}%s${normal}\n" \
 	"---------------------------------------------------"
 	printf "                Summary Of Operations\n"
 	printf "${normal} ${blue}-------------------------+-------------------------${normal}\n" \
 
-	# auCDtect operations
-	if [[ "${aucdtect_flac}" == "true" && "${aucdtect_complete}" == "true" ]] ; then
-		operation="Validate with auCDtect"
-		operation_summary="complete"
-		__summary_line
-	elif [[ "${aucdtect_flac}" == "true" && "${aucdtect_complete}" == "false" ]] ; then
-		operation="Validate with auCDtect"
-		operation_summary="failed"
-		__summary_line
-	elif [[ "${aucdtect_flac}" == "true" && "${aucdtect_complete}" == "interrupt" ]] ; then
-		operation="Validate with auCDtect"
-		operation_summary="interrupted"
-		__summary_line
-	elif [[ "${aucdtect_flac}" == "true" ]] ; then
-		operation="Validate with auCDtect"
-		operation_summary="did not run"
-		__summary_line
-	fi
+	operation_msgs=(
+		'Validate with auCDtect'
+		'Check MD5 Signature'
+		'Compress FLACs'
+		'Test FLACs'
+		'> Testing'
+		'> Adding'
+		'> Analyzing'
+		'> Applying'
+		'Extracting Artwork'
+		'Prune METADATA Blocks'
+	)
 
-	# MD5 Check operations
-	if [[ "${md5check_flac}" == "true" && "${md5check_complete}" == "true" ]] ; then
-		operation="Check MD5 Signature"
-		operation_summary="complete"
-		__summary_line
-	elif [[ "${md5check_flac}" == "true" && "${md5check_complete}" == "false" ]] ; then
-		operation="Check MD5 Signature"
-		operation_summary="failed"
-		__summary_line
-	elif [[ "${md5check_flac}" == "true" && "${md5check_complete}" == "interrupt" ]] ; then
-		operation="Check MD5 Signature"
-		operation_summary="interrupted"
-		__summary_line
-	elif [[ "${md5check_flac}" == "true" ]] ; then
-		operation="Check MD5 Signature"
-		operation_summary="did not run"
-		__summary_line
-	fi
+	for key in "${operation_msgs[@]}" ; do
+		if [[ -n "${operation_summary[$key]}" ]] ; then
+			if [[ "${key}" == '> '* ]] ; then
+				if [[ "${key}" == '> Testing' ]] ; then
+					printf "${yellow}%25s ${blue}|${normal}\n" 'Applying ReplayGain'
+				elif [[ "${key}" == '> Analyzing' ]] ; then
+					printf "${yellow}%25s ${blue}|${normal}\n" 'Retagging FLACs'
+				fi
 
-	# Compress Flacs operations
-	if [[ "${compress_flac}" == "true" && "${compress_complete}" == "true" ]] ; then
-		operation="Compress FLACS"
-		operation_summary="complete"
-		__summary_line
-	elif [[ "${compress_flac}" == "true" && "${compress_complete}" == "false" ]] ; then
-		operation="Compress FLACS"
-		operation_summary="failed"
-		__summary_line
-	elif [[ "${compress_flac}" == "true" && "${compress_complete}" == "interrupt" ]] ; then
-		operation="Compress FLACS"
-		operation_summary="interrupted"
-		__summary_line
-	elif [[ "${compress_flac}" == "true" ]] ; then
-		operation="Compress FLACS"
-		operation_summary="did not run"
-		__summary_line
-	fi
+				printf "${magenta}%25s ${blue}|${normal}" "${key}"
+			else
+				printf "${yellow}%25s ${blue}|${normal}" "${key}"
+			fi
 
-	# Test Flacs operations
-	if [[ "${test_flac}" == "true" && "${test_complete}" == "true" ]] ; then
-		operation="Test Flacs"
-		operation_summary="complete"
-		__summary_line
-	elif [[ "${test_flac}" == "true" && "${test_complete}" == "false" ]] ; then
-		operation="Test Flacs"
-		operation_summary="failed"
-		__summary_line
-	elif [[ "${test_flac}" == "true" && "${test_complete}" == "interrupt" ]] ; then
-		operation="Test Flacs"
-		operation_summary="interrupted"
-		__summary_line
-	elif [[ "${test_flac}" == "true" ]] ; then
-		operation="Test Flacs"
-		operation_summary="did not run"
-		__summary_line
-	fi
-
-	# ReplayGain test operations
-	if [[ "${replaygain_flac}" == "true" && "${testing_replaygain_complete}" == "true" ]] ; then
-		operation="Testing ReplayGain"
-		operation_summary="complete"
-		__summary_line
-	elif [[ "${replaygain_flac}" == "true" && "${testing_replaygain_complete}" == "false" ]] ; then
-		operation="Testing ReplayGain"
-		operation_summary="failed"
-		__summary_line
-	elif [[ "${replaygain_flac}" == "true" && "${testing_replaygain_complete}" == "interrupt" ]] ; then
-		operation="Testing ReplayGain"
-		operation_summary="interrupted"
-		__summary_line
-	elif [[ "${replaygain_flac}" == "true" ]] ; then
-		operation="Testing ReplayGain"
-		operation_summary="did not run"
-		__summary_line
-	fi
-
-	# ReplayGain apply operations
-	if [[ "${replaygain_flac}" == "true" && "${adding_replaygain_complete}" == "true" ]] ; then
-		operation="Adding ReplayGain"
-		operation_summary="complete"
-		__summary_line
-	elif [[ "${replaygain_flac}" == "true" && "${adding_replaygain_complete}" == "false" ]] ; then
-		operation="Adding ReplayGain"
-		operation_summary="failed"
-		__summary_line
-	elif [[ "${replaygain_flac}" == "true" && "${adding_replaygain_complete}" == "interrupt" ]] ; then
-		operation="Adding ReplayGain"
-		operation_summary="interrupted"
-		__summary_line
-	elif [[ "${replaygain_flac}" == "true" ]] ; then
-		operation="Adding ReplayGain"
-		operation_summary="did not run"
-		__summary_line
-	fi
-
-	# Change ${yellow} color back to yellow (could have been
-	# changed in ReplayGain operations above)
-	if [[ "${no_color}" != "true" ]] ; then
-		yellow="\033[33m"
-	fi
-
-	# Retag analyze operations
-	if [[ "${retag_flac}" == "true" && "${analyzing_retag_complete}" == "true" ]] ; then
-		operation="Analyzing Tags"
-		operation_summary="complete"
-		__summary_line
-	elif [[ "${retag_flac}" == "true" && "${analyzing_retag_complete}" == "false" ]] ; then
-		operation="Analyzing Tags"
-		operation_summary="failed"
-		__summary_line
-	elif [[ "${retag_flac}" == "true" && "${analyzing_retag_complete}" == "interrupt" ]] ; then
-		operation="Analyzing Tags"
-		operation_summary="interrupted"
-		__summary_line
-	elif [[ "${retag_flac}" == "true" ]] ; then
-		operation="Analyzing Tags"
-		operation_summary="did not run"
-		__summary_line
-	fi
-
-	# Retag apply operations
-	if [[ "${retag_flac}" == "true" && "${applying_retag_complete}" == "true" ]] ; then
-		operation="Applying Tags"
-		operation_summary="complete"
-		__summary_line
-	elif [[ "${retag_flac}" == "true" && "${applying_retag_complete}" == "false" ]] ; then
-		operation="Applying Tags"
-		operation_summary="failed"
-		__summary_line
-	elif [[ "${retag_flac}" == "true" && "${applying_retag_complete}" == "interrupt" ]] ; then
-		operation="Applying Tags"
-		operation_summary="interrupted"
-		__summary_line
-	elif [[ "${retag_flac}" == "true" ]] ; then
-		operation="Applying Tags"
-		operation_summary="did not run"
-		__summary_line
-	fi
-
-	# Change ${yellow} color back to yellow (could have been
-	# changed in Retag operations above)
-	if [[ "${no_color}" != "true" ]] ; then
-		yellow="\033[33m"
-	fi
-
-	# Extract artwork operations
-	if [[ "${extract_artwork}" == "true" && "${extract_artwork_complete}" == "true" ]] ; then
-		operation="Extracting Artwork"
-		operation_summary="complete"
-		__summary_line
-	elif [[ "${extract_artwork}" == "true" && "${extract_artwork_complete}" == "false" ]] ; then
-		operation="Extracting Artwork"
-		operation_summary="failed"
-		__summary_line
-	elif [[ "${extract_artwork}" == "true" && "${extract_artwork_complete}" == "interrupt" ]] ; then
-		operation="Extracting Artwork"
-		operation_summary="interrupted"
-		__summary_line
-	elif [[ "${extract_artwork}" == "true" ]] ; then
-		operation="Extracting Artwork"
-		operation_summary="did not run"
-		__summary_line
-	fi
-
-	# Prune Flacs operations
-	if [[ "${prune_flac}" == "true" && "${prune_complete}" == "true" ]] ; then
-		operation="Prune METADATA Blocks"
-		operation_summary="complete"
-		__summary_line
-	elif [[ "${prune_flac}" == "true" && "${prune_complete}" == "false" ]] ; then
-		operation="Prune METADATA Blocks"
-		operation_summary="failed"
-		__summary_line
-	elif [[ "${prune_flac}" == "true" && "${prune_complete}" == "interrupt" ]] ; then
-		operation="Prune METADATA Blocks"
-		operation_summary="interrupted"
-		__summary_line
-	elif [[ "${prune_flac}" == "true" ]] ; then
-		operation="Prune METADATA Blocks"
-		operation_summary="did not run"
-		__summary_line
-	fi
+			case "${operation_summary[$key]}" in
+				'Operation Completed')
+					printf " ${green}%s${normal}\n" "${operation_summary[$key]}"
+				;;
+				'Operation Interrupted')
+					printf " ${cyan}%s${normal}\n" "${operation_summary[$key]}"
+				;;
+				'Operation Did Not Run')
+					printf " ${magenta}%s${normal}\n" "${operation_summary[$key]}"
+				;;
+				*Issue*)
+					printf " ${red}%s${normal}\n" "${operation_summary[$key]}"
+				;;
+			esac
+		fi
+	done
 
 	printf "${normal}%s${blue}%s${normal}\n" \
 	" " "-------------------------+-------------------------"
@@ -3274,7 +3052,7 @@ __operation_summary () {
 
 	# Remove temporary FIFO and leave just the file
 	# descriptor available
-	rm -f "${error_count}"
+	rm -f "${issue_ticks}"
 }
 
 # Function to run commands/operations that are by
@@ -3447,6 +3225,8 @@ __run_parallel_directories () {
 #-------------------------------------------------------------------------------
 # Test ReplayGain
 __operation_test_replaygain () {
+	trap '__kill_jobs "$(jobs -rp)"' EXIT
+
 	# Print current FLAC being processed
 	__print_sub_current_flac
 
@@ -3466,7 +3246,7 @@ __operation_test_replaygain () {
 			>> "${log_file}"
 
 		# Add one to fail fd
-		printf '.' >&5
+		printf '.' >> "${issue_ticks}"
 	else
 		# File is OK, test if sample rate is above 48kHz and the version of
 		# `metaflac' installed is greater than 1.2.1
@@ -3484,7 +3264,7 @@ __operation_test_replaygain () {
 					>> "${log_file}"
 
 				# Add one to fail fd
-				printf '.' >&5
+				printf '.' >> "${issue_ticks}"
 			else
 				# FLAC is ok, display ok
 				__print_sub_progress_ok
@@ -3503,6 +3283,8 @@ __operation_test_replaygain () {
 
 # Process Replaygain (only add values if missing)
 __operation_replaygain_noforce () {
+	trap '__kill_jobs "$(jobs -rp)"' EXIT
+
 	# Print current directory being processed
 	__print_current_directory
 
@@ -3546,7 +3328,7 @@ __operation_replaygain_noforce () {
 					>> "${log_file}"
 
 				# Add one to fail fd
-				printf '.' >&5
+				printf '.' >> "${issue_ticks}"
 
 				# Placeholder variable tested after this loop
 				# if the loop completes with 'break'
@@ -3572,6 +3354,8 @@ __operation_replaygain_noforce () {
 
 # Process ReplayGain (force new values)
 __operation_replaygain_force () {
+	trap '__kill_jobs "$(jobs -rp)"' EXIT
+
 	# Print current directory being processed
 	__print_current_directory
 
@@ -3589,7 +3373,7 @@ __operation_replaygain_force () {
 			>> "${log_file}"
 
 		# Add one to fail fd
-		printf '.' >&5
+		printf '.' >> "${issue_ticks}"
 	else
 		# FLAC is ok, display ok
 		__print_sub_progress_ok
@@ -3603,6 +3387,8 @@ __operation_replaygain_force () {
 
 # Compress FLAC files
 __operation_compress () {
+	trap '__kill_jobs "$(jobs -rp)"' EXIT
+
 	# Test for COMPRESSION level in FLAC file. Hide error output since
 	# we'll be verifying the FLAC file later
 	COMPRESSION="$(metaflac --show-tag=COMPRESSION "${i}" 2> /dev/null)"
@@ -3635,7 +3421,7 @@ __operation_compress () {
 				>> "${log_file}"
 
 			# Add one to fail fd
-			printf '.' >&5
+			printf '.' >> "${issue_ticks}"
 		else
 			metaflac \
 				--remove-tag=COMPRESSION \
@@ -3674,7 +3460,7 @@ __operation_compress () {
 					>> "${log_file}"
 
 				# Add one to fail fd
-				printf '.' >&5
+				printf '.' >> "${issue_ticks}"
 			else
 				# FLAC is ok, display ok
 				__print_progress_ok
@@ -3693,6 +3479,8 @@ __operation_compress () {
 
 # Test FLAC files
 __operation_test () {
+	trap '__kill_jobs "$(jobs -rp)"' EXIT
+
 	# Print current FLAC being processed
 	__print_current_flac
 
@@ -3717,7 +3505,7 @@ __operation_test () {
 		printf "%s::::Failed testing\n" "${i}" >> "${log_file}"
 
 		# Add one to fail fd
-		printf '.' >&5
+		printf '.' >> "${issue_ticks}"
 	else
 		# FLAC is ok, display ok
 		__print_progress_ok
@@ -3731,6 +3519,8 @@ __operation_test () {
 
 # Test FLAC validity with auCDtect
 __operation_aucdtect () {
+	trap '__kill_jobs "$(jobs -rp)"' EXIT
+
 	# Print current FLAC being processed
 	__print_current_flac
 
@@ -3751,7 +3541,7 @@ __operation_aucdtect () {
 			>> "${log_file}"
 
 		# Add one to fail fd
-		printf '.' >&5
+		printf '.' >> "${issue_ticks}"
 
 	# Skip the FLAC file if it has a bit depth greater
 	# than 16 since auCDtect doesn't support audio
@@ -3766,7 +3556,7 @@ __operation_aucdtect () {
 			>> "${log_file}"
 
 		# Add one to fail fd
-		printf '.' >&5
+		printf '.' >> "${issue_ticks}"
 
 	# Skip the FLAC file if it already has the 'Lossy' value set for the
 	# MASTERING tag.  This is only done if the value of 'skip_lossy' is 'true',
@@ -3782,7 +3572,7 @@ __operation_aucdtect () {
 			>> "${log_file}"
 
 		# Add one to fail fd
-		printf '.' >&5
+		printf '.' >> "${issue_ticks}"
 
 	# FLAC checks out, continue processing
 	else
@@ -3815,7 +3605,7 @@ __operation_aucdtect () {
 				>> "${log_file}"
 
 			# Add one to fail fd
-			printf '.' >&5
+			printf '.' >> "${issue_ticks}"
 
 		else
 			# Decoded FLAC is ok, display ok
@@ -3851,7 +3641,7 @@ __operation_aucdtect () {
 					>> "${log_file}"
 
 				# Add one to fail fd
-				printf '.' >&5
+				printf '.' >> "${issue_ticks}"
 
 			else
 				# Grab the conclusion of auCDtect's command
@@ -3890,7 +3680,7 @@ __operation_aucdtect () {
 							>> "${log_file}"
 
 						# Add one to fail fd
-						printf '.' >&5
+						printf '.' >> "${issue_ticks}"
 
 					else
 						# Grab the conclusion of auCDtect's command
@@ -3975,7 +3765,7 @@ __operation_aucdtect () {
 									>> "${log_file}"
 
 								# Add one to fail fd
-								printf '.' >&5
+								printf '.' >> "${issue_ticks}"
 
 							else
 								# Error with FLAC file, display failed/error
@@ -3986,7 +3776,7 @@ __operation_aucdtect () {
 									>> "${log_file}"
 
 								# Add one to fail fd
-								printf '.' >&5
+								printf '.' >> "${issue_ticks}"
 							fi
 						else
 							# FLAC is ok, display ok
@@ -4012,6 +3802,8 @@ __operation_aucdtect () {
 
 # Check MD5 in each FLAC file
 __operation_md5check () {
+	trap '__kill_jobs "$(jobs -rp)"' EXIT
+
 	# Print current FLAC being processed
 	__print_current_flac
 
@@ -4030,7 +3822,7 @@ __operation_md5check () {
 			>> "${log_file}"
 
 		# Add one to fail fd
-		printf '.' >&5
+		printf '.' >> "${issue_ticks}"
 
 	# FLAC file is real, check for unset MD5 checksum.  We cannot use an
 	# arithmetic expression as any amount of 0's will equal the expression
@@ -4045,7 +3837,7 @@ __operation_md5check () {
 			>> "${log_file}"
 
 		# Add one to fail fd
-		printf '.' >&5
+		printf '.' >> "${issue_ticks}"
 	else
 		# FLAC is ok, display ok
 		__print_progress_ok
@@ -4059,6 +3851,8 @@ __operation_md5check () {
 
 # Analyze FLAC tags
 __operation_analyze_tags () {
+	trap '__kill_jobs "$(jobs -rp)"' EXIT
+
 	# Print current FLAC being processed
 	__print_sub_current_flac
 
@@ -4076,7 +3870,7 @@ __operation_analyze_tags () {
 			>> "${log_file}"
 
 		# Add one to fail fd
-		printf '.' >&5
+		printf '.' >> "${issue_ticks}"
 	else
 		# Iterate through each tag field and check if tag is missing
 		for j in "${tags[@]}" ; do
@@ -4198,7 +3992,7 @@ __operation_analyze_tags () {
 				>> "${log_file}"
 
 			# Add one to fail fd
-			printf '.' >&5
+			printf '.' >> "${issue_ticks}"
 		else
 			# FLAC is ok, display ok
 			__print_sub_progress_ok
@@ -4213,6 +4007,8 @@ __operation_analyze_tags () {
 
 # Analyze FLAC tags (not logging missing COVERART tag)
 __operation_analyze_tags_dont_log_coverart () {
+	trap '__kill_jobs "$(jobs -rp)"' EXIT
+
 	# Print current FLAC being processed
 	__print_sub_current_flac
 
@@ -4230,7 +4026,7 @@ __operation_analyze_tags_dont_log_coverart () {
 			>> "${log_file}"
 
 		# Add one to fail fd
-		printf '.' >&5
+		printf '.' >> "${issue_ticks}"
 	else
 		# Album artwork is to be kept so preserve COVERART by adding
 		# it to the tag array (temporary)
@@ -4277,7 +4073,7 @@ __operation_analyze_tags_dont_log_coverart () {
 						>> "${log_file}"
 
 					# Add one to fail fd
-					printf '.' >&5
+					printf '.' >> "${issue_ticks}"
 				fi
 			fi
 		done
@@ -4379,7 +4175,7 @@ __operation_analyze_tags_dont_log_coverart () {
 				>> "${log_file}"
 
 			# Add one to fail fd
-			printf '.' >&5
+			printf '.' >> "${issue_ticks}"
 		else
 			# FLAC is ok, display ok
 			__print_sub_progress_ok
@@ -4394,6 +4190,8 @@ __operation_analyze_tags_dont_log_coverart () {
 
 # Re-tag FLAC files
 __operation_set_tags () {
+	trap '__kill_jobs "$(jobs -rp)"' EXIT
+
 	# Print current FLAC being processed
 	__print_sub_current_flac
 
@@ -4510,6 +4308,8 @@ __operation_set_tags () {
 
 # Extract artwork from FLAC files
 __operation_extract_artwork () {
+	trap '__kill_jobs "$(jobs -rp)"' EXIT
+
 	# Print current FLAC with artwork to be extracted
 	__print_current_half
 
@@ -4526,7 +4326,7 @@ __operation_extract_artwork () {
 			>> "${log_file}"
 
 		# Add one to fail fd
-		printf '.' >&5
+		printf '.' >> "${issue_ticks}"
 	else
 		# Find all the artwork blocks available in the current FLAC file
 		__find_artwork
@@ -5126,6 +4926,8 @@ __operation_extract_artwork () {
 
 # Prune FLACS
 __operation_prune () {
+	trap '__kill_jobs "$(jobs -rp)"' EXIT
+
 	# Print current FLAC being pruned
 	__print_current_half
 
@@ -5142,7 +4944,7 @@ __operation_prune () {
 			>> "${log_file}"
 
 		# Add one to fail fd
-		printf '.' >&5
+		printf '.' >> ${issue_ticks}
 	else
 		# Remove all information but STREAMINFO,VORBIS_COMMENTs, and
 		# possibly METADATA_BLOCK_PICTURE
@@ -5191,7 +4993,7 @@ normal="\033[0m"
 compress_flac=""
 test_flac=""
 aucdtect_flac=""
-md5check_flac=""
+md5_check_flac=""
 replaygain_flac=""
 retag_flac=""
 extract_artwork=""
@@ -5279,6 +5081,42 @@ done
 # think there aren't any positional parameters to process as it
 # handles it's own positional parameters
 __process_positional_parameters "${@}"
+
+# For each operation that was chosen, set up operation_summary array
+declare -A operation_summary
+if [[ "${aucdtect_flac}" == "true" ]] ; then
+	operation_summary['Validate with auCDtect']='Operation Did Not Run'
+fi
+
+if [[ "${md5_check_flac}" == "true" ]] ; then
+	operation_summary['Check MD5 Signature']='Operation Did Not Run'
+fi
+
+if [[ "${compress_flac}" == "true" ]] ; then
+	operation_summary['Compress FLACs']='Operation Did Not Run'
+fi
+
+if [[ "${test_flac}" == "true" ]] ; then
+	operation_summary['Test FLACs']='Operation Did Not Run'
+fi
+
+if [[ "${replaygain_flac}" == "true" ]] ; then
+	operation_summary['> Testing']='Operation Did Not Run'
+	operation_summary['> Adding']='Operation Did Not Run'
+fi
+
+if [[ "${retag_flac}" == "true" ]] ; then
+	operation_summary['> Analyzing']='Operation Did Not Run'
+	operation_summary['> Applying']='Operation Did Not Run'
+fi
+
+if [[ "${extract_artwork}" == "true" ]] ; then
+	operation_summary['Extracting Artwork']='Operation Did Not Run'
+fi
+
+if [[ "${prune_flac}" == "true" ]] ; then
+	operation_summary['Prune METADATA Blocks']='Operation Did Not Run'
+fi
 
 # Check if user set '-n, --no-color'.  This must come before everything (and
 # after the positional parameters) to ensure color is set/unset.  The normal
@@ -5393,8 +5231,8 @@ tmp_fifo="/tmp/redoflacs_fifo_$$"
 
 mkfifo "${tmp_fifo}"
 
-# Set up error file descriptor '5'
-__set_error_fd
+# File where a tick is placed for each issue found
+issue_ticks="/tmp/redoflacs_issue_file_$$"
 
 # Display the top banner
 if [[ "${retag_flac}" != "true" ]] ; then
@@ -5472,16 +5310,16 @@ if [[ "${aucdtect_flac}" == "true" ]] ; then
 		__create_log 'aucdtect'
 
 		# Store operation status for Summary Of Operations
-		aucdtect_complete="false"
+		operation_summary['Validate with auCDtect']="$(__msg_num_issues)"
 
 		# Display Summary Of Operations
-		__operation_summary
+		__summary
 
 		exit 1
 	fi
 
 	# Store operation status for Summary Of Operations
-	aucdtect_complete="true"
+	operation_summary['Validate with auCDtect']='Operation Completed'
 fi
 #== .: END AUCDTECT :. =========================================================
 
@@ -5489,7 +5327,7 @@ fi
 #-------------------------------------------------------------------------------
 # .: MD5 CHECK :.
 #-------------------------------------------------------------------------------
-if [[ "${md5check_flac}" == "true" ]] ; then
+if [[ "${md5_check_flac}" == "true" ]] ; then
 	# Prints title message of current operation
 	__operation_message 'md5_check'
 
@@ -5525,16 +5363,16 @@ if [[ "${md5check_flac}" == "true" ]] ; then
 		__create_log 'md5_check'
 
 		# Store operation status for Summary Of Operations
-		md5check_complete="false"
+		operation_summary['Check MD5 Signature']="$(__msg_num_issues)"
 
 		# Display Summary Of Operations
-		__operation_summary
+		__summary
 
 		exit 1
 	fi
 
 	# Store operation status for Summary Of Operations
-	md5check_complete="true"
+	operation_summary['Check MD5 Signature']='Operation Completed'
 fi
 #== .: END MD5 CHECK :. ========================================================
 
@@ -5578,16 +5416,16 @@ if [[ "${compress_flac}" == "true" ]] ; then
 		__create_log 'compress'
 
 		# Store operation status for Summary Of Operations
-		compress_complete="false"
+		operation_summary['Compress FLACs']="$(__msg_num_issues)"
 
 		# Display Summary Of Operations
-		__operation_summary
+		__summary
 
 		exit 1
 	fi
 
 	# Store operation status for Summary Of Operations
-	compress_complete="true"
+	operation_summary['Compress FLACs']='Operation Completed'
 fi
 #== .: END COMPRESS/VERIFY :. ==================================================
 
@@ -5631,16 +5469,16 @@ if [[ "${test_flac}" == "true" ]] ; then
 		__create_log 'test'
 
 		# Store operation status for Summary Of Operations
-		test_complete="false"
+		operation_summary['Test FLACs']="$(__msg_num_issues)"
 
 		# Display Summary Of Operations
-		__operation_summary
+		__summary
 
 		exit 1
 	fi
 
 	# Store operation status for Summary Of Operations
-	test_complete="true"
+	operation_summary['Test FLACs']='Operation Completed'
 fi
 #== .: END TEST :. =============================================================
 
@@ -5703,16 +5541,16 @@ if [[ "${replaygain_flac}" == "true" ]] ; then
 		__create_log 'replaygain_test'
 
 		# Store operation status for Summary Of Operations
-		testing_replaygain_complete="false"
+		operation_summary['> Testing']="$(__msg_num_issues)"
 
 		# Display Summary Of Operations
-		__operation_summary
+		__summary
 
 		exit 1
 	fi
 
 	# Store operation status for Summary Of Operations
-	testing_replaygain_complete="true"
+	operation_summary['> Testing']='Operation Completed'
 	#== .: END TEST REPLAYGAIN :. ==============================================
 
 
@@ -5762,16 +5600,16 @@ if [[ "${replaygain_flac}" == "true" ]] ; then
 		__create_log 'replaygain_add'
 
 		# Store operation status for Summary Of Operations
-		adding_replaygain_complete="false"
+		operation_summary['> Adding']="$(__msg_num_issues)"
 
 		# Display Summary Of Operations
-		__operation_summary
+		__summary
 
 		exit 1
 	fi
 
 	# Store operation status for Summary Of Operations
-	adding_replaygain_complete="true"
+	operation_summary['> Adding']='Operation Completed'
 	#== .: END PROCESS REPLAYGAIN :. ===========================================
 fi
 #== .: END REPLAYGAIN :. =======================================================
@@ -5829,7 +5667,7 @@ if [[ "${retag_flac}" == "true" ]] ; then
 		post_row=$(( $(__row) + jobs ))
 	fi
 
-	trap '__trap_sigint "$post_row" "retag"' SIGINT
+	trap '__trap_sigint "$post_row" "retag_analyze"' SIGINT
 
 	# Run parallel operations, that which is specified as ${1}
 	__run_parallel_files "${analyze_tags}"
@@ -5861,10 +5699,10 @@ if [[ "${retag_flac}" == "true" ]] ; then
 		__create_log 'retag'
 
 		# Store operation status for Summary Of Operations
-		analyzing_retag_complete="false"
+		operation_summary['> Analyzing']="$(__msg_num_issues)"
 
 		# Display Summary Of Operations
-		__operation_summary
+		__summary
 
 		exit 1
 	elif [[ -f "${log_file}" ]] ; then
@@ -5875,16 +5713,16 @@ if [[ "${retag_flac}" == "true" ]] ; then
 		__create_log 'retag'
 
 		# Store operation status for Summary Of Operations
-		analyzing_retag_complete="false"
+		operation_summary['> Analyzing']="$(__msg_num_issues)"
 
 		# Display Summary Of Operations
-		__operation_summary
+		__summary
 
 		exit 1
 	fi
 
 	# Store operation status for Summary Of Operations
-	analyzing_retag_complete="true"
+	operation_summary['> Analyzing']='Operation Completed'
 	#== .: END ANALYZE TAGS :. =================================================
 
 
@@ -5918,7 +5756,7 @@ if [[ "${retag_flac}" == "true" ]] ; then
 		post_row=$(( $(__row) + jobs ))
 	fi
 
-	trap '__trap_sigint "$post_row" "retag"' SIGINT
+	trap '__trap_sigint "$post_row" "retag_apply"' SIGINT
 
 	# Run parallel operations, that which is specified as ${1}
 	__run_parallel_files '__operation_set_tags'
@@ -5926,7 +5764,7 @@ if [[ "${retag_flac}" == "true" ]] ; then
 	printf "\033[${post_row}H"
 
 	# Store operation status for Summary Of Operations
-	applying_retag_complete="true"
+	operation_summary['> Applying']='Operation Completed'
 	#== .: END SET TAGS :. =====================================================
 fi
 #== .: END RETAG :. ============================================================
@@ -5971,16 +5809,16 @@ if [[ "${extract_artwork}" == "true" ]] ; then
 		__create_log 'extract_artwork'
 
 		# Store operation status for Summary Of Operations
-		extract_artwork_complete="false"
+		operation_summary['Extracting Artwork']="$(__msg_num_issues)"
 
 		# Display Summary Of Operations
-		__operation_summary
+		__summary
 
 		exit 1
 	fi
 
 	# Store operation status for Summary Of Operations
-	extract_artwork_complete="true"
+	operation_summary['Extracting Artwork']='Operation Completed'
 fi
 #== .: END EXTRACT ARTWORK :. ==================================================
 
@@ -6034,16 +5872,16 @@ if [[ "${prune_flac}" == "true" ]] ; then
 		__create_log 'prune'
 
 		# Store operation status for Summary Of Operations
-		prune_complete="false"
+		operation_summary['Prune METADATA Blocks']="$(__msg_num_issues)"
 
 		# Display Summary Of Operations
-		__operation_summary
+		__summary
 
 		exit 1
 	fi
 
 	# Store operation status for Summary Of Operations
-	prune_complete="true"
+	operation_summary['Prune METADATA Blocks']='Operation Completed'
 fi
 #== .: END PRUNE :. ============================================================
 
@@ -6053,6 +5891,8 @@ if [[ "${coverart_warning}" == "true" ]] ; then
 	__coverart_warning
 fi
 
+printf "\033[?25h"
+
 # Display Summary Of Operations
-__operation_summary
+__summary
 #== .: END SCRIPT :. ===========================================================
