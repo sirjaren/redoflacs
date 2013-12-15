@@ -53,24 +53,25 @@ __error () {
 
 # No FLACS found error message
 __no_flacs () {
-	__error "There are not any FLAC files to process!\n" >&2
-}
+	__error "There are not any FLAC files to process!\n"
+} >&2
 
 # Display why COVERART tag should not be used
 __coverart_warning () {
-	__warn "\nThe ${cyan}COVERART${normal} tag is deprecated and should not be\n" >&2
-	__warn "used. Instead, consider migrating over to the new format:\n" >&2
-	__warn "${cyan}METADATA_BLOCK_PICTURE${normal}, using modern tag editors. Read:\n" >&2
-	__warn "${cyan}http://wiki.xiph.org/VorbisComment#Unofficial_COVERART_field_.28deprecated.29${normal}\n" >&2
-	__warn "for more details.\n" >&2
-}
+	printf "\n"
+	__warn "The ${cyan}COVERART${normal} tag is deprecated and should not be\n"
+	__warn "used. Instead, consider migrating over to the new format:\n"
+	__warn "${cyan}METADATA_BLOCK_PICTURE${normal}, using modern tag editors. Read:\n"
+	__warn "${cyan}http://wiki.xiph.org/VorbisComment#Unofficial_COVERART_field_.28deprecated.29${normal}\n"
+	__warn "for more details.\n"
+} >&2
 
 # Display message that system is missing vital programs
 __display_missing_commands_header () {
-	__error "You seem to be missing one or more necessary programs\n" >&2
-	__error "to run this script reliably.  Below shows the program(s)\n" >&2
-	__error "missing, as well as where you can install them from:\n" >&2
-}
+	__error "You seem to be missing one or more necessary programs\n"
+	__error "to run this script reliably.  Below shows the program(s)\n"
+	__error "missing, as well as where you can install them from:\n"
+} >&2
 
 # Display a lot of help
 __long_help () {
@@ -1316,13 +1317,96 @@ __print_sub_progress_failed () {
 
 #== .: PROCESSED FILE/DIRECTORY MESSAGES :. ====================================
 
+#-------------------------------------------------------------------------------
+
+__trap_sigint () {
+	#---------------------------------------------------------------------------
+	# Kill any children process and display the correct interrupt message when
+	# a user sends SIGINT during script execution.
+	#
+	# $1 is where to place the cursor (row-wise) in order to not overwrite
+	# files/directories displayed already.
+	#
+	# $2 determines which additional cleanup may need to be performed when
+	# starting '__exit_cleanup'.  Possible values:
+	#   aucdtect          compress   extract_artwork
+	#   md5_check         prune      replaygain_add
+	#   replaygain_test   retag      test
+	#---------------------------------------------------------------------------
+	kill $(jobs -rp) 2>/dev/null   # Don't show any output
+
+	wait 2>/dev/null               # Hide possible job control output
+
+	# If $1 is NULL, it means that the user invoked SIGINT before any operation
+	# started (eg, retag countdown or config countdown)
+	if [[ -n "${1}" ]] ; then
+		printf "\033[${1};2H${green}*${normal} Control-C received, generating summary. Please wait...\n"
+	else
+		printf "\n ${green}*${normal} Control-C received, generating summary. Please wait...\n"
+	fi
+
+	__exit_cleanup "${2}"          # Additional cleanup before exiting
+}
 
 #-------------------------------------------------------------------------------
-# .: TRAPS :.
-#-------------------------------------------------------------------------------
-# Countdown abort
-__trap_countdown () {
-	__info "\nControl-C received, exiting. Please wait...\n"
+
+__exit_cleanup () {
+	#---------------------------------------------------------------------------
+	# Do any additional cleanup and check for the existence of a log file before
+	# exiting script.
+	#
+	# $1 determines which operation requires additional cleanup.  This value is
+	# normally obtained from $2 in the '__trap_sigint' function.  Possible
+	# values:
+	#   aucdtect          compress   extract_artwork
+	#   md5_check         prune      replaygain_add
+	#   replaygain_test   retag      test
+	#---------------------------------------------------------------------------
+	case "${1}" in
+		compress)
+			# Remove temporarily encoded FLAC files
+			rm -f "${directory}"/**/*.tmp,fl-ac+en\'c
+		;;
+		aucdtect)
+			# Remove temporarily created WAV files (if any)
+			rm -f "${directory}"/**/*_redoflacs_"$$".wav
+		;;
+		retag)
+			# Test for deprecated tag, COVERART, in log file.  If it
+			# exists, set coverart_warning variable to make script output
+			# warning upon completion
+			if [[ -f "${log_file}" ]] ; then
+				while read -r i ; do
+					# Indentation is culled from reading in "${i}"
+					# To change this, set IFS to '\n'
+					if [[ "${i}" == *METADATA_BLOCK_PICTURE* ]] ; then
+						coverart_warning="true"
+						break
+					fi
+				done < "${log_file}"
+			fi
+		;;
+	esac
+
+	if [[ -f "${log_file}"  && "${coverart_warning}" == 'true' ]] ; then
+		# This block is only executed during the 'retag' operation
+		#--
+		# Display COVERART warning function and metadata issues
+		printf "\n" >&2
+		__coverart_warning
+
+		# Print out log exists to STDERR
+		__message_log_exists "$1"
+
+		# Create and format log
+		__create_log "$1"
+	elif [[ -f "${log_file}" ]] ; then
+		# Print out log exists to STDERR
+		__message_log_exists "${1}"
+
+		# Create and format log
+		__create_log "${1}"
+	fi
 
 	# Restore old stty settings, make stty happy
 	# by redirecting /dev/stderr
@@ -1335,132 +1419,6 @@ __trap_countdown () {
 	# descriptor available
 	rm -f "${tmp_fifo}"
 
-	exit 130
-}
-
-# ReplayGain test abort
-__trap_replaygain_test () {
-	# Kill running children
-	__kill_jobs
-
-	# Determine where to print out the interrupt message
-	__set_abort_file_cursor
-
-	# Print interrupt message
-	printf "\033[$current_row;2H${green}*${normal} Control-C received, generating summary. Please wait...\n"
-
-	# Increment the current row by one to allow the Summary Of Operations table
-	# to display correctly
-	(( current_row++ ))
-
-	if [[ -f "${log_file}" ]] ; then
-		# Print out log exists to STDERR
-		__message_log_exists 'replaygain_test'
-
-		# Create and format log
-		__create_log 'replaygain_test'
-	fi
-
-	# Store operation status for Summary Of Operations
-	testing_replaygain_complete="interrupt"
-
-	# Display Summary Of Operations
-	__operation_summary
-
-	exit 130
-}
-
-# ReplayGain process abort
-__trap_replaygain_process () {
-	# Kill running children
-	__kill_jobs
-
-	# Determine where to print out the interrupt message
-	__set_abort_directory_cursor
-
-	# Print interrupt message
-	printf "\033[$current_row;2H${green}*${normal} Control-C received, generating summary. Please wait...\n"
-
-	# Increment the current row by one to allow the Summary Of Operations table
-	# to display correctly
-	(( current_row++ ))
-
-	if [[ -f "${log_file}" ]] ; then
-		# Print out log exists to STDERR
-		__message_log_exists 'replaygain_add'
-
-		# Create and format log
-		__create_log 'replaygain_add'
-	fi
-
-	# Store operation status for Summary Of Operations
-	adding_replaygain_complete="interrupt"
-
-	# Display Summary Of Operations
-	__operation_summary
-
-	exit 130
-}
-
-# FLAC compress abort and remove temporarily encoded files (if any)
-__trap_compress () {
-	# Kill running children
-	__kill_jobs
-
-	# Determine where to print out the interrupt message
-	__set_abort_file_cursor
-
-	# Print interrupt message
-	printf "\033[$current_row;2H${green}*${normal} Control-C received, removing temporary files and\n"
-	printf " ${green}*${normal} generating summary. Please wait...\n"
-
-	# Increment the current row by two to allow the Summary Of Operations table
-	# to display correctly
-	current_row=$(( current_row + 2 ))
-
-	# Remove temporarily encoded FLAC files
-	rm -f "${directory}"/**/*.tmp,fl-ac+en\'c
-
-	if [[ -f "${log_file}" ]] ; then
-		# Print out log exists to STDERR
-		__message_log_exists 'compress'
-
-		# Create and format log
-		__create_log 'compress'
-	fi
-
-	# Store operation status for Summary Of Operations
-	compress_complete="interrupt"
-
-	# Display Summary Of Operations
-	__operation_summary
-
-	exit 130
-}
-
-# FLAC test abort
-__trap_test () {
-	# Kill running children
-	__kill_jobs
-
-	# Determine where to print out the interrupt message
-	__set_abort_file_cursor
-
-	# Print interrupt message
-	printf "\033[$current_row;2H${green}*${normal} Control-C received, generating summary. Please wait...\n"
-
-	# Increment the current row by one to allow the Summary Of Operations table
-	# to display correctly
-	(( current_row++ ))
-
-	if [[ -f "${log_file}" ]] ; then
-		# Print out log exists to STDERR
-		__message_log_exists 'test'
-
-		# Create and format log
-		__create_log 'test'
-	fi
-
 	# Store operation status for Summary Of Operations
 	test_complete="interrupt"
 
@@ -1470,249 +1428,7 @@ __trap_test () {
 	exit 130
 }
 
-# auCDtect abort.  Removes temporary WAV files (if any)
-__trap_aucdtect () {
-	# Kill running children
-	__kill_jobs
-
-	# Determine where to print out the interrupt message
-	__set_abort_file_cursor
-
-	# Print interrupt message
-	printf "\033[$current_row;2H${green}*${normal} Control-C received, removing temporary files and\n"
-	printf " ${green}*${normal} generating summary. Please wait...\n"
-
-	# Increment the current row by two to allow the Summary Of Operations table
-	# to display correctly
-	current_row=$(( current_row + 2 ))
-
-	# Remove temporarily created WAV files (if any)
-	rm -f "${directory}"/**/*_redoflacs_"$$".wav
-
-	if [[ -f "${log_file}" ]] ; then
-		# Print out log exists to STDERR
-		__message_log_exists 'aucdtect'
-
-		# Create and format log
-		__create_log 'aucdtect'
-	fi
-
-	# Store operation status for Summary Of Operations
-	aucdtect_complete="interrupt"
-
-	# Display Summary Of Operations
-	__operation_summary
-
-	exit 130
-}
-
-# MD5 check abort
-__trap_md5check () {
-	# Kill running children
-	__kill_jobs
-
-	# Determine where to print out the interrupt message
-	__set_abort_file_cursor
-
-	# Print interrupt message
-	printf "\033[$current_row;2H${green}*${normal} Control-C received, generating summary. Please wait...\n"
-
-	# Increment the current row by one to allow the Summary Of Operations table
-	# to display correctly
-	(( current_row++ ))
-
-	if [[ -f "${log_file}" ]] ; then
-		# Print out log exists to STDERR
-		__message_log_exists 'md5_check'
-
-		# Create and format log
-		__create_log 'md5_check'
-	fi
-
-	# Store operation status for Summary Of Operations
-	md5check_complete="interrupt"
-
-	# Display Summary Of Operations
-	__operation_summary
-
-	exit 130
-}
-
-# Analyzing tags abort
-__trap_analyzing_tags () {
-	# Kill running children
-	__kill_jobs
-
-	# Determine where to print out the interrupt message
-	__set_abort_file_cursor
-
-	# Print interrupt message
-	printf "\033[$current_row;2H${green}*${normal} Control-C received, generating summary. Please wait...\n"
-
-	# Increment the current row by one to allow the Summary Of Operations table
-	# to display correctly
-	(( current_row++ ))
-
-	# Test for DEPRECATED tag, COVERART in METADATA_ERROR log.  If it
-	# exists, set coverart_warning variable to make script output
-	# warning upon completion
-	if [[ -f "${log_file}" ]] ; then
-		while read -r i ; do
-			# Indentation is culled from reading in "${i}"
-			# To change this, set IFS to '\n'
-			if [[ "${i}" == *METADATA_BLOCK_PICTURE* ]] ; then
-				coverart_warning="true"
-				break
-			fi
-		done < "${log_file}"
-	fi
-
-	if [[ -f "${log_file}"  && "${coverart_warning}" == "true" ]] ; then
-		# Display COVERART warning function and metadata issues
-		printf '\n' >&2 ; __coverart_warning
-
-		# Print out log exists to STDERR
-		__message_log_exists 'retag'
-
-		# Create and format log
-		__create_log 'retag'
-	elif [[ -f "${log_file}" ]] ; then
-		# Print out log exists to STDERR
-		__message_log_exists 'retag'
-
-		# Create and format log
-		__create_log 'retag'
-	fi
-
-	# Store operation status for Summary Of Operations
-	analyzing_retag_complete="interrupt"
-
-	# Display Summary Of Operations
-	__operation_summary
-
-	exit 130
-}
-
-# Applying tags abort
-__trap_applying_tags () {
-	# Kill running children
-	__kill_jobs
-
-	# Determine where to print out the interrupt message
-	__set_abort_file_cursor
-
-	# Print interrupt message
-	printf "\033[$current_row;2H${green}*${normal} Control-C received, generating summary. Please wait...\n"
-
-	# Increment the current row by one to allow the Summary Of Operations table
-	# to display correctly
-	(( current_row++ ))
-
-	# Test for DEPRECATED tag, COVERART in METADATA_ERROR log.  If it
-	# exists, set coverart_warning variable to make script output
-	# warning upon completion
-	if [[ -f "${log_file}" ]] ; then
-		while read -r i ; do
-			# Indentation is culled from reading in "${i}"
-			# To change this, set IFS to '\n'
-			if [[ "${i}" == *METADATA_BLOCK_PICTURE* ]] ; then
-				coverart_warning="true"
-				break
-			fi
-		done < "${log_file}"
-	fi
-
-	if [[ -f "${log_file}"  && "${coverart_warning}" == "true" ]] ; then
-		# Display COVERART warning function and metadata issues
-		printf '\n' >&2 ; __coverart_warning
-
-		# Print out log exists to STDERR
-		__message_log_exists 'retag'
-
-		# Create and format log
-		__create_log 'retag'
-	elif [[ -f "${log_file}" ]] ; then
-		# Print out log exists to STDERR
-		__message_log_exists 'retag'
-
-		# Create and format log
-		__create_log 'retag'
-	fi
-
-	# Store operation status for Summary Of Operations
-	applying_retag_complete="interrupt"
-
-	# Display Summary Of Operations
-	__operation_summary
-
-	exit 130
-}
-
-# Extract artwork abort
-__trap_extract_artwork () {
-	# Kill running children
-	__kill_jobs
-
-	# Determine where to print out the interrupt message
-	__set_abort_file_cursor
-
-	# Print interrupt message
-	printf "\033[$current_row;2H${green}*${normal} Control-C received, generating summary. Please wait...\n"
-
-	# Increment the current row by one to allow the Summary Of Operations table
-	# to display correctly
-	(( current_row++ ))
-
-	if [[ -f "${log_file}" ]] ; then
-		# Print out log exists to STDERR
-		__message_log_exists 'extract_artwork'
-
-		# Create and format log
-		__create_log 'extract_artwork'
-	fi
-
-	# Store operation status for Summary Of Operations
-	extract_artwork_complete="interrupt"
-
-	# Display Summary Of Operations
-	__operation_summary
-
-	exit 130
-}
-
-# Prune FLACS abort
-__trap_prune () {
-	# Kill running children
-	__kill_jobs
-
-	# Determine where to print out the interrupt message
-	__set_abort_file_cursor
-
-	# Print interrupt message
-	printf "\033[$current_row;2H${green}*${normal} Control-C received, generating summary. Please wait...\n"
-
-	# Increment the current row by one to allow the Summary Of Operations table
-	# to display correctly
-	(( current_row++ ))
-
-	if [[ -f "${log_file}" ]] ; then
-		# Print out log exists to STDERR
-		__message_log_exists 'prune'
-
-		# Create and format log
-		__create_log 'prune'
-	fi
-
-	# Store operation status for Summary Of Operations
-	prune_complete="interrupt"
-
-	# Display Summary Of Operations
-	__operation_summary
-
-	exit 130
-}
-#== .: END TRAPS :. ============================================================
-
+#-------------------------------------------------------------------------------
 
 #-------------------------------------------------------------------------------
 # .: VARIOUS COMMANDS :.
@@ -1841,61 +1557,6 @@ __scroll_terminal () {
 	fi
 }
 
-# This sets the current row to allow the interrupt message and the Summary Of
-# Operations table to print out correctly.  This is for 'file' operations
-__set_abort_file_cursor () {
-	# Set the cursor to the correct row depending on whether there were more
-	# or less files to process than the number of jobs to run
-	if (( ${#total_flacs_array[@]} < jobs )) ; then
-		# Less files than jobs to run, so only add the number of files
-		# processed
-		current_row=$(( $(__row) + ${#total_flacs_array[@]} ))
-	else
-		# More files than jobs to run, so add the number of jobs processed
-		current_row=$(( $(__row) + jobs ))
-	fi
-
-	# Obtain the remaining lines left in the current terminal
-	local remaining_lines=$(( lines - $(__row) ))
-
-	# Scroll the terminal up by 1 if we do not have any remaining lines
-	if (( remaining_lines == 0 )) ; then
-		# This scrolls the terminal up by 1
-		printf "\033[1S"
-
-		# Since we've scrolled the terminal, the current row is one less
-		(( --current_row ))
-	fi
-}
-
-# This sets the current row to allow the interrupt message and the Summary Of
-# Operations table to print out correctly.  This is for 'directory' operations
-__set_abort_directory_cursor () {
-	# Set the cursor to the correct row depending on whether there were more
-	# or less directories to process than the number of jobs to run
-	if (( ${#flac_directories_array[@]} < jobs )) ; then
-		# Less directories than jobs to run, so only add the number of
-		# directories processed
-		current_row=$(( $(__row) + ${#flac_directories_array[@]} ))
-	else
-		# More directories than jobs to run, so add the number of jobs processed
-		current_row=$(( $(__row) + jobs ))
-	fi
-
-	# Obtain the remaining lines left in the current terminal
-	local remaining_lines=$(( lines - $(__row) ))
-
-	# Scroll the terminal up by 1 if we do not have any remaining lines
-	if (( remaining_lines == 0 )) ; then
-		# This scrolls the terminal up by 1
-		printf "\033[1S"
-
-		# Since we've scrolled the terminal, the current row is one less
-		(( --current_row ))
-	fi
-}
-
-
 # Obtain the current progress completed percentage while compressing FLAC files
 __obtain_compress_percentage () {
 	# Remove backspace sequences used by the FLAC command line interface
@@ -1982,42 +1643,6 @@ __store_position () {
 		# stored by 'read' upon starting the next job
 		printf "${previous_operation_position}\n" >&3
 	fi
-}
-
-# Determine abort to run based off the operation to run (via ${1})
-__determine_abort () {
-	case "${1}" in
-		__operation_aucdtect)
-			run_abort="__trap_aucdtect"
-		;;
-		__operation_md5check)
-			run_abort="__trap_md5check"
-		;;
-		__operation_compress)
-			run_abort="__trap_compress"
-		;;
-		__operation_test)
-			run_abort="__trap_test"
-		;;
-		__operation_test_replaygain)
-			run_abort="__trap_replaygain_test"
-		;;
-		__operation_replaygain_noforce | __operation_replaygain_force)
-			run_abort="__trap_replaygain_process"
-		;;
-		__operation_analyze_tags_dont_log_coverart | __operation_analyze_tags)
-			run_abort="__trap_analyzing_tags"
-		;;
-		__operation_set_tags)
-			run_abort="__trap_applying_tags"
-		;;
-		__operation_extract_artwork)
-			run_abort="__trap_extract_artwork"
-		;;
-		__operation_prune)
-			run_abort="__trap_prune"
-		;;
-	esac
 }
 
 # Force the creation of a new configuration file
@@ -2677,7 +2302,7 @@ __processed_flacs_ok () {
 # to allow user to quit script safely
 __countdown_metadata () {
 	# Trap SIGINT (Control-C) to abort cleanly
-	trap __trap_countdown SIGINT
+	trap __trap_sigint SIGINT
 
 	# Warning message
 	__error "${yellow}CAUTION!${normal} These are the tag fields that will be kept\n" >&2
@@ -2715,7 +2340,7 @@ __countdown_metadata () {
 # the user has.  Allows user to quit script before proceeding
 __countdown_config () {
 	# Trap SIGINT (Control-C) to abort cleanly
-	trap __trap_countdown SIGINT
+	trap __trap_sigint SIGINT
 
 	# Warning message
 	__info "There is a newer configuration file available!\n\n"
@@ -2794,16 +2419,6 @@ __set_error_fd () {
 
 	# Open FIFO for reading and writing on file descriptor '5'
 	exec 5<>"${error_count}"
-}
-
-# Kill any child processes
-__kill_jobs () {
-	# Hide error output in case there are no children to kill
-	kill $(jobs -rp) 2>/dev/null
-
-	# Wait on killing the children process, hiding STDERR to disable job control
-	# output
-	wait 2>/dev/null
 }
 
 # Obtain and process the positional parameters invoked
@@ -3665,13 +3280,6 @@ __operation_summary () {
 # Function to run commands/operations that are by
 # files _ONLY_
 __run_parallel_files () {
-	# Determine which function should be run in the `trap' via what is specified
-	# via ${1} (eg, the operation to be run), returned as ${run_abort}
-	__determine_abort "${1}"
-
-	# Run abort function on script exit
-	trap "${run_abort}" SIGINT
-
 	# Forces iteration to start at 0, in the event that
 	# multiple operations are going to be run
 	iteration=0
@@ -3839,10 +3447,6 @@ __run_parallel_directories () {
 #-------------------------------------------------------------------------------
 # Test ReplayGain
 __operation_test_replaygain () {
-	# Let's make sure to kill running children if this function was aborted via
-	# SIGINT.  This function will receive EXIT from the kill in previous trap
-	trap __kill_jobs EXIT
-
 	# Print current FLAC being processed
 	__print_sub_current_flac
 
@@ -3899,10 +3503,6 @@ __operation_test_replaygain () {
 
 # Process Replaygain (only add values if missing)
 __operation_replaygain_noforce () {
-	# Let's make sure to kill running children if this function was aborted via
-	# SIGINT.  This function will receive EXIT from the kill in previous trap
-	trap __kill_jobs EXIT
-
 	# Print current directory being processed
 	__print_current_directory
 
@@ -3972,10 +3572,6 @@ __operation_replaygain_noforce () {
 
 # Process ReplayGain (force new values)
 __operation_replaygain_force () {
-	# Let's make sure to kill running children if this function was aborted via
-	# SIGINT.  This function will receive EXIT from the kill in previous trap
-	trap __kill_jobs EXIT
-
 	# Print current directory being processed
 	__print_current_directory
 
@@ -4007,10 +3603,6 @@ __operation_replaygain_force () {
 
 # Compress FLAC files
 __operation_compress () {
-	# Let's make sure to kill running children if this function was aborted via
-	# SIGINT.  This function will receive EXIT from the kill in previous trap
-	trap __kill_jobs EXIT
-
 	# Test for COMPRESSION level in FLAC file. Hide error output since
 	# we'll be verifying the FLAC file later
 	COMPRESSION="$(metaflac --show-tag=COMPRESSION "${i}" 2> /dev/null)"
@@ -4101,10 +3693,6 @@ __operation_compress () {
 
 # Test FLAC files
 __operation_test () {
-	# Let's make sure to kill running children if this function was aborted via
-	# SIGINT.  This function will receive EXIT from the kill in previous trap
-	trap __kill_jobs EXIT
-
 	# Print current FLAC being processed
 	__print_current_flac
 
@@ -4143,10 +3731,6 @@ __operation_test () {
 
 # Test FLAC validity with auCDtect
 __operation_aucdtect () {
-	# Let's make sure to kill running children if this function was aborted via
-	# SIGINT.  This function will receive EXIT from the kill in previous trap
-	trap __kill_jobs EXIT
-
 	# Print current FLAC being processed
 	__print_current_flac
 
@@ -4428,10 +4012,6 @@ __operation_aucdtect () {
 
 # Check MD5 in each FLAC file
 __operation_md5check () {
-	# Let's make sure to kill running children if this function was aborted via
-	# SIGINT.  This function will receive EXIT from the kill in previous trap
-	trap __kill_jobs EXIT
-
 	# Print current FLAC being processed
 	__print_current_flac
 
@@ -4479,10 +4059,6 @@ __operation_md5check () {
 
 # Analyze FLAC tags
 __operation_analyze_tags () {
-	# Let's make sure to kill running children if this function was aborted via
-	# SIGINT.  This function will receive EXIT from the kill in previous trap
-	trap __kill_jobs EXIT
-
 	# Print current FLAC being processed
 	__print_sub_current_flac
 
@@ -4637,10 +4213,6 @@ __operation_analyze_tags () {
 
 # Analyze FLAC tags (not logging missing COVERART tag)
 __operation_analyze_tags_dont_log_coverart () {
-	# Let's make sure to kill running children if this function was aborted via
-	# SIGINT.  This function will receive EXIT from the kill in previous trap
-	trap __kill_jobs EXIT
-
 	# Print current FLAC being processed
 	__print_sub_current_flac
 
@@ -4822,10 +4394,6 @@ __operation_analyze_tags_dont_log_coverart () {
 
 # Re-tag FLAC files
 __operation_set_tags () {
-	# Let's make sure to kill running children if this function was aborted via
-	# SIGINT.  This function will receive EXIT from the kill in previous trap
-	trap __kill_jobs EXIT
-
 	# Print current FLAC being processed
 	__print_sub_current_flac
 
@@ -4942,10 +4510,6 @@ __operation_set_tags () {
 
 # Extract artwork from FLAC files
 __operation_extract_artwork () {
-	# Let's make sure to kill running children if this function was aborted via
-	# SIGINT.  This function will receive EXIT from the kill in previous trap
-	trap __kill_jobs EXIT
-
 	# Print current FLAC with artwork to be extracted
 	__print_current_half
 
@@ -5562,10 +5126,6 @@ __operation_extract_artwork () {
 
 # Prune FLACS
 __operation_prune () {
-	# Let's make sure to kill running children if this function was aborted via
-	# SIGINT.  This function will receive EXIT from the kill in previous trap
-	trap __kill_jobs EXIT
-
 	# Print current FLAC being pruned
 	__print_current_half
 
@@ -5886,22 +5446,23 @@ if [[ "${aucdtect_flac}" == "true" ]] ; then
 	# STDOUT to
 	__create_aucdtect_fd
 
-	# Save the row position before starting the operation
-	pre_operation_row_position=$(__row)
-
-	# Run parallel operations, that which is specified as ${1}
-	__run_parallel_files __operation_aucdtect
-
 	# Set the cursor to the correct row depending on whether there were more
 	# or less files to process than the number of jobs to run
 	if (( ${#total_flacs_array[@]} < jobs )) ; then
 		# Less files than jobs to run, so only add the number of files
 		# processed
-		printf "\033[$(( pre_operation_row_position + ${#total_flacs_array[@]} ))H"
+		post_row=$(( $(__row) + ${#total_flacs_array[@]} ))
 	else
 		# More files than jobs to run, so add the number of jobs processed
-		printf "\033[$(( pre_operation_row_position + jobs ))H"
+		post_row=$(( $(__row) + jobs ))
 	fi
+
+	trap '__trap_sigint "$post_row" "aucdtect"' SIGINT
+
+	# Run parallel operations, that which is specified as ${1}
+	__run_parallel_files '__operation_aucdtect'
+
+	printf "\033[${post_row}H"
 
 	if [[ -f "${log_file}" ]] ; then
 		# Print out log exists to STDERR
@@ -5938,22 +5499,23 @@ if [[ "${md5check_flac}" == "true" ]] ; then
 	# Make sure to clear file descriptor '3' before proceeding
 	__clear_tmp_fd
 
-	# Save the row position before starting the operation
-	pre_operation_row_position=$(__row)
-
-	# Run parallel operations, that which is specified as ${1}
-	__run_parallel_files __operation_md5check
-
 	# Set the cursor to the correct row depending on whether there were more
 	# or less files to process than the number of jobs to run
 	if (( ${#total_flacs_array[@]} < jobs )) ; then
 		# Less files than jobs to run, so only add the number of files
 		# processed
-		printf "\033[$(( pre_operation_row_position + ${#total_flacs_array[@]} ))H"
+		post_row=$(( $(__row) + ${#total_flacs_array[@]} ))
 	else
 		# More files than jobs to run, so add the number of jobs processed
-		printf "\033[$(( pre_operation_row_position + jobs ))H"
+		post_row=$(( $(__row) + jobs ))
 	fi
+
+	trap '__trap_sigint "$post_row" "md5_check"' SIGINT
+
+	# Run parallel operations, that which is specified as ${1}
+	__run_parallel_files '__operation_md5check'
+
+	printf "\033[${post_row}H"
 
 	if [[ -f "${log_file}" ]] ; then
 		# Print out log exists to STDERR
@@ -5990,22 +5552,23 @@ if [[ "${compress_flac}" == "true" ]] ; then
 	# Make sure to clear file descriptor '3' before proceeding
 	__clear_tmp_fd
 
-	# Save the row position before starting the operation
-	pre_operation_row_position=$(__row)
-
-	# Run parallel operations, that which is specified as ${1}
-	__run_parallel_files __operation_compress
-
 	# Set the cursor to the correct row depending on whether there were more
 	# or less files to process than the number of jobs to run
 	if (( ${#total_flacs_array[@]} < jobs )) ; then
 		# Less files than jobs to run, so only add the number of files
 		# processed
-		printf "\033[$(( pre_operation_row_position + ${#total_flacs_array[@]} ))H"
+		post_row=$(( $(__row) + ${#total_flacs_array[@]} ))
 	else
 		# More files than jobs to run, so add the number of jobs processed
-		printf "\033[$(( pre_operation_row_position + jobs ))H"
+		post_row=$(( $(__row) + jobs ))
 	fi
+
+	trap '__trap_sigint "$post_row" "compress"' SIGINT
+
+	# Run parallel operations, that which is specified as ${1}
+	__run_parallel_files '__operation_compress'
+
+	printf "\033[${post_row}H"
 
 	if [[ -f "${log_file}" ]] ; then
 		# Print out log exists to STDERR
@@ -6042,22 +5605,23 @@ if [[ "${test_flac}" == "true" ]] ; then
 	# Make sure to clear file descriptor '3' before proceeding
 	__clear_tmp_fd
 
-	# Save the row position before starting the operation
-	pre_operation_row_position=$(__row)
-
-	# Run parallel operations, that which is specified as ${1}
-	__run_parallel_files __operation_test
-
 	# Set the cursor to the correct row depending on whether there were more
 	# or less files to process than the number of jobs to run
 	if (( ${#total_flacs_array[@]} < jobs )) ; then
 		# Less files than jobs to run, so only add the number of files
 		# processed
-		printf "\033[$(( pre_operation_row_position + ${#total_flacs_array[@]} ))H"
+		post_row=$(( $(__row) + ${#total_flacs_array[@]} ))
 	else
 		# More files than jobs to run, so add the number of jobs processed
-		printf "\033[$(( pre_operation_row_position + jobs ))H"
+		post_row=$(( $(__row) + jobs ))
 	fi
+
+	trap '__trap_sigint "$post_row" "test"' SIGINT
+
+	# Run parallel operations, that which is specified as ${1}
+	__run_parallel_files '__operation_test'
+
+	printf "\033[${post_row}H"
 
 	if [[ -f "${log_file}" ]] ; then
 		# Print out log exists to STDERR
@@ -6113,22 +5677,23 @@ if [[ "${replaygain_flac}" == "true" ]] ; then
 	# Make sure to clear file descriptor '3' before proceeding
 	__clear_tmp_fd
 
-	# Save the row position before starting the operation
-	pre_operation_row_position=$(__row)
-
-	# Run parallel operations, that which is specified as ${1}
-	__run_parallel_files __operation_test_replaygain
-
 	# Set the cursor to the correct row depending on whether there were more
 	# or less files to process than the number of jobs to run
 	if (( ${#total_flacs_array[@]} < jobs )) ; then
 		# Less files than jobs to run, so only add the number of files
 		# processed
-		printf "\033[$(( pre_operation_row_position + ${#total_flacs_array[@]} ))H"
+		post_row=$(( $(__row) + ${#total_flacs_array[@]} ))
 	else
 		# More files than jobs to run, so add the number of jobs processed
-		printf "\033[$(( pre_operation_row_position + jobs ))H"
+		post_row=$(( $(__row) + jobs ))
 	fi
+
+	trap '__trap_sigint "$post_row" "replaygain_test"' SIGINT
+
+	# Run parallel operations, that which is specified as ${1}
+	__run_parallel_files '__operation_test_replaygain'
+
+	printf "\033[${post_row}H"
 
 	if [[ -f "${log_file}" ]] ; then
 		# Print out log exists to STDERR
@@ -6171,22 +5736,23 @@ if [[ "${replaygain_flac}" == "true" ]] ; then
 	# files
 	__scroll_terminal 'directory'
 
-	# Save the row position before starting the operation
-	pre_operation_row_position=$(__row)
-
-	# Run parallel operations, that which is specified as ${1}
-	__run_parallel_directories "${process_replaygain}"
-
 	# Set the cursor to the correct row depending on whether there were more
 	# or less directories to process than the number of jobs to run
 	if (( ${#flac_directories_array[@]} < jobs )) ; then
 		# Less directories than jobs to run, so only add the number of
 		# directories processed
-		printf "\033[$(( pre_operation_row_position + ${#flac_directories_array[@]} ))H"
+		post_row=$(( $(__row) + ${#flac_directories_array[@]} ))
 	else
 		# More directories than jobs to run, so add the number of jobs processed
-		printf "\033[$(( pre_operation_row_position + jobs ))H"
+		post_row=$(( $(__row) + jobs ))
 	fi
+
+	trap '__trap_sigint "$post_row" "replaygain_add"' SIGINT
+
+	# Run parallel operations, that which is specified as ${1}
+	__run_parallel_directories "${process_replaygain}"
+
+	printf "\033[${post_row}H"
 
 	if [[ -f "${log_file}" ]] ; then
 		# Print out log exists to STDERR
@@ -6220,12 +5786,10 @@ if [[ "${retag_flac}" == "true" ]] ; then
 	# missing COVERART tags (in the event that the script adds
 	# it into the tag array)
 	if [[ "${coverart_warning}" != "true" && "${remove_artwork}" != "true" ]] ; then
-
 		# Analyze tags but don't log COVERART as a missing
 		# tag (if applicable)
 		analyze_tags="__operation_analyze_tags_dont_log_coverart"
 	else
-
 		# Log all the missing tags found in the ${tags} array including COVERART
 		# tag, regardless of whether it was added by the script or explicitly
 		# chosen by the user
@@ -6254,22 +5818,23 @@ if [[ "${retag_flac}" == "true" ]] ; then
 	# Make sure to clear file descriptor '3' before proceeding
 	__clear_tmp_fd
 
-	# Save the row position before starting the operation
-	pre_operation_row_position=$(__row)
-
-	# Run parallel operations, that which is specified as ${1}
-	__run_parallel_files "${analyze_tags}"
-
 	# Set the cursor to the correct row depending on whether there were more
 	# or less files to process than the number of jobs to run
 	if (( ${#total_flacs_array[@]} < jobs )) ; then
 		# Less files than jobs to run, so only add the number of files
 		# processed
-		printf "\033[$(( pre_operation_row_position + ${#total_flacs_array[@]} ))H"
+		post_row=$(( $(__row) + ${#total_flacs_array[@]} ))
 	else
 		# More files than jobs to run, so add the number of jobs processed
-		printf "\033[$(( pre_operation_row_position + jobs ))H"
+		post_row=$(( $(__row) + jobs ))
 	fi
+
+	trap '__trap_sigint "$post_row" "retag"' SIGINT
+
+	# Run parallel operations, that which is specified as ${1}
+	__run_parallel_files "${analyze_tags}"
+
+	printf "\033[${post_row}H"
 
 	# Test for DEPRECATED tag, COVERART in METADATA_ERROR log.  If it
 	# exists, set coverart_warning variable to make script output
@@ -6342,22 +5907,23 @@ if [[ "${retag_flac}" == "true" ]] ; then
 	# Make sure to clear file descriptor '3' before proceeding
 	__clear_tmp_fd
 
-	# Save the row position before starting the operation
-	pre_operation_row_position=$(__row)
-
-	# Run parallel operations, that which is specified as ${1}
-	__run_parallel_files __operation_set_tags
-
 	# Set the cursor to the correct row depending on whether there were more
 	# or less files to process than the number of jobs to run
 	if (( ${#total_flacs_array[@]} < jobs )) ; then
 		# Less files than jobs to run, so only add the number of files
 		# processed
-		printf "\033[$(( pre_operation_row_position + ${#total_flacs_array[@]} ))H"
+		post_row=$(( $(__row) + ${#total_flacs_array[@]} ))
 	else
 		# More files than jobs to run, so add the number of jobs processed
-		printf "\033[$(( pre_operation_row_position + jobs ))H"
+		post_row=$(( $(__row) + jobs ))
 	fi
+
+	trap '__trap_sigint "$post_row" "retag"' SIGINT
+
+	# Run parallel operations, that which is specified as ${1}
+	__run_parallel_files '__operation_set_tags'
+
+	printf "\033[${post_row}H"
 
 	# Store operation status for Summary Of Operations
 	applying_retag_complete="true"
@@ -6379,22 +5945,23 @@ if [[ "${extract_artwork}" == "true" ]] ; then
 	# Make sure to clear file descriptor '3' before proceeding
 	__clear_tmp_fd
 
-	# Save the row position before starting the operation
-	pre_operation_row_position=$(__row)
-
-	# Run parallel operations, that which is specified as ${1}
-	__run_parallel_files __operation_extract_artwork
-
 	# Set the cursor to the correct row depending on whether there were more
 	# or less files to process than the number of jobs to run
 	if (( ${#total_flacs_array[@]} < jobs )) ; then
 		# Less files than jobs to run, so only add the number of files
 		# processed
-		printf "\033[$(( pre_operation_row_position + ${#total_flacs_array[@]} ))H"
+		post_row=$(( $(__row) + ${#total_flacs_array[@]} ))
 	else
 		# More files than jobs to run, so add the number of jobs processed
-		printf "\033[$(( pre_operation_row_position + jobs ))H"
+		post_row=$(( $(__row) + jobs ))
 	fi
+
+	trap '__trap_sigint "$post_row" "extract_artwork"' SIGINT
+
+	# Run parallel operations, that which is specified as ${1}
+	__run_parallel_files '__operation_extract_artwork'
+
+	printf "\033[${post_row}H"
 
 	if [[ -f "${log_file}" ]] ; then
 		# Print out log exists to STDERR
@@ -6441,22 +6008,23 @@ if [[ "${prune_flac}" == "true" ]] ; then
 	# Make sure to clear file descriptor '3' before proceeding
 	__clear_tmp_fd
 
-	# Save the row position before starting the operation
-	pre_operation_row_position=$(__row)
-
-	# Run parallel operations, that which is specified as ${1}
-	__run_parallel_files __operation_prune
-
 	# Set the cursor to the correct row depending on whether there were more
 	# or less files to process than the number of jobs to run
 	if (( ${#total_flacs_array[@]} < jobs )) ; then
 		# Less files than jobs to run, so only add the number of files
 		# processed
-		printf "\033[$(( pre_operation_row_position + ${#total_flacs_array[@]} ))H"
+		post_row=$(( $(__row) + ${#total_flacs_array[@]} ))
 	else
 		# More files than jobs to run, so add the number of jobs processed
-		printf "\033[$(( pre_operation_row_position + jobs ))H"
+		post_row=$(( $(__row) + jobs ))
 	fi
+
+	trap '__trap_sigint "$post_row" "prune"' SIGINT
+
+	# Run parallel operations, that which is specified as ${1}
+	__run_parallel_files '__operation_prune'
+
+	printf "\033[${post_row}H"
 
 	if [[ -f "${log_file}" ]] ; then
 		# Print out log exists to STDERR
