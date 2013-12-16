@@ -5077,6 +5077,30 @@ done
 # handles it's own positional parameters
 __process_positional_parameters "${@}"
 
+# Check if user set '-n, --no-color'.  This must come before everything (and
+# after the positional parameters) to ensure color is set/unset.  The normal
+# variable is always set, to reset the inverted colors (color or no-color)
+# during progress bar output
+if [[ "${no_color}" == "true" ]] ; then
+	blue=""
+	green=""
+	red=""
+	cyan=""
+	magenta=""
+	yellow=""
+fi
+
+# Make sure we are running BASH 4 or greater
+if (( ${BASH_VERSION%%.*} < 4 )) ; then
+	__error "You must be running ${cyan}BASH 4${normal} or greater to use\n" >&2
+	__error "this program!\n" >&2
+	exit 1
+fi
+
+# Check for any conflicting operations/arguments called
+# at script invocation and warn user
+__check_conflicting_operations
+
 # For each operation that was chosen, set up operation_summary array
 declare -A operation_summary
 if [[ "${aucdtect_flac}" == "true" ]] ; then
@@ -5112,30 +5136,6 @@ fi
 if [[ "${prune_flac}" == "true" ]] ; then
 	operation_summary['Prune METADATA Blocks']='Operation Did Not Run'
 fi
-
-# Check if user set '-n, --no-color'.  This must come before everything (and
-# after the positional parameters) to ensure color is set/unset.  The normal
-# variable is always set, to reset the inverted colors (color or no-color)
-# during progress bar output
-if [[ "${no_color}" == "true" ]] ; then
-	blue=""
-	green=""
-	red=""
-	cyan=""
-	magenta=""
-	yellow=""
-fi
-
-# Make sure we are running BASH 4 or greater
-if (( ${BASH_VERSION%%.*} < 4 )) ; then
-	__error "You must be running ${cyan}BASH 4${normal} or greater to use\n" >&2
-	__error "this program!\n" >&2
-	exit 1
-fi
-
-# Check for any conflicting operations/arguments called
-# at script invocation and warn user
-__check_conflicting_operations
 
 # Check for any missing programs vital for this script
 # to operate correctly, and exit if any programs are found
