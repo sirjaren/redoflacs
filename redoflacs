@@ -3136,13 +3136,6 @@ __run_parallel_files () {
 # Function to run commands/operations that are by
 # directory _ONLY_
 __run_parallel_directories () {
-	# Determine which function should be run in the `trap' via what is specified
-	# via ${1} (eg, the operation to be run), returned as ${run_abort}
-	__determine_abort "${1}"
-
-	# Run abort function on script exit
-	trap "${run_abort}" SIGINT
-
 	# Forces iteration to start at 0, in the event that
 	# multiple operations are going to be run
 	iteration=0
@@ -3151,12 +3144,14 @@ __run_parallel_directories () {
 	# specified by ${1} when calling this function
 	parallel_operation="${1}"
 
+	row_state=$(__row)
+
 	# Start as many processes as determined by ${jobs}
 	for i in "${flac_directories_array[@]:0:${jobs}}" ; do
 		# This is the first set of jobs to run, so the placement of each file to
 		# display is the current row the cursor is on plus the iteration (the
 		# current file [number] being processed), which is zero-based
-		placement=$((current_row + iteration))
+		placement=$((row_state + iteration))
 
 		# Add one to the iteration to enforce we print one or more, not zero
 		((iteration++))
@@ -3180,7 +3175,7 @@ __run_parallel_directories () {
 			# cursor is on plus the position of the last completed location
 			# of the directory, which allows us to dynamically place new
 			# jobs where other jobs have completed
-			placement="$((current_row + previous_operation_position))"
+			placement="$((row_state + previous_operation_position))"
 
 			# If current number of directories to process is less than total
 			# directories found, add another directory to process
