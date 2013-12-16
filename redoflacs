@@ -3053,6 +3053,8 @@ __summary () {
 	# Remove temporary FIFO and leave just the file
 	# descriptor available
 	rm -f "${issue_ticks}"
+
+	printf "\033[?25h"   # Restore cursor
 }
 
 # Function to run commands/operations that are by
@@ -5885,8 +5887,6 @@ fi
 if [[ "${coverart_warning}" == "true" ]] ; then
 	__coverart_warning
 fi
-
-printf "\033[?25h"
 
 # Display Summary Of Operations
 __summary
