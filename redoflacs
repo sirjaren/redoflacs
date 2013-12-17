@@ -5226,6 +5226,10 @@ __check_config_version
 # Temporary FIFO location
 tmp_fifo="/tmp/redoflacs_fifo_$$"
 
+# Enforce FIFO is removed right away if user invokes SIGINT _immediately_ after
+# script invocation
+trap 'rm -f "${tmp_fifo}"' EXIT
+
 mkfifo "${tmp_fifo}"
 
 # File where a tick is placed for each issue found
