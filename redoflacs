@@ -660,8 +660,8 @@ __create_log () {
 	for line in "${log_array[@]}" ; do
 		# Find the longest filename in the log file, and store it's length
 		#--
-		# 'path/to/file.flac::::error message' -> 'path/to/file.flac'
-		filename="${line%%.flac::::*}.flac"
+		# 'path/to/file.flac__redoflacs::delimiter__error message' -> 'path/to/file.flac'
+		filename="${line%%__redoflacs::delimiter__*}"
 
 		# Use 'wc -L' for apparent length, not number of characters
 		if (( $(wc -L <<< ${filename}) > length )) ; then
@@ -676,14 +676,14 @@ __create_log () {
 		# Left align filenames and line up error messages before appending to
 		# log file
 		#--
-		# 'path/to/file.flac::::error message' -> 'path/to/file.flac'
-		filename="${line%%.flac::::*}.flac"
+		# 'path/to/file.flac__redoflacs::delimiter__error message' -> 'path/to/file.flac'
+		filename="${line%%__redoflacs::delimiter__*}"
 
 		# Use 'wc -L' for apparent length, not number of characters
 		filename_length=$(wc -L <<< "${filename}")
 
-		# 'path/to/file.flac::::error message' -> 'error message'
-		error_msg="${line##*.flac::::}"
+		# 'path/to/file.flac__redoflacs::delimiter__error message' -> 'error message'
+		error_msg="${line##*__redoflacs::delimiter__}"
 
 		# Example line: /media/Music/Artist/Album/file.flac  ->  Error Message
 		printf "%s%$((length - filename_length))s  ->  %s\n" "${filename}" "" "${error_msg}" >> "${log_file}"
@@ -3239,7 +3239,7 @@ __operation_test_replaygain () {
 		__print_sub_progress_failed
 
 		# Log FLAC failure
-		printf "%s::::Not a real FLAC file\n" "${i}" \
+		printf "%s__redoflacs::delimiter__Not a real FLAC file\n" "${i}" \
 			>> "${log_file}"
 
 		# Add one to fail fd
@@ -3257,7 +3257,7 @@ __operation_test_replaygain () {
 
 				# The `metaflac' version installed is NOT greater than 1.2.1 so
 				# skip processing current FLAC file, logging why it was skipped
-				printf "%s::::FLAC 1.3.0 or higher needed for sample rates >48kHz\n" "${i}" \
+				printf "%s__redoflacs::delimiter__FLAC 1.3.0 or higher needed for sample rates >48kHz\n" "${i}" \
 					>> "${log_file}"
 
 				# Add one to fail fd
@@ -3321,7 +3321,7 @@ __operation_replaygain_noforce () {
 				__print_sub_progress_failed
 
 				# Log ReplayGain error
-				printf "%s::::Corrupt FLAC(s) or differing sample rates (album ReplayGain)\n" "${i}" \
+				printf "%s__redoflacs::delimiter__Corrupt FLAC(s) or differing sample rates (album ReplayGain)\n" "${i}" \
 					>> "${log_file}"
 
 				# Add one to fail fd
@@ -3366,7 +3366,7 @@ __operation_replaygain_force () {
 		__print_sub_progress_failed
 
 		# Log ReplayGain error
-		printf "%s::::Corrupt FLAC(s) or differing sample rates (album ReplayGain)\n" "${i}" \
+		printf "%s__redoflacs::delimiter__Corrupt FLAC(s) or differing sample rates (album ReplayGain)\n" "${i}" \
 			>> "${log_file}"
 
 		# Add one to fail fd
@@ -3414,7 +3414,7 @@ __operation_compress () {
 			__print_progress_failed
 
 			# Log FLAC failure
-			printf "%s::::Failed verification\n" "${i}" \
+			printf "%s__redoflacs::delimiter__Failed verification\n" "${i}" \
 				>> "${log_file}"
 
 			# Add one to fail fd
@@ -3453,7 +3453,7 @@ __operation_compress () {
 				__print_progress_failed
 
 				# Log FLAC failure
-				printf "%s::::Failed verification\n" "${i}" \
+				printf "%s__redoflacs::delimiter__Failed verification\n" "${i}" \
 					>> "${log_file}"
 
 				# Add one to fail fd
@@ -3499,7 +3499,7 @@ __operation_test () {
 		__print_progress_failed
 
 		# Log FLAC failure
-		printf "%s::::Failed testing\n" "${i}" >> "${log_file}"
+		printf "%s__redoflacs::delimiter__Failed testing\n" "${i}" >> "${log_file}"
 
 		# Add one to fail fd
 		printf '.' >> "${issue_ticks}"
@@ -3534,7 +3534,7 @@ __operation_aucdtect () {
 		__print_progress_failed
 
 		# Log FLAC failure
-		printf "%s::::Not a real FLAC file\n" "${i}" \
+		printf "%s__redoflacs::delimiter__Not a real FLAC file\n" "${i}" \
 			>> "${log_file}"
 
 		# Add one to fail fd
@@ -3549,7 +3549,7 @@ __operation_aucdtect () {
 		__print_skip_flac
 
 		# Log skipped FLAC file
-		printf "%s::::auCDtect does not support a bit depth >16\n" "${i}" \
+		printf "%s__redoflacs::delimiter__auCDtect does not support a bit depth >16\n" "${i}" \
 			>> "${log_file}"
 
 		# Add one to fail fd
@@ -3565,7 +3565,7 @@ __operation_aucdtect () {
 		__print_skip_flac
 
 		# Log skipped FLAC file
-		printf "%s::::MASTERING=Lossy value found; skipping ('skip_lossy' configuration)\n" "${i}" \
+		printf "%s__redoflacs::delimiter__MASTERING=Lossy value found; skipping ('skip_lossy' configuration)\n" "${i}" \
 			>> "${log_file}"
 
 		# Add one to fail fd
@@ -3598,7 +3598,7 @@ __operation_aucdtect () {
 			__print_decoding_fail
 
 			# Log FLAC failure
-			printf "%s::::Failed decoding to WAV\n" "${i}" \
+			printf "%s__redoflacs::delimiter__Failed decoding to WAV\n" "${i}" \
 				>> "${log_file}"
 
 			# Add one to fail fd
@@ -3634,7 +3634,7 @@ __operation_aucdtect () {
 				__print_aucdtect_fast_fail
 
 				# Log FLAC failure
-				printf "%s::::Failed analyzing decoded FLAC\n" "${i}" \
+				printf "%s__redoflacs::delimiter__Failed analyzing decoded FLAC\n" "${i}" \
 					>> "${log_file}"
 
 				# Add one to fail fd
@@ -3673,7 +3673,7 @@ __operation_aucdtect () {
 						__print_aucdtect_slow_fail
 
 						# Log FLAC failure
-						printf "%s::::Failed analyzing decoded FLAC\n" "${i}" \
+						printf "%s__redoflacs::delimiter__Failed analyzing decoded FLAC\n" "${i}" \
 							>> "${log_file}"
 
 						# Add one to fail fd
@@ -3758,7 +3758,7 @@ __operation_aucdtect () {
 								__print_spectrogram_issue
 
 								# Log auCDtect report
-								printf "%s::::%s (%s)\n" "$i" "${aucdtect_check_array[0]}" "${spectrogram_picture}" \
+								printf "%s__redoflacs::delimiter__%s (%s)\n" "$i" "${aucdtect_check_array[0]}" "${spectrogram_picture}" \
 									>> "${log_file}"
 
 								# Add one to fail fd
@@ -3769,7 +3769,7 @@ __operation_aucdtect () {
 								__print_aucdtect_issue
 
 								# Log auCDtect report
-								printf "%s::::%s\n" "$i" "${aucdtect_check_array[0]}" \
+								printf "%s__redoflacs::delimiter__%s\n" "$i" "${aucdtect_check_array[0]}" \
 									>> "${log_file}"
 
 								# Add one to fail fd
@@ -3815,7 +3815,7 @@ __operation_md5check () {
 		__print_progress_failed
 
 		# Log FLAC failure
-		printf "%s::::Not a real FLAC file\n" "${i}" \
+		printf "%s__redoflacs::delimiter__Not a real FLAC file\n" "${i}" \
 			>> "${log_file}"
 
 		# Add one to fail fd
@@ -3830,7 +3830,7 @@ __operation_md5check () {
 		__print_progress_failed
 
 		# Log FLAC failure
-		printf "%s::::Unset MD5 signature (00000000000000000000000000000000)\n" "${i}" \
+		printf "%s__redoflacs::delimiter__Unset MD5 signature (00000000000000000000000000000000)\n" "${i}" \
 			>> "${log_file}"
 
 		# Add one to fail fd
@@ -3863,7 +3863,7 @@ __operation_analyze_tags () {
 		__print_sub_progress_failed
 
 		# Log FLAC failure
-		printf "%s::::Not a real FLAC file\n" "${i}" \
+		printf "%s__redoflacs::delimiter__Not a real FLAC file\n" "${i}" \
 			>> "${log_file}"
 
 		# Add one to fail fd
@@ -3985,7 +3985,7 @@ __operation_analyze_tags () {
 			__print_sub_progress_failed
 
 			# Log the missing tags
-			printf "%s::::Missing tags: ${missing_tags%, }\n" "${i}" \
+			printf "%s__redoflacs::delimiter__Missing tags: ${missing_tags%, }\n" "${i}" \
 				>> "${log_file}"
 
 			# Add one to fail fd
@@ -4019,7 +4019,7 @@ __operation_analyze_tags_dont_log_coverart () {
 		__print_sub_progress_failed
 
 		# Log FLAC failure
-		printf "%s::::Not a real FLAC file\n" "${i}" \
+		printf "%s__redoflacs::delimiter__Not a real FLAC file\n" "${i}" \
 			>> "${log_file}"
 
 		# Add one to fail fd
@@ -4066,7 +4066,7 @@ __operation_analyze_tags_dont_log_coverart () {
 					# Error with FLAC file, display failed/error
 					__print_sub_progress_failed
 
-					printf "%s::::COVERART tag is deprecated, consider using METADATA_BLOCK_PICTURE\n" "${i}" \
+					printf "%s__redoflacs::delimiter__COVERART tag is deprecated, consider using METADATA_BLOCK_PICTURE\n" "${i}" \
 						>> "${log_file}"
 
 					# Add one to fail fd
@@ -4168,7 +4168,7 @@ __operation_analyze_tags_dont_log_coverart () {
 			__print_sub_progress_failed
 
 			# Log the missing tags
-			printf "%s::::Missing tags: ${missing_tags%, }\n" "${i}" \
+			printf "%s__redoflacs::delimiter__Missing tags: ${missing_tags%, }\n" "${i}" \
 				>> "${log_file}"
 
 			# Add one to fail fd
@@ -4319,7 +4319,7 @@ __operation_extract_artwork () {
 		__print_progress_failed
 
 		# Log FLAC failure
-		printf "%s::::Not a real FLAC file\n" "${i}" \
+		printf "%s__redoflacs::delimiter__Not a real FLAC file\n" "${i}" \
 			>> "${log_file}"
 
 		# Add one to fail fd
@@ -4937,7 +4937,7 @@ __operation_prune () {
 		__print_progress_failed
 
 		# Log FLAC failure
-		printf "%s::::Not a real FLAC file\n" "${i}" \
+		printf "%s__redoflacs::delimiter__Not a real FLAC file\n" "${i}" \
 			>> "${log_file}"
 
 		# Add one to fail fd
