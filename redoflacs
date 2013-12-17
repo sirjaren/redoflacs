@@ -489,9 +489,10 @@ __message_log_exists () {
 	#
 	# $1 determines the log file to use, as well as how many lines are printed
 	# out to correctly set the current row.  Possible values:
-	#   aucdtect          compress   extract_artwork
-	#   md5_check         prune      replaygain_add
-	#   replaygain_test   retag      test
+	#   aucdtect          compress        extract_artwork
+	#   md5_check         prune           replaygain_add
+	#   replaygain_test   retag_analyze   retag_apply
+	#   test
 	#---------------------------------------------------------------------------
 	case "$1" in
 		aucdtect)
@@ -527,7 +528,7 @@ __message_log_exists () {
 			__error "please check:\n"
 			current_row=$(( current_row + 5 ))
 		;;
-		retag)
+		retag*)
 			__error "Some FLAC files have missing tags or there were\n"
 			__error "issues with some of the FLAC files, please check:\n"
 			current_row=$(( current_row + 5 ))
@@ -551,9 +552,10 @@ __create_log () {
 	# as well as formatting/aligning log lines
 	#
 	# $1 determines the log file to create, and is any one of these values:
-	#   aucdtect          compress   extract_artwork
-	#   md5_check         prune      replaygain_add
-	#   replaygain_test   retag      test
+	#   aucdtect          compress        extract_artwork
+	#   md5_check         prune           replaygain_add
+	#   replaygain_test   retag_analyze   retag_apply
+	#   test
 	#---------------------------------------------------------------------------
 	# Set up local variables/arrays
 	declare -a header_array        header_compress   header_extract_artwork \
@@ -650,7 +652,7 @@ __create_log () {
 		prune)            header=( "${header_prune[@]}"           )  ;;
 		replaygain_add)   header=( "${header_replay_add[@]}"      )  ;;
 		replaygain_test)  header=( "${header_replay_test[@]}"     )  ;;
-		retag)            header=( "${header_retag[@]}"           )  ;;
+		retag*)           header=( "${header_retag[@]}"           )  ;;
 		test)             header=( "${header_test[@]}"            )  ;;
 	esac
 
@@ -1388,7 +1390,7 @@ __exit_cleanup () {
 		replaygain_test)
 			operation_summary['> Testing']='Operation Interrupted'
 		;;
-		retag_*)
+		retag*)
 			# Test for deprecated tag, COVERART, in log file.  If it
 			# exists, set coverart_warning variable to make script output
 			# warning upon completion
