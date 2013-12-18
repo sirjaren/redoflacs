@@ -34,30 +34,22 @@
 #    4: auCDtect's (STDOUT) output
 #    5: Number of FLAC files that failed and/or had issues
 #-------------------------------------------------------------------------------
-# .: SCRIPT MESSAGES :.
+
+__info()  { printf " ${green}*${normal} ${@}"  ;}   # Bold green message
+__warn()  { printf " ${yellow}*${normal} ${@}" ;}   # Yellow message
+__error() { printf " ${red}*${normal} ${@}"    ;}   # Bold red message
+
 #-------------------------------------------------------------------------------
-# Bold green message
-__info () {
-	printf " ${green}*${normal} ${@}"
-}
-
-# Yellow message
-__warn () {
-	printf " ${yellow}*${normal} ${@}"
-}
-
-# Bold red message
-__error () {
-	printf " ${red}*${normal} ${@}"
-}
 
 # No FLACS found error message
-__no_flacs () {
-	__error "There are not any FLAC files to process!\n"
-} >&2
+__no_flacs() { __error "There are not any FLAC files to process!\n" ;} >&2
 
-# Display why COVERART tag should not be used
-__coverart_warning () {
+#-------------------------------------------------------------------------------
+
+__coverart_warning() {
+	##
+	# Display why COVERART tag should not be used
+	##
 	printf "\n"
 	__warn "The ${cyan}COVERART${normal} tag is deprecated and should not be\n"
 	__warn "used. Instead, consider migrating over to the new format:\n"
@@ -66,16 +58,24 @@ __coverart_warning () {
 	__warn "for more details.\n"
 } >&2
 
-# Display message that system is missing vital programs
-__display_missing_commands_header () {
+#-------------------------------------------------------------------------------
+
+__display_missing_commands_header() {
+	##
+	# Display message that system is missing vital programs
+	##
 	__error "You seem to be missing one or more necessary programs\n"
 	__error "to run this script reliably.  Below shows the program(s)\n"
 	__error "missing, as well as where you can install them from:\n"
 } >&2
 
-# Display a lot of help
-__long_help () {
-long_help=".TH \"REDOFLACS\" 1
+#-------------------------------------------------------------------------------
+
+__long_help() {
+	##
+	# Display a lot of help
+	##
+	long_help=".TH \"REDOFLACS\" 1
 .SH NAME
 redoflacs \\- Parallel BASH commandline FLAC compressor, verifier, organizer, analyzer, and retagger
 .SH SYNOPSIS
@@ -448,8 +448,12 @@ Thanks to all the people whom have provided feedback and support!
 	printf "%s\n" "${long_help}" > "${tmp_man_page}"
 }
 
-# Display short help
-__short_help () {
+#-------------------------------------------------------------------------------
+
+__short_help() {
+	##
+	# Display short help
+	##
 	printf " Usage: redoflacs [operations] [options] [target] ...\n"
 	printf " Operations:\n"
 	printf "   -c, --compress\n"
@@ -474,16 +478,15 @@ __short_help () {
 	printf " This is the short help; for details use 'redoflacs --help' or 'redoflacs -h'\n"
 }
 
+#-------------------------------------------------------------------------------
+
 # Display usage
-__usage () {
-	printf " Usage: redoflacs [operations] [options] [target] ...\n"
-}
-#== .: END SCRIPT MESSAGES :. ==================================================
+__usage() { printf " Usage: redoflacs [operations] [options] [target] ...\n" ;}
 
 #-------------------------------------------------------------------------------
 
-__message_log_exists () {
-	#---------------------------------------------------------------------------
+__message_log_exists() {
+	##
 	# Print out the correct operational message regarding a log file's existence
 	# and what infomration that log may contain
 	#
@@ -493,49 +496,40 @@ __message_log_exists () {
 	#   md5_check         prune           replaygain_add
 	#   replaygain_test   retag_analyze   retag_apply
 	#   test
-	#---------------------------------------------------------------------------
+	##
 	case "$1" in
 		aucdtect)
 			__error "Some FLAC files may be lossy sourced, please check:\n"
-			current_row=$(( current_row + 4 ))
 		;;
 		compress)
 			__error "Errors found in some FLAC files, please check:\n"
-			current_row=$(( current_row + 4 ))
 		;;
 		extract_artwork)
 			__error "There were issues with some of the FLAC files,\n"
 			__error "please check:\n"
-			current_row=$(( current_row + 5 ))
 		;;
 		md5_check)
 			__error "The MD5 Signature is unset for some FLAC files or there were\n"
 			__error "issues with some of the FLAC files, please check:\n"
-			current_row=$(( current_row + 5 ))
 		;;
 		prune)
 			__error "There were issues with some of the FLAC files,\n"
 			__error "please check:\n"
-			current_row=$(( current_row + 5 ))
 		;;
 		replaygain_add)
 			__error "There were issues adding ReplayGain values,\n"
 			__error "please check:\n"
-			current_row=$(( current_row + 5 ))
 		;;
 		replaygain_test)
 			__error "There were issues with some of the FLAC files,\n"
 			__error "please check:\n"
-			current_row=$(( current_row + 5 ))
 		;;
 		retag*)
 			__error "Some FLAC files have missing tags or there were\n"
 			__error "issues with some of the FLAC files, please check:\n"
-			current_row=$(( current_row + 5 ))
 		;;
 		test)
 			__error "Errors found in some FLAC files, please check:\n"
-			current_row=$(( current_row + 4 ))
 		;;
 	esac
 
@@ -546,8 +540,8 @@ __message_log_exists () {
 
 #-------------------------------------------------------------------------------
 
-__create_log () {
-	#---------------------------------------------------------------------------
+__create_log() {
+	##
 	# Take log file from the current operation, prepending a header to it as
 	# as well as formatting/aligning log lines
 	#
@@ -556,104 +550,90 @@ __create_log () {
 	#   md5_check         prune           replaygain_add
 	#   replaygain_test   retag_analyze   retag_apply
 	#   test
-	#---------------------------------------------------------------------------
+	##
 	# Set up local variables/arrays
-	declare -a header_array        header_compress   header_extract_artwork \
-               header_md5          header_prune      header_replay_add \
-               header_replay_test  header_retag      header_test \
-               log_array
-
+	declare -a header  log_array
 	declare    error_msg  filename  length  line
-
-	# Set up header array indices
-	header_aucdtect=(
-		"--------------------------------------------------------------------------------"
-		"                           AUCDTECT ERROR/REPORT LOG"
-		"                           -------------------------"
-		"      This log details which FLAC files have errors when running auCDtect"
-		"--------------------------------------------------------------------------------"
-	)
-
-	header_compress=(
-		"--------------------------------------------------------------------------------"
-		"                          COMPRESS & VERIFY ERROR LOG"
-		"                          ---------------------------"
-		"    This log details which FLAC files have errors when compressing and/or"
-		"  verifying"
-		"--------------------------------------------------------------------------------"
-	)
-
-	header_extract_artwork=(
-		"--------------------------------------------------------------------------------"
-		"                           EXTRACT ARTWORK ERROR LOG"
-		"                           -------------------------"
-		"  This log details which FLAC files have errors when extracting artwork images"
-		"--------------------------------------------------------------------------------"
-	)
-
-	header_md5=(
-		"--------------------------------------------------------------------------------"
-		"                              MD5 CHECK ERROR LOG"
-		"                              -------------------"
-		"    This log details which FLAC files have errors when checking the MD5"
-		"  signature"
-		"--------------------------------------------------------------------------------"
-	)
-
-	header_prune=(
-		"--------------------------------------------------------------------------------"
-		"                                PRUNE ERROR LOG"
-		"                                ---------------"
-		"   This log details which FLAC files have errors when pruning METADATA blocks"
-		"--------------------------------------------------------------------------------"
-	)
-
-	header_replay_add=(
-		"--------------------------------------------------------------------------------"
-		"                           REPLAYGAIN ADD ERROR LOG"
-		"                           ------------------------"
-		"    This log details which directories have FLAC files that have errors when"
-		"  applying ReplayGain values"
-		"--------------------------------------------------------------------------------"
-	)
-
-	header_replay_test=(
-		"--------------------------------------------------------------------------------"
-		"                           REPLAYGAIN TEST ERROR LOG"
-		"                           -------------------------"
-		"    This log details which FLAC files have errors when testing for ReplayGain"
-		"  compatability"
-		"--------------------------------------------------------------------------------"
-	)
-
-	header_retag=(
-		"--------------------------------------------------------------------------------"
-		"                                RETAG ERROR LOG"
-		"                                ---------------"
-		"         This log details which FLAC files have errors when retagging"
-		"--------------------------------------------------------------------------------"
-	)
-
-	header_test=(
-		"--------------------------------------------------------------------------------"
-		"                             TEST FLACS ERROR LOG"
-		"                             --------------------"
-		"          This log details which FLAC files have errors when testing"
-		"--------------------------------------------------------------------------------"
-	)
 
 	# Set log file and the type of header to prepend based on how this function
 	# was called, via $1
 	case "${1}" in
-		aucdtect)         header=( "${header_aucdtect[@]}"        )  ;;
-		compress)         header=( "${header_compress[@]}"        )  ;;
-		extract_artwork)  header=( "${header_extract_artwork[@]}" )  ;;
-		md5_check)        header=( "${header_md5[@]}"             )  ;;
-		prune)            header=( "${header_prune[@]}"           )  ;;
-		replaygain_add)   header=( "${header_replay_add[@]}"      )  ;;
-		replaygain_test)  header=( "${header_replay_test[@]}"     )  ;;
-		retag*)           header=( "${header_retag[@]}"           )  ;;
-		test)             header=( "${header_test[@]}"            )  ;;
+		aucdtect)
+			header=(
+				"--------------------------------------------------------------------------------"
+				"                           AUCDTECT ERROR/REPORT LOG"
+				"                           -------------------------"
+				"      This log details which FLAC files have errors when running auCDtect"
+				"--------------------------------------------------------------------------------"
+			) ;;
+		compress)
+			header=(
+				"--------------------------------------------------------------------------------"
+				"                          COMPRESS & VERIFY ERROR LOG"
+				"                          ---------------------------"
+				"    This log details which FLAC files have errors when compressing and/or"
+				"  verifying"
+				"--------------------------------------------------------------------------------"
+			) ;;
+		extract_artwork)
+			header=(
+				"--------------------------------------------------------------------------------"
+				"                           EXTRACT ARTWORK ERROR LOG"
+				"                           -------------------------"
+				"  This log details which FLAC files have errors when extracting artwork images"
+				"--------------------------------------------------------------------------------"
+			) ;;
+		md5_check)
+			header=(
+				"--------------------------------------------------------------------------------"
+				"                              MD5 CHECK ERROR LOG"
+				"                              -------------------"
+				"    This log details which FLAC files have errors when checking the MD5"
+				"  signature"
+				"--------------------------------------------------------------------------------"
+			) ;;
+		prune)
+			header=(
+				"--------------------------------------------------------------------------------"
+				"                                PRUNE ERROR LOG"
+				"                                ---------------"
+				"   This log details which FLAC files have errors when pruning METADATA blocks"
+				"--------------------------------------------------------------------------------"
+			) ;;
+		replaygain_add)
+			header=(
+				"--------------------------------------------------------------------------------"
+				"                           REPLAYGAIN ADD ERROR LOG"
+				"                           ------------------------"
+				"    This log details which directories have FLAC files that have errors when"
+				"  applying ReplayGain values"
+				"--------------------------------------------------------------------------------"
+			) ;;
+		replaygain_test)
+			header=(
+				"--------------------------------------------------------------------------------"
+				"                           REPLAYGAIN TEST ERROR LOG"
+				"                           -------------------------"
+				"    This log details which FLAC files have errors when testing for ReplayGain"
+				"  compatability"
+				"--------------------------------------------------------------------------------"
+			) ;;
+		retag*)
+			header=(
+				"--------------------------------------------------------------------------------"
+				"                                RETAG ERROR LOG"
+				"                                ---------------"
+				"         This log details which FLAC files have errors when retagging"
+				"--------------------------------------------------------------------------------"
+			) ;;
+		test)
+			header=(
+				"--------------------------------------------------------------------------------"
+				"                             TEST FLACS ERROR LOG"
+				"                             --------------------"
+				"          This log details which FLAC files have errors when testing"
+				"--------------------------------------------------------------------------------"
+			) ;;
 	esac
 
 	# Create array of current log file
@@ -694,8 +674,8 @@ __create_log () {
 
 #-------------------------------------------------------------------------------
 
-__operation_message () {
-	#---------------------------------------------------------------------------
+__operation_message() {
+	##
 	# Print out current operation message.
 	#
 	# $1 determines which title message to print (if any).  Possible values:
@@ -706,11 +686,10 @@ __operation_message () {
 	# $2 determines which sub message to print (if any).  Possible values:
 	#   replaygain_add    replaygain_test
 	#   retag_analyze     retag_apply
-	#---------------------------------------------------------------------------
+	##
 	# Set up local variables
 	declare message
 
-	# Define message to print based off of $1
 	case "${1}" in
 		aucdtect)         message="auCDtect Analysis"    ;;
 		compress)         message="Compressing & Verifying ${magenta}[Level 8]${normal}"  ;;
@@ -733,7 +712,6 @@ __operation_message () {
 	# Print title message if $1 is not NULL
 	[[ -n "${1}" ]] && printf "\033[$(__row)H ${green}*${normal} ${message}\n"
 
-	# Define sub message to print based off of $2
 	case "${2}" in
 		replaygain_test)  message="Testing"      ;;
 		replaygain_add)   message="Applying"     ;;
@@ -754,7 +732,7 @@ __operation_message () {
 # Current Files Operated On
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # Print the current FLAC file being operated on
-__print_current_flac () {
+__print_current_flac() {
 	# This stores the current file number processed out of the total files:
 	#  [56/213]
 	number_completed="[${iteration}/${#total_flacs_array[@]}]"
@@ -778,7 +756,7 @@ __print_current_flac () {
 }
 
 # Print the current FLAC file being pruned
-__print_current_half () {
+__print_current_half() {
 	# This stores the current file number processed out of the total files:
 	#  [56/213]
 	number_completed="[${iteration}/${#total_flacs_array[@]}]"
@@ -802,7 +780,7 @@ __print_current_half () {
 }
 
 # Print the current directory being operated on
-__print_current_directory () {
+__print_current_directory() {
 	# This stores the current directory number processed out of the total
 	# number of directories:
 	#  [6/34]
@@ -827,7 +805,7 @@ __print_current_directory () {
 }
 
 # Print the current FLAC file being operated on (for sub messages)
-__print_sub_current_flac () {
+__print_sub_current_flac() {
 	# This stores the current file number processed out of the total files:
 	#  [56/213]
 	number_completed="[${iteration}/${#total_flacs_array[@]}]"
@@ -851,7 +829,7 @@ __print_sub_current_flac () {
 }
 
 # Print the current FLAC file being operated on with skip message
-__print_skip_flac () {
+__print_skip_flac() {
 	# This stores the current file number processed out of the total files:
 	#  [56/213]
 	number_completed="[${iteration}/${#total_flacs_array[@]}]"
@@ -879,7 +857,7 @@ __print_skip_flac () {
 # auCDtect
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # Print the current FLAC file being decoded
-__print_decoding_flac () {
+__print_decoding_flac() {
 	# This stores the current file number processed out of the total files:
 	#  [56/213]
 	number_completed="[${iteration}/${#total_flacs_array[@]}]"
@@ -905,7 +883,7 @@ __print_decoding_flac () {
 
 # Display the filename, clearing the progress bar and display the progress
 # percentage as 100% (since FLAC stops at 99%) in green
-__print_decoding_ok () {
+__print_decoding_ok() {
 	if (( current_filename_length < max_filename_length )) ; then
 		printf "\033[${placement};4H${green}%s${normal} ${cyan}%s${normal} %s%$(( max_filename_length - current_filename_length + 1 ))s" \
 		"100%" "[Decoding]" "${filename}" ""
@@ -917,7 +895,7 @@ __print_decoding_ok () {
 
 # Display the filename, clearing the progress bar and display the progress
 # percentage as fail (since the file failed to decode the properly)
-__print_decoding_fail () {
+__print_decoding_fail() {
 	if (( current_filename_length < max_filename_length )) ; then
 		printf "\033[${placement};4H${red}%s${normal} ${cyan}%s${normal} %s%$(( max_filename_length - current_filename_length + 1 ))s" \
 		"fail" "[Decoding]" "${filename}" ""
@@ -928,7 +906,7 @@ __print_decoding_fail () {
 }
 
 # Print the current FLAC file being analyzed with auCDtect [fast]
-__print_current_aucdtect_fast () {
+__print_current_aucdtect_fast() {
 	# This stores the current file number processed out of the total files:
 	#  [56/213]
 	number_completed="[${iteration}/${#total_flacs_array[@]}]"
@@ -953,7 +931,7 @@ __print_current_aucdtect_fast () {
 
 # Display the filename, clearing the progress bar and display the progress
 # percentage as 100% (since FLAC stops at 99%) in green
-__print_aucdtect_fast_ok () {
+__print_aucdtect_fast_ok() {
 	if (( current_filename_length < max_filename_length )) ; then
 		printf "\033[${placement};4H${green}%4s${normal} ${cyan}%s${normal}%s%$(( max_filename_length - current_filename_length + 1 ))s" \
 		"100%" "[auCDtect: Fast]" " ${filename}" ""
@@ -965,7 +943,7 @@ __print_aucdtect_fast_ok () {
 
 # Display the filename, clearing the progress bar and display the progress as an
 # error in red
-__print_aucdtect_fast_fail () {
+__print_aucdtect_fast_fail() {
 	if (( current_filename_length < max_filename_length )) ; then
 		printf "\033[${placement};4H${red}%4s${normal} ${cyan}%s${normal}%s%$(( max_filename_length - current_filename_length + 1 ))s" \
 		"fail" "[auCDtect: Fast]" "${filename}" ""
@@ -976,7 +954,7 @@ __print_aucdtect_fast_fail () {
 }
 
 # Print the current FLAC file being analyzed with auCDtect [slow]
-__print_current_aucdtect_slow () {
+__print_current_aucdtect_slow() {
 	# This stores the current file number processed out of the total files:
 	#  [56/213]
 	number_completed="[${iteration}/${#total_flacs_array[@]}]"
@@ -1002,7 +980,7 @@ __print_current_aucdtect_slow () {
 
 # Display the filename, clearing the progress bar and display the progress
 # percentage as 100% (since FLAC stops at 99%) in green
-__print_aucdtect_slow_ok () {
+__print_aucdtect_slow_ok() {
 	if (( current_filename_length < max_filename_length )) ; then
 		printf "\033[${placement};4H${green}%s${normal} ${cyan}%s${normal} %s%$(( max_filename_length - current_filename_length + 1 ))s" \
 		"100%" "[auCDtect: Slow]" "${filename}" ""
@@ -1014,7 +992,7 @@ __print_aucdtect_slow_ok () {
 
 # Display the filename, clearing the progress bar and display the progress as an
 # error in red
-__print_aucdtect_slow_fail () {
+__print_aucdtect_slow_fail() {
 	if (( current_filename_length < max_filename_length )) ; then
 		printf "\033[${placement};4H${red}%s${normal} ${cyan}%s${normal} %s%$(( max_filename_length - current_filename_length + 1 ))s" \
 		"fail" "[auCDtect: Slow]" "${filename}" ""
@@ -1026,7 +1004,7 @@ __print_aucdtect_slow_fail () {
 
 # Display the filename, clearing the progress bar and display the progress as an
 # error in yellow color
-__print_aucdtect_issue () {
+__print_aucdtect_issue() {
 	if (( current_filename_length < max_filename_length )) ; then
 		printf "\033[${placement};4H${yellow}%s${normal} ${cyan}%s${normal} %s%$(( max_filename_length - current_filename_length + 1 ))s" \
 		"chck" "[auCDtect: Slow]" "${filename}" ""
@@ -1037,7 +1015,7 @@ __print_aucdtect_issue () {
 }
 
 # Print the current FLAC file, detailing a spectrogram is being created
-__print_current_spectrogram () {
+__print_current_spectrogram() {
 	# This stores the current file number processed out of the total files:
 	#  [56/213]
 	number_completed="[${iteration}/${#total_flacs_array[@]}]"
@@ -1062,7 +1040,7 @@ __print_current_spectrogram () {
 
 # Display the filename, clearing the progress bar and display the progress as an
 # error in red
-__print_spectrogram_issue () {
+__print_spectrogram_issue() {
 	if (( current_filename_length < max_filename_length )) ; then
 		printf "\033[${placement};4H${yellow}%s${normal} ${cyan}%s${normal} %s%$(( max_filename_length - current_filename_length + 1 ))s" \
 		"chck" "[Spectrogram]" "${filename}" ""
@@ -1077,7 +1055,7 @@ __print_spectrogram_issue () {
 # Current file/directory with percentage completed
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # Display filename and current progress of operation
-__print_progress () {
+__print_progress() {
 	# Obtain the percentage of the current operation, the was it's obtained
 	# was defined earlier and stored in the below variable
 	${obtain_percentage}
@@ -1113,7 +1091,7 @@ __print_progress () {
 }
 
 # Display filename and current progress of decoding FLAC files
-__print_decoding_progress () {
+__print_decoding_progress() {
 	# Obtain the percentage of the current operation, the was it's obtained
 	# was defined earlier and stored in the below variable
 	${obtain_percentage}
@@ -1149,7 +1127,7 @@ __print_decoding_progress () {
 }
 
 # Display filename and current progress of auCDtect [fast] analysis
-__print_progress_aucdtect_fast () {
+__print_progress_aucdtect_fast() {
 	# Obtain the percentage of the current operation, the was it's obtained
 	# was defined earlier and stored in the below variable
 	${obtain_percentage}
@@ -1185,7 +1163,7 @@ __print_progress_aucdtect_fast () {
 }
 
 # Display filename and current progress of auCDtect [slow] analysis
-__print_progress_aucdtect_slow () {
+__print_progress_aucdtect_slow() {
 	# Obtain the percentage of the current operation, the was it's obtained
 	# was defined earlier and stored in the below variable
 	${obtain_percentage}
@@ -1221,7 +1199,7 @@ __print_progress_aucdtect_slow () {
 }
 
 # Display filename and current progress of creating a spectrogram
-__print_progress_spectrogram () {
+__print_progress_spectrogram() {
 	# Obtain the percentage of the current operation, the was it's obtained
 	# was defined earlier and stored in the below variable
 	${obtain_percentage}
@@ -1262,7 +1240,7 @@ __print_progress_spectrogram () {
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # Display the filename, clearing the progress bar and display the progress
 # percentage as 100% (since FLAC stops at 99%) in green
-__print_progress_ok () {
+__print_progress_ok() {
 	if (( current_filename_length < max_filename_length )) ; then
 		printf "\033[${placement};4H${green}%4s${normal} %s%$(( max_filename_length - current_filename_length + 1 ))s" \
 		"100%" "${filename}" ""
@@ -1274,7 +1252,7 @@ __print_progress_ok () {
 
 # Display the filename, clearing the progress bar and display the progress as an
 # error in yellow color
-__print_progress_issue () {
+__print_progress_issue() {
 	if (( current_filename_length < max_filename_length )) ; then
 		printf "\033[${placement};4H${yellow}%s${normal} %s%$(( max_filename_length - current_filename_length + 1 ))s" \
 		"chck" "${filename}" ""
@@ -1286,7 +1264,7 @@ __print_progress_issue () {
 
 # Display the filename, clearing the progress bar and display the progress as an
 # error in red color
-__print_progress_failed () {
+__print_progress_failed() {
 	if (( current_filename_length < max_filename_length )) ; then
 		printf "\033[${placement};4H${red}%s${normal} %s%$(( max_filename_length - current_filename_length + 1 ))s" \
 		"fail" "${filename}" ""
@@ -1298,21 +1276,21 @@ __print_progress_failed () {
 
 # Display the filename, clearing the progress bar and display the progress as an
 # error in yellow color (for sub messages)
-__print_sub_progress_issue () {
+__print_sub_progress_issue() {
 	printf "\033[${placement};6H${yellow}%s${normal} %s" \
 	"chck" "${filename}"
 }
 
 # Display the filename, clearing the progress bar and display the progress
 # percentage as 100% (since FLAC stops at 99%) in green (for sub messages)
-__print_sub_progress_ok () {
+__print_sub_progress_ok() {
 	printf "\033[${placement};6H${green}%s${normal} %s" \
 	"100%" "${filename}"
 }
 
 # Display the filename, clearing the progress bar and display the progress as an
 # error in red color (for sub messages)
-__print_sub_progress_failed () {
+__print_sub_progress_failed() {
 	printf "\033[${placement};6H${red}%s${normal} %s" \
 	"fail" "${filename}"
 }
@@ -1321,8 +1299,8 @@ __print_sub_progress_failed () {
 
 #-------------------------------------------------------------------------------
 
-__trap_sigint () {
-	#---------------------------------------------------------------------------
+__trap_sigint() {
+	##
 	# Kill any children process and display the correct interrupt message when
 	# a user sends SIGINT during script execution.
 	#
@@ -1335,7 +1313,7 @@ __trap_sigint () {
 	#   md5_check         prune           replaygain_add
 	#   replaygain_test   retag_analyze   retag_apply
 	#   test
-	#---------------------------------------------------------------------------
+	##
 	__kill_jobs "$(jobs -rp)"
 
 	# If $1 is NULL, it means that the user invoked SIGINT before any operation
@@ -1351,8 +1329,8 @@ __trap_sigint () {
 
 #-------------------------------------------------------------------------------
 
-__exit_cleanup () {
-	#---------------------------------------------------------------------------
+__exit_cleanup() {
+	##
 	# Do any additional cleanup and check for the existence of a log file before
 	# exiting script.
 	#
@@ -1363,7 +1341,7 @@ __exit_cleanup () {
 	#   md5_check         prune           replaygain_add
 	#   replaygain_test   retag_analyze   retag_apply
 	#   test
-	#---------------------------------------------------------------------------
+	##
 	case "${1}" in
 		aucdtect)
 			# Remove temporarily created WAV files (if any)
@@ -1455,39 +1433,29 @@ __exit_cleanup () {
 
 #-------------------------------------------------------------------------------
 
-#-------------------------------------------------------------------------------
-# .: VARIOUS COMMANDS :.
-#-------------------------------------------------------------------------------
 # Display script version
-__print_version () {
-	printf "%s\n" "Version ${version}"
-}
+__print_version() { printf "%s\n" "Version ${version}" ;}
 
-# Obtain `metaflac' version information to test on.  Example:
-#   metaflac 1.3.0pre1
-#   -----------^
-# Test only the second integer in the version string above
-__metaflac_version () {
-	# Obtain entire version string, example:
-	#    metaflac 1.3.0pre1
-	metaflac_version="$(metaflac --version)"
+#-------------------------------------------------------------------------------
 
-	# Remove first part of string including first integer, example:
-	#    3.0pre1
-	metaflac_version="${metaflac_version#* [[:digit:]].}"
+__metaflac_version() {
+	##
+	# Obtain metaflac version information to test on
+	##
+	# Metaflacs version (ie: '2' in 1.2.1)
+	IFS='.' read -r _ metaflac_version _ < <(metaflac --version)
 
-	# Remove last part of string, leaving only the second integer, example:
-	#    3
-	metaflac_version="${metaflac_version%.*}"
+	# Return the above integer
+	printf "%s" "${metaflac_version}"
 }
 
 #-------------------------------------------------------------------------------
 
-__kill_jobs () {
-	#---------------------------------------------------------------------------
-	# Kill any children process (obtained via $@), hiding any error output from
-	# 'kill' and supressing the shell's notification of terminated jobs
-	#---------------------------------------------------------------------------
+__kill_jobs() {
+	##
+	# Kill any children process (obtained via $@), hiding errors and suppressing
+	# the shell's notification of terminated jobs
+	##
 	for pid in $@ ; do
 		kill $pid 2>/dev/null
 		wait $pid 2>/dev/null
@@ -1496,29 +1464,24 @@ __kill_jobs () {
 
 #-------------------------------------------------------------------------------
 
-__row () {
-	#---------------------------------------------------------------------------
+__row() {
+	##
 	# Print out the current cursor row position
-	#---------------------------------------------------------------------------
-	exec < /dev/tty              # Set a new TTY to read in STDIN
-	row_old_stty="$(stty -g)"    # Store current TTY settings
-	stty raw -echo min 0         # Current TTY set at an absolute minimum
+	##
+	declare old_stty  row_pos        # Intialize local variables
+	exec < /dev/tty                  # Set a new TTY to read in STDIN
+	old_stty="$(stty -g)"            # Store current TTY settings
+	stty raw -echo min 0             # Current TTY set at an absolute minimum
+	printf "\033[6n" > /dev/tty      # Send escape into new TTY
 
-	# Print escape sequence to obtain cursor position into the new TTY
-	printf "\033[6n" > /dev/tty
+	# Read in escape sequence output from TTY.  The escape sequence looks like:
+	#   ^[<integer>;<integer>R
+	#--
+	# This is what is read in below:  ^[<integer>
+	IFS=';' read -r -d'R' row_pos _ < /dev/tty 
 
-	# Read in escape sequence output from TTY.  The resultant output from the
-	# escape sequence looks like:
-	#  ^[<integer>;<integer>R
-	#       ^------------ This is the 'row' we want to obtain
-	# The read then specifies the 'R' is the delimeter to stop reading in from,
-	# storing this string into the $current_row variable
-	IFS=';' read -r -d R current_row _
-
-	stty "${row_old_stty}"          # Restore the old TTY settings
-
-	# Return current row position (integer)
-	printf "%s" "${current_row#??}"
+	stty "${old_stty}"               # Restore the old TTY settings
+	printf "%s" "${row_pos#??}"      # Return row position (removes: ^[)
 }
 
 #-------------------------------------------------------------------------------
@@ -1529,7 +1492,7 @@ __row () {
 # number will only occur if the number of files/directories to process is less
 # than the jobs specified to run.  This allows us to _NOT_ have extra gaps in
 # our output
-__scroll_terminal () {
+__scroll_terminal() {
 	# Grab the first line of 'stty -a' output
 	# Redirecting '/dev/stderr' to 'stty' allows valid arguments
 	read -r _ _ _ _ lines _ columns _ < <(stty -a < /dev/stderr)
@@ -1600,7 +1563,7 @@ __scroll_terminal () {
 }
 
 # Obtain the current progress completed percentage while compressing FLAC files
-__obtain_compress_percentage () {
+__obtain_compress_percentage() {
 	# Remove backspace sequences used by the FLAC command line interface
 	percent_complete="${percent_complete///}"
 
@@ -1619,7 +1582,7 @@ __obtain_compress_percentage () {
 }
 
 # Obtain the current progress completed percentage while testing FLAC file
-__obtain_test_percentage () {
+__obtain_test_percentage() {
 	# Remove the first part of the line to leave the resultant percent stored as
 	# an integer (no '%' appended)
 	percent_complete="${percent_complete##* }"
@@ -1630,7 +1593,7 @@ __obtain_test_percentage () {
 }
 
 # Obtain the current progress completed percentage while decoding FLAC file
-__obtain_decode_percentage () {
+__obtain_decode_percentage() {
 	# Remove backspace sequences used by the FLAC command line interface
 	percent_complete="${percent_complete///}"
 
@@ -1649,7 +1612,7 @@ __obtain_decode_percentage () {
 }
 
 # Obtain the current progress completed percentage while using auCDtect
-__obtain_aucdtect_percentage () {
+__obtain_aucdtect_percentage() {
 	# Remove the first part of the line to leave the resultant percent stored as
 	# an integer (no '%' appended)
 	percent_complete="${percent_complete##*[}"
@@ -1660,7 +1623,7 @@ __obtain_aucdtect_percentage () {
 }
 
 # Obtain the current progress completed percentage while using auCDtect
-__obtain_spectrogram_percentage () {
+__obtain_spectrogram_percentage() {
 	# Remove the first part of the line leaving only the percent which is
 	# represented as a floating point number:
 	#  '32.3'
@@ -1675,7 +1638,7 @@ __obtain_spectrogram_percentage () {
 }
 
 # Store the position of the current job being displayed
-__store_position () {
+__store_position() {
 	# If the current job(s) are the first set, we'll use the iteration
 	# (starting at 0 -- hence the minus 1) of the job to start
 	if (( iteration <= jobs )) ; then
@@ -1688,28 +1651,28 @@ __store_position () {
 }
 
 # Force the creation of a new configuration file
-__new_config () {
+__new_config() {
 	# Check if configuration file exists based of ${EUID}.  If it doesn't
 	# exist, create one
 	if (( EUID == 0 )) ; then
 		# User is root
 		#
 		# Configuration file location
-		config_location="/etc/redoflacs.conf"
+		config_file="/etc/redoflacs.conf"
 
 		# If there already is a configuration file, do not overwrite it
-		if [[ -f "${config_location}" ]] ; then
-			config_location="/etc/_$$.redoflacs.conf"
+		if [[ -f "${config_file}" ]] ; then
+			config_file="/etc/_$$.redoflacs.conf"
 		fi
 	else
 		# User is _NOT_ root
 		#
 		# Configuration file location
-		config_location="${HOME}/.config/redoflacs/config"
+		config_file="${HOME}/.config/redoflacs/config"
 
 		# If there already is a configuration file, do not overwrite it
-		if [[ -f "${config_location}" ]] ; then
-			config_location="${HOME}/.config/redoflacs/_$$.config"
+		if [[ -f "${config_file}" ]] ; then
+			config_file="${HOME}/.config/redoflacs/_$$.config"
 		fi
 	fi
 
@@ -1718,7 +1681,7 @@ __new_config () {
 
 	# Explain to user where to find the new configuration file
 	__info "A new configuration file has been created here:\n"
-	__info "${cyan}${config_location}${normal}\n\n"
+	__info "${cyan}${config_file}${normal}\n\n"
 
 	__info "It's recommended to review the new configuration file\n"
 	__info "and transfer over any changes you made in your old\n"
@@ -1729,15 +1692,15 @@ __new_config () {
 	__info "name.  Here is the command you could use:\n"
 
 	if (( EUID == 0 )) ; then
-		__info "${cyan}mv${normal} ${cyan}${config_location}${normal} ${cyan}/etc/redoflacs.conf${normal}\n"
+		__info "${cyan}mv${normal} ${cyan}${config_file}${normal} ${cyan}/etc/redoflacs.conf${normal}\n"
 	else
-		__info "${cyan}mv${normal} ${cyan}${config_location}${normal} ${cyan}${HOME}/.config/redoflacs/config${normal}\n"
+		__info "${cyan}mv${normal} ${cyan}${config_file}${normal} ${cyan}${HOME}/.config/redoflacs/config${normal}\n"
 	fi
 }
 
 # Create a configuration file
-__create_config () {
-create_config="################################################################################
+__create_config() {
+	create_config="################################################################################
 #                                                                              #
 #                         REDOFLACS USER CONFIGURATION                         #
 #                         ----------------------------                         #
@@ -1903,69 +1866,60 @@ prepend_zero=\"false\"
 
 	# Print out the configuration file to the specified location (either system-
 	# wide or local)
-	printf "%s\n" "${create_config}" > "${config_location}"
+	printf "%s\n" "${create_config}" > "${config_file}"
 }
 
-# Parse the configuration file
-__parse_config () {
-	# Load configuration file into an array
-	mapfile -n0 -t config_file_array < "${config_location}"
+#-------------------------------------------------------------------------------
 
-	# For each line in the configuration file, obtain only the
-	# lines that are part of the configuration
-	for line in "${config_file_array[@]}" ; do
-		# Strip line and replace with comment _ONLY_ if the line
-		# starts with a comment
-		test_line="${line/##*/#}"
+__parse_config() {
+	##
+	# Parse the user/system configuration file
+	#
+	# Load the config file into an array and process each line, grabbing the
+	# user-specified FLAC tags and setting up the configuration variables
+	##
+	mapfile -n0 -t config_array < "${config_file}"
 
-		# If ${test_line} does not equal a comment and if ${line}
-		# is not blank, store the current line (which is either
-		# a tag to keep or an option) into an array for further
-		# parsing
-		if [[ "${test_line}" != "#" && "${line}" != "" ]] ; then
-			# Add valid configuration lines into an array
-			valid_config_array+=( "${line}" )
-		fi
-	done
+	for line in "${config_array[@]}" ; do
+		# Run through the array, evaluating the configuration option into the
+		# current enviroment and storing the tag fields into an array
+		#--
+		# Test and use only the tag and config options
+		if [[ -n "${line###*}" && -n "${line}" ]] ; then
+			config_option="${line//*=*/}"  # Null if line is a config option
 
-	# For each line in the configuration, store the tag fields
-	# and evaluate the options as variables into the environment
-	for line in "${valid_config_array[@]}" ; do
-		# ${value_type} holds the key=pair for options to be
-		# parsed, else the line is a tag field
-		value_type="${line//*=*/}"
-
-		# If ${value_type} is _NOT_ null, then the line parsed
-		# is a tag field
-		if [[ -n "${value_type}" ]] ; then
-			# Store the tag field into the tags array
-			tags+=( "${line}" )
-		else
-			# Evaluate the option
-			eval "${line}"
+			if [[ -n "${config_option}" ]] ; then
+				tags+=( "${line}" )        # Store line (tag) in array
+			else
+				eval "${line}"             # Put config option in environment
+			fi
 		fi
 	done
 }
 
-# Check current configuration, if the version in the script is newer
-# warn user and display a countdown before starting script
-__check_config_version () {
+#-------------------------------------------------------------------------------
+
+__check_config_version() {
+	##
+	# Check current configuration, if the version in the script is newer
+	# warn user and display a countdown before starting script
+	##
 	# Check if configuration file exists based of ${EUID}.  If it doesn't
 	# exist, create one
 	if (( EUID == 0 )) ; then
 		# User is root
 		#
 		# Configuration file location
-		config_location="/etc/redoflacs.conf"
+		config_file="/etc/redoflacs.conf"
 	else
 		# User is _NOT_ root
 		#
 		# Configuration file location
-		config_location="${HOME}/.config/redoflacs/config"
+		config_file="${HOME}/.config/redoflacs/config"
 	fi
 
 	# Load configuration file into an array
-	mapfile -n0 -t config_array < "${config_location}"
+	mapfile -n0 -t config_array < "${config_file}"
 
 	# Obtain only the last line of the config
 	config_last_line="${config_array[$(( ${#config_array[@]} - 1 ))]}"
@@ -1994,9 +1948,11 @@ __check_config_version () {
 	fi
 }
 
+#-------------------------------------------------------------------------------
+
 # Creates filename of current FLAC and culls it if the length
 # is bigger than then width of the terminal
-__filename () {
+__filename() {
 	filename="${i##*/}"
 	# Replace possible newlines in filename with '?' (like 'ls' output)
 	filename="${filename//$'\n'/?}"
@@ -2039,7 +1995,7 @@ __filename () {
 }
 
 # Display current length spacing between filename and operation message
-__current_length () {
+__current_length() {
 	# The current length is obtained via the length of what's printed now minus
 	# the length of the filename and gaps:
 	#
@@ -2059,7 +2015,7 @@ __current_length () {
 
 # Determine number of jobs to run via the number
 # of CPUs/cores available
-__find_cores () {
+__find_cores() {
 	# Check if /proc is mounted by comparing device numbers of
 	# /proc and / and see if they don't match (ie, /proc is mounted)
 	if (( $(stat -c %d /proc) == $(stat -c %d /) )) ; then
@@ -2098,7 +2054,7 @@ __find_cores () {
 
 # If COVERART tag is kept and remove_artwork is set to 'true'
 # display conflict and exit
-__coverart_remove_conflict () {
+__coverart_remove_conflict() {
 	# Check if COVERART exists in the tag array.  Notify user
 	# of its deprecation and advise against using it, preferring
 	# METADATA_BLOCK_PICTURE
@@ -2138,7 +2094,7 @@ __coverart_remove_conflict () {
 
 # Find all the artwork blocks in the current FLAC file, storing each instance in
 # an array to be processed
-__find_artwork () {
+__find_artwork() {
 	# Grab all the PICTURE blocks from current FLAC file, storing into an array
 	mapfile -n0 -t artwork_blocks < <(metaflac --list --block-type=PICTURE "${i}")
 
@@ -2274,7 +2230,7 @@ __find_artwork () {
 
 # Extract artwork image from the specified artwork block ID in the PICTURE block
 # of the current FLAC file
-__extract_artwork () {
+__extract_artwork() {
 	# $@ is the name of the artwork filename with the extension
 	metaflac \
 		--block-number="${artwork_block_id}" \
@@ -2283,7 +2239,7 @@ __extract_artwork () {
 }
 
 # Top banner displaying invocation settings
-__top_banner () {
+__top_banner() {
 	# If Redo Tags is called, create the necessary spacing
 	if [[ "${retag_flac}" == "true" ]] ; then
 		printf '\n\n'
@@ -2335,14 +2291,14 @@ __top_banner () {
 # Below creates the '[ ok ]' message to print after the info
 # line above.  This will be displayed when all the FLAC files
 # have been mapped to an array
-__processed_flacs_ok () {
+__processed_flacs_ok() {
 	printf "${normal}%11s${blue}%s${normal}%s${green}%s${normal}%s${blue}%s${normal}\n" \
 	"" "[" " " "ok" " " "]"
 }
 
 # Create a countdown function for the metadata
 # to allow user to quit script safely
-__countdown_metadata () {
+__countdown_metadata() {
 	# Trap SIGINT (Control-C) to abort cleanly
 	trap __trap_sigint SIGINT
 
@@ -2380,7 +2336,7 @@ __countdown_metadata () {
 
 # Displays a countdown after a newer config is found than what
 # the user has.  Allows user to quit script before proceeding
-__countdown_config () {
+__countdown_config() {
 	# Trap SIGINT (Control-C) to abort cleanly
 	trap __trap_sigint SIGINT
 
@@ -2409,7 +2365,7 @@ __countdown_config () {
 
 # Obtain the total number of directories to process, repesented
 # as ${total_directories}
-__total_directories () {
+__total_directories() {
 	# Find all the directories in which to process the FLAC files.
 	for i in "${total_flacs_array[@]}" ; do
 		if [[ "${processed_directory}" != "${i%/*}" ]] ; then
@@ -2424,7 +2380,7 @@ __total_directories () {
 
 # Clear old file descriptor (3) and create a new
 # FIFO that's tied to file discriptor 3
-__clear_tmp_fd () {
+__clear_tmp_fd() {
 	# Close FIFO (if already open)
 	exec 3<&- 3>&-
 
@@ -2436,7 +2392,7 @@ __clear_tmp_fd () {
 # FIFO that's tied to file discriptor 4, removing
 # the FIFO upon completion.  This is ONLY for auCDtect's
 # STDOUT
-__create_aucdtect_fd () {
+__create_aucdtect_fd() {
 	# Set up a temporary FIFO location.  The variable
 	# is set up here, to prevent it from being called
 	# upon script invocation when auCDtect isn't going
@@ -2454,12 +2410,12 @@ __create_aucdtect_fd () {
 	rm -f "${tmp_aucdtect_fd}"
 }
 
-__msg_num_issues () {
-	#---------------------------------------------------------------------------
+__msg_num_issues() {
+	##
 	# Display the number of issues an operation may have by reading in the
 	# number of ticks from the temporary issues_count file, returning the proper
 	# message for use with the Summary Of Operations table
-	#---------------------------------------------------------------------------
+	##
 	read -r fail_count < "${issue_ticks}"   # Read in number of issue ticks
 
 	if (( ${#fail_count} == 1 )) ; then
@@ -2471,7 +2427,7 @@ __msg_num_issues () {
 
 # Obtain and process the positional parameters invoked
 # with the script
-__process_positional_parameters () {
+__process_positional_parameters() {
 	# If no arguments are made to the script show usage & short help
 	if (( ${#} == 0 )) ; then
 		__short_help
@@ -2748,7 +2704,7 @@ __process_positional_parameters () {
 }
 
 # Check for missing programs vital to this script
-__check_missing_programs () {
+__check_missing_programs() {
 	# Check if each command can be found in $PATH
 	rm_exists="$(type -P rm)"
 	stty_exists="$(type -P stty)"
@@ -2858,7 +2814,7 @@ __check_missing_programs () {
 }
 
 # Check for any conflicting operations/arguments
-__check_conflicting_operations () {
+__check_conflicting_operations() {
 	# If "-l, --all" and "-L, --reallyall" are both called, warn and exit
 	if [[ "${all}" == "true" && "${reallyall}" == "true" ]] ; then
 		__error "Running both ${cyan}-l, --all${normal} and ${cyan}-L, --reallyall${normal} conflict!\n" >&2
@@ -2992,7 +2948,7 @@ __check_conflicting_operations () {
 }
 
 # Display the summary of operations chart
-__summary () {
+__summary() {
 	# Begin printing the table
 	#--
 	# Title
@@ -3061,7 +3017,7 @@ __summary () {
 
 # Function to run commands/operations that are by
 # files _ONLY_
-__run_parallel_files () {
+__run_parallel_files() {
 	# Forces iteration to start at 0, in the event that
 	# multiple operations are going to be run
 	iteration=0
@@ -3139,7 +3095,7 @@ __run_parallel_files () {
 
 # Function to run commands/operations that are by
 # directory _ONLY_
-__run_parallel_directories () {
+__run_parallel_directories() {
 	# Forces iteration to start at 0, in the event that
 	# multiple operations are going to be run
 	iteration=0
@@ -3223,7 +3179,7 @@ __run_parallel_directories () {
 # .: OPERATIONS :.
 #-------------------------------------------------------------------------------
 # Test ReplayGain
-__operation_test_replaygain () {
+__operation_test_replaygain() {
 	trap '__kill_jobs "$(jobs -rp)"' EXIT
 
 	# Print current FLAC being processed
@@ -3253,7 +3209,7 @@ __operation_test_replaygain () {
 
 			# Sample rate is greater than 48kHz, so check to make sure the
 			# version of `metaflac' is greater than 1.2.1
-			if (( metaflac_version < 3 )) ; then
+			if (( $(__metaflac_version) < 3 )) ; then
 				# Old version of `metaflac' installed, display skipped
 				__print_sub_progress_issue
 
@@ -3281,7 +3237,7 @@ __operation_test_replaygain () {
 }
 
 # Process Replaygain (only add values if missing)
-__operation_replaygain_noforce () {
+__operation_replaygain_noforce() {
 	trap '__kill_jobs "$(jobs -rp)"' EXIT
 
 	# Print current directory being processed
@@ -3352,7 +3308,7 @@ __operation_replaygain_noforce () {
 }
 
 # Process ReplayGain (force new values)
-__operation_replaygain_force () {
+__operation_replaygain_force() {
 	trap '__kill_jobs "$(jobs -rp)"' EXIT
 
 	# Print current directory being processed
@@ -3385,7 +3341,7 @@ __operation_replaygain_force () {
 }
 
 # Compress FLAC files
-__operation_compress () {
+__operation_compress() {
 	trap '__kill_jobs "$(jobs -rp)"' EXIT
 
 	# Test for COMPRESSION level in FLAC file. Hide error output since
@@ -3477,7 +3433,7 @@ __operation_compress () {
 }
 
 # Test FLAC files
-__operation_test () {
+__operation_test() {
 	trap '__kill_jobs "$(jobs -rp)"' EXIT
 
 	# Print current FLAC being processed
@@ -3517,7 +3473,7 @@ __operation_test () {
 }
 
 # Test FLAC validity with auCDtect
-__operation_aucdtect () {
+__operation_aucdtect() {
 	trap '__kill_jobs "$(jobs -rp)"' EXIT
 
 	# Print current FLAC being processed
@@ -3800,7 +3756,7 @@ __operation_aucdtect () {
 }
 
 # Check MD5 in each FLAC file
-__operation_md5check () {
+__operation_md5check() {
 	trap '__kill_jobs "$(jobs -rp)"' EXIT
 
 	# Print current FLAC being processed
@@ -3849,7 +3805,7 @@ __operation_md5check () {
 }
 
 # Analyze FLAC tags
-__operation_analyze_tags () {
+__operation_analyze_tags() {
 	trap '__kill_jobs "$(jobs -rp)"' EXIT
 
 	# Print current FLAC being processed
@@ -4005,7 +3961,7 @@ __operation_analyze_tags () {
 }
 
 # Analyze FLAC tags (not logging missing COVERART tag)
-__operation_analyze_tags_dont_log_coverart () {
+__operation_analyze_tags_dont_log_coverart() {
 	trap '__kill_jobs "$(jobs -rp)"' EXIT
 
 	# Print current FLAC being processed
@@ -4188,7 +4144,7 @@ __operation_analyze_tags_dont_log_coverart () {
 }
 
 # Re-tag FLAC files
-__operation_set_tags () {
+__operation_set_tags() {
 	trap '__kill_jobs "$(jobs -rp)"' EXIT
 
 	# Print current FLAC being processed
@@ -4306,7 +4262,7 @@ __operation_set_tags () {
 }
 
 # Extract artwork from FLAC files
-__operation_extract_artwork () {
+__operation_extract_artwork() {
 	trap '__kill_jobs "$(jobs -rp)"' EXIT
 
 	# Print current FLAC with artwork to be extracted
@@ -4924,7 +4880,7 @@ __operation_extract_artwork () {
 }
 
 # Prune FLACS
-__operation_prune () {
+__operation_prune() {
 	trap '__kill_jobs "$(jobs -rp)"' EXIT
 
 	# Print current FLAC being pruned
@@ -5016,17 +4972,17 @@ if (( EUID == 0 )) ; then
 	# User is root
 	#
 	# Configuration file location
-	config_location="/etc/redoflacs.conf"
+	config_file="/etc/redoflacs.conf"
 
 	# Check if system-wide configuration doesn't exist
-	if [[ ! -f "${config_location}" ]] ; then
+	if [[ ! -f "${config_file}" ]] ; then
 		# Create system-wide configuration file
 		__create_config
 
 		# Inform user of created configuration file, reminding them to check
 		# it over before running program
 		__info "A configuration file has been created here:\n"
-		__info "${cyan}${config_location}${normal}\n\n"
+		__info "${cyan}${config_file}${normal}\n\n"
 
 		__info "Please review it before running this program.\n"
 
@@ -5039,12 +4995,12 @@ else
 	# User is _NOT_ root
 	#
 	# Configuration file location
-	config_location="${HOME}/.config/redoflacs/config"
+	config_file="${HOME}/.config/redoflacs/config"
 
 	# Check if user configuration doesn't exist
-	if [[ ! -f "${config_location}" ]] ; then
+	if [[ ! -f "${config_file}" ]] ; then
 		# Create '.config/redoflacs' directory (if it doesn't exist)
-		mkdir -p "${config_location%/*}"
+		mkdir -p "${config_file%/*}"
 
 		# Create user configuration file
 		__create_config
@@ -5052,7 +5008,7 @@ else
 		# Inform user of created configuration file, reminding them to check
 		# it over before running program
 		__info "A configuration file has been created here:\n"
-		__info "${cyan}${config_location}${normal}\n\n"
+		__info "${cyan}${config_file}${normal}\n\n"
 
 		__info "Please review it before running this program.\n"
 
@@ -5500,15 +5456,9 @@ if [[ "${replaygain_flac}" == "true" ]] ; then
 	# Prints title message of current operation
 	__operation_message 'replaygain'
 
-	# Obtain `metaflac' version information to test on.  Example:
-	#   metaflac 1.3.0pre1
-	#   -----------^
-	# Test only the second integer in the version string above
-	__metaflac_version
-
-	#---------------------------------------------------------------------------
+	##
 	# .: TEST REPLAYGAIN :.
-	#---------------------------------------------------------------------------
+	##
 	# Prints sub message of current operation
 	__operation_message '' 'replaygain_test'
 
@@ -5557,9 +5507,9 @@ if [[ "${replaygain_flac}" == "true" ]] ; then
 	#== .: END TEST REPLAYGAIN :. ==============================================
 
 
-	#---------------------------------------------------------------------------
+	##
 	# .: PROCESS REPLAYGAIN :.
-	#---------------------------------------------------------------------------
+	##
 	# Make printing pretty if specified directory is '.'
 	if [[ "${directory}" == "." ]] ; then
 		directory="${PWD}"
@@ -5645,9 +5595,9 @@ if [[ "${retag_flac}" == "true" ]] ; then
 	# tag array
 	old_tags=( "${tags[@]}" )
 
-	#---------------------------------------------------------------------------
+	##
 	# .: ANALYZE TAGS :.
-	#---------------------------------------------------------------------------
+	##
 	# Analyze FLAC tags to ensure none are missing and/or empty
 
 	# Prints sub message of current operation
@@ -5729,9 +5679,9 @@ if [[ "${retag_flac}" == "true" ]] ; then
 	#== .: END ANALYZE TAGS :. =================================================
 
 
-	#---------------------------------------------------------------------------
+	##
 	# .: SET TAGS :.
-	#---------------------------------------------------------------------------
+	##
 	# Clear the old tags and re-tag with the kept tags
 
 	# Restore the original tags array as the script _may_ have
