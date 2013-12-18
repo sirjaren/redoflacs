@@ -1565,7 +1565,7 @@ __scroll_terminal() {
 # Obtain the current progress completed percentage while compressing FLAC files
 __obtain_compress_percentage() {
 	# Remove backspace sequences used by the FLAC command line interface
-	percent_complete="${percent_complete///}"
+	percent_complete="${percent_complete//$'\b'/}"
 
 	# Remove the first part of the line leaving only the percent integer as well
 	# as other information:
@@ -1595,7 +1595,7 @@ __obtain_test_percentage() {
 # Obtain the current progress completed percentage while decoding FLAC file
 __obtain_decode_percentage() {
 	# Remove backspace sequences used by the FLAC command line interface
-	percent_complete="${percent_complete///}"
+	percent_complete="${percent_complete//$'\b'}"
 
 	# Remove the first part of the line leaving only the percent integer as well
 	# as well as other information:
