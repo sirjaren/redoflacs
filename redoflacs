@@ -41,11 +41,6 @@ __error() { printf " ${red}*${normal} ${@}"    ;}   # Bold red message
 
 #-------------------------------------------------------------------------------
 
-# No FLACS found error message
-__no_flacs() { __error "There are not any FLAC files to process!\n" ;} >&2
-
-#-------------------------------------------------------------------------------
-
 __coverart_warning() {
 	##
 	# Display why COVERART tag should not be used
@@ -725,12 +720,6 @@ __operation_message() {
 
 #-------------------------------------------------------------------------------
 
-#-------------------------------------------------------------------------------
-# .: PROCESSED FILE/DIRECTORY MESSAGES :.
-#-------------------------------------------------------------------------------
-#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-# Current Files Operated On
-#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # Print the current FLAC file being operated on
 __print_current_flac() {
 	# This stores the current file number processed out of the total files:
@@ -755,6 +744,8 @@ __print_current_flac() {
 	"${filename}" "" "${number_completed}"
 }
 
+#-------------------------------------------------------------------------------
+
 # Print the current FLAC file being pruned
 __print_current_half() {
 	# This stores the current file number processed out of the total files:
@@ -778,6 +769,8 @@ __print_current_half() {
 	printf "\033[${placement};4H${yellow}%s${normal} %s%$(__current_length)s${magenta}%s${normal}" \
 	" 50%" "${filename}" "" "${number_completed}"
 }
+
+#-------------------------------------------------------------------------------
 
 # Print the current directory being operated on
 __print_current_directory() {
@@ -804,6 +797,8 @@ __print_current_directory() {
 	" 50%" "${filename}" "" "${number_completed}"
 }
 
+#-------------------------------------------------------------------------------
+
 # Print the current FLAC file being operated on (for sub messages)
 __print_sub_current_flac() {
 	# This stores the current file number processed out of the total files:
@@ -828,6 +823,8 @@ __print_sub_current_flac() {
 	"${filename}" "" "${number_completed}"
 }
 
+#-------------------------------------------------------------------------------
+
 # Print the current FLAC file being operated on with skip message
 __print_skip_flac() {
 	# This stores the current file number processed out of the total files:
@@ -851,11 +848,9 @@ __print_skip_flac() {
 	printf "\033[${placement};4H${yellow}skip${normal} %s%$(__current_length)s${magenta}%s${normal}" \
 	"${filename}" "" "${number_completed}"
 }
-#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-# auCDtect
-#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+#-------------------------------------------------------------------------------
+
 # Print the current FLAC file being decoded
 __print_decoding_flac() {
 	# This stores the current file number processed out of the total files:
@@ -881,6 +876,8 @@ __print_decoding_flac() {
 	"${filename}" "" "${number_completed}"
 }
 
+#-------------------------------------------------------------------------------
+
 # Display the filename, clearing the progress bar and display the progress
 # percentage as 100% (since FLAC stops at 99%) in green
 __print_decoding_ok() {
@@ -893,6 +890,8 @@ __print_decoding_ok() {
 	fi
 }
 
+#-------------------------------------------------------------------------------
+
 # Display the filename, clearing the progress bar and display the progress
 # percentage as fail (since the file failed to decode the properly)
 __print_decoding_fail() {
@@ -904,6 +903,8 @@ __print_decoding_fail() {
 		"fail" "[Decoding]" "${filename}"
 	fi
 }
+
+#-------------------------------------------------------------------------------
 
 # Print the current FLAC file being analyzed with auCDtect [fast]
 __print_current_aucdtect_fast() {
@@ -929,6 +930,8 @@ __print_current_aucdtect_fast() {
 	printf "\033[${placement};9H${cyan}[auCDtect: fast]${normal} %s%$(__current_length)s${magenta}%s${normal}" "${filename}" "" "${number_completed}"
 }
 
+#-------------------------------------------------------------------------------
+
 # Display the filename, clearing the progress bar and display the progress
 # percentage as 100% (since FLAC stops at 99%) in green
 __print_aucdtect_fast_ok() {
@@ -941,6 +944,8 @@ __print_aucdtect_fast_ok() {
 	fi
 }
 
+#-------------------------------------------------------------------------------
+
 # Display the filename, clearing the progress bar and display the progress as an
 # error in red
 __print_aucdtect_fast_fail() {
@@ -952,6 +957,8 @@ __print_aucdtect_fast_fail() {
 		"fail" "[auCDtect: Fast]" "${filename}"
 	fi
 }
+
+#-------------------------------------------------------------------------------
 
 # Print the current FLAC file being analyzed with auCDtect [slow]
 __print_current_aucdtect_slow() {
@@ -978,6 +985,8 @@ __print_current_aucdtect_slow() {
 	"${filename}" "" "${number_completed}"
 }
 
+#-------------------------------------------------------------------------------
+
 # Display the filename, clearing the progress bar and display the progress
 # percentage as 100% (since FLAC stops at 99%) in green
 __print_aucdtect_slow_ok() {
@@ -989,6 +998,8 @@ __print_aucdtect_slow_ok() {
 		"100%" "[auCDtect: Slow]" "${filename}"
 	fi
 }
+
+#-------------------------------------------------------------------------------
 
 # Display the filename, clearing the progress bar and display the progress as an
 # error in red
@@ -1002,6 +1013,8 @@ __print_aucdtect_slow_fail() {
 	fi
 }
 
+#-------------------------------------------------------------------------------
+
 # Display the filename, clearing the progress bar and display the progress as an
 # error in yellow color
 __print_aucdtect_issue() {
@@ -1013,6 +1026,8 @@ __print_aucdtect_issue() {
 		"chck" "[auCDtect: Slow]" "${filename}"
 	fi
 }
+
+#-------------------------------------------------------------------------------
 
 # Print the current FLAC file, detailing a spectrogram is being created
 __print_current_spectrogram() {
@@ -1038,6 +1053,8 @@ __print_current_spectrogram() {
 	printf "\033[${placement};9H${cyan}[Spectrogram]${normal} %s%$(__current_length)s${magenta}%s${normal}" "${filename}" "" "${number_completed}"
 }
 
+#-------------------------------------------------------------------------------
+
 # Display the filename, clearing the progress bar and display the progress as an
 # error in red
 __print_spectrogram_issue() {
@@ -1049,11 +1066,9 @@ __print_spectrogram_issue() {
 		"chck" "[Spectrogram]" "${filename}"
 	fi
 }
-#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-# Current file/directory with percentage completed
-#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+#-------------------------------------------------------------------------------
+
 # Display filename and current progress of operation
 __print_progress() {
 	# Obtain the percentage of the current operation, the was it's obtained
@@ -1089,6 +1104,8 @@ __print_progress() {
 		"${percent_complete}%" "${filename}" ""
 	fi
 }
+
+#-------------------------------------------------------------------------------
 
 # Display filename and current progress of decoding FLAC files
 __print_decoding_progress() {
@@ -1126,6 +1143,8 @@ __print_decoding_progress() {
 	fi
 }
 
+#-------------------------------------------------------------------------------
+
 # Display filename and current progress of auCDtect [fast] analysis
 __print_progress_aucdtect_fast() {
 	# Obtain the percentage of the current operation, the was it's obtained
@@ -1161,6 +1180,8 @@ __print_progress_aucdtect_fast() {
 		"${percent_complete}%" "[auCDtect: Fast] " "${filename}" ""
 	fi
 }
+
+#-------------------------------------------------------------------------------
 
 # Display filename and current progress of auCDtect [slow] analysis
 __print_progress_aucdtect_slow() {
@@ -1198,6 +1219,8 @@ __print_progress_aucdtect_slow() {
 	fi
 }
 
+#-------------------------------------------------------------------------------
+
 # Display filename and current progress of creating a spectrogram
 __print_progress_spectrogram() {
 	# Obtain the percentage of the current operation, the was it's obtained
@@ -1233,11 +1256,9 @@ __print_progress_spectrogram() {
 		"${percent_complete}%" "[Spectrogram] " "${filename}" ""
 	fi
 }
-#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-# Resultant operation status
-#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+#-------------------------------------------------------------------------------
+
 # Display the filename, clearing the progress bar and display the progress
 # percentage as 100% (since FLAC stops at 99%) in green
 __print_progress_ok() {
@@ -1249,6 +1270,8 @@ __print_progress_ok() {
 		"100%" "${filename}"
 	fi
 }
+
+#-------------------------------------------------------------------------------
 
 # Display the filename, clearing the progress bar and display the progress as an
 # error in yellow color
@@ -1262,6 +1285,8 @@ __print_progress_issue() {
 	fi
 }
 
+#-------------------------------------------------------------------------------
+
 # Display the filename, clearing the progress bar and display the progress as an
 # error in red color
 __print_progress_failed() {
@@ -1274,12 +1299,16 @@ __print_progress_failed() {
 	fi
 }
 
+#-------------------------------------------------------------------------------
+
 # Display the filename, clearing the progress bar and display the progress as an
 # error in yellow color (for sub messages)
 __print_sub_progress_issue() {
 	printf "\033[${placement};6H${yellow}%s${normal} %s" \
 	"chck" "${filename}"
 }
+
+#-------------------------------------------------------------------------------
 
 # Display the filename, clearing the progress bar and display the progress
 # percentage as 100% (since FLAC stops at 99%) in green (for sub messages)
@@ -1288,14 +1317,14 @@ __print_sub_progress_ok() {
 	"100%" "${filename}"
 }
 
+#-------------------------------------------------------------------------------
+
 # Display the filename, clearing the progress bar and display the progress as an
 # error in red color (for sub messages)
 __print_sub_progress_failed() {
 	printf "\033[${placement};6H${red}%s${normal} %s" \
 	"fail" "${filename}"
 }
-
-#== .: PROCESSED FILE/DIRECTORY MESSAGES :. ====================================
 
 #-------------------------------------------------------------------------------
 
@@ -1562,6 +1591,8 @@ __scroll_terminal() {
 	fi
 }
 
+#-------------------------------------------------------------------------------
+
 # Obtain the current progress completed percentage while compressing FLAC files
 __obtain_compress_percentage() {
 	# Remove backspace sequences used by the FLAC command line interface
@@ -1581,6 +1612,8 @@ __obtain_compress_percentage() {
 	[[ "${percent_complete}" =~ ^[[:digit:]]+$ ]] || percent_complete=0
 }
 
+#-------------------------------------------------------------------------------
+
 # Obtain the current progress completed percentage while testing FLAC file
 __obtain_test_percentage() {
 	# Remove the first part of the line to leave the resultant percent stored as
@@ -1591,6 +1624,8 @@ __obtain_test_percentage() {
 	# integer
 	[[ "${percent_complete}" =~ ^[[:digit:]]+$ ]] || percent_complete=0
 }
+
+#-------------------------------------------------------------------------------
 
 # Obtain the current progress completed percentage while decoding FLAC file
 __obtain_decode_percentage() {
@@ -1611,6 +1646,8 @@ __obtain_decode_percentage() {
 	[[ "${percent_complete}" =~ ^[[:digit:]]+$ ]] || percent_complete=0
 }
 
+#-------------------------------------------------------------------------------
+
 # Obtain the current progress completed percentage while using auCDtect
 __obtain_aucdtect_percentage() {
 	# Remove the first part of the line to leave the resultant percent stored as
@@ -1621,6 +1658,8 @@ __obtain_aucdtect_percentage() {
 	# integer
 	[[ "${percent_complete}" =~ ^[[:digit:]]+$ ]] || percent_complete=0
 }
+
+#-------------------------------------------------------------------------------
 
 # Obtain the current progress completed percentage while using auCDtect
 __obtain_spectrogram_percentage() {
@@ -1637,6 +1676,8 @@ __obtain_spectrogram_percentage() {
 	[[ "${percent_complete}" =~ ^[[:digit:]]+$ ]] || percent_complete=0
 }
 
+#-------------------------------------------------------------------------------
+
 # Store the position of the current job being displayed
 __store_position() {
 	# If the current job(s) are the first set, we'll use the iteration
@@ -1649,6 +1690,8 @@ __store_position() {
 		printf "${previous_operation_position}\n" >&3
 	fi
 }
+
+#-------------------------------------------------------------------------------
 
 # Force the creation of a new configuration file
 __new_config() {
@@ -1697,6 +1740,8 @@ __new_config() {
 		__info "${cyan}mv${normal} ${cyan}${config_file}${normal} ${cyan}${HOME}/.config/redoflacs/config${normal}\n"
 	fi
 }
+
+#-------------------------------------------------------------------------------
 
 # Create a configuration file
 __create_config() {
@@ -1994,6 +2039,8 @@ __filename() {
 	fi
 }
 
+#-------------------------------------------------------------------------------
+
 # Display current length spacing between filename and operation message
 __current_length() {
 	# The current length is obtained via the length of what's printed now minus
@@ -2012,6 +2059,8 @@ __current_length() {
 		printf %d $(( max_filename_length - current_filename_length + 1 ))
 	fi
 }
+
+#-------------------------------------------------------------------------------
 
 # Determine number of jobs to run via the number
 # of CPUs/cores available
@@ -2052,6 +2101,8 @@ __find_cores() {
 	fi
 }
 
+#-------------------------------------------------------------------------------
+
 # If COVERART tag is kept and remove_artwork is set to 'true'
 # display conflict and exit
 __coverart_remove_conflict() {
@@ -2091,6 +2142,8 @@ __coverart_remove_conflict() {
 		fi
 	done
 }
+
+#-------------------------------------------------------------------------------
 
 # Find all the artwork blocks in the current FLAC file, storing each instance in
 # an array to be processed
@@ -2228,6 +2281,8 @@ __find_artwork() {
 	done
 }
 
+#-------------------------------------------------------------------------------
+
 # Extract artwork image from the specified artwork block ID in the PICTURE block
 # of the current FLAC file
 __extract_artwork() {
@@ -2237,6 +2292,8 @@ __extract_artwork() {
 		--export-picture-to="${artwork_directory}/${@}" \
 		"${i}"
 }
+
+#-------------------------------------------------------------------------------
 
 # Top banner displaying invocation settings
 __top_banner() {
@@ -2296,6 +2353,8 @@ __processed_flacs_ok() {
 	"" "[" " " "ok" " " "]"
 }
 
+#-------------------------------------------------------------------------------
+
 # Create a countdown function for the metadata
 # to allow user to quit script safely
 __countdown_metadata() {
@@ -2334,6 +2393,8 @@ __countdown_metadata() {
 	done
 }
 
+#-------------------------------------------------------------------------------
+
 # Displays a countdown after a newer config is found than what
 # the user has.  Allows user to quit script before proceeding
 __countdown_config() {
@@ -2363,6 +2424,8 @@ __countdown_config() {
 	done
 }
 
+#-------------------------------------------------------------------------------
+
 # Obtain the total number of directories to process, repesented
 # as ${total_directories}
 __total_directories() {
@@ -2378,6 +2441,8 @@ __total_directories() {
 	total_directories="${#flac_directories_array[@]}"
 }
 
+#-------------------------------------------------------------------------------
+
 # Clear old file descriptor (3) and create a new
 # FIFO that's tied to file discriptor 3
 __clear_tmp_fd() {
@@ -2387,6 +2452,8 @@ __clear_tmp_fd() {
 	# Open FIFO for reading and writing on file descriptor '3'
 	exec 3<>"${tmp_fifo}"
 }
+
+#-------------------------------------------------------------------------------
 
 # Clear old file descriptor (4) and create a new
 # FIFO that's tied to file discriptor 4, removing
@@ -2410,6 +2477,8 @@ __create_aucdtect_fd() {
 	rm -f "${tmp_aucdtect_fd}"
 }
 
+#-------------------------------------------------------------------------------
+
 __msg_num_issues() {
 	##
 	# Display the number of issues an operation may have by reading in the
@@ -2424,6 +2493,8 @@ __msg_num_issues() {
 		printf "%s Issues\n" "${#fail_count}"
 	fi
 }
+
+#-------------------------------------------------------------------------------
 
 # Obtain and process the positional parameters invoked
 # with the script
@@ -2703,6 +2774,8 @@ __process_positional_parameters() {
 	directory="${called_arguments_array[$(( ${#called_arguments_array[@]} - 1 ))]%/}"
 }
 
+#-------------------------------------------------------------------------------
+
 # Check for missing programs vital to this script
 __check_missing_programs() {
 	# Check if each command can be found in $PATH
@@ -2812,6 +2885,8 @@ __check_missing_programs() {
 		fi
 	fi
 }
+
+#-------------------------------------------------------------------------------
 
 # Check for any conflicting operations/arguments
 __check_conflicting_operations() {
@@ -2947,6 +3022,8 @@ __check_conflicting_operations() {
 	fi
 }
 
+#-------------------------------------------------------------------------------
+
 # Display the summary of operations chart
 __summary() {
 	# Begin printing the table
@@ -3014,6 +3091,8 @@ __summary() {
 
 	printf "\033[?25h"   # Restore cursor
 }
+
+#-------------------------------------------------------------------------------
 
 # Function to run commands/operations that are by
 # files _ONLY_
@@ -3092,6 +3171,8 @@ __run_parallel_files() {
 	# Wait for children processes
 	wait
 }
+
+#-------------------------------------------------------------------------------
 
 # Function to run commands/operations that are by
 # directory _ONLY_
@@ -3172,12 +3253,9 @@ __run_parallel_directories() {
 	# Wait for children processes
 	wait
 }
-#== .: END VARIOUS COMMANDS :. =================================================
-
 
 #-------------------------------------------------------------------------------
-# .: OPERATIONS :.
-#-------------------------------------------------------------------------------
+
 # Test ReplayGain
 __operation_test_replaygain() {
 	trap '__kill_jobs "$(jobs -rp)"' EXIT
@@ -3235,6 +3313,8 @@ __operation_test_replaygain() {
 	# indicate job completed
 	__store_position
 }
+
+#-------------------------------------------------------------------------------
 
 # Process Replaygain (only add values if missing)
 __operation_replaygain_noforce() {
@@ -3307,6 +3387,8 @@ __operation_replaygain_noforce() {
 	__store_position
 }
 
+#-------------------------------------------------------------------------------
+
 # Process ReplayGain (force new values)
 __operation_replaygain_force() {
 	trap '__kill_jobs "$(jobs -rp)"' EXIT
@@ -3339,6 +3421,8 @@ __operation_replaygain_force() {
 	# indicate job completed
 	__store_position
 }
+
+#-------------------------------------------------------------------------------
 
 # Compress FLAC files
 __operation_compress() {
@@ -3432,6 +3516,8 @@ __operation_compress() {
 	__store_position
 }
 
+#-------------------------------------------------------------------------------
+
 # Test FLAC files
 __operation_test() {
 	trap '__kill_jobs "$(jobs -rp)"' EXIT
@@ -3471,6 +3557,8 @@ __operation_test() {
 	# indicate job completed
 	__store_position
 }
+
+#-------------------------------------------------------------------------------
 
 # Test FLAC validity with auCDtect
 __operation_aucdtect() {
@@ -3755,6 +3843,8 @@ __operation_aucdtect() {
 	__store_position
 }
 
+#-------------------------------------------------------------------------------
+
 # Check MD5 in each FLAC file
 __operation_md5check() {
 	trap '__kill_jobs "$(jobs -rp)"' EXIT
@@ -3803,6 +3893,8 @@ __operation_md5check() {
 	# indicate job completed
 	__store_position
 }
+
+#-------------------------------------------------------------------------------
 
 # Analyze FLAC tags
 __operation_analyze_tags() {
@@ -3959,6 +4051,8 @@ __operation_analyze_tags() {
 	# indicate job completed
 	__store_position
 }
+
+#-------------------------------------------------------------------------------
 
 # Analyze FLAC tags (not logging missing COVERART tag)
 __operation_analyze_tags_dont_log_coverart() {
@@ -4143,6 +4237,8 @@ __operation_analyze_tags_dont_log_coverart() {
 	__store_position
 }
 
+#-------------------------------------------------------------------------------
+
 # Re-tag FLAC files
 __operation_set_tags() {
 	trap '__kill_jobs "$(jobs -rp)"' EXIT
@@ -4260,6 +4356,8 @@ __operation_set_tags() {
 	# indicate job completed
 	__store_position
 }
+
+#-------------------------------------------------------------------------------
 
 # Extract artwork from FLAC files
 __operation_extract_artwork() {
@@ -4879,6 +4977,8 @@ __operation_extract_artwork() {
 	__store_position
 }
 
+#-------------------------------------------------------------------------------
+
 # Prune FLACS
 __operation_prune() {
 	trap '__kill_jobs "$(jobs -rp)"' EXIT
@@ -4914,10 +5014,7 @@ __operation_prune() {
 	# indicate job completed
 	__store_position
 }
-#== .: END OPERATIONS :. =======================================================
 
-
-#-------------------------------------------------------------------------------
 # .: PRE-SCRIPT CHECKS :.
 #-------------------------------------------------------------------------------
 # Enable BASH 4 globstar
@@ -4965,6 +5062,8 @@ if [[ "${os_name}" == "Cygwin" ]] ; then
 
 	exit 1
 fi
+
+#-------------------------------------------------------------------------------
 
 # Check if configuration file exists based of ${EUID}.  If it doesn't
 # exist, create one
@@ -5019,10 +5118,12 @@ else
 	fi
 fi
 
+#-------------------------------------------------------------------------------
+
 # Generate log file location
 #--
 # Ensure we don't overwrite an existing log file by incrementing the current
-# PID by 1 until the log file, that's to be set, doesn't exist
+# PID by 1 until the log file that is to be set, doesn't exist
 pid="$$"
 log_file="${error_log}/redoflacs_${pid}.log"
 
@@ -5030,12 +5131,12 @@ until [[ ! -f "${log_file}" ]] ; do
 	log_file="${error_log}/redoflacs_log_$((pid++)).log"
 done
 
-# Process positional parameters, allowing script to see
-# which operations to run.  Make sure we send all the positional
-# parameters called to the function, otherwise the function will
-# think there aren't any positional parameters to process as it
-# handles it's own positional parameters
+#-------------------------------------------------------------------------------
+
+# Handle CLI arguments
 __process_positional_parameters "${@}"
+
+#-------------------------------------------------------------------------------
 
 # Check if user set '-n, --no-color'.  This must come before everything (and
 # after the positional parameters) to ensure color is set/unset.  The normal
@@ -5050,6 +5151,8 @@ if [[ "${no_color}" == "true" ]] ; then
 	yellow=""
 fi
 
+#-------------------------------------------------------------------------------
+
 # Make sure we are running BASH 4 or greater
 if (( ${BASH_VERSION%%.*} < 4 )) ; then
 	__error "You must be running ${cyan}BASH 4${normal} or greater to use\n" >&2
@@ -5057,9 +5160,13 @@ if (( ${BASH_VERSION%%.*} < 4 )) ; then
 	exit 1
 fi
 
+#-------------------------------------------------------------------------------
+
 # Check for any conflicting operations/arguments called
 # at script invocation and warn user
 __check_conflicting_operations
+
+#-------------------------------------------------------------------------------
 
 # For each operation that was chosen, set up operation_summary array
 declare -A operation_summary
@@ -5097,27 +5204,33 @@ if [[ "${prune_flac}" == "true" ]] ; then
 	operation_summary['Prune METADATA Blocks']='Operation Did Not Run'
 fi
 
+#-------------------------------------------------------------------------------
+
 # Check for any missing programs vital for this script
 # to operate correctly, and exit if any programs are found
 # to be missing
 __check_missing_programs
 
+#-------------------------------------------------------------------------------
+
 # Check whether directory exists
 if [[ ! -d "${directory}" ]] ; then
 	printf "  Usage: redoflacs [OPTION] [PATH_TO_FLAC(s)]...\n\n" >&2
 	__error "Please specify a directory!\n" >&2
-
 	exit 1
 fi
+
+#-------------------------------------------------------------------------------
 
 # Check for at least 1 FLAC file
 read -r find_flacs < <( printf "%s\n" "${directory}"/**/*${flac_extension} )
 
-# No FLAC files found
 if [[ ! -f "${find_flacs}" ]] ; then
-	__no_flacs
+	__error "There are not any FLAC files to process!\n" >&2
 	exit 1
 fi
+
+#-------------------------------------------------------------------------------
 
 # If "-e, --extract-artwork" was called, make sure artwork_location is a valid
 # location, if user-defined
@@ -5155,6 +5268,8 @@ if [[ "${create_spectrogram}" == "true" ]] ; then
 	fi
 fi
 
+#-------------------------------------------------------------------------------
+
 # If ${jobs} wasn't set upon invocation, check in /proc
 # to see how many jobs should be run
 if [[ -z "${jobs}" ]] ; then
@@ -5162,10 +5277,7 @@ if [[ -z "${jobs}" ]] ; then
 else
 	jobs_display="(User Defined)"
 fi
-#== .: END PRE-SCRIPT CHECKS :. ================================================
 
-
-#-------------------------------------------------------------------------------
 # .: START SCRIPT :.
 #-------------------------------------------------------------------------------
 # Store current stty settings
@@ -5223,7 +5335,6 @@ total_flacs_length="${#total_flacs_length}"
 # This displays '[ ok ]' after 'Finding FLAC files to process...'
 __processed_flacs_ok
 
-#-------------------------------------------------------------------------------
 # .: AUCDTECT :.
 #-------------------------------------------------------------------------------
 # The below order is probably the best bet in ensuring time
@@ -5280,10 +5391,7 @@ if [[ "${aucdtect_flac}" == "true" ]] ; then
 	# Store operation status for Summary Of Operations
 	operation_summary['Validate with auCDtect']='Operation Completed'
 fi
-#== .: END AUCDTECT :. =========================================================
 
-
-#-------------------------------------------------------------------------------
 # .: MD5 CHECK :.
 #-------------------------------------------------------------------------------
 if [[ "${md5_check_flac}" == "true" ]] ; then
@@ -5333,10 +5441,7 @@ if [[ "${md5_check_flac}" == "true" ]] ; then
 	# Store operation status for Summary Of Operations
 	operation_summary['Check MD5 Signature']='Operation Completed'
 fi
-#== .: END MD5 CHECK :. ========================================================
 
-
-#-------------------------------------------------------------------------------
 # .: COMPRESS/VERIFY :.
 #-------------------------------------------------------------------------------
 if [[ "${compress_flac}" == "true" ]] ; then
@@ -5386,10 +5491,7 @@ if [[ "${compress_flac}" == "true" ]] ; then
 	# Store operation status for Summary Of Operations
 	operation_summary['Compress FLACs']='Operation Completed'
 fi
-#== .: END COMPRESS/VERIFY :. ==================================================
 
-
-#-------------------------------------------------------------------------------
 # .: TEST :.
 #-------------------------------------------------------------------------------
 if [[ "${test_flac}" == "true" ]] ; then
@@ -5439,10 +5541,7 @@ if [[ "${test_flac}" == "true" ]] ; then
 	# Store operation status for Summary Of Operations
 	operation_summary['Test FLACs']='Operation Completed'
 fi
-#== .: END TEST :. =============================================================
 
-
-#-------------------------------------------------------------------------------
 # .: REPLAYGAIN :.
 #-------------------------------------------------------------------------------
 if [[ "${replaygain_flac}" == "true" ]] ; then
@@ -5504,8 +5603,6 @@ if [[ "${replaygain_flac}" == "true" ]] ; then
 
 	# Store operation status for Summary Of Operations
 	operation_summary['> Testing']='Operation Completed'
-	#== .: END TEST REPLAYGAIN :. ==============================================
-
 
 	##
 	# .: PROCESS REPLAYGAIN :.
@@ -5563,12 +5660,8 @@ if [[ "${replaygain_flac}" == "true" ]] ; then
 
 	# Store operation status for Summary Of Operations
 	operation_summary['> Adding']='Operation Completed'
-	#== .: END PROCESS REPLAYGAIN :. ===========================================
 fi
-#== .: END REPLAYGAIN :. =======================================================
 
-
-#-------------------------------------------------------------------------------
 # .: RETAG :.
 #-------------------------------------------------------------------------------
 if [[ "${retag_flac}" == "true" ]] ; then
@@ -5676,8 +5769,6 @@ if [[ "${retag_flac}" == "true" ]] ; then
 
 	# Store operation status for Summary Of Operations
 	operation_summary['> Analyzing']='Operation Completed'
-	#== .: END ANALYZE TAGS :. =================================================
-
 
 	##
 	# .: SET TAGS :.
@@ -5718,12 +5809,8 @@ if [[ "${retag_flac}" == "true" ]] ; then
 
 	# Store operation status for Summary Of Operations
 	operation_summary['> Applying']='Operation Completed'
-	#== .: END SET TAGS :. =====================================================
 fi
-#== .: END RETAG :. ============================================================
 
-
-#-------------------------------------------------------------------------------
 # .: EXTRACT ARTWORK :.
 #-------------------------------------------------------------------------------
 if [[ "${extract_artwork}" == "true" ]] ; then
@@ -5773,10 +5860,7 @@ if [[ "${extract_artwork}" == "true" ]] ; then
 	# Store operation status for Summary Of Operations
 	operation_summary['Extracting Artwork']='Operation Completed'
 fi
-#== .: END EXTRACT ARTWORK :. ==================================================
 
-
-#-------------------------------------------------------------------------------
 # .: PRUNE :.
 #-------------------------------------------------------------------------------
 if [[ "${prune_flac}" == "true" ]] ; then
@@ -5836,8 +5920,8 @@ if [[ "${prune_flac}" == "true" ]] ; then
 	# Store operation status for Summary Of Operations
 	operation_summary['Prune METADATA Blocks']='Operation Completed'
 fi
-#== .: END PRUNE :. ============================================================
 
+#-------------------------------------------------------------------------------
 
 # Display warning about legacy COVERART tag, if applicable
 if [[ "${coverart_warning}" == "true" ]] ; then
@@ -5846,4 +5930,3 @@ fi
 
 # Display Summary Of Operations
 __summary
-#== .: END SCRIPT :. ===========================================================
