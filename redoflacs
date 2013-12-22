@@ -685,37 +685,42 @@ __operation_message() {
 	# Set up local variables
 	declare message
 
-	case "${1}" in
-		aucdtect)         message="auCDtect Analysis"    ;;
-		compress)         message="Compressing & Verifying ${magenta}[Level 8]${normal}"  ;;
-		extract_artwork)  message="Extracting Artwork"   ;;
-		md5_check)        message="MD5 Check"            ;;
-		replaygain)       message="Generating & Applying ReplayGain"  ;;
-		retag)            message="Re-Tagging"           ;;
-		test)             message="Testing"              ;;
-		prune)
-			if [[ "${remove_artwork}" != "true" ]] ; then
-				# Keep artwork
-				message="Pruning All Blocks [Except: ${cyan}STREAMINFO${normal}, ${cyan}VORBIS_COMMENT${normal} & ${cyan}PICTURE${normal}"
-			else
-				# Remove artwork
-				message="Pruning All Blocks [Except: ${cyan}STREAMINFO${normal} & ${cyan}VORBIS_COMMENT${normal}"
-			fi
-		;;
-	esac
-
 	# Print title message if $1 is not NULL
-	[[ -n "${1}" ]] && printf "\033[$(__row)H ${green}*${normal} ${message}\n"
+	if [[ -n "${1}" ]] ; then
+		case "${1}" in
+			aucdtect)         message="auCDtect Analysis"    ;;
+			compress)         message="Compressing & Verifying ${magenta}[Level 8]${normal}"  ;;
+			extract_artwork)  message="Extracting Artwork"   ;;
+			md5_check)        message="MD5 Check"            ;;
+			replaygain)       message="Generating & Applying ReplayGain"  ;;
+			retag)            message="Re-Tagging"           ;;
+			test)             message="Testing"              ;;
+			prune)
+				if [[ "${remove_artwork}" != "true" ]] ; then
+					# Keep artwork
+					message="Pruning All Blocks [Except: ${cyan}STREAMINFO${normal}, ${cyan}VORBIS_COMMENT${normal} & ${cyan}PICTURE${normal}"
+				else
+					# Remove artwork
+					message="Pruning All Blocks [Except: ${cyan}STREAMINFO${normal} & ${cyan}VORBIS_COMMENT${normal}"
+				fi
+			;;
+		esac
 
-	case "${2}" in
-		replaygain_test)  message="Testing"      ;;
-		replaygain_add)   message="Applying"     ;;
-		retag_analyze)    message="Analyzing"    ;;
-		retag_apply)      message="Re-Applying"  ;;
-	esac
+		printf "\033[$(__row)H ${green}*${normal} ${message}\n"
+	fi
 
 	# Print sub message if $2 is not NULL
-	[[ -n "${2}" ]] && printf "\033[$(__row);4H${green}>${normal} ${message}\n"
+	if [[ -n "${2}" ]] ; then
+		case "${2}" in
+			replaygain_test)  message="Testing"      ;;
+			replaygain_add)   message="Applying"     ;;
+			retag_analyze)    message="Analyzing"    ;;
+			retag_apply)      message="Re-Applying"  ;;
+		esac
+
+		printf "\033[$(__row);4H${green}>${normal} ${message}\n"
+	fi
+
 }
 
 #-------------------------------------------------------------------------------
@@ -724,7 +729,7 @@ __operation_message() {
 __print_current_flac() {
 	# This stores the current file number processed out of the total files:
 	#  [56/213]
-	number_completed="[${iteration}/${#total_flacs_array[@]}]"
+	number_completed="[${iteration}/${#total_items[@]}]"
 
 	# This is the maximum length of a string to be displayed based on column width,
 	# obtained via the number of columns minus the length of displayed characters:
@@ -750,7 +755,7 @@ __print_current_flac() {
 __print_current_half() {
 	# This stores the current file number processed out of the total files:
 	#  [56/213]
-	number_completed="[${iteration}/${#total_flacs_array[@]}]"
+	number_completed="[${iteration}/${#total_items[@]}]"
 
 	# This is the maximum length of a string to be displayed based on column width,
 	# obtained via the number of columns minus the length of displayed characters:
@@ -777,7 +782,7 @@ __print_current_directory() {
 	# This stores the current directory number processed out of the total
 	# number of directories:
 	#  [6/34]
-	number_completed="[${iteration}/${#flac_directories_array[@]}]"
+	number_completed="[${iteration}/${#total_items[@]}]"
 
 	# This is the maximum length of a string to be displayed based on column width,
 	# obtained via the number of columns minus the length of displayed characters:
@@ -803,7 +808,7 @@ __print_current_directory() {
 __print_sub_current_flac() {
 	# This stores the current file number processed out of the total files:
 	#  [56/213]
-	number_completed="[${iteration}/${#total_flacs_array[@]}]"
+	number_completed="[${iteration}/${#total_items[@]}]"
 
 	# This is the maximum length of a string to be displayed based on column width,
 	# obtained via the number of columns minus the length of displayed characters:
@@ -829,7 +834,7 @@ __print_sub_current_flac() {
 __print_skip_flac() {
 	# This stores the current file number processed out of the total files:
 	#  [56/213]
-	number_completed="[${iteration}/${#total_flacs_array[@]}]"
+	number_completed="[${iteration}/${#total_items[@]}]"
 
 	# This is the maximum length of a string to be displayed based on column width,
 	# obtained via the number of columns minus the length of displayed characters:
@@ -855,7 +860,7 @@ __print_skip_flac() {
 __print_decoding_flac() {
 	# This stores the current file number processed out of the total files:
 	#  [56/213]
-	number_completed="[${iteration}/${#total_flacs_array[@]}]"
+	number_completed="[${iteration}/${#total_items[@]}]"
 
 	# This is the maximum length of a string to be displayed based on column width,
 	# obtained via the number of columns minus the length of displayed characters:
@@ -910,7 +915,7 @@ __print_decoding_fail() {
 __print_current_aucdtect_fast() {
 	# This stores the current file number processed out of the total files:
 	#  [56/213]
-	number_completed="[${iteration}/${#total_flacs_array[@]}]"
+	number_completed="[${iteration}/${#total_items[@]}]"
 
 	# This is the maximum length of a string to be displayed based on column width,
 	# obtained via the number of columns minus the length of displayed characters:
@@ -964,7 +969,7 @@ __print_aucdtect_fast_fail() {
 __print_current_aucdtect_slow() {
 	# This stores the current file number processed out of the total files:
 	#  [56/213]
-	number_completed="[${iteration}/${#total_flacs_array[@]}]"
+	number_completed="[${iteration}/${#total_items[@]}]"
 
 	# This is the maximum length of a string to be displayed based on column width,
 	# obtained via the number of columns minus the length of displayed characters:
@@ -1033,7 +1038,7 @@ __print_aucdtect_issue() {
 __print_current_spectrogram() {
 	# This stores the current file number processed out of the total files:
 	#  [56/213]
-	number_completed="[${iteration}/${#total_flacs_array[@]}]"
+	number_completed="[${iteration}/${#total_items[@]}]"
 
 	# This is the maximum length of a string to be displayed based on column width,
 	# obtained via the number of columns minus the length of displayed characters:
@@ -1516,11 +1521,7 @@ __row() {
 #-------------------------------------------------------------------------------
 
 # Check if we need to scroll the terminal up depending on how much room is left,
-# relative to the number of jobs to process.  There is the special value of ${1}
-# which signifies a number to remove from the total lines to scroll.  This
-# number will only occur if the number of files/directories to process is less
-# than the jobs specified to run.  This allows us to _NOT_ have extra gaps in
-# our output
+# relative to the number of jobs to process
 __scroll_terminal() {
 	# Grab the first line of 'stty -a' output
 	# Redirecting '/dev/stderr' to 'stty' allows valid arguments
@@ -1534,26 +1535,12 @@ __scroll_terminal() {
 	# Terminal height
 	lines="${lines%;}"
 
-	# If 'directory' is specified as ${1}, we will process the number of lines
-	# to remove as the total number of directories, else we'll use the total
-	# number of files
-	if [[ "${1}" == "directory" ]] ; then
-		# If the total number of directories to process is less than jobs
-		# specified, then set the number of lines to remove from the terminal
-		# scroll as the difference of the number of jobs minus the total number
-		# of directories
-		if (( ${#flac_directories_array[@]} < jobs )) ; then
-			# This variable will be used for '__scroll_terminal' as ${1}
-			local remove_from_scroll="$(( jobs - ${#flac_directories_array[@]} ))"
-		fi
-	else
-		# If the total number of files to process is less than jobs specified,
-		# then set the number of lines to remove from the terminal scroll as the
-		# difference of the number of jobs minus the total number of files
-		if (( ${#total_flacs_array[@]} < jobs )) ; then
-			# This variable will be used for '__scroll_terminal' as ${1}
-			local remove_from_scroll="$(( jobs - ${#total_flacs_array[@]} ))"
-		fi
+	# If the total number of files to process is less than jobs specified,
+	# then set the number of lines to remove from the terminal scroll as the
+	# difference of the number of jobs minus the total number of files
+	if (( ${#total_items[@]} < jobs )) ; then
+		# This variable will be used for '__scroll_terminal' as ${1}
+		local remove_from_scroll="$(( jobs - ${#total_items[@]} ))"
 	fi
 
 	# If ${remove_from_scroll} is NULL, then the remaining lines we have left is
@@ -2426,19 +2413,21 @@ __countdown_config() {
 
 #-------------------------------------------------------------------------------
 
-# Obtain the total number of directories to process, repesented
-# as ${total_directories}
-__total_directories() {
-	# Find all the directories in which to process the FLAC files.
-	for i in "${total_flacs_array[@]}" ; do
-		if [[ "${processed_directory}" != "${i%/*}" ]] ; then
-			flac_directories_array+=( "${i%/*}" )
-		fi
-		local processed_directory="${i%/*}"
-	done
+__get_directory_list() {
+	##
+	# Return a listing of the total base directories housing all the found FLACs
+	##
+	declare     processed_dir  #  Set up local variable(s)
+	declare -ga total_dirs     #  Set up global array
 
-	# The total number of directories in a string variable
-	total_directories="${#flac_directories_array[@]}"
+	for flac in "$@" ; do
+		# Run through total FLAC files array, printing out each unique directory
+		#--
+		if [[ "${processed_dir}" != "${flac%/*}" ]] ; then
+			total_dirs+=( "${flac%/*}" )
+		fi
+		processed_dir="${flac%/*}"  # Set current loop directory found/processed
+	done
 }
 
 #-------------------------------------------------------------------------------
@@ -3096,7 +3085,7 @@ __summary() {
 
 # Function to run commands/operations that are by
 # files _ONLY_
-__run_parallel_files() {
+__run_parallel() {
 	# Forces iteration to start at 0, in the event that
 	# multiple operations are going to be run
 	iteration=0
@@ -3108,7 +3097,7 @@ __run_parallel_files() {
 	row_state=$(__row)
 
 	# Start as many processes as determined by ${jobs}
-	for i in "${total_flacs_array[@]:0:${jobs}}" ; do
+	for i in "${total_items[@]:0:${jobs}}" ; do
 		# This is the first set of jobs to run, so the placement of each file to
 		# display is the current row the cursor is on plus the iteration (the
 		# current file [number] being processed), which is zero-based
@@ -3123,7 +3112,7 @@ __run_parallel_files() {
 
 	# If the FLAC files to process are greater than the # of ${jobs}
 	# available, continue processing them, else quit
-	if (( ${#total_flacs_array[@]} > jobs )) ; then
+	if (( ${#total_items[@]} > jobs )) ; then
 
 		# After each newline is read from FIFO, start a new process, storing the
 		# value of the line into ${previous_operation_position}, which houses
@@ -3140,9 +3129,9 @@ __run_parallel_files() {
 
 			# If current number of FLACs to process is less than total FLACs
 			# found, add another FLAC to process
-			if (( iteration < (${#total_flacs_array[@]} - 1) )) ; then
+			if (( iteration < (${#total_items[@]} - 1) )) ; then
 				# Set the current filename ($i) to the current file in the array
-				i="${total_flacs_array[${iteration}]}"
+				i="${total_items[${iteration}]}"
 
 				# Add one to the iteration
 				((iteration++))
@@ -3151,92 +3140,10 @@ __run_parallel_files() {
 				"${parallel_operation}" &
 
 			# Below is processed only if the current FLAC file is equal to the
-			# last ${total_flacs_array[@]} index
+			# last ${total_items[@]} index
 			else
 				# Set the current filename ($i) to the current file in the array
-				i="${total_flacs_array[${iteration}]}"
-
-				# Add one to the iteration
-				((iteration++))
-
-				# Run the specified operation in the background
-				"${parallel_operation}" &
-
-				# Break out of loop to prevent hanging FIFO
-				break
-			fi
-		done <&3
-	fi
-
-	# Wait for children processes
-	wait
-}
-
-#-------------------------------------------------------------------------------
-
-# Function to run commands/operations that are by
-# directory _ONLY_
-__run_parallel_directories() {
-	# Forces iteration to start at 0, in the event that
-	# multiple operations are going to be run
-	iteration=0
-
-	# This is the parallel operation to run
-	# specified by ${1} when calling this function
-	parallel_operation="${1}"
-
-	row_state=$(__row)
-
-	# Start as many processes as determined by ${jobs}
-	for i in "${flac_directories_array[@]:0:${jobs}}" ; do
-		# This is the first set of jobs to run, so the placement of each file to
-		# display is the current row the cursor is on plus the iteration (the
-		# current file [number] being processed), which is zero-based
-		placement=$((row_state + iteration))
-
-		# Add one to the iteration to enforce we print one or more, not zero
-		((iteration++))
-
-		# Run the specified operation in the background
-		"${parallel_operation}" &
-	done
-
-	# If the directories to process are greater than the # of ${jobs}
-	# available, continue processing them, else quit
-	if (( ${#flac_directories_array[@]} > jobs )) ; then
-
-		# After each newline is read from FIFO, start a new process, storing the
-		# value of the line into ${previous_operation_position}, which houses
-		# the previous operation's position (relative to the position _after_
-		# the current row)
-		while read previous_operation_position ; do
-
-			# Since this is _NOT_ the first set of jobs to run, the
-			# placement of each directory to display is the current row the
-			# cursor is on plus the position of the last completed location
-			# of the directory, which allows us to dynamically place new
-			# jobs where other jobs have completed
-			placement="$((row_state + previous_operation_position))"
-
-			# If current number of directories to process is less than total
-			# directories found, add another directory to process
-			if (( iteration < (${#flac_directories_array[@]} - 1) )) ; then
-				# Set the current directory ($i) to the current directory in the
-				# array
-				i="${flac_directories_array[${iteration}]}"
-
-				# Add one to the iteration
-				((iteration++))
-
-				# Run the specified operation in the background
-				"${parallel_operation}" &
-
-			# Below is processed only if the current directory
-			# is equal to the last ${flac_directories_array[@]} index
-			else
-				# Set the current directory ($i) to the current directory in the
-				# array
-				i="${flac_directories_array[${iteration}]}"
+				i="${total_items[${iteration}]}"
 
 				# Add one to the iteration
 				((iteration++))
@@ -5154,7 +5061,7 @@ fi
 #-------------------------------------------------------------------------------
 
 # Make sure we are running BASH 4 or greater
-if (( ${BASH_VERSION%%.*} < 4 )) ; then
+if (( ${BASH_VERSINFO[0]} < 4 )) ; then
 	__error "You must be running ${cyan}BASH 4${normal} or greater to use\n" >&2
 	__error "this program!\n" >&2
 	exit 1
@@ -5326,10 +5233,10 @@ else
 fi
 
 # Grab the total flacs to process
-total_flacs_array=( "${directory}"/**/*${flac_extension} )
+total_items=( "${directory}"/**/*${flac_extension} )
 
 # String length of total number of flacs
-total_flacs_length="${#total_flacs_array[@]}"
+total_flacs_length="${#total_items[@]}"
 total_flacs_length="${#total_flacs_length}"
 
 # This displays '[ ok ]' after 'Finding FLAC files to process...'
@@ -5356,10 +5263,10 @@ if [[ "${aucdtect_flac}" == "true" ]] ; then
 
 	# Set the cursor to the correct row depending on whether there were more
 	# or less files to process than the number of jobs to run
-	if (( ${#total_flacs_array[@]} < jobs )) ; then
+	if (( ${#total_items[@]} < jobs )) ; then
 		# Less files than jobs to run, so only add the number of files
 		# processed
-		post_row=$(( $(__row) + ${#total_flacs_array[@]} ))
+		post_row=$(( $(__row) + ${#total_items[@]} ))
 	else
 		# More files than jobs to run, so add the number of jobs processed
 		post_row=$(( $(__row) + jobs ))
@@ -5368,7 +5275,7 @@ if [[ "${aucdtect_flac}" == "true" ]] ; then
 	trap '__trap_sigint "$post_row" "aucdtect"' SIGINT
 
 	# Run parallel operations, that which is specified as ${1}
-	__run_parallel_files '__operation_aucdtect'
+	__run_parallel '__operation_aucdtect'
 
 	printf "\033[${post_row}H"
 
@@ -5406,10 +5313,10 @@ if [[ "${md5_check_flac}" == "true" ]] ; then
 
 	# Set the cursor to the correct row depending on whether there were more
 	# or less files to process than the number of jobs to run
-	if (( ${#total_flacs_array[@]} < jobs )) ; then
+	if (( ${#total_items[@]} < jobs )) ; then
 		# Less files than jobs to run, so only add the number of files
 		# processed
-		post_row=$(( $(__row) + ${#total_flacs_array[@]} ))
+		post_row=$(( $(__row) + ${#total_items[@]} ))
 	else
 		# More files than jobs to run, so add the number of jobs processed
 		post_row=$(( $(__row) + jobs ))
@@ -5418,7 +5325,7 @@ if [[ "${md5_check_flac}" == "true" ]] ; then
 	trap '__trap_sigint "$post_row" "md5_check"' SIGINT
 
 	# Run parallel operations, that which is specified as ${1}
-	__run_parallel_files '__operation_md5check'
+	__run_parallel '__operation_md5check'
 
 	printf "\033[${post_row}H"
 
@@ -5456,10 +5363,10 @@ if [[ "${compress_flac}" == "true" ]] ; then
 
 	# Set the cursor to the correct row depending on whether there were more
 	# or less files to process than the number of jobs to run
-	if (( ${#total_flacs_array[@]} < jobs )) ; then
+	if (( ${#total_items[@]} < jobs )) ; then
 		# Less files than jobs to run, so only add the number of files
 		# processed
-		post_row=$(( $(__row) + ${#total_flacs_array[@]} ))
+		post_row=$(( $(__row) + ${#total_items[@]} ))
 	else
 		# More files than jobs to run, so add the number of jobs processed
 		post_row=$(( $(__row) + jobs ))
@@ -5468,7 +5375,7 @@ if [[ "${compress_flac}" == "true" ]] ; then
 	trap '__trap_sigint "$post_row" "compress"' SIGINT
 
 	# Run parallel operations, that which is specified as ${1}
-	__run_parallel_files '__operation_compress'
+	__run_parallel '__operation_compress'
 
 	printf "\033[${post_row}H"
 
@@ -5506,10 +5413,10 @@ if [[ "${test_flac}" == "true" ]] ; then
 
 	# Set the cursor to the correct row depending on whether there were more
 	# or less files to process than the number of jobs to run
-	if (( ${#total_flacs_array[@]} < jobs )) ; then
+	if (( ${#total_items[@]} < jobs )) ; then
 		# Less files than jobs to run, so only add the number of files
 		# processed
-		post_row=$(( $(__row) + ${#total_flacs_array[@]} ))
+		post_row=$(( $(__row) + ${#total_items[@]} ))
 	else
 		# More files than jobs to run, so add the number of jobs processed
 		post_row=$(( $(__row) + jobs ))
@@ -5518,7 +5425,7 @@ if [[ "${test_flac}" == "true" ]] ; then
 	trap '__trap_sigint "$post_row" "test"' SIGINT
 
 	# Run parallel operations, that which is specified as ${1}
-	__run_parallel_files '__operation_test'
+	__run_parallel '__operation_test'
 
 	printf "\033[${post_row}H"
 
@@ -5569,10 +5476,10 @@ if [[ "${replaygain_flac}" == "true" ]] ; then
 
 	# Set the cursor to the correct row depending on whether there were more
 	# or less files to process than the number of jobs to run
-	if (( ${#total_flacs_array[@]} < jobs )) ; then
+	if (( ${#total_items[@]} < jobs )) ; then
 		# Less files than jobs to run, so only add the number of files
 		# processed
-		post_row=$(( $(__row) + ${#total_flacs_array[@]} ))
+		post_row=$(( $(__row) + ${#total_items[@]} ))
 	else
 		# More files than jobs to run, so add the number of jobs processed
 		post_row=$(( $(__row) + jobs ))
@@ -5581,7 +5488,7 @@ if [[ "${replaygain_flac}" == "true" ]] ; then
 	trap '__trap_sigint "$post_row" "replaygain_test"' SIGINT
 
 	# Run parallel operations, that which is specified as ${1}
-	__run_parallel_files '__operation_test_replaygain'
+	__run_parallel '__operation_test_replaygain'
 
 	printf "\033[${post_row}H"
 
@@ -5612,24 +5519,22 @@ if [[ "${replaygain_flac}" == "true" ]] ; then
 		directory="${PWD}"
 	fi
 
-	# Grab number of directories to process provided as
-	# ${total_directories}
-	__total_directories
+	# List of directories to process
+	__get_directory_list "${total_items[@]}"  # Returns $total_dirs[@]
+	total_items=( "${total_dirs[@]}" )        # Change to processing directories
 
 	# Prints sub message of current operation
 	__operation_message '' 'replaygain_add'
 
-	# Scroll terminal, if needed; we are specifying 'directory' to all the
-	# '__scroll_terminal' function to apply logic on directories as opposed to
-	# files
-	__scroll_terminal 'directory'
+	# Scroll terminal, if needed
+	__scroll_terminal
 
 	# Set the cursor to the correct row depending on whether there were more
 	# or less directories to process than the number of jobs to run
-	if (( ${#flac_directories_array[@]} < jobs )) ; then
+	if (( ${#total_items[@]} < jobs )) ; then
 		# Less directories than jobs to run, so only add the number of
 		# directories processed
-		post_row=$(( $(__row) + ${#flac_directories_array[@]} ))
+		post_row=$(( $(__row) + ${#total_items[@]} ))
 	else
 		# More directories than jobs to run, so add the number of jobs processed
 		post_row=$(( $(__row) + jobs ))
@@ -5638,7 +5543,7 @@ if [[ "${replaygain_flac}" == "true" ]] ; then
 	trap '__trap_sigint "$post_row" "replaygain_add"' SIGINT
 
 	# Run parallel operations, that which is specified as ${1}
-	__run_parallel_directories "${process_replaygain}"
+	__run_parallel "${process_replaygain}"
 
 	printf "\033[${post_row}H"
 
@@ -5704,10 +5609,10 @@ if [[ "${retag_flac}" == "true" ]] ; then
 
 	# Set the cursor to the correct row depending on whether there were more
 	# or less files to process than the number of jobs to run
-	if (( ${#total_flacs_array[@]} < jobs )) ; then
+	if (( ${#total_items[@]} < jobs )) ; then
 		# Less files than jobs to run, so only add the number of files
 		# processed
-		post_row=$(( $(__row) + ${#total_flacs_array[@]} ))
+		post_row=$(( $(__row) + ${#total_items[@]} ))
 	else
 		# More files than jobs to run, so add the number of jobs processed
 		post_row=$(( $(__row) + jobs ))
@@ -5716,7 +5621,7 @@ if [[ "${retag_flac}" == "true" ]] ; then
 	trap '__trap_sigint "$post_row" "retag_analyze"' SIGINT
 
 	# Run parallel operations, that which is specified as ${1}
-	__run_parallel_files "${analyze_tags}"
+	__run_parallel "${analyze_tags}"
 
 	printf "\033[${post_row}H"
 
@@ -5791,10 +5696,10 @@ if [[ "${retag_flac}" == "true" ]] ; then
 
 	# Set the cursor to the correct row depending on whether there were more
 	# or less files to process than the number of jobs to run
-	if (( ${#total_flacs_array[@]} < jobs )) ; then
+	if (( ${#total_items[@]} < jobs )) ; then
 		# Less files than jobs to run, so only add the number of files
 		# processed
-		post_row=$(( $(__row) + ${#total_flacs_array[@]} ))
+		post_row=$(( $(__row) + ${#total_items[@]} ))
 	else
 		# More files than jobs to run, so add the number of jobs processed
 		post_row=$(( $(__row) + jobs ))
@@ -5803,7 +5708,7 @@ if [[ "${retag_flac}" == "true" ]] ; then
 	trap '__trap_sigint "$post_row" "retag_apply"' SIGINT
 
 	# Run parallel operations, that which is specified as ${1}
-	__run_parallel_files '__operation_set_tags'
+	__run_parallel '__operation_set_tags'
 
 	printf "\033[${post_row}H"
 
@@ -5825,10 +5730,10 @@ if [[ "${extract_artwork}" == "true" ]] ; then
 
 	# Set the cursor to the correct row depending on whether there were more
 	# or less files to process than the number of jobs to run
-	if (( ${#total_flacs_array[@]} < jobs )) ; then
+	if (( ${#total_items[@]} < jobs )) ; then
 		# Less files than jobs to run, so only add the number of files
 		# processed
-		post_row=$(( $(__row) + ${#total_flacs_array[@]} ))
+		post_row=$(( $(__row) + ${#total_items[@]} ))
 	else
 		# More files than jobs to run, so add the number of jobs processed
 		post_row=$(( $(__row) + jobs ))
@@ -5837,7 +5742,7 @@ if [[ "${extract_artwork}" == "true" ]] ; then
 	trap '__trap_sigint "$post_row" "extract_artwork"' SIGINT
 
 	# Run parallel operations, that which is specified as ${1}
-	__run_parallel_files '__operation_extract_artwork'
+	__run_parallel '__operation_extract_artwork'
 
 	printf "\033[${post_row}H"
 
@@ -5885,10 +5790,10 @@ if [[ "${prune_flac}" == "true" ]] ; then
 
 	# Set the cursor to the correct row depending on whether there were more
 	# or less files to process than the number of jobs to run
-	if (( ${#total_flacs_array[@]} < jobs )) ; then
+	if (( ${#total_items[@]} < jobs )) ; then
 		# Less files than jobs to run, so only add the number of files
 		# processed
-		post_row=$(( $(__row) + ${#total_flacs_array[@]} ))
+		post_row=$(( $(__row) + ${#total_items[@]} ))
 	else
 		# More files than jobs to run, so add the number of jobs processed
 		post_row=$(( $(__row) + jobs ))
@@ -5897,7 +5802,7 @@ if [[ "${prune_flac}" == "true" ]] ; then
 	trap '__trap_sigint "$post_row" "prune"' SIGINT
 
 	# Run parallel operations, that which is specified as ${1}
-	__run_parallel_files '__operation_prune'
+	__run_parallel '__operation_prune'
 
 	printf "\033[${post_row}H"
 
