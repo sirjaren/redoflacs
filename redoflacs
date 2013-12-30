@@ -2450,30 +2450,6 @@ __clear_tmp_fd() {
 
 #-------------------------------------------------------------------------------
 
-# Clear old file descriptor (4) and create a new
-# FIFO that's tied to file discriptor 4, removing
-# the FIFO upon completion.  This is ONLY for auCDtect's
-# STDOUT
-__create_aucdtect_fd() {
-	# Set up a temporary FIFO location.  The variable
-	# is set up here, to prevent it from being called
-	# upon script invocation when auCDtect isn't going
-	# to be run
-	tmp_aucdtect_fd="/tmp/redoflacs_aucdtect_fifo_$$"
-
-	# Create the temporary FIFO
-	mkfifo "${tmp_aucdtect_fd}"
-
-	# Open FIFO for reading and writing on file descriptor '4'
-	exec 4<>"${tmp_aucdtect_fd}"
-
-	# Remove temporary FIFO and leave just the file
-	# descriptor available
-	rm -f "${tmp_aucdtect_fd}"
-}
-
-#-------------------------------------------------------------------------------
-
 __num_issues() {
 	##
 	# Display the number of issues an operation may have by reading in the
@@ -2799,6 +2775,7 @@ __check_missing_programs() {
 		exit 1
 	fi
 
+	# FIXME
 	# If auCDtect operation was specified, check
 	# if auCDtect is found/installed
 	if [[ "${aucdtect_flac}" == "true" ]] ; then
@@ -3047,6 +3024,10 @@ __summary() {
 	# Remove temporary FIFO and leave just the file
 	# descriptor available
 	rm -f "${tmp_fifo}"
+
+	# Remove temporary FIFO and leave just the file
+	# descriptor available
+	rm -f "${tmp_aucdtect_fd}"
 
 	# Remove temporary FIFO and leave just the file
 	# descriptor available
@@ -3600,7 +3581,7 @@ __aucdtect() {
 
 			# The actual auCDtect command with lowest accuracy setting (for
 			# speed).  STDOUT is sent to file descriptor '4'
-			"${aucdtect_command}" -m40 "${decoded_wav}" 2> >(while read -r -d% percent_complete ; do
+			auCDtect -m40 "${decoded_wav}" 2> >(while read -r -d% percent_complete ; do
 				# Display the current file with progress completed thus far via
 				# a percentage and progress bar
 				__print_progress_aucdtect_fast
@@ -3639,7 +3620,7 @@ __aucdtect() {
 
 					# The actual auCDtect command with highest accuracy setting.
 					# STDOUT is sent to file descriptor '4'
-					"${aucdtect_command}" -m0 "${decoded_wav}" 2> >(while read -r -d% percent_complete ; do
+					auCDtect -m0 "${decoded_wav}" 2> >(while read -r -d% percent_complete ; do
 						# Display the current file with progress completed thus far via
 						# a percentage and progress bar
 						__print_progress_aucdtect_slow
@@ -5190,11 +5171,20 @@ __check_config_version
 # Temporary FIFO location
 tmp_fifo="/tmp/redoflacs_fifo_$$"
 
+# Set up a temporary FIFO location.  The variable
+# is set up here, to prevent it from being called
+# upon script invocation when auCDtect isn't going
+# to be run
+tmp_aucdtect_fd="/tmp/redoflacs_aucdtect_fifo_$$"
+
 # Enforce FIFO is removed right away if user invokes SIGINT _immediately_ after
 # script invocation
-trap 'rm -f "${tmp_fifo}"' EXIT
+trap 'rm -f "${tmp_fifo}" "${tmp_aucdtect_fd}"' EXIT
 
-mkfifo "${tmp_fifo}"
+mkfifo "${tmp_fifo}" "${tmp_aucdtect_fd}"
+
+# Open auCDtect FIFO for reading and writing on file descriptor '4'
+exec 4<>"${tmp_aucdtect_fd}"
 
 # File where a tick is placed for each issue found
 issue_ticks="/tmp/redoflacs_issue_file_$$"
@@ -5225,9 +5215,7 @@ total_items=( "${directory}"/**/*${flac_extension} )
 # This displays '[ ok ]' after 'Finding FLAC files to process...'
 __processed_flacs_ok
 
-# Open up a temporary file descriptor to send auCDtect's
-# STDOUT to
-__create_aucdtect_fd
+#-------------------------------------------------------------------------------
 
 # operations[0]='aucdtect'
 # operations[1]='aucdtect_spectrogram'
