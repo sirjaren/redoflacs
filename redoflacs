@@ -713,10 +713,10 @@ __message() {
 			prune)
 				if [[ "${remove_artwork}" != "true" ]] ; then
 					# Keep artwork
-					message="Pruning All Blocks [Except: ${cyan}STREAMINFO${normal}, ${cyan}VORBIS_COMMENT${normal} & ${cyan}PICTURE${normal}"
+					message="Pruning All Blocks [Except: ${cyan}STREAMINFO${normal}, ${cyan}VORBIS_COMMENT${normal} & ${cyan}PICTURE${normal}]"
 				else
 					# Remove artwork
-					message="Pruning All Blocks [Except: ${cyan}STREAMINFO${normal} & ${cyan}VORBIS_COMMENT${normal}"
+					message="Pruning All Blocks [Except: ${cyan}STREAMINFO${normal} & ${cyan}VORBIS_COMMENT${normal}]"
 				fi
 			;;
 		esac
@@ -5563,66 +5563,6 @@ done
 #   
 #   	# Store operation status for Summary Of Operations
 #   	operation_summary['> Applying']='Operation Completed'
-#   fi
-#   
-#   # .: PRUNE :.
-#   #-------------------------------------------------------------------------------
-#   if [[ "${prune_flac}" == "true" ]] ; then
-#   	# Don't remove artwork if user wants it kept.  We don't have to check
-#   	# for the legacy COVERART tag as we are NOT removing any VORBIS_COMMENTs.
-#   	if [[ "${remove_artwork}" == "true" ]] ; then
-#   		# Remove artwork
-#   		dont_prune_flac_metadata="STREAMINFO,VORBIS_COMMENT"
-#   	else
-#   		# Don't remove artwork
-#   		dont_prune_flac_metadata="STREAMINFO,PICTURE,VORBIS_COMMENT"
-#   	fi
-#   
-#   	# Prints title message of current operation
-#   	__message 'prune'
-#   
-#   	# Scroll terminal, if needed
-#   	__scroll_terminal
-#   
-#   	# Make sure to clear file descriptor '3' before proceeding
-#   	__clear_tmp_fd
-#   
-#   	# Set the cursor to the correct row depending on whether there were more
-#   	# or less files to process than the number of jobs to run
-#   	if (( ${#total_items[@]} < jobs )) ; then
-#   		# Less files than jobs to run, so only add the number of files
-#   		# processed
-#   		post_row=$(( $(__row) + ${#total_items[@]} ))
-#   	else
-#   		# More files than jobs to run, so add the number of jobs processed
-#   		post_row=$(( $(__row) + jobs ))
-#   	fi
-#   
-#   	trap '__trap_sigint "$post_row" "prune"' SIGINT
-#   
-#   	# Run parallel operations, that which is specified as ${1}
-#   	__run_parallel '__prune'
-#   
-#   	printf "\033[${post_row}H"
-#   
-#   	if [[ -f "${log_file}" ]] ; then
-#   		# Print out log exists to STDERR
-#   		__message_log_exists 'prune'
-#   
-#   		# Prepend log header to log file
-#   		__create_log 'prune'
-#   
-#   		# Store operation status for Summary Of Operations
-#   		operation_summary['Prune METADATA Blocks']="$(__num_issues)"
-#   
-#   		# Display Summary Of Operations
-#   		__summary
-#   
-#   		exit 1
-#   	fi
-#   
-#   	# Store operation status for Summary Of Operations
-#   	operation_summary['Prune METADATA Blocks']='Operation Completed'
 #   fi
 
 #-------------------------------------------------------------------------------
