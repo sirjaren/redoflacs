@@ -490,7 +490,7 @@ __message_log_exists() {
 	#   aucdtect          aucdtect_spectrogram        md5_check
 	#   compress_verify   compress_no_verify          test
 	#   replaygain_test   replaygain_force_apply      replaygain_apply
-	#   retag_analyze     retag_apply                 extract_artwork
+	#   retag_analyze     retag_apply                 extract_images
 	#   prune
 	##
 	case "$1" in
@@ -519,7 +519,7 @@ __message_log_exists() {
 			__error "Some FLAC files have missing tags or there were\n"
 			__error "issues with some of the FLAC files, please check:\n"
 		;;
-		extract_artwork)
+		extract_images)
 			__error "There were issues with some of the FLAC files,\n"
 			__error "please check:\n"
 		;;
@@ -545,7 +545,7 @@ __create_log() {
 	#   aucdtect          aucdtect_spectrogram        md5_check
 	#   compress_verify   compress_no_verify          test
 	#   replaygain_test   replaygain_force_apply      replaygain_apply
-	#   retag_analyze     retag_apply                 extract_artwork
+	#   retag_analyze     retag_apply                 extract_images
 	#   prune
 	##
 	# Set up local variables/arrays
@@ -615,11 +615,11 @@ __create_log() {
 				"         This log details which FLAC files have errors when retagging"
 				"--------------------------------------------------------------------------------"
 			) ;;
-		extract_artwork)
+		extract_images)
 			header=(
 				"--------------------------------------------------------------------------------"
-				"                           EXTRACT ARTWORK ERROR LOG"
-				"                           -------------------------"
+				"                           EXTRACT IMAGES ERROR LOG"
+				"                           ------------------------"
 				"  This log details which FLAC files have errors when extracting artwork images"
 				"--------------------------------------------------------------------------------"
 			) ;;
@@ -679,7 +679,7 @@ __message() {
 	#   aucdtect          aucdtect_spectrogram        md5_check
 	#   compress_verify   compress_no_verify          test
 	#   replaygain_test   replaygain_force_apply      replaygain_apply
-	#   retag_analyze     retag_apply                 extract_artwork
+	#   retag_analyze     retag_apply                 extract_images
 	#   prune
 	##
 	# Set up local variables
@@ -691,7 +691,7 @@ __message() {
 			aucdtect)            message="auCDtect Analysis"    ;;
 			md5_check)           message="MD5 Check"            ;;
 			compress_verify)     message="Compressing & Verifying ${magenta}[Level 8]${normal}"  ;;
-			compress_no_verify)  message="Compressing"          ;;
+			compress_no_verify)  message="Compressing ${magenta}[Level 8]${normal}"              ;;
 			test)                message="Testing"              ;;
 			replaygain_*)
 				if [[ "${1}" == 'replaygain_test' ]] ; then
@@ -709,7 +709,7 @@ __message() {
 					sub_message="Re-Applying"
 				fi
 			;;
-			extract_artwork)     message="Extracting Artwork"   ;;
+			extract_images)      message="Extracting Artwork"   ;;
 			prune)
 				if [[ "${remove_artwork}" != "true" ]] ; then
 					# Keep artwork
@@ -745,7 +745,7 @@ __update_operation_status () {
 		replyagain*apply)  operation_summary['> Applying']="${2}"             ;;
 		retag_analyze)     operation_summary['> Analyzing']="${2}"            ;;
 		retag_apply)       operation_summary['> Applying']="${2}"             ;;
-		extract_artwork)   operation_summary['Extracting Artwork']="${2}"     ;;
+		extract_images)    operation_summary['Extracting Artwork']="${2}"     ;;
 		prune)             operation_summary['Prune METADATA Blocks']="${2}"  ;;
 	esac
 }
@@ -1373,7 +1373,7 @@ __trap_sigint() {
 	#   aucdtect          aucdtect_spectrogram        md5_check
 	#   compress_verify   compress_no_verify          test
 	#   replaygain_test   replaygain_force_apply      replaygain_apply
-	#   retag_analyze     retag_apply                 extract_artwork
+	#   retag_analyze     retag_apply                 extract_images
 	#   prune
 	##
 	__kill_jobs "$(jobs -rp)"
@@ -1402,7 +1402,7 @@ __exit_cleanup() {
 	#   aucdtect          aucdtect_spectrogram        md5_check
 	#   compress_verify   compress_no_verify          test
 	#   replaygain_test   replaygain_force_apply      replaygain_apply
-	#   retag_analyze     retag_apply                 extract_artwork
+	#   retag_analyze     retag_apply                 extract_images
 	#   prune
 	##
 	case "${1}" in
@@ -2278,7 +2278,7 @@ __find_artwork() {
 
 # Extract artwork image from the specified artwork block ID in the PICTURE block
 # of the current FLAC file
-__extract_artwork() {
+__do_extract() {
 	# $@ is the name of the artwork filename with the extension
 	metaflac \
 		--block-number="${artwork_block_id}" \
@@ -2705,7 +2705,10 @@ __process_positional_parameters() {
 				operations[8]='retag_analyze'
 				operations[9]='retag_apply'
 			;;
-			-e) operations[10]='extract_artwork'      ;;
+			-e)
+				operations[10]='extract_images'
+				check_artwork_dir="true"
+			;;
 			-p) operations[11]='prune'                ;;
 			-n) no_color="true"                       ;;
 			-j)
@@ -4290,7 +4293,7 @@ __retag_apply() {
 #-------------------------------------------------------------------------------
 
 # Extract artwork from FLAC files
-__extract_artwork() {
+__extract_images() {
 	trap '__kill_jobs "$(jobs -rp)"' EXIT
 
 	# Print current FLAC with artwork to be extracted
@@ -4339,7 +4342,7 @@ __extract_artwork() {
 			# extract it, otherwise make sure to add a number at the end of the
 			# image in case there is more than one to prevent clobbering
 			if (( ${#artwork_other[@]} == 1 )) ; then
-				__extract_artwork "${artwork_other[0]}"
+				__do_extract "${artwork_other[0]}"
 			else
 
 				# Run through the images found in the file for the given artwork
@@ -4348,7 +4351,7 @@ __extract_artwork() {
 				# extracting the images
 				for art_file in "${!artwork_other[@]}" ; do
 					artwork_extension="${artwork_other[${art_file}]##*.}"
-					__extract_artwork "${artwork_other[${art_file}]%.*} ($(( art_file + 1 ))).${artwork_extension}"
+					__do_extract "${artwork_other[${art_file}]%.*} ($(( art_file + 1 ))).${artwork_extension}"
 				done
 			fi
 		fi
@@ -4365,7 +4368,7 @@ __extract_artwork() {
 			# extract it, otherwise make sure to add a number at the end of the
 			# image in case there is more than one to prevent clobbering
 			if (( ${#artwork_file_icon[@]} == 1 )) ; then
-				__extract_artwork "${artwork_file_icon[0]}"
+				__do_extract "${artwork_file_icon[0]}"
 			else
 
 				# Run through the images found in the file for the given artwork
@@ -4374,7 +4377,7 @@ __extract_artwork() {
 				# extracting the images
 				for art_file in "${!artwork_file_icon[@]}" ; do
 					artwork_extension="${artwork_file_icon[${art_file}]##*.}"
-					__extract_artwork "${artwork_file_icon[${art_file}]%.*} ($(( art_file + 1 ))).${artwork_extension}"
+					__do_extract "${artwork_file_icon[${art_file}]%.*} ($(( art_file + 1 ))).${artwork_extension}"
 				done
 			fi
 		fi
@@ -4391,7 +4394,7 @@ __extract_artwork() {
 			# extract it, otherwise make sure to add a number at the end of the
 			# image in case there is more than one to prevent clobbering
 			if (( ${#artwork_other_file_icon[@]} == 1 )) ; then
-				__extract_artwork "${artwork_other_file_icon[0]}"
+				__do_extract "${artwork_other_file_icon[0]}"
 			else
 
 				# Run through the images found in the file for the given artwork
@@ -4400,7 +4403,7 @@ __extract_artwork() {
 				# extracting the images
 				for art_file in "${!artwork_other_file_icon[@]}" ; do
 					artwork_extension="${artwork_other_file_icon[${art_file}]##*.}"
-					__extract_artwork "${artwork_other_file_icon[${art_file}]%.*} ($(( art_file + 1 ))).${artwork_extension}"
+					__do_extract "${artwork_other_file_icon[${art_file}]%.*} ($(( art_file + 1 ))).${artwork_extension}"
 				done
 			fi
 		fi
@@ -4417,7 +4420,7 @@ __extract_artwork() {
 			# extract it, otherwise make sure to add a number at the end of the
 			# image in case there is more than one to prevent clobbering
 			if (( ${#artwork_cover_front[@]} == 1 )) ; then
-				__extract_artwork "${artwork_cover_front[0]}"
+				__do_extract "${artwork_cover_front[0]}"
 			else
 
 				# Run through the images found in the file for the given artwork
@@ -4426,7 +4429,7 @@ __extract_artwork() {
 				# extracting the images
 				for art_file in "${!artwork_cover_front[@]}" ; do
 					artwork_extension="${artwork_cover_front[${art_file}]##*.}"
-					__extract_artwork "${artwork_cover_front[${art_file}]%.*} ($(( art_file + 1 ))).${artwork_extension}"
+					__do_extract "${artwork_cover_front[${art_file}]%.*} ($(( art_file + 1 ))).${artwork_extension}"
 				done
 			fi
 		fi
@@ -4443,7 +4446,7 @@ __extract_artwork() {
 			# extract it, otherwise make sure to add a number at the end of the
 			# image in case there is more than one to prevent clobbering
 			if (( ${#artwork_cover_back[@]} == 1 )) ; then
-				__extract_artwork "${artwork_cover_back[0]}"
+				__do_extract "${artwork_cover_back[0]}"
 			else
 
 				# Run through the images found in the file for the given artwork
@@ -4452,7 +4455,7 @@ __extract_artwork() {
 				# extracting the images
 				for art_file in "${!artwork_cover_back[@]}" ; do
 					artwork_extension="${artwork_cover_back[${art_file}]##*.}"
-					__extract_artwork "${artwork_cover_back[${art_file}]%.*} ($(( art_file + 1 ))).${artwork_extension}"
+					__do_extract "${artwork_cover_back[${art_file}]%.*} ($(( art_file + 1 ))).${artwork_extension}"
 				done
 			fi
 		fi
@@ -4469,7 +4472,7 @@ __extract_artwork() {
 			# extract it, otherwise make sure to add a number at the end of the
 			# image in case there is more than one to prevent clobbering
 			if (( ${#artwork_leaflet[@]} == 1 )) ; then
-				__extract_artwork "${artwork_leaflet[0]}"
+				__do_extract "${artwork_leaflet[0]}"
 			else
 
 				# Run through the images found in the file for the given artwork
@@ -4478,7 +4481,7 @@ __extract_artwork() {
 				# extracting the images
 				for art_file in "${!artwork_leaflet[@]}" ; do
 					artwork_extension="${artwork_leaflet[${art_file}]##*.}"
-					__extract_artwork "${artwork_leaflet[${art_file}]%.*} ($(( art_file + 1 ))).${artwork_extension}"
+					__do_extract "${artwork_leaflet[${art_file}]%.*} ($(( art_file + 1 ))).${artwork_extension}"
 				done
 			fi
 		fi
@@ -4495,7 +4498,7 @@ __extract_artwork() {
 			# extract it, otherwise make sure to add a number at the end of the
 			# image in case there is more than one to prevent clobbering
 			if (( ${#artwork_media_label[@]} == 1 )) ; then
-				__extract_artwork "${artwork_media_label[0]}"
+				__do_extract "${artwork_media_label[0]}"
 			else
 
 				# Run through the images found in the file for the given artwork
@@ -4504,7 +4507,7 @@ __extract_artwork() {
 				# extracting the images
 				for art_file in "${!artwork_media_label[@]}" ; do
 					artwork_extension="${artwork_media_label[${art_file}]##*.}"
-					__extract_artwork "${artwork_media_label[${art_file}]%.*} ($(( art_file + 1 ))).${artwork_extension}"
+					__do_extract "${artwork_media_label[${art_file}]%.*} ($(( art_file + 1 ))).${artwork_extension}"
 				done
 			fi
 		fi
@@ -4521,7 +4524,7 @@ __extract_artwork() {
 			# extract it, otherwise make sure to add a number at the end of the
 			# image in case there is more than one to prevent clobbering
 			if (( ${#artwork_lead_artist[@]} == 1 )) ; then
-				__extract_artwork "${artwork_lead_artist[0]}"
+				__do_extract "${artwork_lead_artist[0]}"
 			else
 
 				# Run through the images found in the file for the given artwork
@@ -4530,7 +4533,7 @@ __extract_artwork() {
 				# extracting the images
 				for art_file in "${!artwork_lead_artist[@]}" ; do
 					artwork_extension="${artwork_lead_artist[${art_file}]##*.}"
-					__extract_artwork "${artwork_lead_artist[${art_file}]%.*} ($(( art_file + 1 ))).${artwork_extension}"
+					__do_extract "${artwork_lead_artist[${art_file}]%.*} ($(( art_file + 1 ))).${artwork_extension}"
 				done
 			fi
 		fi
@@ -4547,7 +4550,7 @@ __extract_artwork() {
 			# extract it, otherwise make sure to add a number at the end of the
 			# image in case there is more than one to prevent clobbering
 			if (( ${#artwork_artist[@]} == 1 )) ; then
-				__extract_artwork "${artwork_artist[0]}"
+				__do_extract "${artwork_artist[0]}"
 			else
 
 				# Run through the images found in the file for the given artwork
@@ -4556,7 +4559,7 @@ __extract_artwork() {
 				# extracting the images
 				for art_file in "${!artwork_artist[@]}" ; do
 					artwork_extension="${artwork_artist[${art_file}]##*.}"
-					__extract_artwork "${artwork_artist[${art_file}]%.*} ($(( art_file + 1 ))).${artwork_extension}"
+					__do_extract "${artwork_artist[${art_file}]%.*} ($(( art_file + 1 ))).${artwork_extension}"
 				done
 			fi
 		fi
@@ -4573,7 +4576,7 @@ __extract_artwork() {
 			# extract it, otherwise make sure to add a number at the end of the
 			# image in case there is more than one to prevent clobbering
 			if (( ${#artwork_conductor[@]} == 1 )) ; then
-				__extract_artwork "${artwork_conductor[0]}"
+				__do_extract "${artwork_conductor[0]}"
 			else
 
 				# Run through the images found in the file for the given artwork
@@ -4582,7 +4585,7 @@ __extract_artwork() {
 				# extracting the images
 				for art_file in "${!artwork_conductor[@]}" ; do
 					artwork_extension="${artwork_conductor[${art_file}]##*.}"
-					__extract_artwork "${artwork_conductor[${art_file}]%.*} ($(( art_file + 1 ))).${artwork_extension}"
+					__do_extract "${artwork_conductor[${art_file}]%.*} ($(( art_file + 1 ))).${artwork_extension}"
 				done
 			fi
 		fi
@@ -4599,7 +4602,7 @@ __extract_artwork() {
 			# extract it, otherwise make sure to add a number at the end of the
 			# image in case there is more than one to prevent clobbering
 			if (( ${#artwork_band[@]} == 1 )) ; then
-				__extract_artwork "${artwork_band[0]}"
+				__do_extract "${artwork_band[0]}"
 			else
 
 				# Run through the images found in the file for the given artwork
@@ -4608,7 +4611,7 @@ __extract_artwork() {
 				# extracting the images
 				for art_file in "${!artwork_band[@]}" ; do
 					artwork_extension="${artwork_band[${art_file}]##*.}"
-					__extract_artwork "${artwork_band[${art_file}]%.*} ($(( art_file + 1 ))).${artwork_extension}"
+					__do_extract "${artwork_band[${art_file}]%.*} ($(( art_file + 1 ))).${artwork_extension}"
 				done
 			fi
 		fi
@@ -4625,7 +4628,7 @@ __extract_artwork() {
 			# extract it, otherwise make sure to add a number at the end of the
 			# image in case there is more than one to prevent clobbering
 			if (( ${#artwork_composer[@]} == 1 )) ; then
-				__extract_artwork "${artwork_composer[0]}"
+				__do_extract "${artwork_composer[0]}"
 			else
 
 				# Run through the images found in the file for the given artwork
@@ -4634,7 +4637,7 @@ __extract_artwork() {
 				# extracting the images
 				for art_file in "${!artwork_composer[@]}" ; do
 					artwork_extension="${artwork_composer[${art_file}]##*.}"
-					__extract_artwork "${artwork_composer[${art_file}]%.*} ($(( art_file + 1 ))).${artwork_extension}"
+					__do_extract "${artwork_composer[${art_file}]%.*} ($(( art_file + 1 ))).${artwork_extension}"
 				done
 			fi
 		fi
@@ -4651,7 +4654,7 @@ __extract_artwork() {
 			# extract it, otherwise make sure to add a number at the end of the
 			# image in case there is more than one to prevent clobbering
 			if (( ${#artwork_lyricist[@]} == 1 )) ; then
-				__extract_artwork "${artwork_lyricist[0]}"
+				__do_extract "${artwork_lyricist[0]}"
 			else
 
 				# Run through the images found in the file for the given artwork
@@ -4660,7 +4663,7 @@ __extract_artwork() {
 				# extracting the images
 				for art_file in "${!artwork_lyricist[@]}" ; do
 					artwork_extension="${artwork_lyricist[${art_file}]##*.}"
-					__extract_artwork "${artwork_lyricist[${art_file}]%.*} ($(( art_file + 1 ))).${artwork_extension}"
+					__do_extract "${artwork_lyricist[${art_file}]%.*} ($(( art_file + 1 ))).${artwork_extension}"
 				done
 			fi
 		fi
@@ -4677,7 +4680,7 @@ __extract_artwork() {
 			# extract it, otherwise make sure to add a number at the end of the
 			# image in case there is more than one to prevent clobbering
 			if (( ${#artwork_recording_location[@]} == 1 )) ; then
-				__extract_artwork "${artwork_recording_location[0]}"
+				__do_extract "${artwork_recording_location[0]}"
 			else
 
 				# Run through the images found in the file for the given artwork
@@ -4686,7 +4689,7 @@ __extract_artwork() {
 				# extracting the images
 				for art_file in "${!artwork_recording_location[@]}" ; do
 					artwork_extension="${artwork_recording_location[${art_file}]##*.}"
-					__extract_artwork "${artwork_recording_location[${art_file}]%.*} ($(( art_file + 1 ))).${artwork_extension}"
+					__do_extract "${artwork_recording_location[${art_file}]%.*} ($(( art_file + 1 ))).${artwork_extension}"
 				done
 			fi
 		fi
@@ -4703,7 +4706,7 @@ __extract_artwork() {
 			# extract it, otherwise make sure to add a number at the end of the
 			# image in case there is more than one to prevent clobbering
 			if (( ${#artwork_during_recording[@]} == 1 )) ; then
-				__extract_artwork "${artwork_during_recording[0]}"
+				__do_extract "${artwork_during_recording[0]}"
 			else
 
 				# Run through the images found in the file for the given artwork
@@ -4712,7 +4715,7 @@ __extract_artwork() {
 				# extracting the images
 				for art_file in "${!artwork_during_recording[@]}" ; do
 					artwork_extension="${artwork_during_recording[${art_file}]##*.}"
-					__extract_artwork "${artwork_during_recording[${art_file}]%.*} ($(( art_file + 1 ))).${artwork_extension}"
+					__do_extract "${artwork_during_recording[${art_file}]%.*} ($(( art_file + 1 ))).${artwork_extension}"
 				done
 			fi
 		fi
@@ -4729,7 +4732,7 @@ __extract_artwork() {
 			# extract it, otherwise make sure to add a number at the end of the
 			# image in case there is more than one to prevent clobbering
 			if (( ${#artwork_during_performance[@]} == 1 )) ; then
-				__extract_artwork "${artwork_during_performance[0]}"
+				__do_extract "${artwork_during_performance[0]}"
 			else
 
 				# Run through the images found in the file for the given artwork
@@ -4738,7 +4741,7 @@ __extract_artwork() {
 				# extracting the images
 				for art_file in "${!artwork_during_performance[@]}" ; do
 					artwork_extension="${artwork_during_performance[${art_file}]##*.}"
-					__extract_artwork "${artwork_during_performance[${art_file}]%.*} ($(( art_file + 1 ))).${artwork_extension}"
+					__do_extract "${artwork_during_performance[${art_file}]%.*} ($(( art_file + 1 ))).${artwork_extension}"
 				done
 			fi
 		fi
@@ -4755,7 +4758,7 @@ __extract_artwork() {
 			# extract it, otherwise make sure to add a number at the end of the
 			# image in case there is more than one to prevent clobbering
 			if (( ${#artwork_movie[@]} == 1 )) ; then
-				__extract_artwork "${artwork_movie[0]}"
+				__do_extract "${artwork_movie[0]}"
 			else
 
 				# Run through the images found in the file for the given artwork
@@ -4764,7 +4767,7 @@ __extract_artwork() {
 				# extracting the images
 				for art_file in "${!artwork_movie[@]}" ; do
 					artwork_extension="${artwork_movie[${art_file}]##*.}"
-					__extract_artwork "${artwork_movie[${art_file}]%.*} ($(( art_file + 1 ))).${artwork_extension}"
+					__do_extract "${artwork_movie[${art_file}]%.*} ($(( art_file + 1 ))).${artwork_extension}"
 				done
 			fi
 		fi
@@ -4781,7 +4784,7 @@ __extract_artwork() {
 			# extract it, otherwise make sure to add a number at the end of the
 			# image in case there is more than one to prevent clobbering
 			if (( ${#artwork_fish[@]} == 1 )) ; then
-				__extract_artwork "${artwork_fish[0]}"
+				__do_extract "${artwork_fish[0]}"
 			else
 
 				# Run through the images found in the file for the given artwork
@@ -4790,7 +4793,7 @@ __extract_artwork() {
 				# extracting the images
 				for art_file in "${!artwork_fish[@]}" ; do
 					artwork_extension="${artwork_fish[${art_file}]##*.}"
-					__extract_artwork "${artwork_fish[${art_file}]%.*} ($(( art_file + 1 ))).${artwork_extension}"
+					__do_extract "${artwork_fish[${art_file}]%.*} ($(( art_file + 1 ))).${artwork_extension}"
 				done
 			fi
 		fi
@@ -4807,7 +4810,7 @@ __extract_artwork() {
 			# extract it, otherwise make sure to add a number at the end of the
 			# image in case there is more than one to prevent clobbering
 			if (( ${#artwork_illustration[@]} == 1 )) ; then
-				__extract_artwork "${artwork_illustration[0]}"
+				__do_extract "${artwork_illustration[0]}"
 			else
 
 				# Run through the images found in the file for the given artwork
@@ -4816,7 +4819,7 @@ __extract_artwork() {
 				# extracting the images
 				for art_file in "${!artwork_illustration[@]}" ; do
 					artwork_extension="${artwork_illustration[${art_file}]##*.}"
-					__extract_artwork "${artwork_illustration[${art_file}]%.*} ($(( art_file + 1 ))).${artwork_extension}"
+					__do_extract "${artwork_illustration[${art_file}]%.*} ($(( art_file + 1 ))).${artwork_extension}"
 				done
 			fi
 		fi
@@ -4833,7 +4836,7 @@ __extract_artwork() {
 			# extract it, otherwise make sure to add a number at the end of the
 			# image in case there is more than one to prevent clobbering
 			if (( ${#artwork_band_logo[@]} == 1 )) ; then
-				__extract_artwork "${artwork_band_logo[0]}"
+				__do_extract "${artwork_band_logo[0]}"
 			else
 
 				# Run through the images found in the file for the given artwork
@@ -4842,7 +4845,7 @@ __extract_artwork() {
 				# extracting the images
 				for art_file in "${!artwork_band_logo[@]}" ; do
 					artwork_extension="${artwork_band_logo[${art_file}]##*.}"
-					__extract_artwork "${artwork_band_logo[${art_file}]%.*} ($(( art_file + 1 ))).${artwork_extension}"
+					__do_extract "${artwork_band_logo[${art_file}]%.*} ($(( art_file + 1 ))).${artwork_extension}"
 				done
 			fi
 		fi
@@ -4859,7 +4862,7 @@ __extract_artwork() {
 			# extract it, otherwise make sure to add a number at the end of the
 			# image in case there is more than one to prevent clobbering
 			if (( ${#artwork_publisher_logo[@]} == 1 )) ; then
-				__extract_artwork "${artwork_publisher_logo[0]}"
+				__do_extract "${artwork_publisher_logo[0]}"
 			else
 
 				# Run through the images found in the file for the given artwork
@@ -4868,7 +4871,7 @@ __extract_artwork() {
 				# extracting the images
 				for art_file in "${!artwork_publisher_logo[@]}" ; do
 					artwork_extension="${artwork_publisher_logo[${art_file}]##*.}"
-					__extract_artwork "${artwork_publisher_logo[${art_file}]%.*} ($(( art_file + 1 ))).${artwork_extension}"
+					__do_extract "${artwork_publisher_logo[${art_file}]%.*} ($(( art_file + 1 ))).${artwork_extension}"
 				done
 			fi
 		fi
@@ -4970,16 +4973,8 @@ yellow="\033[33m"
 invert="\033[7m"
 normal="\033[0m"
 
-# Set arguments to null
-# If enabled they will be changed to true
-compress_flac=""
-test_flac=""
-aucdtect_flac=""
-md5_check_flac=""
-replaygain_flac=""
-retag_flac=""
-extract_artwork=""
-prune_flac=""
+# Initialize an array housing all the operational states
+declare -Ag operation_summary
 
 # Check if user is running under Cygwin
 # and if so, warn user and exit
@@ -5098,42 +5093,11 @@ __check_conflicting_operations
 
 #-------------------------------------------------------------------------------
 
-# For each operation that was chosen, set up operation_summary array
-declare -A operation_summary
-if [[ "${aucdtect_flac}" == "true" ]] ; then
-	operation_summary['Validate with auCDtect']='Operation Did Not Run'
-fi
-
-if [[ "${md5_check_flac}" == "true" ]] ; then
-	operation_summary['Check MD5 Signature']='Operation Did Not Run'
-fi
-
-if [[ "${compress_flac}" == "true" ]] ; then
-	operation_summary['Compress FLACs']='Operation Did Not Run'
-fi
-
-if [[ "${test_flac}" == "true" ]] ; then
-	operation_summary['Test FLACs']='Operation Did Not Run'
-fi
-
-if [[ "${replaygain_flac}" == "true" ]] ; then
-	operation_summary['> Testing']='Operation Did Not Run'
-	operation_summary['> Adding']='Operation Did Not Run'
-fi
-
-if [[ "${retag_flac}" == "true" ]] ; then
-	operation_summary['> Analyzing']='Operation Did Not Run'
-	operation_summary['> Applying']='Operation Did Not Run'
-fi
-
-if [[ "${extract_artwork}" == "true" ]] ; then
-	operation_summary['Extracting Artwork']='Operation Did Not Run'
-fi
-
-if [[ "${prune_flac}" == "true" ]] ; then
-	operation_summary['Prune METADATA Blocks']='Operation Did Not Run'
-fi
-
+# For each operation that was selected, set up operation_summary array
+for operation in "${operations[@]}" ; do
+	# Update status for the current operation
+	__update_operation_status "${operation}" 'Operation Did Not Run'
+done
 #-------------------------------------------------------------------------------
 
 # Check for any missing programs vital for this script
@@ -5164,7 +5128,7 @@ fi
 
 # If "-e, --extract-artwork" was called, make sure artwork_location is a valid
 # location, if user-defined
-if [[ "${extract_artwork}" == "true" ]] ; then
+if [[ "${check_artwork_dir}" == "true" ]] ; then
 
 	# Check if artwork_location is user-defined
 	if [[ -n "${artwork_location}" ]] ; then
