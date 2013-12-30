@@ -476,7 +476,7 @@ __short_help() {
 #-------------------------------------------------------------------------------
 
 # Display usage
-__usage() { printf " Usage: redoflacs [operations] [options] [target] ...\n" ;}
+__usage() { printf " Usage: redoflacs [operations] [options] [target] ...\n" ;} >&2
 
 #-------------------------------------------------------------------------------
 
@@ -487,44 +487,45 @@ __message_log_exists() {
 	#
 	# $1 determines the log file to use, as well as how many lines are printed
 	# out to correctly set the current row.  Possible values:
-	#   aucdtect          compress        extract_artwork
-	#   md5_check         prune           replaygain_add
-	#   replaygain_test   retag_analyze   retag_apply
-	#   test
+	#   aucdtect          aucdtect_spectrogram        md5_check
+	#   compress_verify   compress_no_verify          test
+	#   replaygain_test   replaygain_force_apply      replaygain_apply
+	#   retag_analyze     retag_apply                 extract_artwork
+	#   prune
 	##
 	case "$1" in
-		aucdtect)
+		aucdtect*)
 			__error "Some FLAC files may be lossy sourced, please check:\n"
-		;;
-		compress)
-			__error "Errors found in some FLAC files, please check:\n"
-		;;
-		extract_artwork)
-			__error "There were issues with some of the FLAC files,\n"
-			__error "please check:\n"
 		;;
 		md5_check)
 			__error "The MD5 Signature is unset for some FLAC files or there were\n"
 			__error "issues with some of the FLAC files, please check:\n"
 		;;
-		prune)
-			__error "There were issues with some of the FLAC files,\n"
-			__error "please check:\n"
+		compress_*)
+			__error "Errors found in some FLAC files, please check:\n"
 		;;
-		replaygain_add)
-			__error "There were issues adding ReplayGain values,\n"
-			__error "please check:\n"
+		test)
+			__error "Errors found in some FLAC files, please check:\n"
 		;;
 		replaygain_test)
 			__error "There were issues with some of the FLAC files,\n"
 			__error "please check:\n"
 		;;
-		retag*)
+		replaygain*apply)
+			__error "There were issues adding ReplayGain values,\n"
+			__error "please check:\n"
+		;;
+		retag_*)
 			__error "Some FLAC files have missing tags or there were\n"
 			__error "issues with some of the FLAC files, please check:\n"
 		;;
-		test)
-			__error "Errors found in some FLAC files, please check:\n"
+		extract_artwork)
+			__error "There were issues with some of the FLAC files,\n"
+			__error "please check:\n"
+		;;
+		prune)
+			__error "There were issues with some of the FLAC files,\n"
+			__error "please check:\n"
 		;;
 	esac
 
@@ -541,10 +542,11 @@ __create_log() {
 	# as well as formatting/aligning log lines
 	#
 	# $1 determines the log file to create, and is any one of these values:
-	#   aucdtect          compress        extract_artwork
-	#   md5_check         prune           replaygain_add
-	#   replaygain_test   retag_analyze   retag_apply
-	#   test
+	#   aucdtect          aucdtect_spectrogram        md5_check
+	#   compress_verify   compress_no_verify          test
+	#   replaygain_test   replaygain_force_apply      replaygain_apply
+	#   retag_analyze     retag_apply                 extract_artwork
+	#   prune
 	##
 	# Set up local variables/arrays
 	declare -a header  log_array
@@ -553,29 +555,12 @@ __create_log() {
 	# Set log file and the type of header to prepend based on how this function
 	# was called, via $1
 	case "${1}" in
-		aucdtect)
+		aucdtect*)
 			header=(
 				"--------------------------------------------------------------------------------"
 				"                           AUCDTECT ERROR/REPORT LOG"
 				"                           -------------------------"
 				"      This log details which FLAC files have errors when running auCDtect"
-				"--------------------------------------------------------------------------------"
-			) ;;
-		compress)
-			header=(
-				"--------------------------------------------------------------------------------"
-				"                          COMPRESS & VERIFY ERROR LOG"
-				"                          ---------------------------"
-				"    This log details which FLAC files have errors when compressing and/or"
-				"  verifying"
-				"--------------------------------------------------------------------------------"
-			) ;;
-		extract_artwork)
-			header=(
-				"--------------------------------------------------------------------------------"
-				"                           EXTRACT ARTWORK ERROR LOG"
-				"                           -------------------------"
-				"  This log details which FLAC files have errors when extracting artwork images"
 				"--------------------------------------------------------------------------------"
 			) ;;
 		md5_check)
@@ -587,21 +572,21 @@ __create_log() {
 				"  signature"
 				"--------------------------------------------------------------------------------"
 			) ;;
-		prune)
+		compress_*)
 			header=(
 				"--------------------------------------------------------------------------------"
-				"                                PRUNE ERROR LOG"
-				"                                ---------------"
-				"   This log details which FLAC files have errors when pruning METADATA blocks"
+				"                          COMPRESS & VERIFY ERROR LOG"
+				"                          ---------------------------"
+				"    This log details which FLAC files have errors when compressing and/or"
+				"  verifying"
 				"--------------------------------------------------------------------------------"
 			) ;;
-		replaygain_add)
+		test)
 			header=(
 				"--------------------------------------------------------------------------------"
-				"                           REPLAYGAIN ADD ERROR LOG"
-				"                           ------------------------"
-				"    This log details which directories have FLAC files that have errors when"
-				"  applying ReplayGain values"
+				"                             TEST FLACS ERROR LOG"
+				"                             --------------------"
+				"          This log details which FLAC files have errors when testing"
 				"--------------------------------------------------------------------------------"
 			) ;;
 		replaygain_test)
@@ -613,7 +598,16 @@ __create_log() {
 				"  compatability"
 				"--------------------------------------------------------------------------------"
 			) ;;
-		retag*)
+		replaygain*apply)
+			header=(
+				"--------------------------------------------------------------------------------"
+				"                          REPLAYGAIN APPLY ERROR LOG"
+				"                          --------------------------"
+				"    This log details which directories have FLAC files that have errors when"
+				"  applying ReplayGain values"
+				"--------------------------------------------------------------------------------"
+			) ;;
+		retag_*)
 			header=(
 				"--------------------------------------------------------------------------------"
 				"                                RETAG ERROR LOG"
@@ -621,12 +615,20 @@ __create_log() {
 				"         This log details which FLAC files have errors when retagging"
 				"--------------------------------------------------------------------------------"
 			) ;;
-		test)
+		extract_artwork)
 			header=(
 				"--------------------------------------------------------------------------------"
-				"                             TEST FLACS ERROR LOG"
-				"                             --------------------"
-				"          This log details which FLAC files have errors when testing"
+				"                           EXTRACT ARTWORK ERROR LOG"
+				"                           -------------------------"
+				"  This log details which FLAC files have errors when extracting artwork images"
+				"--------------------------------------------------------------------------------"
+			) ;;
+		prune)
+			header=(
+				"--------------------------------------------------------------------------------"
+				"                                PRUNE ERROR LOG"
+				"                                ---------------"
+				"   This log details which FLAC files have errors when pruning METADATA blocks"
 				"--------------------------------------------------------------------------------"
 			) ;;
 	esac
@@ -669,18 +671,16 @@ __create_log() {
 
 #-------------------------------------------------------------------------------
 
-__operation_message() {
+__message() {
 	##
 	# Print out current operation message.
 	#
 	# $1 determines which title message to print (if any).  Possible values:
-	#   aucdtect          compress   extract_artwork
-	#   md5_check         prune      replaygain
-	#   retag             test
-	#
-	# $2 determines which sub message to print (if any).  Possible values:
-	#   replaygain_add    replaygain_test
-	#   retag_analyze     retag_apply
+	#   aucdtect          aucdtect_spectrogram        md5_check
+	#   compress_verify   compress_no_verify          test
+	#   replaygain_test   replaygain_force_apply      replaygain_apply
+	#   retag_analyze     retag_apply                 extract_artwork
+	#   prune
 	##
 	# Set up local variables
 	declare message
@@ -688,13 +688,28 @@ __operation_message() {
 	# Print title message if $1 is not NULL
 	if [[ -n "${1}" ]] ; then
 		case "${1}" in
-			aucdtect)         message="auCDtect Analysis"    ;;
-			compress)         message="Compressing & Verifying ${magenta}[Level 8]${normal}"  ;;
-			extract_artwork)  message="Extracting Artwork"   ;;
-			md5_check)        message="MD5 Check"            ;;
-			replaygain)       message="Generating & Applying ReplayGain"  ;;
-			retag)            message="Re-Tagging"           ;;
-			test)             message="Testing"              ;;
+			aucdtect)            message="auCDtect Analysis"    ;;
+			md5_check)           message="MD5 Check"            ;;
+			compress_verify)     message="Compressing & Verifying ${magenta}[Level 8]${normal}"  ;;
+			compress_no_verify)  message="Compressing"          ;;
+			test)                message="Testing"              ;;
+			replaygain_*)
+				if [[ "${1}" == 'replaygain_test' ]] ; then
+					message="Generating & Applying ReplayGain"
+					sub_message="Testing"
+				else  #  'replaygain'*'apply'
+					sub_message="Applying"
+				fi
+			;;
+			retag_*)
+				if [[ "${1}" == 'retag_analyze' ]] ; then
+					message="Re-Tagging"
+					sub_message="Analyzing"
+				else  #  'retag_apply'
+					sub_message="Re-Applying"
+				fi
+			;;
+			extract_artwork)     message="Extracting Artwork"   ;;
 			prune)
 				if [[ "${remove_artwork}" != "true" ]] ; then
 					# Keep artwork
@@ -706,21 +721,33 @@ __operation_message() {
 			;;
 		esac
 
-		printf "\033[$(__row)H ${green}*${normal} ${message}\n"
+		# Print title message, if applicable
+		if [[ -n "${message}" ]] ; then
+			printf "\033[$(__row)H ${green}*${normal} ${message}\n"
+		fi
+
+		# Print sub title message, if applicable
+		if [[ -n "${sub_message}" ]] ; then
+			printf "\033[$(__row);4H${green}>${normal} ${message}\n"
+		fi
 	fi
+}
 
-	# Print sub message if $2 is not NULL
-	if [[ -n "${2}" ]] ; then
-		case "${2}" in
-			replaygain_test)  message="Testing"      ;;
-			replaygain_add)   message="Applying"     ;;
-			retag_analyze)    message="Analyzing"    ;;
-			retag_apply)      message="Re-Applying"  ;;
-		esac
+#-------------------------------------------------------------------------------
 
-		printf "\033[$(__row);4H${green}>${normal} ${message}\n"
-	fi
-
+__update_operation_status () {
+	case "${1}" in
+		aucdtect*)         operation_summary['Validate with auCDtect']="${2}" ;;
+		md5_check)         operation_summary['Check MD5 Signature']="${2}"    ;;
+		compress_*)        operation_summary['Compress FLACs']="${2}"         ;;
+		test)              operation_summary['Test FLACs']="${2}"             ;;
+		replaygain_test)   operation_summary['> Testing']="${2}"              ;;
+		replyagain*apply)  operation_summary['> Applying']="${2}"             ;;
+		retag_analyze)     operation_summary['> Analyzing']="${2}"            ;;
+		retag_apply)       operation_summary['> Applying']="${2}"             ;;
+		extract_artwork)   operation_summary['Extracting Artwork']="${2}"     ;;
+		prune)             operation_summary['Prune METADATA Blocks']="${2}"  ;;
+	esac
 }
 
 #-------------------------------------------------------------------------------
@@ -1343,10 +1370,11 @@ __trap_sigint() {
 	#
 	# $2 determines which additional cleanup may need to be performed when
 	# starting '__exit_cleanup'.  Possible values:
-	#   aucdtect          compress        extract_artwork
-	#   md5_check         prune           replaygain_add
-	#   replaygain_test   retag_analyze   retag_apply
-	#   test
+	#   aucdtect          aucdtect_spectrogram        md5_check
+	#   compress_verify   compress_no_verify          test
+	#   replaygain_test   replaygain_force_apply      replaygain_apply
+	#   retag_analyze     retag_apply                 extract_artwork
+	#   prune
 	##
 	__kill_jobs "$(jobs -rp)"
 
@@ -1371,38 +1399,22 @@ __exit_cleanup() {
 	# $1 determines which operation requires additional cleanup.  This value is
 	# normally obtained from $2 in the '__trap_sigint' function.  Possible
 	# values:
-	#   aucdtect          compress        extract_artwork
-	#   md5_check         prune           replaygain_add
-	#   replaygain_test   retag_analyze   retag_apply
-	#   test
+	#   aucdtect          aucdtect_spectrogram        md5_check
+	#   compress_verify   compress_no_verify          test
+	#   replaygain_test   replaygain_force_apply      replaygain_apply
+	#   retag_analyze     retag_apply                 extract_artwork
+	#   prune
 	##
 	case "${1}" in
-		aucdtect)
+		aucdtect*)
 			# Remove temporarily created WAV files (if any)
 			rm -f "${directory}"/**/*_redoflacs_"$$".wav
-			operation_summary['Validate with auCDtect']='Operation Interrupted'
 		;;
-		compress)
+		compress_*)
 			# Remove temporarily encoded FLAC files
 			rm -f "${directory}"/**/*.tmp,fl-ac+en\'c
-			operation_summary['Compress FLACs']='Operation Interrupted'
 		;;
-		extract_artwork)
-			operation_summary['Extracting Artwork']='Operation Interrupted'
-		;;
-		md5_check)
-			operation_summary['Check MD5 Signature']='Operation Interrupted'
-		;;
-		prune)
-			operation_summary['Prune METADATA Blocks']='Operation Interrupted'
-		;;
-		replaygain_add)
-			operation_summary['> Adding']='Operation Interrupted'
-		;;
-		replaygain_test)
-			operation_summary['> Testing']='Operation Interrupted'
-		;;
-		retag*)
+		retag_*)
 			# Test for deprecated tag, COVERART, in log file.  If it
 			# exists, set coverart_warning variable to make script output
 			# warning upon completion
@@ -1416,17 +1428,11 @@ __exit_cleanup() {
 					fi
 				done < "${log_file}"
 			fi
-
-			if [[ "$1" == 'retag_analyze' ]] ; then
-				operation_summary['> Analyzing']='Operation Interrupted'
-			elif [[ "$1" == 'retag_apply' ]] ; then
-				operation_summary['> Applying']='Operation Interrupted'
-			fi
-		;;
-		test)
-			operation_summary['Test FLACs']='Operation Interrupted'
 		;;
 	esac
+
+	# Update status for the current operation
+	__update_operation_status "${1}" 'Operation Interrupted'
 
 	if [[ -f "${log_file}"  && "${coverart_warning}" == 'true' ]] ; then
 		# This block is only executed during the 'retag' operation
@@ -1468,7 +1474,7 @@ __exit_cleanup() {
 #-------------------------------------------------------------------------------
 
 # Display script version
-__print_version() { printf "%s\n" "Version ${version}" ;}
+__print_version() { printf "Version %s\n" "${version}" ;}
 
 #-------------------------------------------------------------------------------
 
@@ -2468,7 +2474,7 @@ __create_aucdtect_fd() {
 
 #-------------------------------------------------------------------------------
 
-__msg_num_issues() {
+__num_issues() {
 	##
 	# Display the number of issues an operation may have by reading in the
 	# number of ticks from the temporary issues_count file, returning the proper
@@ -2497,10 +2503,7 @@ __process_positional_parameters() {
 	# Add case where only one argument is specified
 	if (( ${#} == 1 )) ; then
 		case "${1}" in
-			--version|-v)
-				__print_version
-				exit 0
-			;;
+			--version|-v)     __print_version ; exit 0 ;;
 			--help|-h)
 				# Create the temporary file in which a man page will be
 				# generated
@@ -2517,14 +2520,8 @@ __process_positional_parameters() {
 
 				exit 0
 			;;
-			--new-config|-o)
-				__new_config
-				exit 0
-			;;
-			*)
-				__usage >&2
-				exit 1
-			;;
+			--new-config|-o)  __new_config ; exit 0 ;;
+			*)                __usage      ; exit 1 ;;
 		esac
 	fi
 
@@ -2532,26 +2529,11 @@ __process_positional_parameters() {
 	# arguments called are not to have anything after them
 	if (( ${#} == 2 )) ; then
 		case "${1}" in
-			--jobs=[[:digit:]]*|-j[[:digit:]]*)
-				__usage >&2
-				exit 1
-			;;
-			--no-color|-n)
-				__usage >&2
-				exit 1
-			;;
-			--version|-v)
-				__usage >&2
-				exit 1
-			;;
-			--new-config|-o)
-				__usage >&2
-				exit 1
-			;;
-			--help|-h)
-				__usage >&2
-				exit 1
-			;;
+			--jobs=[[:digit:]]*|-j[[:digit:]]*)  __usage ; exit 1 ;;
+			--no-color|-n)                       __usage ; exit 1 ;;
+			--version|-v)                        __usage ; exit 1 ;;
+			--new-config|-o)                     __usage ; exit 1 ;;
+			--help|-h)                           __usage ; exit 1 ;;
 		esac
 	fi
 
@@ -2570,7 +2552,7 @@ __process_positional_parameters() {
 
 	# If there are 0 (zero) directories or more than 1, exit script
 	if (( ${#non_arguments_array[@]} == 0 || ${#non_arguments_array[@]} > 1 )) ; then
-		__usage >&2
+		__usage
 		exit 1
 	fi
 
@@ -2579,20 +2561,21 @@ __process_positional_parameters() {
 	# them correctly (ignoring '--help', '--version', '--new-config' since
 	# this is taken care of above).  Add invalid arguments to it's
 	# own array
+
 	if [[ -n "${long_style_arguments_array[@]}" ]] ; then
 		for i in "${long_style_arguments_array[@]}" ; do
 			case "${i}" in
+				--aucdtect)             converted_arguments_array+=( -a )   ;;
+				--aucdtect-spectrogram) converted_arguments_array+=( -A )   ;;
+				--md5check)             converted_arguments_array+=( -m )   ;;
 				--compress)             converted_arguments_array+=( -c )   ;;
 				--compress-notest)      converted_arguments_array+=( -C )   ;;
 				--test)                 converted_arguments_array+=( -t )   ;;
-				--md5check)             converted_arguments_array+=( -m )   ;;
-				--aucdtect)             converted_arguments_array+=( -a )   ;;
-				--aucdtect-spectrogram) converted_arguments_array+=( -A )   ;;
-				--extract-artwork)      converted_arguments_array+=( -e )   ;;
-				--prune)                converted_arguments_array+=( -p )   ;;
 				--replaygain)           converted_arguments_array+=( -g )   ;;
 				--replaygain-noforce)   converted_arguments_array+=( -G )   ;;
 				--retag)                converted_arguments_array+=( -r )   ;;
+				--extract-artwork)      converted_arguments_array+=( -e )   ;;
+				--prune)                converted_arguments_array+=( -p )   ;;
 				--all)                  converted_arguments_array+=( -l )   ;;
 				--reallyall)            converted_arguments_array+=( -L )   ;;
 				--no-color)             converted_arguments_array+=( -n )   ;;
@@ -2601,18 +2584,9 @@ __process_positional_parameters() {
 				# integer argument after '-j'
 				--jobs=[[:digit:]]*)    jobs="${i##*=}"                     ;;
 
-				--version)
-					__usage >&2
-					exit 1
-				;;
-				--help)
-					__usage >&2
-					exit 1
-				;;
-				--new-config)
-					__usage >&2
-					exit 1
-				;;
+				--version)     __usage ; exit 1 ;;
+				--help)        __usage ; exit 1 ;;
+				--new-config)  __usage ; exit 1 ;;
 				*)
 					# Set invalid argument into array
 					invalid_arguments_array+=( "${i}" )
@@ -2627,19 +2601,19 @@ __process_positional_parameters() {
 	if [[ -n "${short_style_arguments_array[@]}" ]] ; then
 		while getopts ":LlcCtgGaAmeprnj:hvo" arguments "${short_style_arguments_array[@]}" ; do
 			case "${arguments}" in
-				l) converted_arguments_array+=( -l ) ;;
 				L) converted_arguments_array+=( -L ) ;;
+				a) converted_arguments_array+=( -a ) ;;
+				A) converted_arguments_array+=( -A ) ;;
+				m) converted_arguments_array+=( -m ) ;;
 				c) converted_arguments_array+=( -c ) ;;
 				C) converted_arguments_array+=( -C ) ;;
 				t) converted_arguments_array+=( -t ) ;;
 				g) converted_arguments_array+=( -g ) ;;
 				G) converted_arguments_array+=( -G ) ;;
-				a) converted_arguments_array+=( -a ) ;;
-				A) converted_arguments_array+=( -A ) ;;
-				m) converted_arguments_array+=( -m ) ;;
+				r) converted_arguments_array+=( -r ) ;;
 				e) converted_arguments_array+=( -e ) ;;
 				p) converted_arguments_array+=( -p ) ;;
-				r) converted_arguments_array+=( -r ) ;;
+				l) converted_arguments_array+=( -l ) ;;
 				n) converted_arguments_array+=( -n ) ;;
 
 				j)
@@ -2678,7 +2652,7 @@ __process_positional_parameters() {
 	# If there were invalid arguments called, display them and
 	# exit script
 	if [[ -n "${invalid_arguments_array[@]}" || -n "${parameter_errors_array[@]}" ]] ; then
-		__usage >&2
+		__usage
 
 		if [[ -n "${invalid_arguments_array[@]}" ]] ; then
 			__error "\nInvalid options:" >&2
@@ -2707,43 +2681,41 @@ __process_positional_parameters() {
 	# functions
 	for i in "${converted_arguments_array[@]}" ; do
 		case "${i}" in
-			-l) all="true"                                        ;;
-			-L) reallyall="true"                                  ;;
-			-c) compress_flac="true"    compress_test="true"      ;;
-			-C) compress_flac="true"    skip_test="true"          ;;
-			-t) test_flac="true"                                  ;;
-			-g) replaygain_flac="true"  replaygain_force="true"   ;;
-			-G) replaygain_flac="true"  replaygain_noforce="true" ;;
-			-a) aucdtect_flac="true"    no_spectrogram="true"     ;;
-			-A) aucdtect_flac="true"    create_spectrogram="true" ;;
-			-m) md5_check_flac="true"                              ;;
-			-e) extract_artwork="true"                            ;;
-			-p) prune_flac="true"                                 ;;
-			-r) retag_flac="true"                                 ;;
-			-n) no_color="true"                                   ;;
+			-l) all="true"                            ;;
+			-L) reallyall="true"                      ;;
+			-a) operations[0]='aucdtect'              ;;
+			-A)
+				#operations[1]='aucdtect_spectrogram'
+				operations[1]='aucdtect'
+				create_spectrogram='true'
+			;;
+			-m) operations[2]='md5_check'             ;;
+			-c) operations[3]='compress_verify'       ;;
+			-C) operations[4]='compress_no_verify'    ;;
+			-t) operations[5]='test'                  ;;
+			-g|-G)
+				operations[6]='replaygain_test'
+				if [[ "${i}" == '-g' ]] ; then
+					operations[7]='replyagain_force_apply'
+				else  # '-G'
+					operations[7]='replyagain_apply'
+				fi
+			;;
+			-r)
+				operations[8]='retag_analyze'
+				operations[9]='retag_apply'
+			;;
+			-e) operations[10]='extract_artwork'      ;;
+			-p) operations[11]='prune'                ;;
+			-n) no_color="true"                       ;;
 			-j)
 				# Do nothing, ${jobs} has already been stored
 				# in previous getopts loop
 				:
 			;;
-			-v) __usage >&2
-				exit 1
-			;;
-			-h)
-				__usage >&2
-				exit 1
-			;;
-			-o)
-				__usage >&2
-				exit 1
-			;;
-			*)
-				# Should not ever happen!
-				__error "This is a BUG! Please report to:\n" >&2
-				__error "${cyan}https://github.com/sirjaren/redoflacs/issues/new${normal}\n" >&2
-
-				exit 1
-			;;
+			-v) __usage ; exit 1 ;;
+			-h) __usage ; exit 1 ;;
+			-o) __usage ; exit 1 ;;
 		esac
 	done
 
@@ -2752,14 +2724,13 @@ __process_positional_parameters() {
 
 	# Set the last argument as the directory and remove the
 	# ending slash (if any) to prevent double slashes from
-	# appearing because of BASH's globstar.
+	# appearing
 	#
-	# This only appears if the directory chosen is the direct
+	# This may appear if the directory chosen is the direct
 	# parent directory to the FLAC files to be processed.
 	#
 	# BASH 4.2 allows negative indices (ie):
-	#
-	# directory="${called_arguments_array[-1]%/}"
+	#   directory="${called_arguments_array[-1]%/}"
 	directory="${called_arguments_array[$(( ${#called_arguments_array[@]} - 1 ))]%/}"
 }
 
@@ -3029,7 +3000,7 @@ __summary() {
 		'Compress FLACs'
 		'Test FLACs'
 		'> Testing'
-		'> Adding'
+		'> Applying'
 		'> Analyzing'
 		'> Applying'
 		'Extracting Artwork'
@@ -3164,7 +3135,7 @@ __run_parallel() {
 #-------------------------------------------------------------------------------
 
 # Test ReplayGain
-__operation_test_replaygain() {
+__replaygain_test() {
 	trap '__kill_jobs "$(jobs -rp)"' EXIT
 
 	# Print current FLAC being processed
@@ -3224,7 +3195,7 @@ __operation_test_replaygain() {
 #-------------------------------------------------------------------------------
 
 # Process Replaygain (only add values if missing)
-__operation_replaygain_noforce() {
+__replaygain_apply() {
 	trap '__kill_jobs "$(jobs -rp)"' EXIT
 
 	# Print current directory being processed
@@ -3297,7 +3268,7 @@ __operation_replaygain_noforce() {
 #-------------------------------------------------------------------------------
 
 # Process ReplayGain (force new values)
-__operation_replaygain_force() {
+__replaygain_force_apply() {
 	trap '__kill_jobs "$(jobs -rp)"' EXIT
 
 	# Print current directory being processed
@@ -3331,8 +3302,7 @@ __operation_replaygain_force() {
 
 #-------------------------------------------------------------------------------
 
-# Compress FLAC files
-__operation_compress() {
+__compress_verify() {
 	trap '__kill_jobs "$(jobs -rp)"' EXIT
 
 	# Test for COMPRESSION level in FLAC file. Hide error output since
@@ -3378,42 +3348,36 @@ __operation_compress() {
 		fi
 
 	# If already at compression_level, test the FLAC file instead
-	# or skip the file if '-C, --compress-notest' was specified
 	else
-		if [[ "${skip_test}" != "true" ]] ; then
-			# Print current FLAC being processed
-			__print_current_flac
+		# Print current FLAC being processed
+		__print_current_flac
 
-			# This is a variable to determine which type of process is used to
-			# get the current percentage during the operation
-			obtain_percentage="__obtain_test_percentage"
+		# This is a variable to determine which type of process is used to
+		# get the current percentage during the operation
+		obtain_percentage="__obtain_test_percentage"
 
-			# Test FLAC file
-			# Display the current file with progress completed thus far via a
-			# percentage and progress bar
-			flac -t "${i}" 2> >(while read -r -d% percent_complete ; do
-				__print_progress
-			done) >/dev/null
+		# Test FLAC file
+		# Display the current file with progress completed thus far via a
+		# percentage and progress bar
+		flac -t "${i}" 2> >(while read -r -d% percent_complete ; do
+			__print_progress
+		done) >/dev/null
 
-			# Exit code 130 is SIGINT so only check for exit code '1'
-			if (( ${?} == 1 )) ; then
+		# Exit code 130 is SIGINT so only check for exit code '1'
+		if (( ${?} == 1 )) ; then
 
-				# Error with FLAC file, display failed/error
-				__print_progress_failed
+			# Error with FLAC file, display failed/error
+			__print_progress_failed
 
-				# Log FLAC failure
-				printf "%s__redoflacs::delimiter__Failed verification\n" "${i}" \
-					>> "${log_file}"
+			# Log FLAC failure
+			printf "%s__redoflacs::delimiter__Failed verification\n" "${i}" \
+				>> "${log_file}"
 
-				# Add one to fail fd
-				printf '.' >> "${issue_ticks}"
-			else
-				# FLAC is ok, display ok
-				__print_progress_ok
-			fi
+			# Add one to fail fd
+			printf '.' >> "${issue_ticks}"
 		else
-			# Print skipped FLAC
-			__print_skip_flac
+			# FLAC is ok, display ok
+			__print_progress_ok
 		fi
 	fi
 
@@ -3425,8 +3389,67 @@ __operation_compress() {
 
 #-------------------------------------------------------------------------------
 
+__compress_no_verify() {
+	trap '__kill_jobs "$(jobs -rp)"' EXIT
+
+	# Test for COMPRESSION level in FLAC file. Hide error output since
+	# we'll be verifying the FLAC file later
+	COMPRESSION="$(metaflac --show-tag=COMPRESSION "${i}" 2> /dev/null)"
+	COMPRESSION="${COMPRESSION#*=}"
+
+	if (( COMPRESSION != compression_level )) ; then
+		# Print current FLAC being processed
+		__print_current_flac
+
+		# This is a variable to determine which type of process is used to get
+		# the current percentage during the operation
+		obtain_percentage="__obtain_compress_percentage"
+
+		# Compress FLAC file
+		# Display the current file with progress completed thus far via a
+		# percentage and progress bar
+		flac --no-error-on-compression-fail -f -${compression_level} -V "${i}" 2> >(while read -r -d% percent_complete ; do
+			__print_progress
+		done) >/dev/null
+
+
+		# Exit code 130 is SIGINT so only check for exit code '1'
+		if (( ${?} == 1 )) ; then
+
+			# Error with FLAC file, display failed/error
+			__print_progress_failed
+
+			# Log FLAC failure
+			printf "%s__redoflacs::delimiter__Failed verification\n" "${i}" \
+				>> "${log_file}"
+
+			# Add one to fail fd
+			printf '.' >> "${issue_ticks}"
+		else
+			metaflac \
+				--remove-tag=COMPRESSION \
+				--set-tag=COMPRESSION=${compression_level} "${i}"
+
+			# FLAC is ok, display ok
+			__print_progress_ok
+		fi
+
+	# If already at compression_level, skip the FLAC file
+	else
+		# Print skipped FLAC
+		__print_skip_flac
+	fi
+
+	# Store the position of where the line of the FLAC file is displayed in file
+	# descriptor (3), to be used by the next job, terminated by a newline to
+	# indicate job completed
+	__store_position
+}
+
+#-------------------------------------------------------------------------------
+
 # Test FLAC files
-__operation_test() {
+__test() {
 	trap '__kill_jobs "$(jobs -rp)"' EXIT
 
 	# Print current FLAC being processed
@@ -3468,7 +3491,7 @@ __operation_test() {
 #-------------------------------------------------------------------------------
 
 # Test FLAC validity with auCDtect
-__operation_aucdtect() {
+__aucdtect() {
 	trap '__kill_jobs "$(jobs -rp)"' EXIT
 
 	# Print current FLAC being processed
@@ -3753,7 +3776,7 @@ __operation_aucdtect() {
 #-------------------------------------------------------------------------------
 
 # Check MD5 in each FLAC file
-__operation_md5check() {
+__md5_check() {
 	trap '__kill_jobs "$(jobs -rp)"' EXIT
 
 	# Print current FLAC being processed
@@ -3804,7 +3827,7 @@ __operation_md5check() {
 #-------------------------------------------------------------------------------
 
 # Analyze FLAC tags
-__operation_analyze_tags() {
+__retag_analyze() {
 	trap '__kill_jobs "$(jobs -rp)"' EXIT
 
 	# Print current FLAC being processed
@@ -3962,7 +3985,7 @@ __operation_analyze_tags() {
 #-------------------------------------------------------------------------------
 
 # Analyze FLAC tags (not logging missing COVERART tag)
-__operation_analyze_tags_dont_log_coverart() {
+__analyze_tags_dont_log_coverart() {
 	trap '__kill_jobs "$(jobs -rp)"' EXIT
 
 	# Print current FLAC being processed
@@ -4147,7 +4170,7 @@ __operation_analyze_tags_dont_log_coverart() {
 #-------------------------------------------------------------------------------
 
 # Re-tag FLAC files
-__operation_set_tags() {
+__retag_apply() {
 	trap '__kill_jobs "$(jobs -rp)"' EXIT
 
 	# Print current FLAC being processed
@@ -4267,7 +4290,7 @@ __operation_set_tags() {
 #-------------------------------------------------------------------------------
 
 # Extract artwork from FLAC files
-__operation_extract_artwork() {
+__extract_artwork() {
 	trap '__kill_jobs "$(jobs -rp)"' EXIT
 
 	# Print current FLAC with artwork to be extracted
@@ -4887,7 +4910,7 @@ __operation_extract_artwork() {
 #-------------------------------------------------------------------------------
 
 # Prune FLACS
-__operation_prune() {
+__prune() {
 	trap '__kill_jobs "$(jobs -rp)"' EXIT
 
 	# Print current FLAC being pruned
@@ -5235,542 +5258,27 @@ fi
 # Grab the total flacs to process
 total_items=( "${directory}"/**/*${flac_extension} )
 
-# String length of total number of flacs
-total_flacs_length="${#total_items[@]}"
-total_flacs_length="${#total_flacs_length}"
-
 # This displays '[ ok ]' after 'Finding FLAC files to process...'
 __processed_flacs_ok
 
-# .: AUCDTECT :.
-#-------------------------------------------------------------------------------
-# The below order is probably the best bet in ensuring time
-# isn't wasted on doing unnecessary operations if the
-# FLAC files are corrupt or have metadata issues
-if [[ "${aucdtect_flac}" == "true" ]] ; then
-	# Prints title message of current operation
-	__operation_message 'aucdtect'
-
-	# Scroll terminal, if needed
-	__scroll_terminal
-
-	# Make sure to clear file descriptor '3' before proceeding
-	__clear_tmp_fd
-
-	# Open up a temporary file descriptor to send auCDtect's
-	# STDOUT to
-	__create_aucdtect_fd
-
-	# Set the cursor to the correct row depending on whether there were more
-	# or less files to process than the number of jobs to run
-	if (( ${#total_items[@]} < jobs )) ; then
-		# Less files than jobs to run, so only add the number of files
-		# processed
-		post_row=$(( $(__row) + ${#total_items[@]} ))
-	else
-		# More files than jobs to run, so add the number of jobs processed
-		post_row=$(( $(__row) + jobs ))
-	fi
-
-	trap '__trap_sigint "$post_row" "aucdtect"' SIGINT
-
-	# Run parallel operations, that which is specified as ${1}
-	__run_parallel '__operation_aucdtect'
-
-	printf "\033[${post_row}H"
-
-	if [[ -f "${log_file}" ]] ; then
-		# Print out log exists to STDERR
-		__message_log_exists 'aucdtect'
-
-		# Create and format log
-		__create_log 'aucdtect'
-
-		# Store operation status for Summary Of Operations
-		operation_summary['Validate with auCDtect']="$(__msg_num_issues)"
-
-		# Display Summary Of Operations
-		__summary
-
-		exit 1
-	fi
-
-	# Store operation status for Summary Of Operations
-	operation_summary['Validate with auCDtect']='Operation Completed'
-fi
-
-# .: MD5 CHECK :.
-#-------------------------------------------------------------------------------
-if [[ "${md5_check_flac}" == "true" ]] ; then
-	# Prints title message of current operation
-	__operation_message 'md5_check'
-
-	# Scroll terminal, if needed
-	__scroll_terminal
-
-	# Make sure to clear file descriptor '3' before proceeding
-	__clear_tmp_fd
-
-	# Set the cursor to the correct row depending on whether there were more
-	# or less files to process than the number of jobs to run
-	if (( ${#total_items[@]} < jobs )) ; then
-		# Less files than jobs to run, so only add the number of files
-		# processed
-		post_row=$(( $(__row) + ${#total_items[@]} ))
-	else
-		# More files than jobs to run, so add the number of jobs processed
-		post_row=$(( $(__row) + jobs ))
-	fi
-
-	trap '__trap_sigint "$post_row" "md5_check"' SIGINT
-
-	# Run parallel operations, that which is specified as ${1}
-	__run_parallel '__operation_md5check'
-
-	printf "\033[${post_row}H"
-
-	if [[ -f "${log_file}" ]] ; then
-		# Print out log exists to STDERR
-		__message_log_exists 'md5_check'
-
-		# Prepend log header to log file
-		__create_log 'md5_check'
-
-		# Store operation status for Summary Of Operations
-		operation_summary['Check MD5 Signature']="$(__msg_num_issues)"
-
-		# Display Summary Of Operations
-		__summary
-
-		exit 1
-	fi
-
-	# Store operation status for Summary Of Operations
-	operation_summary['Check MD5 Signature']='Operation Completed'
-fi
-
-# .: COMPRESS/VERIFY :.
-#-------------------------------------------------------------------------------
-if [[ "${compress_flac}" == "true" ]] ; then
-	# Prints title message of current operation
-	__operation_message 'compress'
-
-	# Scroll terminal, if needed
-	__scroll_terminal
-
-	# Make sure to clear file descriptor '3' before proceeding
-	__clear_tmp_fd
-
-	# Set the cursor to the correct row depending on whether there were more
-	# or less files to process than the number of jobs to run
-	if (( ${#total_items[@]} < jobs )) ; then
-		# Less files than jobs to run, so only add the number of files
-		# processed
-		post_row=$(( $(__row) + ${#total_items[@]} ))
-	else
-		# More files than jobs to run, so add the number of jobs processed
-		post_row=$(( $(__row) + jobs ))
-	fi
-
-	trap '__trap_sigint "$post_row" "compress"' SIGINT
-
-	# Run parallel operations, that which is specified as ${1}
-	__run_parallel '__operation_compress'
-
-	printf "\033[${post_row}H"
-
-	if [[ -f "${log_file}" ]] ; then
-		# Print out log exists to STDERR
-		__message_log_exists 'compress'
-
-		# Prepend log header to log file
-		__create_log 'compress'
-
-		# Store operation status for Summary Of Operations
-		operation_summary['Compress FLACs']="$(__msg_num_issues)"
-
-		# Display Summary Of Operations
-		__summary
-
-		exit 1
-	fi
-
-	# Store operation status for Summary Of Operations
-	operation_summary['Compress FLACs']='Operation Completed'
-fi
-
-# .: TEST :.
-#-------------------------------------------------------------------------------
-if [[ "${test_flac}" == "true" ]] ; then
-	# Prints title message of current operation
-	__operation_message 'test'
-
-	# Scroll terminal, if needed
-	__scroll_terminal
-
-	# Make sure to clear file descriptor '3' before proceeding
-	__clear_tmp_fd
-
-	# Set the cursor to the correct row depending on whether there were more
-	# or less files to process than the number of jobs to run
-	if (( ${#total_items[@]} < jobs )) ; then
-		# Less files than jobs to run, so only add the number of files
-		# processed
-		post_row=$(( $(__row) + ${#total_items[@]} ))
-	else
-		# More files than jobs to run, so add the number of jobs processed
-		post_row=$(( $(__row) + jobs ))
-	fi
-
-	trap '__trap_sigint "$post_row" "test"' SIGINT
-
-	# Run parallel operations, that which is specified as ${1}
-	__run_parallel '__operation_test'
-
-	printf "\033[${post_row}H"
-
-	if [[ -f "${log_file}" ]] ; then
-		# Print out log exists to STDERR
-		__message_log_exists 'test'
-
-		# Prepend log header to log file
-		__create_log 'test'
-
-		# Store operation status for Summary Of Operations
-		operation_summary['Test FLACs']="$(__msg_num_issues)"
-
-		# Display Summary Of Operations
-		__summary
-
-		exit 1
-	fi
-
-	# Store operation status for Summary Of Operations
-	operation_summary['Test FLACs']='Operation Completed'
-fi
-
-# .: REPLAYGAIN :.
-#-------------------------------------------------------------------------------
-if [[ "${replaygain_flac}" == "true" ]] ; then
-	# Check if "-G, --replaygain-noforce" was called
-	if [[ "${replaygain_noforce}" == "true" ]] ; then
-		process_replaygain="__operation_replaygain_noforce"
-	else
-		process_replaygain="__operation_replaygain_force"
-	fi
-
-	# Prints title message of current operation
-	__operation_message 'replaygain'
-
-	##
-	# .: TEST REPLAYGAIN :.
-	##
-	# Prints sub message of current operation
-	__operation_message '' 'replaygain_test'
-
-	# Scroll terminal, if needed
-	__scroll_terminal
-
-	# Make sure to clear file descriptor '3' before proceeding
-	__clear_tmp_fd
-
-	# Set the cursor to the correct row depending on whether there were more
-	# or less files to process than the number of jobs to run
-	if (( ${#total_items[@]} < jobs )) ; then
-		# Less files than jobs to run, so only add the number of files
-		# processed
-		post_row=$(( $(__row) + ${#total_items[@]} ))
-	else
-		# More files than jobs to run, so add the number of jobs processed
-		post_row=$(( $(__row) + jobs ))
-	fi
-
-	trap '__trap_sigint "$post_row" "replaygain_test"' SIGINT
-
-	# Run parallel operations, that which is specified as ${1}
-	__run_parallel '__operation_test_replaygain'
-
-	printf "\033[${post_row}H"
-
-	if [[ -f "${log_file}" ]] ; then
-		# Print out log exists to STDERR
-		__message_log_exists 'replaygain_test'
-
-		# Prepend log header to log file
-		__create_log 'replaygain_test'
-
-		# Store operation status for Summary Of Operations
-		operation_summary['> Testing']="$(__msg_num_issues)"
-
-		# Display Summary Of Operations
-		__summary
-
-		exit 1
-	fi
-
-	# Store operation status for Summary Of Operations
-	operation_summary['> Testing']='Operation Completed'
-
-	##
-	# .: PROCESS REPLAYGAIN :.
-	##
-	# Make printing pretty if specified directory is '.'
-	if [[ "${directory}" == "." ]] ; then
-		directory="${PWD}"
-	fi
-
-	# List of directories to process
-	__get_directory_list "${total_items[@]}"  # Returns $total_dirs[@]
-	total_items=( "${total_dirs[@]}" )        # Change to processing directories
-
-	# Prints sub message of current operation
-	__operation_message '' 'replaygain_add'
-
-	# Scroll terminal, if needed
-	__scroll_terminal
-
-	# Set the cursor to the correct row depending on whether there were more
-	# or less directories to process than the number of jobs to run
-	if (( ${#total_items[@]} < jobs )) ; then
-		# Less directories than jobs to run, so only add the number of
-		# directories processed
-		post_row=$(( $(__row) + ${#total_items[@]} ))
-	else
-		# More directories than jobs to run, so add the number of jobs processed
-		post_row=$(( $(__row) + jobs ))
-	fi
-
-	trap '__trap_sigint "$post_row" "replaygain_add"' SIGINT
-
-	# Run parallel operations, that which is specified as ${1}
-	__run_parallel "${process_replaygain}"
-
-	printf "\033[${post_row}H"
-
-	if [[ -f "${log_file}" ]] ; then
-		# Print out log exists to STDERR
-		__message_log_exists 'replaygain_add'
-
-		# Prepend log header to log file
-		__create_log 'replaygain_add'
-
-		# Store operation status for Summary Of Operations
-		operation_summary['> Adding']="$(__msg_num_issues)"
-
-		# Display Summary Of Operations
-		__summary
-
-		exit 1
-	fi
-
-	# Store operation status for Summary Of Operations
-	operation_summary['> Adding']='Operation Completed'
-fi
-
-# .: RETAG :.
-#-------------------------------------------------------------------------------
-if [[ "${retag_flac}" == "true" ]] ; then
-	# If COVERART tag doesn't appear in any of the FLAC files'
-	# tags, and if the user wants artwork to be kept, don't log
-	# missing COVERART tags (in the event that the script adds
-	# it into the tag array)
-	if [[ "${coverart_warning}" != "true" && "${remove_artwork}" != "true" ]] ; then
-		# Analyze tags but don't log COVERART as a missing
-		# tag (if applicable)
-		analyze_tags="__operation_analyze_tags_dont_log_coverart"
-	else
-		# Log all the missing tags found in the ${tags} array including COVERART
-		# tag, regardless of whether it was added by the script or explicitly
-		# chosen by the user
-		analyze_tags="__operation_analyze_tags"
-	fi
-
-	# Prints title message of current operation
-	__operation_message 'retag'
-
-	# Copy the tag array because we will need to use it
-	# later as we are _may_ add a temporary element to the
-	# tag array
-	old_tags=( "${tags[@]}" )
-
-	##
-	# .: ANALYZE TAGS :.
-	##
-	# Analyze FLAC tags to ensure none are missing and/or empty
-
-	# Prints sub message of current operation
-	__operation_message '' 'retag_analyze'
-
-	# Scroll terminal, if needed
-	__scroll_terminal
-
-	# Make sure to clear file descriptor '3' before proceeding
-	__clear_tmp_fd
-
-	# Set the cursor to the correct row depending on whether there were more
-	# or less files to process than the number of jobs to run
-	if (( ${#total_items[@]} < jobs )) ; then
-		# Less files than jobs to run, so only add the number of files
-		# processed
-		post_row=$(( $(__row) + ${#total_items[@]} ))
-	else
-		# More files than jobs to run, so add the number of jobs processed
-		post_row=$(( $(__row) + jobs ))
-	fi
-
-	trap '__trap_sigint "$post_row" "retag_analyze"' SIGINT
-
-	# Run parallel operations, that which is specified as ${1}
-	__run_parallel "${analyze_tags}"
-
-	printf "\033[${post_row}H"
-
-	# Test for DEPRECATED tag, COVERART in METADATA_ERROR log.  If it
-	# exists, set coverart_warning variable to make script output
-	# warning upon completion
-	if [[ -f "${log_file}" ]] ; then
-		while read -r i ; do
-			# Indentation is culled from reading in "${i}"
-			# To change this, set IFS to '\n'
-			if [[ "${i}" == *METADATA_BLOCK_PICTURE* ]] ; then
-				coverart_warning="true"
-				break
-			fi
-		done < "${log_file}"
-	fi
-
-	if [[ -f "${log_file}"  && "${coverart_warning}" == "true" ]] ; then
-		# Display COVERART warning function and metadata issues
-		printf '\n' >&2 ; __coverart_warning
-
-		# Print out log exists to STDERR
-		__message_log_exists 'retag'
-
-		# Prepend log header to log file
-		__create_log 'retag'
-
-		# Store operation status for Summary Of Operations
-		operation_summary['> Analyzing']="$(__msg_num_issues)"
-
-		# Display Summary Of Operations
-		__summary
-
-		exit 1
-	elif [[ -f "${log_file}" ]] ; then
-		# Print out log exists to STDERR
-		__message_log_exists 'retag'
-
-		# Prepend log header to log file
-		__create_log 'retag'
-
-		# Store operation status for Summary Of Operations
-		operation_summary['> Analyzing']="$(__msg_num_issues)"
-
-		# Display Summary Of Operations
-		__summary
-
-		exit 1
-	fi
-
-	# Store operation status for Summary Of Operations
-	operation_summary['> Analyzing']='Operation Completed'
-
-	##
-	# .: SET TAGS :.
-	##
-	# Clear the old tags and re-tag with the kept tags
-
-	# Restore the original tags array as the script _may_ have
-	# added the COVERART tag.  This way, we ensure that the
-	# COVERART tag was, in fact, temporary.
-	tags=( "${old_tags[@]}" )
-
-	# Prints sub message of current operation
-	__operation_message '' 'retag_apply'
-
-	# Scroll terminal, if needed
-	__scroll_terminal
-
-	# Make sure to clear file descriptor '3' before proceeding
-	__clear_tmp_fd
-
-	# Set the cursor to the correct row depending on whether there were more
-	# or less files to process than the number of jobs to run
-	if (( ${#total_items[@]} < jobs )) ; then
-		# Less files than jobs to run, so only add the number of files
-		# processed
-		post_row=$(( $(__row) + ${#total_items[@]} ))
-	else
-		# More files than jobs to run, so add the number of jobs processed
-		post_row=$(( $(__row) + jobs ))
-	fi
-
-	trap '__trap_sigint "$post_row" "retag_apply"' SIGINT
-
-	# Run parallel operations, that which is specified as ${1}
-	__run_parallel '__operation_set_tags'
-
-	printf "\033[${post_row}H"
-
-	# Store operation status for Summary Of Operations
-	operation_summary['> Applying']='Operation Completed'
-fi
-
-# .: EXTRACT ARTWORK :.
-#-------------------------------------------------------------------------------
-if [[ "${extract_artwork}" == "true" ]] ; then
-	# Prints title message of current operation
-	__operation_message 'extract_artwork'
-
-	# Scroll terminal, if needed
-	__scroll_terminal
-
-	# Make sure to clear file descriptor '3' before proceeding
-	__clear_tmp_fd
-
-	# Set the cursor to the correct row depending on whether there were more
-	# or less files to process than the number of jobs to run
-	if (( ${#total_items[@]} < jobs )) ; then
-		# Less files than jobs to run, so only add the number of files
-		# processed
-		post_row=$(( $(__row) + ${#total_items[@]} ))
-	else
-		# More files than jobs to run, so add the number of jobs processed
-		post_row=$(( $(__row) + jobs ))
-	fi
-
-	trap '__trap_sigint "$post_row" "extract_artwork"' SIGINT
-
-	# Run parallel operations, that which is specified as ${1}
-	__run_parallel '__operation_extract_artwork'
-
-	printf "\033[${post_row}H"
-
-	if [[ -f "${log_file}" ]] ; then
-		# Print out log exists to STDERR
-		__message_log_exists 'extract_artwork'
-
-		# Prepend log header to log file
-		__create_log 'extract_artwork'
-
-		# Store operation status for Summary Of Operations
-		operation_summary['Extracting Artwork']="$(__msg_num_issues)"
-
-		# Display Summary Of Operations
-		__summary
-
-		exit 1
-	fi
-
-	# Store operation status for Summary Of Operations
-	operation_summary['Extracting Artwork']='Operation Completed'
-fi
-
-# .: PRUNE :.
-#-------------------------------------------------------------------------------
-if [[ "${prune_flac}" == "true" ]] ; then
-	# Don't remove artwork if user wants it kept.  We don't have to check
-	# for the legacy COVERART tag as we are NOT removing any VORBIS_COMMENTs.
+# Open up a temporary file descriptor to send auCDtect's
+# STDOUT to
+__create_aucdtect_fd
+
+# operations[0]='aucdtect'
+# operations[1]='aucdtect_spectrogram'
+# operations[2]='md5_check'
+# operations[3]='compress_verify'
+# operations[4]='compress_no_verify'
+# operations[5]='test'
+# operations[6]='replaygain_test'
+# operations[7]='replyagain_force_apply'
+# operations[7]='replyagain_apply'
+# operations[8]='retag_analyze'
+# operations[9]='retag_apply'
+# operations[10]='extract_artwork'
+# operations[11]='prune'
+for operation in "${operations[@]}" ; do
 	if [[ "${remove_artwork}" == "true" ]] ; then
 		# Remove artwork
 		dont_prune_flac_metadata="STREAMINFO,VORBIS_COMMENT"
@@ -5780,7 +5288,7 @@ if [[ "${prune_flac}" == "true" ]] ; then
 	fi
 
 	# Prints title message of current operation
-	__operation_message 'prune'
+	__message "${operation}"
 
 	# Scroll terminal, if needed
 	__scroll_terminal
@@ -5799,22 +5307,22 @@ if [[ "${prune_flac}" == "true" ]] ; then
 		post_row=$(( $(__row) + jobs ))
 	fi
 
-	trap '__trap_sigint "$post_row" "prune"' SIGINT
+	trap '__trap_sigint "$post_row" "${operation}"' SIGINT
 
 	# Run parallel operations, that which is specified as ${1}
-	__run_parallel '__operation_prune'
+	__run_parallel "__${operation}"
 
 	printf "\033[${post_row}H"
 
 	if [[ -f "${log_file}" ]] ; then
 		# Print out log exists to STDERR
-		__message_log_exists 'prune'
+		__message_log_exists "${operation}"
 
-		# Prepend log header to log file
-		__create_log 'prune'
+		# Create and format log
+		__create_log "${operation}"
 
-		# Store operation status for Summary Of Operations
-		operation_summary['Prune METADATA Blocks']="$(__msg_num_issues)"
+		# Update status for the current operation
+		__update_operation_status "${operation}" "$(__num_issues)"
 
 		# Display Summary Of Operations
 		__summary
@@ -5822,9 +5330,336 @@ if [[ "${prune_flac}" == "true" ]] ; then
 		exit 1
 	fi
 
-	# Store operation status for Summary Of Operations
-	operation_summary['Prune METADATA Blocks']='Operation Completed'
-fi
+	# Update status for the current operation
+	__update_operation_status "${operation}" 'Operation Completed'
+done
+
+#   # .: REPLAYGAIN :.
+#   #-------------------------------------------------------------------------------
+#   if [[ "${replaygain_flac}" == "true" ]] ; then
+#   	# Check if "-G, --replaygain-noforce" was called
+#   	if [[ "${replaygain_noforce}" == "true" ]] ; then
+#   		process_replaygain="__replaygain_noforce"
+#   	else
+#   		process_replaygain="__replaygain_force"
+#   	fi
+#   
+#   	# Prints title message of current operation
+#   	__message 'replaygain'
+#   
+#   	##
+#   	# .: TEST REPLAYGAIN :.
+#   	##
+#   	# Prints sub message of current operation
+#   	__message '' 'replaygain_test'
+#   
+#   	# Scroll terminal, if needed
+#   	__scroll_terminal
+#   
+#   	# Make sure to clear file descriptor '3' before proceeding
+#   	__clear_tmp_fd
+#   
+#   	# Set the cursor to the correct row depending on whether there were more
+#   	# or less files to process than the number of jobs to run
+#   	if (( ${#total_items[@]} < jobs )) ; then
+#   		# Less files than jobs to run, so only add the number of files
+#   		# processed
+#   		post_row=$(( $(__row) + ${#total_items[@]} ))
+#   	else
+#   		# More files than jobs to run, so add the number of jobs processed
+#   		post_row=$(( $(__row) + jobs ))
+#   	fi
+#   
+#   	trap '__trap_sigint "$post_row" "replaygain_test"' SIGINT
+#   
+#   	# Run parallel operations, that which is specified as ${1}
+#   	__run_parallel '__test_replaygain'
+#   
+#   	printf "\033[${post_row}H"
+#   
+#   	if [[ -f "${log_file}" ]] ; then
+#   		# Print out log exists to STDERR
+#   		__message_log_exists 'replaygain_test'
+#   
+#   		# Prepend log header to log file
+#   		__create_log 'replaygain_test'
+#   
+#   		# Store operation status for Summary Of Operations
+#   		operation_summary['> Testing']="$(__num_issues)"
+#   
+#   		# Display Summary Of Operations
+#   		__summary
+#   
+#   		exit 1
+#   	fi
+#   
+#   	# Store operation status for Summary Of Operations
+#   	operation_summary['> Testing']='Operation Completed'
+#   
+#   	##
+#   	# .: PROCESS REPLAYGAIN :.
+#   	##
+#   	# Make printing pretty if specified directory is '.'
+#   	if [[ "${directory}" == "." ]] ; then
+#   		directory="${PWD}"
+#   	fi
+#   
+#   	# List of directories to process
+#   	__get_directory_list "${total_items[@]}"  # Returns $total_dirs[@]
+#   	total_items=( "${total_dirs[@]}" )        # Change to processing directories
+#   
+#   	# Prints sub message of current operation
+#   	__message '' 'replaygain_add'
+#   
+#   	# Scroll terminal, if needed
+#   	__scroll_terminal
+#   
+#   	# Set the cursor to the correct row depending on whether there were more
+#   	# or less directories to process than the number of jobs to run
+#   	if (( ${#total_items[@]} < jobs )) ; then
+#   		# Less directories than jobs to run, so only add the number of
+#   		# directories processed
+#   		post_row=$(( $(__row) + ${#total_items[@]} ))
+#   	else
+#   		# More directories than jobs to run, so add the number of jobs processed
+#   		post_row=$(( $(__row) + jobs ))
+#   	fi
+#   
+#   	trap '__trap_sigint "$post_row" "replaygain_add"' SIGINT
+#   
+#   	# Run parallel operations, that which is specified as ${1}
+#   	__run_parallel "${process_replaygain}"
+#   
+#   	printf "\033[${post_row}H"
+#   
+#   	if [[ -f "${log_file}" ]] ; then
+#   		# Print out log exists to STDERR
+#   		__message_log_exists 'replaygain_add'
+#   
+#   		# Prepend log header to log file
+#   		__create_log 'replaygain_add'
+#   
+#   		# Store operation status for Summary Of Operations
+#   		operation_summary['> Adding']="$(__num_issues)"
+#   
+#   		# Display Summary Of Operations
+#   		__summary
+#   
+#   		exit 1
+#   	fi
+#   
+#   	# Store operation status for Summary Of Operations
+#   	operation_summary['> Adding']='Operation Completed'
+#   fi
+#   
+#   # .: RETAG :.
+#   #-------------------------------------------------------------------------------
+#   if [[ "${retag_flac}" == "true" ]] ; then
+#   	# If COVERART tag doesn't appear in any of the FLAC files'
+#   	# tags, and if the user wants artwork to be kept, don't log
+#   	# missing COVERART tags (in the event that the script adds
+#   	# it into the tag array)
+#   	if [[ "${coverart_warning}" != "true" && "${remove_artwork}" != "true" ]] ; then
+#   		# Analyze tags but don't log COVERART as a missing
+#   		# tag (if applicable)
+#   		analyze_tags="__analyze_tags_dont_log_coverart"
+#   	else
+#   		# Log all the missing tags found in the ${tags} array including COVERART
+#   		# tag, regardless of whether it was added by the script or explicitly
+#   		# chosen by the user
+#   		analyze_tags="__analyze_tags"
+#   	fi
+#   
+#   	# Prints title message of current operation
+#   	__message 'retag'
+#   
+#   	# Copy the tag array because we will need to use it
+#   	# later as we are _may_ add a temporary element to the
+#   	# tag array
+#   	old_tags=( "${tags[@]}" )
+#   
+#   	##
+#   	# .: ANALYZE TAGS :.
+#   	##
+#   	# Analyze FLAC tags to ensure none are missing and/or empty
+#   
+#   	# Prints sub message of current operation
+#   	__message '' 'retag_analyze'
+#   
+#   	# Scroll terminal, if needed
+#   	__scroll_terminal
+#   
+#   	# Make sure to clear file descriptor '3' before proceeding
+#   	__clear_tmp_fd
+#   
+#   	# Set the cursor to the correct row depending on whether there were more
+#   	# or less files to process than the number of jobs to run
+#   	if (( ${#total_items[@]} < jobs )) ; then
+#   		# Less files than jobs to run, so only add the number of files
+#   		# processed
+#   		post_row=$(( $(__row) + ${#total_items[@]} ))
+#   	else
+#   		# More files than jobs to run, so add the number of jobs processed
+#   		post_row=$(( $(__row) + jobs ))
+#   	fi
+#   
+#   	trap '__trap_sigint "$post_row" "retag_analyze"' SIGINT
+#   
+#   	# Run parallel operations, that which is specified as ${1}
+#   	__run_parallel "${analyze_tags}"
+#   
+#   	printf "\033[${post_row}H"
+#   
+#   	# Test for DEPRECATED tag, COVERART in METADATA_ERROR log.  If it
+#   	# exists, set coverart_warning variable to make script output
+#   	# warning upon completion
+#   	if [[ -f "${log_file}" ]] ; then
+#   		while read -r i ; do
+#   			# Indentation is culled from reading in "${i}"
+#   			# To change this, set IFS to '\n'
+#   			if [[ "${i}" == *METADATA_BLOCK_PICTURE* ]] ; then
+#   				coverart_warning="true"
+#   				break
+#   			fi
+#   		done < "${log_file}"
+#   	fi
+#   
+#   	if [[ -f "${log_file}"  && "${coverart_warning}" == "true" ]] ; then
+#   		# Display COVERART warning function and metadata issues
+#   		printf '\n' >&2 ; __coverart_warning
+#   
+#   		# Print out log exists to STDERR
+#   		__message_log_exists 'retag'
+#   
+#   		# Prepend log header to log file
+#   		__create_log 'retag'
+#   
+#   		# Store operation status for Summary Of Operations
+#   		operation_summary['> Analyzing']="$(__num_issues)"
+#   
+#   		# Display Summary Of Operations
+#   		__summary
+#   
+#   		exit 1
+#   	elif [[ -f "${log_file}" ]] ; then
+#   		# Print out log exists to STDERR
+#   		__message_log_exists 'retag'
+#   
+#   		# Prepend log header to log file
+#   		__create_log 'retag'
+#   
+#   		# Store operation status for Summary Of Operations
+#   		operation_summary['> Analyzing']="$(__num_issues)"
+#   
+#   		# Display Summary Of Operations
+#   		__summary
+#   
+#   		exit 1
+#   	fi
+#   
+#   	# Store operation status for Summary Of Operations
+#   	operation_summary['> Analyzing']='Operation Completed'
+#   
+#   	##
+#   	# .: SET TAGS :.
+#   	##
+#   	# Clear the old tags and re-tag with the kept tags
+#   
+#   	# Restore the original tags array as the script _may_ have
+#   	# added the COVERART tag.  This way, we ensure that the
+#   	# COVERART tag was, in fact, temporary.
+#   	tags=( "${old_tags[@]}" )
+#   
+#   	# Prints sub message of current operation
+#   	__message '' 'retag_apply'
+#   
+#   	# Scroll terminal, if needed
+#   	__scroll_terminal
+#   
+#   	# Make sure to clear file descriptor '3' before proceeding
+#   	__clear_tmp_fd
+#   
+#   	# Set the cursor to the correct row depending on whether there were more
+#   	# or less files to process than the number of jobs to run
+#   	if (( ${#total_items[@]} < jobs )) ; then
+#   		# Less files than jobs to run, so only add the number of files
+#   		# processed
+#   		post_row=$(( $(__row) + ${#total_items[@]} ))
+#   	else
+#   		# More files than jobs to run, so add the number of jobs processed
+#   		post_row=$(( $(__row) + jobs ))
+#   	fi
+#   
+#   	trap '__trap_sigint "$post_row" "retag_apply"' SIGINT
+#   
+#   	# Run parallel operations, that which is specified as ${1}
+#   	__run_parallel '__set_tags'
+#   
+#   	printf "\033[${post_row}H"
+#   
+#   	# Store operation status for Summary Of Operations
+#   	operation_summary['> Applying']='Operation Completed'
+#   fi
+#   
+#   # .: PRUNE :.
+#   #-------------------------------------------------------------------------------
+#   if [[ "${prune_flac}" == "true" ]] ; then
+#   	# Don't remove artwork if user wants it kept.  We don't have to check
+#   	# for the legacy COVERART tag as we are NOT removing any VORBIS_COMMENTs.
+#   	if [[ "${remove_artwork}" == "true" ]] ; then
+#   		# Remove artwork
+#   		dont_prune_flac_metadata="STREAMINFO,VORBIS_COMMENT"
+#   	else
+#   		# Don't remove artwork
+#   		dont_prune_flac_metadata="STREAMINFO,PICTURE,VORBIS_COMMENT"
+#   	fi
+#   
+#   	# Prints title message of current operation
+#   	__message 'prune'
+#   
+#   	# Scroll terminal, if needed
+#   	__scroll_terminal
+#   
+#   	# Make sure to clear file descriptor '3' before proceeding
+#   	__clear_tmp_fd
+#   
+#   	# Set the cursor to the correct row depending on whether there were more
+#   	# or less files to process than the number of jobs to run
+#   	if (( ${#total_items[@]} < jobs )) ; then
+#   		# Less files than jobs to run, so only add the number of files
+#   		# processed
+#   		post_row=$(( $(__row) + ${#total_items[@]} ))
+#   	else
+#   		# More files than jobs to run, so add the number of jobs processed
+#   		post_row=$(( $(__row) + jobs ))
+#   	fi
+#   
+#   	trap '__trap_sigint "$post_row" "prune"' SIGINT
+#   
+#   	# Run parallel operations, that which is specified as ${1}
+#   	__run_parallel '__prune'
+#   
+#   	printf "\033[${post_row}H"
+#   
+#   	if [[ -f "${log_file}" ]] ; then
+#   		# Print out log exists to STDERR
+#   		__message_log_exists 'prune'
+#   
+#   		# Prepend log header to log file
+#   		__create_log 'prune'
+#   
+#   		# Store operation status for Summary Of Operations
+#   		operation_summary['Prune METADATA Blocks']="$(__num_issues)"
+#   
+#   		# Display Summary Of Operations
+#   		__summary
+#   
+#   		exit 1
+#   	fi
+#   
+#   	# Store operation status for Summary Of Operations
+#   	operation_summary['Prune METADATA Blocks']='Operation Completed'
+#   fi
 
 #-------------------------------------------------------------------------------
 
