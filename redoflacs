@@ -2295,6 +2295,9 @@ __top_banner() {
 		printf '\n\n'
 	fi
 
+	# Find FLAC version
+	read -r _ flac_version < <(flac --version)
+
 	# Top title line
 	printf "${normal}%s${blue}%s${normal}\n" \
 	" " "---------------------------------------------------"
@@ -2309,7 +2312,11 @@ __top_banner() {
 
 	# Script version
 	printf "${normal}%s${blue}%s${normal}%s${cyan}%s${normal}\n" \
-	"                  Version " "|" " " "${version}"
+	"           Script Version " "|" " " "${version}"
+
+	# FLAC version
+	printf "${normal}%s${blue}%s${normal}%s${cyan}%s${normal}\n" \
+	"             FLAC Version " "|" " " "${flac_version}"
 
 	# Processes to be used
 	printf "${normal}%s${blue}%s${normal}%s${cyan}%s${normal}%s${cyan}%s${normal}\n" \
@@ -5242,7 +5249,7 @@ for operation in "${operations[@]}" ; do
 			fi
 		;;
 		replaygain_*apply)
-			# Make printing pretty if specified directory is '.'
+			# Change current directory to absolute pathname if: .
 			if [[ "${directory}" == "." ]] ; then
 				directory="${PWD}"
 			fi
