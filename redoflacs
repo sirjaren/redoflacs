@@ -2980,8 +2980,8 @@ __summary() {
 		'Compress FLACs'
 		'Test FLACs'
 		'> Testing'
-		'> Applying'   # Used in 'replaygain' and 'retagging'
 		'> Analyzing'
+		'> Applying'   # Used in 'replaygain' & 'retagging'; Must be after sub messages
 		'Extracting Artwork'
 		'Prune METADATA Blocks'
 	)
@@ -5230,6 +5230,7 @@ __processed_flacs_ok
 # operations[10]='extract_artwork'
 # operations[11]='prune'
 for operation in "${operations[@]}" ; do
+	# Operation-specific logic
 	case "${operation}" in
 		prune)
 			if [[ "${remove_artwork}" == "true" ]] ; then
@@ -5249,6 +5250,32 @@ for operation in "${operations[@]}" ; do
 			# List of directories to process
 			__get_directory_list "${total_items[@]}"  # Returns $total_dirs[@]
 			total_items=( "${total_dirs[@]}" )        # Change to processing directories
+		;;
+		retag_analyze)
+			# If COVERART tag doesn't appear in any of the FLAC files'
+			# tags, and if the user wants artwork to be kept, don't log
+			# missing COVERART tags (in the event that the script adds
+			# it into the tag array)
+			if [[ "${coverart_warning}" != "true" && "${remove_artwork}" != "true" ]] ; then
+				# Analyze tags but don't log COVERART as a missing
+				# tag (if applicable)
+				analyze_tags="__analyze_tags_dont_log_coverart"
+			else
+				# Log all the missing tags found in the ${tags} array including COVERART
+				# tag, regardless of whether it was added by the script or explicitly
+				# chosen by the user
+				analyze_tags="__analyze_tags"
+			fi
+
+			# later as we are _may_ add a temporary element to the
+			# tag array
+			old_tags=( "${tags[@]}" )
+		;;
+		retag_apply)
+			# Restore the original tags array as the script _may_ have
+			# added the COVERART tag.  This way, we ensure that the
+			# COVERART tag was, in fact, temporary.
+			tags=( "${old_tags[@]}" )
 		;;
 	esac
 
@@ -5298,155 +5325,6 @@ for operation in "${operations[@]}" ; do
 	# Update status for the current operation
 	__update_operation_status "${operation}" 'Operation Completed'
 done
-
-#   # .: RETAG :.
-#   #-------------------------------------------------------------------------------
-#   if [[ "${retag_flac}" == "true" ]] ; then
-#   	# If COVERART tag doesn't appear in any of the FLAC files'
-#   	# tags, and if the user wants artwork to be kept, don't log
-#   	# missing COVERART tags (in the event that the script adds
-#   	# it into the tag array)
-#   	if [[ "${coverart_warning}" != "true" && "${remove_artwork}" != "true" ]] ; then
-#   		# Analyze tags but don't log COVERART as a missing
-#   		# tag (if applicable)
-#   		analyze_tags="__analyze_tags_dont_log_coverart"
-#   	else
-#   		# Log all the missing tags found in the ${tags} array including COVERART
-#   		# tag, regardless of whether it was added by the script or explicitly
-#   		# chosen by the user
-#   		analyze_tags="__analyze_tags"
-#   	fi
-#   
-#   	# Prints title message of current operation
-#   	__message 'retag'
-#   
-#   	# Copy the tag array because we will need to use it
-#   	# later as we are _may_ add a temporary element to the
-#   	# tag array
-#   	old_tags=( "${tags[@]}" )
-#   
-#   	##
-#   	# .: ANALYZE TAGS :.
-#   	##
-#   	# Analyze FLAC tags to ensure none are missing and/or empty
-#   
-#   	# Prints sub message of current operation
-#   	__message '' 'retag_analyze'
-#   
-#   	# Scroll terminal, if needed
-#   	__scroll_terminal
-#   
-#   	# Make sure to clear file descriptor '3' before proceeding
-#   	__clear_tmp_fd
-#   
-#   	# Set the cursor to the correct row depending on whether there were more
-#   	# or less files to process than the number of jobs to run
-#   	if (( ${#total_items[@]} < jobs )) ; then
-#   		# Less files than jobs to run, so only add the number of files
-#   		# processed
-#   		post_row=$(( $(__row) + ${#total_items[@]} ))
-#   	else
-#   		# More files than jobs to run, so add the number of jobs processed
-#   		post_row=$(( $(__row) + jobs ))
-#   	fi
-#   
-#   	trap '__trap_sigint "$post_row" "retag_analyze"' SIGINT
-#   
-#   	# Run parallel operations, that which is specified as ${1}
-#   	__run_parallel "${analyze_tags}"
-#   
-#   	printf "\033[${post_row}H"
-#   
-#   	# Test for DEPRECATED tag, COVERART in METADATA_ERROR log.  If it
-#   	# exists, set coverart_warning variable to make script output
-#   	# warning upon completion
-#   	if [[ -f "${log_file}" ]] ; then
-#   		while read -r i ; do
-#   			# Indentation is culled from reading in "${i}"
-#   			# To change this, set IFS to '\n'
-#   			if [[ "${i}" == *METADATA_BLOCK_PICTURE* ]] ; then
-#   				coverart_warning="true"
-#   				break
-#   			fi
-#   		done < "${log_file}"
-#   	fi
-#   
-#   	if [[ -f "${log_file}"  && "${coverart_warning}" == "true" ]] ; then
-#   		# Display COVERART warning function and metadata issues
-#   		printf '\n' >&2 ; __coverart_warning
-#   
-#   		# Print out log exists to STDERR
-#   		__message_log_exists 'retag'
-#   
-#   		# Prepend log header to log file
-#   		__create_log 'retag'
-#   
-#   		# Store operation status for Summary Of Operations
-#   		operation_summary['> Analyzing']="$(__num_issues)"
-#   
-#   		# Display Summary Of Operations
-#   		__summary
-#   
-#   		exit 1
-#   	elif [[ -f "${log_file}" ]] ; then
-#   		# Print out log exists to STDERR
-#   		__message_log_exists 'retag'
-#   
-#   		# Prepend log header to log file
-#   		__create_log 'retag'
-#   
-#   		# Store operation status for Summary Of Operations
-#   		operation_summary['> Analyzing']="$(__num_issues)"
-#   
-#   		# Display Summary Of Operations
-#   		__summary
-#   
-#   		exit 1
-#   	fi
-#   
-#   	# Store operation status for Summary Of Operations
-#   	operation_summary['> Analyzing']='Operation Completed'
-#   
-#   	##
-#   	# .: SET TAGS :.
-#   	##
-#   	# Clear the old tags and re-tag with the kept tags
-#   
-#   	# Restore the original tags array as the script _may_ have
-#   	# added the COVERART tag.  This way, we ensure that the
-#   	# COVERART tag was, in fact, temporary.
-#   	tags=( "${old_tags[@]}" )
-#   
-#   	# Prints sub message of current operation
-#   	__message '' 'retag_apply'
-#   
-#   	# Scroll terminal, if needed
-#   	__scroll_terminal
-#   
-#   	# Make sure to clear file descriptor '3' before proceeding
-#   	__clear_tmp_fd
-#   
-#   	# Set the cursor to the correct row depending on whether there were more
-#   	# or less files to process than the number of jobs to run
-#   	if (( ${#total_items[@]} < jobs )) ; then
-#   		# Less files than jobs to run, so only add the number of files
-#   		# processed
-#   		post_row=$(( $(__row) + ${#total_items[@]} ))
-#   	else
-#   		# More files than jobs to run, so add the number of jobs processed
-#   		post_row=$(( $(__row) + jobs ))
-#   	fi
-#   
-#   	trap '__trap_sigint "$post_row" "retag_apply"' SIGINT
-#   
-#   	# Run parallel operations, that which is specified as ${1}
-#   	__run_parallel '__set_tags'
-#   
-#   	printf "\033[${post_row}H"
-#   
-#   	# Store operation status for Summary Of Operations
-#   	operation_summary['> Applying']='Operation Completed'
-#   fi
 
 #-------------------------------------------------------------------------------
 
