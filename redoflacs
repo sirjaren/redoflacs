@@ -728,7 +728,7 @@ __message() {
 
 		# Print sub title message, if applicable
 		if [[ -n "${sub_message}" ]] ; then
-			printf "\033[$(__row);4H${green}>${normal} ${message}\n"
+			printf "\033[$(__row);4H${green}>${normal} ${sub_message}\n"
 		fi
 	fi
 }
@@ -742,7 +742,7 @@ __update_operation_status () {
 		compress_*)        operation_summary['Compress FLACs']="${2}"         ;;
 		test)              operation_summary['Test FLACs']="${2}"             ;;
 		replaygain_test)   operation_summary['> Testing']="${2}"              ;;
-		replyagain*apply)  operation_summary['> Applying']="${2}"             ;;
+		replaygain*apply)  operation_summary['> Applying']="${2}"             ;;
 		retag_analyze)     operation_summary['> Analyzing']="${2}"            ;;
 		retag_apply)       operation_summary['> Applying']="${2}"             ;;
 		extract_images)    operation_summary['Extracting Artwork']="${2}"     ;;
@@ -2672,9 +2672,9 @@ __process_positional_parameters() {
 			-g|-G)
 				operations[6]='replaygain_test'
 				if [[ "${i}" == '-g' ]] ; then
-					operations[7]='replyagain_force_apply'
+					operations[7]='replaygain_force_apply'
 				else  # '-G'
-					operations[7]='replyagain_apply'
+					operations[7]='replaygain_apply'
 				fi
 			;;
 			-r)
@@ -2980,9 +2980,8 @@ __summary() {
 		'Compress FLACs'
 		'Test FLACs'
 		'> Testing'
-		'> Applying'
+		'> Applying'   # Used in 'replaygain' and 'retagging'
 		'> Analyzing'
-		'> Applying'
 		'Extracting Artwork'
 		'Prune METADATA Blocks'
 	)
@@ -5224,20 +5223,34 @@ __processed_flacs_ok
 # operations[4]='compress_no_verify'
 # operations[5]='test'
 # operations[6]='replaygain_test'
-# operations[7]='replyagain_force_apply'
-# operations[7]='replyagain_apply'
+# operations[7]='replaygain_force_apply'
+# operations[7]='replaygain_apply'
 # operations[8]='retag_analyze'
 # operations[9]='retag_apply'
 # operations[10]='extract_artwork'
 # operations[11]='prune'
 for operation in "${operations[@]}" ; do
-	if [[ "${remove_artwork}" == "true" ]] ; then
-		# Remove artwork
-		dont_prune_flac_metadata="STREAMINFO,VORBIS_COMMENT"
-	else
-		# Don't remove artwork
-		dont_prune_flac_metadata="STREAMINFO,PICTURE,VORBIS_COMMENT"
-	fi
+	case "${operation}" in
+		prune)
+			if [[ "${remove_artwork}" == "true" ]] ; then
+				# Remove artwork
+				dont_prune_flac_metadata="STREAMINFO,VORBIS_COMMENT"
+			else
+				# Don't remove artwork
+				dont_prune_flac_metadata="STREAMINFO,PICTURE,VORBIS_COMMENT"
+			fi
+		;;
+		replaygain_*apply)
+			# Make printing pretty if specified directory is '.'
+			if [[ "${directory}" == "." ]] ; then
+				directory="${PWD}"
+			fi
+
+			# List of directories to process
+			__get_directory_list "${total_items[@]}"  # Returns $total_dirs[@]
+			total_items=( "${total_dirs[@]}" )        # Change to processing directories
+		;;
+	esac
 
 	# Prints title message of current operation
 	__message "${operation}"
@@ -5286,124 +5299,6 @@ for operation in "${operations[@]}" ; do
 	__update_operation_status "${operation}" 'Operation Completed'
 done
 
-#   # .: REPLAYGAIN :.
-#   #-------------------------------------------------------------------------------
-#   if [[ "${replaygain_flac}" == "true" ]] ; then
-#   	# Check if "-G, --replaygain-noforce" was called
-#   	if [[ "${replaygain_noforce}" == "true" ]] ; then
-#   		process_replaygain="__replaygain_noforce"
-#   	else
-#   		process_replaygain="__replaygain_force"
-#   	fi
-#   
-#   	# Prints title message of current operation
-#   	__message 'replaygain'
-#   
-#   	##
-#   	# .: TEST REPLAYGAIN :.
-#   	##
-#   	# Prints sub message of current operation
-#   	__message '' 'replaygain_test'
-#   
-#   	# Scroll terminal, if needed
-#   	__scroll_terminal
-#   
-#   	# Make sure to clear file descriptor '3' before proceeding
-#   	__clear_tmp_fd
-#   
-#   	# Set the cursor to the correct row depending on whether there were more
-#   	# or less files to process than the number of jobs to run
-#   	if (( ${#total_items[@]} < jobs )) ; then
-#   		# Less files than jobs to run, so only add the number of files
-#   		# processed
-#   		post_row=$(( $(__row) + ${#total_items[@]} ))
-#   	else
-#   		# More files than jobs to run, so add the number of jobs processed
-#   		post_row=$(( $(__row) + jobs ))
-#   	fi
-#   
-#   	trap '__trap_sigint "$post_row" "replaygain_test"' SIGINT
-#   
-#   	# Run parallel operations, that which is specified as ${1}
-#   	__run_parallel '__test_replaygain'
-#   
-#   	printf "\033[${post_row}H"
-#   
-#   	if [[ -f "${log_file}" ]] ; then
-#   		# Print out log exists to STDERR
-#   		__message_log_exists 'replaygain_test'
-#   
-#   		# Prepend log header to log file
-#   		__create_log 'replaygain_test'
-#   
-#   		# Store operation status for Summary Of Operations
-#   		operation_summary['> Testing']="$(__num_issues)"
-#   
-#   		# Display Summary Of Operations
-#   		__summary
-#   
-#   		exit 1
-#   	fi
-#   
-#   	# Store operation status for Summary Of Operations
-#   	operation_summary['> Testing']='Operation Completed'
-#   
-#   	##
-#   	# .: PROCESS REPLAYGAIN :.
-#   	##
-#   	# Make printing pretty if specified directory is '.'
-#   	if [[ "${directory}" == "." ]] ; then
-#   		directory="${PWD}"
-#   	fi
-#   
-#   	# List of directories to process
-#   	__get_directory_list "${total_items[@]}"  # Returns $total_dirs[@]
-#   	total_items=( "${total_dirs[@]}" )        # Change to processing directories
-#   
-#   	# Prints sub message of current operation
-#   	__message '' 'replaygain_add'
-#   
-#   	# Scroll terminal, if needed
-#   	__scroll_terminal
-#   
-#   	# Set the cursor to the correct row depending on whether there were more
-#   	# or less directories to process than the number of jobs to run
-#   	if (( ${#total_items[@]} < jobs )) ; then
-#   		# Less directories than jobs to run, so only add the number of
-#   		# directories processed
-#   		post_row=$(( $(__row) + ${#total_items[@]} ))
-#   	else
-#   		# More directories than jobs to run, so add the number of jobs processed
-#   		post_row=$(( $(__row) + jobs ))
-#   	fi
-#   
-#   	trap '__trap_sigint "$post_row" "replaygain_add"' SIGINT
-#   
-#   	# Run parallel operations, that which is specified as ${1}
-#   	__run_parallel "${process_replaygain}"
-#   
-#   	printf "\033[${post_row}H"
-#   
-#   	if [[ -f "${log_file}" ]] ; then
-#   		# Print out log exists to STDERR
-#   		__message_log_exists 'replaygain_add'
-#   
-#   		# Prepend log header to log file
-#   		__create_log 'replaygain_add'
-#   
-#   		# Store operation status for Summary Of Operations
-#   		operation_summary['> Adding']="$(__num_issues)"
-#   
-#   		# Display Summary Of Operations
-#   		__summary
-#   
-#   		exit 1
-#   	fi
-#   
-#   	# Store operation status for Summary Of Operations
-#   	operation_summary['> Adding']='Operation Completed'
-#   fi
-#   
 #   # .: RETAG :.
 #   #-------------------------------------------------------------------------------
 #   if [[ "${retag_flac}" == "true" ]] ; then
