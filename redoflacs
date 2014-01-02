@@ -2299,32 +2299,31 @@ __top_banner() {
 	read -r _ flac_version < <(flac --version)
 
 	# Top title line
-	printf "${normal}%s${blue}%s${normal}\n" \
-	" " "---------------------------------------------------"
+	printf " ${blue}%s${normal}\n" \
+		"---------------------------------------------------"
 
 	# Title
-	printf "${normal}%s\n" \
-	"                Runtime Information"
+	printf "%16sRuntime Information\n"
 
 	# Bottom title line
-	printf "${normal}%s${blue}%s${normal}\n" \
-	" " "-------------------------+-------------------------"
+	printf " ${blue}%s${normal}\n" \
+		"-------------------------+-------------------------"
 
 	# Script version
-	printf "${normal}%s${blue}%s${normal}%s${cyan}%s${normal}\n" \
-	"           Script Version " "|" " " "${version}"
+	printf "           Script Version ${blue}|${normal} ${cyan}%s${normal}\n" \
+		"${version}"
 
 	# FLAC version
-	printf "${normal}%s${blue}%s${normal}%s${cyan}%s${normal}\n" \
-	"             FLAC Version " "|" " " "${flac_version}"
+	printf "             FLAC Version ${blue}|${normal} ${cyan}%s${normal}\n" \
+		"${flac_version}"
 
-	# Processes to be used
-	printf "${normal}%s${blue}%s${normal}%s${cyan}%s${normal}%s${cyan}%s${normal}\n" \
-	"            Parallel Jobs " "|" " " "${jobs}" " " "${jobs_display}"
+	# Number of Jobs
+	printf "            Parallel Jobs ${blue}|${normal} ${cyan}%s %s${normal}\n" \
+		"${jobs}" "${jobs_display}"
 
 	# Log directory
-	printf "${normal}%s${blue}%s${normal}%s${cyan}%s${normal}\n" \
-	"            Log Directory " "|" " " "${error_log}/"
+	printf "            Log Directory ${blue}|${normal} ${cyan}%s${normal}\n" \
+		"${error_log}/"
 
 	# Configuration directory
 	if (( EUID == 0 )) ; then
@@ -2334,12 +2333,12 @@ __top_banner() {
 		# Non root: User configuration
 		config_directory="~/.config/redoflacs/"
 	fi
-	printf "${normal}%s${blue}%s${normal}%s${cyan}%s${normal}\n" \
-	"         Config Directory " "|" " " "${config_directory}"
+	printf "         Config Directory ${blue}|${normal} ${cyan}%s${normal}\n" \
+		"${config_directory}"
 
 	# Bottom banner line
-	printf "${normal}%s${blue}%s${normal}\n" \
-	" " "-------------------------+-------------------------"
+	printf " ${blue}%s${normal}\n" \
+		"-------------------------+-------------------------"
 
 	# Message indicating the searching of FLAC files
 	__info "Finding FLAC files to process..."
@@ -2349,8 +2348,7 @@ __top_banner() {
 # line above.  This will be displayed when all the FLAC files
 # have been mapped to an array
 __processed_flacs_ok() {
-	printf "${normal}%11s${blue}%s${normal}%s${green}%s${normal}%s${blue}%s${normal}\n" \
-	"" "[" " " "ok" " " "]"
+	printf "%11s${blue}[ ${green}ok${blue} ]${normal}\n" ""
 }
 
 #-------------------------------------------------------------------------------
