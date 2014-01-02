@@ -41,20 +41,6 @@ __error() { printf " ${red}*${normal} ${@}"    ;}   # Bold red message
 
 #-------------------------------------------------------------------------------
 
-__coverart_warning() {
-	##
-	# Display why COVERART tag should not be used
-	##
-	printf "\n"
-	__warn "The ${cyan}COVERART${normal} tag is deprecated and should not be\n"
-	__warn "used. Instead, consider migrating over to the new format:\n"
-	__warn "${cyan}METADATA_BLOCK_PICTURE${normal}, using modern tag editors. Read:\n"
-	__warn "${cyan}http://wiki.xiph.org/VorbisComment#Unofficial_COVERART_field_.28deprecated.29${normal}\n"
-	__warn "for more details.\n"
-} >&2
-
-#-------------------------------------------------------------------------------
-
 __display_missing_commands_header() {
 	##
 	# Display message that system is missing vital programs
@@ -1414,39 +1400,12 @@ __exit_cleanup() {
 			# Remove temporarily encoded FLAC files
 			rm -f "${directory}"/**/*.tmp,fl-ac+en\'c
 		;;
-		retag_*)
-			# Test for deprecated tag, COVERART, in log file.  If it
-			# exists, set coverart_warning variable to make script output
-			# warning upon completion
-			if [[ -f "${log_file}" ]] ; then
-				while read -r i ; do
-					# Indentation is culled from reading in "${i}"
-					# To change this, set IFS to '\n'
-					if [[ "${i}" == *METADATA_BLOCK_PICTURE* ]] ; then
-						coverart_warning="true"
-						break
-					fi
-				done < "${log_file}"
-			fi
-		;;
 	esac
 
 	# Update status for the current operation
 	__update_operation_status "${1}" 'Operation Interrupted'
 
-	if [[ -f "${log_file}"  && "${coverart_warning}" == 'true' ]] ; then
-		# This block is only executed during the 'retag' operation
-		#--
-		# Display COVERART warning function and metadata issues
-		printf "\n" >&2
-		__coverart_warning
-
-		# Print out log exists to STDERR
-		__message_log_exists "$1"
-
-		# Create and format log
-		__create_log "$1"
-	elif [[ -f "${log_file}" ]] ; then
+	if [[ -f "${log_file}" ]] ; then
 		# Print out log exists to STDERR
 		__message_log_exists "${1}"
 
@@ -1927,7 +1886,7 @@ __parse_config() {
 			config_option="${line//*=*/}"  # Null if line is a config option
 
 			if [[ -n "${config_option}" ]] ; then
-				tags+=( "${line}" )        # Store line (tag) in array
+				tags+=( "${line^^}" )      # Store uppercase tag in array
 			else
 				eval "${line}"             # Put config option in environment
 			fi
@@ -2092,48 +2051,6 @@ __find_cores() {
 			jobs_display="(/proc/cpuinfo)"
 		fi
 	fi
-}
-
-#-------------------------------------------------------------------------------
-
-# If COVERART tag is kept and remove_artwork is set to 'true'
-# display conflict and exit
-__coverart_remove_conflict() {
-	# Check if COVERART exists in the tag array.  Notify user
-	# of its deprecation and advise against using it, preferring
-	# METADATA_BLOCK_PICTURE
-	for j in "${tags[@]}" ; do
-
-		if [[ "${j}" == "COVERART" ]] ; then
-
-			# If remove_artwork is "true" (remove the artwork), then
-			# exit and warn the user you can't specify whether you want to
-			# remove artwork, yet keep the COVERART tag in configuration file
-			if [[ "${remove_artwork}" == "true" ]] ; then
-
-				# Display COVERART tag warning
-				__coverart_warning
-
-				__error "\nIt appears you have ${cyan}remove_artwork${normal} set to ${cyan}true${normal} in the\n" >&2
-				__error "configuration file, yet ${cyan}COVERART${normal} is specified as one\n" >&2
-				__error "(or more) of the FLAC tags to be kept. Please choose either\n" >&2
-				__error "to keep album artwork (ie ${cyan}remove_artwork=\"false\"${normal}) or remove\n" >&2
-				__error "the ${cyan}COVERART${normal} tag located in the configuration file.\n" >&2
-
-				exit 1
-
-			# COVERART was found, but artwork is to be removed,
-			# so warn user of its deprecation
-			else
-
-				# Create coverart_warning variable, so script can append
-				# the coverart_warning function after completion as well as
-				# determine whether the script should temporarily add COVERART
-				# to the tag array
-				coverart_warning="true"
-			fi
-		fi
-	done
 }
 
 #-------------------------------------------------------------------------------
@@ -2361,7 +2278,7 @@ __countdown_metadata() {
 
 	# Warning message
 	__error "${yellow}CAUTION!${normal} These are the tag fields that will be kept\n" >&2
-	__error "when re-tagging the selected files:\n\n" >&2
+	__error "when re-tagging the selected files:\n" >&2
 
 	# Creates the listing of tags to be kept
 	for i in "${tags[@]}" ; do
@@ -2369,16 +2286,13 @@ __countdown_metadata() {
 	done
 
 	# Warning message about embedded coverart
-	printf "\n"
-	__error "By default, this script will ${cyan}REMOVE${normal} the legacy (deprecated)\n" >&2
-	__error "${cyan}COVERART${normal} tag when re-tagging files.  Change the ${cyan}remove_artwork${normal}\n" >&2
-	__error "option (in the configuration file) to ${cyan}false${normal} to keep the legacy\n" >&2
-	__error "${cyan}COVERART${normal} tag, or add the ${cyan}COVERART${normal} tag to the list of tags to\n" >&2
-	__error "be kept in the ${cyan}TAGGING SECTION${normal} of the configuration file.\n\n" >&2
+	__error "By default, this script will ${cyan}REMOVE${normal} the legacy ${cyan}COVERART${normal} tag.\n" >&2
+	__error "Add the ${cyan}COVERART${normal} tag to the list of tags to be kept in the\n" >&2
+	__error "${cyan}TAGGING SECTION${normal} of the configuration file.\n\n" >&2
 
 	__error "Keep in mind, if the ${cyan}remove_artwork${normal} option is set to ${cyan}false${normal},\n" >&2
 	__error "embedded artwork in the ${cyan}PICTURE${normal} block will be kept when using\n" >&2
-	__error "${cyan}-p, --prune${normal} option as well.\n\n" >&2
+	__error "the ${cyan}-p, --prune${normal} option as well.\n\n" >&2
 
 	__warn "Waiting ${red}10${normal} seconds before starting program...\n" >&2
 	__warn "Ctrl+C (Control-C) to abort...\n" >&2
@@ -2386,9 +2300,11 @@ __countdown_metadata() {
 
 	# 10 second countdown
 	for count in {10..1} ; do
-		printf "${red}%s${normal}%s" "$count" " "
-		read -t1 # Sleep 1
+		printf "${red}%d ${normal}" "$count"
+		read -t1  # Sleep 1
 	done
+
+	printf '\n'  # Advance countdown to next line
 }
 
 #-------------------------------------------------------------------------------
@@ -3972,191 +3888,6 @@ __retag_analyze() {
 
 #-------------------------------------------------------------------------------
 
-# Analyze FLAC tags (not logging missing COVERART tag)
-__analyze_tags_dont_log_coverart() {
-	trap '__kill_jobs "$(jobs -rp)"' EXIT
-
-	# Print current FLAC being processed
-	__print_sub_current_flac
-
-	# Check if file is a FLAC file (variable hides output)
-	check_flac="$(metaflac --show-md5sum "${i}" 2>&1)"
-
-	# If above command return anything other than '0', log output
-	if (( ${?} != 0 )) ; then
-
-		# Error with FLAC file, display failed/error
-		__print_sub_progress_failed
-
-		# Log FLAC failure
-		printf "%s__redoflacs::delimiter__Not a real FLAC file\n" "${i}" \
-			>> "${log_file}"
-
-		# Add one to fail fd
-		printf '.' >> "${issue_ticks}"
-	else
-		# Album artwork is to be kept so preserve COVERART by adding
-		# it to the tag array (temporary)
-		tags+=( COVERART )
-
-		# Iterate through each tag field and check if tag is missing (except
-		# for the COVERART tag)
-		for j in "${tags[@]}" ; do
-			# Check if ALBUMARTIST is in tag array and apply operations on
-			# the tag field if it exists
-			if [[ "${j}" == "ALBUMARTIST" ]] ; then
-				# ALBUMARTIST exists in tag array so allow script to check the
-				# various naming conventions within the FLAC files (ie,
-				# 'ALBUM ARTIST' or 'ALBUM_ARTIST')
-
-				# "ALBUMARTIST" or "ALBUM ARTIST" or "ALBUM_ARTIST", case-insensitive
-				if [[ -n "$(metaflac --show-tag=ALBUMARTIST "${i}")" ]] ; then
-					show_tag_list+=( "--show-tag=ALBUMARTIST" )
-
-				elif [[ -n "$(metaflac --show-tag="ALBUM ARTIST" "${i}")" ]] ; then
-					show_tag_list+=( "--show-tag='ALBUM ARTIST'" )
-
-				elif [[ -n "$(metaflac --show-tag="ALBUM_ARTIST" "${i}")" ]] ; then
-					show_tag_list+=( "--show-tag=ALBUM_ARTIST" )
-				fi
-			else
-				# Build up metaflac '--show-tag=' list
-				show_tag_list+=( "--show-tag=${j}" )
-			fi
-
-			# Check if COVERART exists and is not null
-			if [[ "${j}" == "COVERART" ]] ; then
-				# Obtain COVERART value
-				coverart_value="$(metaflac --show-tag=COVERART "${i}")"
-
-				# If COVERART value is not null, so log it exists and that
-				# COVERART tag is depcrated
-				if [[ -n "${coverart_value#*=}" ]] ; then
-
-					# Error with FLAC file, display failed/error
-					__print_sub_progress_failed
-
-					printf "%s__redoflacs::delimiter__COVERART tag is deprecated, consider using METADATA_BLOCK_PICTURE\n" "${i}" \
-						>> "${log_file}"
-
-					# Add one to fail fd
-					printf '.' >> "${issue_ticks}"
-				fi
-			fi
-		done
-
-		# Load up all the tag values for current file
-		mapfile -n0 -t metaflac_tag_array < \
-		<(
-			metaflac \
-				"${show_tag_list[@]}" \
-				"${i}"
-		)
-
-		# Take above tag values and create an associative
-		# array using TAG_FIELD=TAG_VALUE as the key/value pair
-		#
-		# Specifically declare an empty associative array
-		declare -A temp_tag_array
-
-		# Run through the tag array from above and store
-		# the values into a temporary tag array
-		for tag_field_value in "${metaflac_tag_array[@]}" ; do
-			# This is the tag field (eg. TITLE)
-			tag_field="${tag_field_value%%=*}"
-
-			# Enforce the tag field to be uppercase
-			# ${tag_field_value} below is the tag value
-			temp_tag_array+=( ["${tag_field^^}"]="${tag_field_value#*=}" )
-		done
-
-		# Run through the tags array and test each tag value from
-		# ${temp_tag_array} with the currently processed tag in ${tag[@]}.  For
-		# each match found, test if the tag value is null, reporting any missing
-		# tags. Then remove the tag field (index) from the ${temp_tag_array}, so
-		# the next iteration is faster and we can check for missing tags (tag
-		# fields)
-		for j in "${tags[@]}" ; do
-
-			# If the total # of indices in the temporary tag array is above
-			# 0, continue testing, else store missing tag (${j}) into the
-			# missing tags array
-			if (( ${#temp_tag_array[@]} > 0 )) ; then
-
-				# Compare each tag field from the temporary array to ${j},
-				# checking if they are equal and if so, check for missing
-				# tag values.
-				# Skip output of COVERART tag as this is a temporary
-				# addition to the tag array (for processing legacy artwork)
-				for temp_tag_field in "${!temp_tag_array[@]}" ; do
-					# Both tag fields are equal
-					if [[ "${j}" == "${temp_tag_field}" && "${j}" != "COVERART" ]] ; then
-						# Check if tag value is null, logging missing tags if so
-						if [[ -z "${temp_tag_array[${temp_tag_field}]}" ]] ; then
-							missing_tags+="${j}, "
-						fi
-
-						# Remove the current tag field from the temporary tag
-						# array since it's been matched already
-						unset -v temp_tag_array[${temp_tag_field}]
-
-						# This variable let's the script know that the current
-						# tag, ${j} has been matched up with a tag field in
-						# ${temp_tag_array[@]}
-						tag_match="true"
-
-						# Break out of loop since the tag fields have been
-						# matched, continuing on to the next iteration of ${j}
-						break
-					fi
-				done
-
-				# If there wasn't a tag field in the temporary tag array
-				# ( eg. ${temp_tag_array[@]} ) that matched ${j}, the FLAC file
-				# must have a missing tag, so log it by throwing the missing tag
-				# into the missing tags array.  Also skip logging of COVERART tag
-				if [[ "${tag_match}" != "true" && "${j}" != "COVERART" ]] ; then
-					missing_tags+="${j}, "
-				fi
-
-				# Reset the value of tag match (if any) for the next iteration
-				# of ${j}
-				unset -v tag_match
-
-			# The total # of indices in the temporary tag array is 0, so
-			# whatever is left in ${tags[@]} represented by ${j} is logged
-			# as missing.  Also skip logging of COVERART tag
-			elif [[ "${j}" != "COVERART" ]] ; then
-				missing_tags+="${j}, "
-			fi
-		done
-
-		# If missing_tags_array is not empty, there are missing
-		# tags in the current file so log output
-		if [[ -n "${missing_tags}" ]] ; then
-			# Error with FLAC file, display failed/error
-			__print_sub_progress_failed
-
-			# Log the missing tags
-			printf "%s__redoflacs::delimiter__Missing tags: ${missing_tags%, }\n" "${i}" \
-				>> "${log_file}"
-
-			# Add one to fail fd
-			printf '.' >> "${issue_ticks}"
-		else
-			# FLAC is ok, display ok
-			__print_sub_progress_ok
-		fi
-	fi
-
-	# Store the position of where the line of the FLAC file is displayed in file
-	# descriptor (3), to be used by the next job, terminated by a newline to
-	# indicate job completed
-	__store_position
-}
-
-#-------------------------------------------------------------------------------
-
 # Re-tag FLAC files
 __retag_apply() {
 	trap '__kill_jobs "$(jobs -rp)"' EXIT
@@ -5193,25 +4924,11 @@ exec 4<>"${tmp_aucdtect_fd}"
 # File where a tick is placed for each issue found
 issue_ticks="/tmp/redoflacs_issue_file_$$"
 
-# Display the top banner
-if [[ "${retag_flac}" != "true" ]] ; then
-	# Display top banner
-	__top_banner
-else
-	# Force all the tag fields to be uppercase
-	tags=( "${tags[@]^^}" )
+# Display a countdown if retagging FLACs
+[[ "${operations[8]}" == 'retag_analyze' ]] && __countdown_metadata
 
-	# Check for coverart conflicts.  Needed here
-	# to allow script to exit right away if there
-	# is a conflict
-	__coverart_remove_conflict
-
-	# Display a countdown before continuing
-	__countdown_metadata
-
-	# Display top banner
-	__top_banner
-fi
+# Display top banner
+__top_banner
 
 # Grab the total flacs to process
 total_items=( "${directory}"/**/*${flac_extension} )
@@ -5221,23 +4938,36 @@ __processed_flacs_ok
 
 #-------------------------------------------------------------------------------
 
-# operations[0]='aucdtect'
-# operations[1]='aucdtect_spectrogram'
-# operations[2]='md5_check'
-# operations[3]='compress_verify'
-# operations[4]='compress_no_verify'
-# operations[5]='test'
-# operations[6]='replaygain_test'
-# operations[7]='replaygain_force_apply'
-# operations[7]='replaygain_apply'
-# operations[8]='retag_analyze'
-# operations[9]='retag_apply'
-# operations[10]='extract_artwork'
-# operations[11]='prune'
 for operation in "${operations[@]}" ; do
-	# Operation-specific logic
+	# Loop through the various operations to run.  All the operations are to be
+	# run, in order, which is detailed below:
+	#   operations[0]='aucdtect'
+	#   operations[1]='aucdtect_spectrogram'
+	#   operations[2]='md5_check'
+	#   operations[3]='compress_verify'
+	#   operations[4]='compress_no_verify'
+	#   operations[5]='test'
+	#   operations[6]='replaygain_test'
+	#   operations[7]='replaygain_force_apply'   # Conditionally set
+	#   operations[7]='replaygain_apply'         # Conditionally set
+	#   operations[8]='retag_analyze'
+	#   operations[9]='retag_apply'
+	#   operations[10]='extract_artwork'
+	#   operations[11]='prune'
+	#--
 	case "${operation}" in
+		# Operation-specific procedures
+		#--
+		replaygain_*apply)
+			# Change current directory to absolute pathname
+			[[ "${directory}" == "." ]] && directory="${PWD}"
+
+			# List of directories to process
+			__get_directory_list "${total_items[@]}"  # Returns $total_dirs[@]
+			total_items=( "${total_dirs[@]}" )        # Change to processing directories
+		;;
 		prune)
+			# Set which FLAC metadata BLOCKS to remove
 			if [[ "${remove_artwork}" == "true" ]] ; then
 				# Remove artwork
 				dont_prune_flac_metadata="STREAMINFO,VORBIS_COMMENT"
@@ -5245,42 +4975,6 @@ for operation in "${operations[@]}" ; do
 				# Don't remove artwork
 				dont_prune_flac_metadata="STREAMINFO,PICTURE,VORBIS_COMMENT"
 			fi
-		;;
-		replaygain_*apply)
-			# Change current directory to absolute pathname if: .
-			if [[ "${directory}" == "." ]] ; then
-				directory="${PWD}"
-			fi
-
-			# List of directories to process
-			__get_directory_list "${total_items[@]}"  # Returns $total_dirs[@]
-			total_items=( "${total_dirs[@]}" )        # Change to processing directories
-		;;
-		retag_analyze)
-			# If COVERART tag doesn't appear in any of the FLAC files'
-			# tags, and if the user wants artwork to be kept, don't log
-			# missing COVERART tags (in the event that the script adds
-			# it into the tag array)
-			if [[ "${coverart_warning}" != "true" && "${remove_artwork}" != "true" ]] ; then
-				# Analyze tags but don't log COVERART as a missing
-				# tag (if applicable)
-				analyze_tags="__analyze_tags_dont_log_coverart"
-			else
-				# Log all the missing tags found in the ${tags} array including COVERART
-				# tag, regardless of whether it was added by the script or explicitly
-				# chosen by the user
-				analyze_tags="__analyze_tags"
-			fi
-
-			# later as we are _may_ add a temporary element to the
-			# tag array
-			old_tags=( "${tags[@]}" )
-		;;
-		retag_apply)
-			# Restore the original tags array as the script _may_ have
-			# added the COVERART tag.  This way, we ensure that the
-			# COVERART tag was, in fact, temporary.
-			tags=( "${old_tags[@]}" )
 		;;
 	esac
 
@@ -5332,11 +5026,6 @@ for operation in "${operations[@]}" ; do
 done
 
 #-------------------------------------------------------------------------------
-
-# Display warning about legacy COVERART tag, if applicable
-if [[ "${coverart_warning}" == "true" ]] ; then
-	__coverart_warning
-fi
 
 # Display Summary Of Operations
 __summary
