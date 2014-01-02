@@ -662,7 +662,7 @@ __message() {
 	#   prune
 	#--
 	# Set up local variables
-	declare message
+	declare message sub_message
 
 	# Print title message if $1 is not NULL
 	if [[ -n "${1}" ]] ; then
@@ -4939,28 +4939,26 @@ for operation in "${operations[@]}" ; do
 	#   operations[10]='extract_artwork'
 	#   operations[11]='prune'
 	#--
-	case "${operation}" in
-		# Operation-specific procedures
-		#--
-		replaygain_*apply)
-			# Change current directory to absolute pathname
-			[[ "${directory}" == "." ]] && directory="${PWD}"
+	if [[ "${operation}" == 'replaygain_'*'apply' ]] ; then
+		# Change current directory to absolute pathname
+		[[ "${directory}" == "." ]] && directory="${PWD}"
 
-			# List of directories to process
-			__get_directory_list "${total_items[@]}"  # Returns $total_dirs[@]
-			total_items=( "${total_dirs[@]}" )        # Change to processing directories
-		;;
-		prune)
-			# Set which FLAC metadata BLOCKS to remove
-			if [[ "${remove_artwork}" == "true" ]] ; then
-				# Remove artwork
-				dont_prune_flac_metadata="STREAMINFO,VORBIS_COMMENT"
-			else
-				# Don't remove artwork
-				dont_prune_flac_metadata="STREAMINFO,PICTURE,VORBIS_COMMENT"
-			fi
-		;;
-	esac
+		# List of directories to process
+		total_items_backup=( "${total_items[@]}" )  # Total FLACs backup array
+		__get_directory_list "${total_items[@]}"    # Returns $total_dirs[@]
+		total_items=( "${total_dirs[@]}" )          # Now process directories
+	fi
+
+	if [[ "${operation}" == 'prune' ]] ; then
+		# Set which FLAC metadata BLOCKS to remove
+		if [[ "${remove_artwork}" == "true" ]] ; then
+			# Remove artwork
+			dont_prune_flac_metadata="STREAMINFO,VORBIS_COMMENT"
+		else
+			# Don't remove artwork
+			dont_prune_flac_metadata="STREAMINFO,PICTURE,VORBIS_COMMENT"
+		fi
+	fi
 
 	# Prints title message of current operation
 	__message "${operation}"
@@ -5007,6 +5005,9 @@ for operation in "${operations[@]}" ; do
 
 	# Update status for the current operation
 	__update_operation_status "${operation}" 'Operation Completed'
+
+	# Restore the items to process from directories to FLACs
+	[[ "${operation}" == 'replaygain_'*'apply' ]] && total_items=( "${total_items_backup[@]}" )
 done
 
 #-------------------------------------------------------------------------------
