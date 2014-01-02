@@ -31,8 +31,7 @@
 #    1: STDOUT
 #    2: STDERR
 #    3: FIFO process manager
-#    4: auCDtect's (STDOUT) output
-#    5: Number of FLAC files that failed and/or had issues
+#    4: auCDtect's STDOUT output
 #-------------------------------------------------------------------------------
 
 __info()  { printf " ${green}*${normal} ${@}"  ;}   # Bold green message
@@ -42,9 +41,8 @@ __error() { printf " ${red}*${normal} ${@}"    ;}   # Bold red message
 #-------------------------------------------------------------------------------
 
 __display_missing_commands_header() {
-	##
 	# Display message that system is missing vital programs
-	##
+	#--
 	__error "You seem to be missing one or more necessary programs\n"
 	__error "to run this script reliably.  Below shows the program(s)\n"
 	__error "missing, as well as where you can install them from:\n"
@@ -53,9 +51,8 @@ __display_missing_commands_header() {
 #-------------------------------------------------------------------------------
 
 __long_help() {
-	##
 	# Display a lot of help
-	##
+	#--
 	long_help=".TH \"REDOFLACS\" 1
 .SH NAME
 redoflacs \\- Parallel BASH commandline FLAC compressor, verifier, organizer, analyzer, and retagger
@@ -432,9 +429,8 @@ Thanks to all the people whom have provided feedback and support!
 #-------------------------------------------------------------------------------
 
 __short_help() {
-	##
 	# Display short help
-	##
+	#--
 	printf " Usage: redoflacs [operations] [options] [target] ...\n"
 	printf " Operations:\n"
 	printf "   -c, --compress\n"
@@ -467,7 +463,6 @@ __usage() { printf " Usage: redoflacs [operations] [options] [target] ...\n" ;} 
 #-------------------------------------------------------------------------------
 
 __message_log_exists() {
-	##
 	# Print out the correct operational message regarding a log file's existence
 	# and what infomration that log may contain
 	#
@@ -478,7 +473,7 @@ __message_log_exists() {
 	#   replaygain_test   replaygain_force_apply      replaygain_apply
 	#   retag_analyze     retag_apply                 extract_images
 	#   prune
-	##
+	#--
 	case "$1" in
 		aucdtect*)
 			__error "Some FLAC files may be lossy sourced, please check:\n"
@@ -523,7 +518,6 @@ __message_log_exists() {
 #-------------------------------------------------------------------------------
 
 __create_log() {
-	##
 	# Take log file from the current operation, prepending a header to it as
 	# as well as formatting/aligning log lines
 	#
@@ -533,7 +527,7 @@ __create_log() {
 	#   replaygain_test   replaygain_force_apply      replaygain_apply
 	#   retag_analyze     retag_apply                 extract_images
 	#   prune
-	##
+	#--
 	# Set up local variables/arrays
 	declare -a header  log_array
 	declare    error_msg  filename  length  line
@@ -658,7 +652,6 @@ __create_log() {
 #-------------------------------------------------------------------------------
 
 __message() {
-	##
 	# Print out current operation message.
 	#
 	# $1 determines which title message to print (if any).  Possible values:
@@ -667,7 +660,7 @@ __message() {
 	#   replaygain_test   replaygain_force_apply      replaygain_apply
 	#   retag_analyze     retag_apply                 extract_images
 	#   prune
-	##
+	#--
 	# Set up local variables
 	declare message
 
@@ -1347,7 +1340,6 @@ __print_sub_progress_failed() {
 #-------------------------------------------------------------------------------
 
 __trap_sigint() {
-	##
 	# Kill any children process and display the correct interrupt message when
 	# a user sends SIGINT during script execution.
 	#
@@ -1361,7 +1353,7 @@ __trap_sigint() {
 	#   replaygain_test   replaygain_force_apply      replaygain_apply
 	#   retag_analyze     retag_apply                 extract_images
 	#   prune
-	##
+	#--
 	__kill_jobs "$(jobs -rp)"
 
 	# If $1 is NULL, it means that the user invoked SIGINT before any operation
@@ -1378,7 +1370,6 @@ __trap_sigint() {
 #-------------------------------------------------------------------------------
 
 __exit_cleanup() {
-	##
 	# Do any additional cleanup and check for the existence of a log file before
 	# exiting script.
 	#
@@ -1390,7 +1381,7 @@ __exit_cleanup() {
 	#   replaygain_test   replaygain_force_apply      replaygain_apply
 	#   retag_analyze     retag_apply                 extract_images
 	#   prune
-	##
+	#--
 	case "${1}" in
 		aucdtect*)
 			# Remove temporarily created WAV files (if any)
@@ -1438,9 +1429,8 @@ __print_version() { printf "Version %s\n" "${version}" ;}
 #-------------------------------------------------------------------------------
 
 __metaflac_version() {
-	##
 	# Obtain metaflac version information to test on
-	##
+	#--
 	# Metaflacs version (ie: '2' in 1.2.1)
 	IFS='.' read -r _ metaflac_version _ < <(metaflac --version)
 
@@ -1451,10 +1441,9 @@ __metaflac_version() {
 #-------------------------------------------------------------------------------
 
 __kill_jobs() {
-	##
 	# Kill any children process (obtained via $@), hiding errors and suppressing
 	# the shell's notification of terminated jobs
-	##
+	#--
 	for pid in $@ ; do
 		kill $pid 2>/dev/null
 		wait $pid 2>/dev/null
@@ -1464,9 +1453,8 @@ __kill_jobs() {
 #-------------------------------------------------------------------------------
 
 __row() {
-	##
 	# Print out the current cursor row position
-	##
+	#--
 	declare old_stty  row_pos        # Intialize local variables
 	exec < /dev/tty                  # Set a new TTY to read in STDIN
 	old_stty="$(stty -g)"            # Store current TTY settings
@@ -1869,12 +1857,11 @@ prepend_zero=\"false\"
 #-------------------------------------------------------------------------------
 
 __parse_config() {
-	##
 	# Parse the user/system configuration file
 	#
 	# Load the config file into an array and process each line, grabbing the
 	# user-specified FLAC tags and setting up the configuration variables
-	##
+	#--
 	mapfile -n0 -t config_array < "${config_file}"
 
 	for line in "${config_array[@]}" ; do
@@ -1897,10 +1884,9 @@ __parse_config() {
 #-------------------------------------------------------------------------------
 
 __check_config_version() {
-	##
 	# Check current configuration, if the version in the script is newer
 	# warn user and display a countdown before starting script
-	##
+	#--
 	# Check if configuration file exists based of ${EUID}.  If it doesn't
 	# exist, create one
 	if (( EUID == 0 )) ; then
@@ -2341,9 +2327,8 @@ __countdown_config() {
 #-------------------------------------------------------------------------------
 
 __get_directory_list() {
-	##
 	# Return a listing of the total base directories housing all the found FLACs
-	##
+	#--
 	declare     processed_dir  #  Set up local variable(s)
 	declare -ga total_dirs     #  Set up global array
 
@@ -2372,11 +2357,10 @@ __clear_tmp_fd() {
 #-------------------------------------------------------------------------------
 
 __num_issues() {
-	##
 	# Display the number of issues an operation may have by reading in the
 	# number of ticks from the temporary issues_count file, returning the proper
 	# message for use with the Summary Of Operations table
-	##
+	#--
 	read -r fail_count < "${issue_ticks}"   # Read in number of issue ticks
 
 	if (( ${#fail_count} == 1 )) ; then
