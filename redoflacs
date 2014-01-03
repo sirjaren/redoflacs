@@ -1936,11 +1936,16 @@ __check_config_version() {
 # Creates filename of current FLAC and culls it if the length
 # is bigger than then width of the terminal
 __filename() {
-   filename="${i##*/}"
+   if [[ "${i#"${i%?}"}" == '/' ]] ; then
+      filename="${i%?}"
+      filename="${filename##*/}/"
+   else
+      filename="${i##*/}"
+   fi
    # Replace possible newlines in filename with '?' (like 'ls' output)
    filename="${filename//$'\n'/?}"
 
-   # Obtain filename length.  We cannot use ${#filename} in the event there is
+   # Obtain filename length.  We cannot use ${#filename} in the event there are
    # multibyte characters -- the width would not be equal to characters since
    # the characters can take up more than one block in a terminal
    current_filename_length="$(wc -L <<< "${filename}")"
@@ -1962,7 +1967,7 @@ __filename() {
 
          # Decrement placeholder ${max_length} by one (1)
          ((--max_length))
-         
+
          # Obtain the new culled filename length
          culled_filename_length="$(wc -L <<< "${filename:0:${max_length}}")"
 
@@ -2329,16 +2334,17 @@ __countdown_config() {
 __get_directory_list() {
    # Return a listing of the total base directories housing all the found FLACs
    #--
-   declare     processed_dir  #  Set up local variable(s)
-   declare -ga total_dirs     #  Set up global array
+   declare     previous_dir  current_dir  #  Set up local variable(s)
+   declare -ga total_dirs                 #  Set up global array
 
    for flac in "$@" ; do
       # Run through total FLAC files array, printing out each unique directory
       #--
-      if [[ "${processed_dir}" != "${flac%/*}" ]] ; then
-         total_dirs+=( "${flac%/*}" )
+      current_dir="${flac%/*}"
+      if [[ "${previous_dir}" != "${current_dir}" ]] ; then
+         total_dirs+=( "${current_dir}/" )
       fi
-      processed_dir="${flac%/*}"  # Set current loop directory found/processed
+      previous_dir="${current_dir}"  # Set current directory to previous
    done
 }
 
