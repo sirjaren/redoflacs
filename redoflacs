@@ -723,7 +723,7 @@ __update_operation_status () {
       replaygain_test)   operation_summary['> Testing']="${2}"              ;;
       replaygain*apply)  operation_summary['> Applying']="${2}"             ;;
       retag_analyze)     operation_summary['> Analyzing']="${2}"            ;;
-      retag_apply)       operation_summary['> Applying']="${2}"             ;;
+      retag_apply)       operation_summary['> Re-Tagging']="${2}"             ;;
       extract_images)    operation_summary['Extracting Artwork']="${2}"     ;;
       prune)             operation_summary['Prune METADATA Blocks']="${2}"  ;;
    esac
@@ -2891,8 +2891,9 @@ __summary() {
       'Compress FLACs'
       'Test FLACs'
       '> Testing'
+      '> Applying'
       '> Analyzing'
-      '> Applying'   # Used in 'replaygain' & 'retagging'; Must be after sub messages
+      '> Re-Tagging'
       'Extracting Artwork'
       'Prune METADATA Blocks'
    )
