@@ -475,38 +475,24 @@ __message_log_exists() {
    #   prune
    #--
    case "$1" in
-      aucdtect*)
+      'aucdtect'*)
          __error "Some FLAC files may be lossy sourced, please check:\n"
       ;;
-      md5_check)
+      'md5_check')
          __error "The MD5 Signature is unset for some FLAC files or there were\n"
          __error "issues with some of the FLAC files, please check:\n"
       ;;
-      compress_*)
-         __error "Errors found in some FLAC files, please check:\n"
-      ;;
-      test)
-         __error "Errors found in some FLAC files, please check:\n"
-      ;;
-      replaygain_test)
+      'compress_'*|'test'|'replaygain_test'|'extract_images'|'prune')
          __error "There were issues with some of the FLAC files,\n"
          __error "please check:\n"
       ;;
-      replaygain*apply)
+      'replaygain'*'apply')
          __error "There were issues adding ReplayGain values,\n"
          __error "please check:\n"
       ;;
-      retag_*)
+      'retag_'*)
          __error "Some FLAC files have missing tags or there were\n"
          __error "issues with some of the FLAC files, please check:\n"
-      ;;
-      extract_images)
-         __error "There were issues with some of the FLAC files,\n"
-         __error "please check:\n"
-      ;;
-      prune)
-         __error "There were issues with some of the FLAC files,\n"
-         __error "please check:\n"
       ;;
    esac
 
@@ -535,80 +521,78 @@ __create_log() {
    # Set log file and the type of header to prepend based on how this function
    # was called, via $1
    case "${1}" in
-      aucdtect*)
+      'aucdtect'*)
          header=(
             "--------------------------------------------------------------------------------"
-            "                           AUCDTECT ERROR/REPORT LOG"
-            "                           -------------------------"
+            "                            [ Aucdtect Report Log ]"
+            ""
             "      This log details which FLAC files have errors when running auCDtect"
             "--------------------------------------------------------------------------------"
          ) ;;
-      md5_check)
+      'md5_check')
          header=(
             "--------------------------------------------------------------------------------"
-            "                              MD5 CHECK ERROR LOG"
-            "                              -------------------"
-            "    This log details which FLAC files have errors when checking the MD5"
-            "  signature"
+            "                            [ Md5 Check Error Log ]"
+            ""
+            " This log details which FLAC files have errors when checking the MD5 signature"
             "--------------------------------------------------------------------------------"
          ) ;;
-      compress_*)
+      'compress_'*)
          header=(
             "--------------------------------------------------------------------------------"
-            "                          COMPRESS & VERIFY ERROR LOG"
-            "                          ---------------------------"
-            "    This log details which FLAC files have errors when compressing and/or"
-            "  verifying"
+            "                        [ Compress & Verify Error Log ]"
+            ""
+            " This log details which FLAC files have errors when compressing and/or verifying"
             "--------------------------------------------------------------------------------"
          ) ;;
-      test)
+      'test')
          header=(
             "--------------------------------------------------------------------------------"
-            "                             TEST FLACS ERROR LOG"
-            "                             --------------------"
+            "                               [ Test Error Log ]"
+            ""
             "          This log details which FLAC files have errors when testing"
             "--------------------------------------------------------------------------------"
          ) ;;
-      replaygain_test)
+      'replaygain_test')
          header=(
             "--------------------------------------------------------------------------------"
-            "                           REPLAYGAIN TEST ERROR LOG"
-            "                           -------------------------"
-            "    This log details which FLAC files have errors when testing for ReplayGain"
-            "  compatability"
+            "                         [ ReplayGain Test Error Log ]"
+            ""
+            " This log details which FLAC files have errors when testing for ReplayGain"
+            " compatability"
             "--------------------------------------------------------------------------------"
          ) ;;
-      replaygain*apply)
+      'replaygain'*'apply')
          header=(
             "--------------------------------------------------------------------------------"
-            "                          REPLAYGAIN APPLY ERROR LOG"
-            "                          --------------------------"
-            "    This log details which directories have FLAC files that have errors when"
-            "  applying ReplayGain values"
+            "                        [ ReplayGain Apply Error Log ]"
+            ""
+            " This log details which directories have FLAC files that have errors when"
+            " applying ReplayGain values"
             "--------------------------------------------------------------------------------"
          ) ;;
-      retag_*)
+      'retag_'*)
          header=(
             "--------------------------------------------------------------------------------"
-            "                                RETAG ERROR LOG"
-            "                                ---------------"
+            "                              [ Retag Error Log ]"
+            ""
             "         This log details which FLAC files have errors when retagging"
             "--------------------------------------------------------------------------------"
          ) ;;
-      extract_images)
+      'extract_images')
          header=(
             "--------------------------------------------------------------------------------"
-            "                           EXTRACT IMAGES ERROR LOG"
-            "                           ------------------------"
-            "  This log details which FLAC files have errors when extracting artwork images"
+            "                         [ Extract Images Error Log ]"
+            ""
+            " This log details which FLAC files have errors when extracting artwork images"
             "--------------------------------------------------------------------------------"
          ) ;;
-      prune)
+      'prune')
          header=(
             "--------------------------------------------------------------------------------"
-            "                                PRUNE ERROR LOG"
-            "                                ---------------"
-            "   This log details which FLAC files have errors when pruning METADATA blocks"
+            "                              [ Prune Error Log ]"
+            ""
+            " This log details which FLAC files have errors when pruning METADATA blocks"
             "--------------------------------------------------------------------------------"
          ) ;;
    esac
@@ -667,12 +651,12 @@ __message() {
    # Print title message if $1 is not NULL
    if [[ -n "${1}" ]] ; then
       case "${1}" in
-         aucdtect)            message="Validating FLAC files with auCDtect..."                                         ;;
-         md5_check)           message="Verifying FLAC files MD5 Signature..."                                          ;;
-         compress_verify)     message="Compressing & Verifying FLAC files [Compression Lvl: ${compression_level}]..."  ;;
-         compress_no_verify)  message="Compressing FLAC files [Compression Lvl: ${compression_level}]..."              ;;
-         test)                message="Testing integrity of FLAC files..."                                             ;;
-         replaygain_*)
+         'aucdtect')            message="Validating FLAC files with auCDtect..."                                         ;;
+         'md5_check')           message="Verifying FLAC files MD5 Signature..."                                          ;;
+         'compress_verify')     message="Compressing & Verifying FLAC files [Compression Lvl: ${compression_level}]..."  ;;
+         'compress_no_verify')  message="Compressing FLAC files [Compression Lvl: ${compression_level}]..."              ;;
+         'test')                message="Testing integrity of FLAC files..."                                             ;;
+         'replaygain_'*)
             if [[ "${1}" == 'replaygain_test' ]] ; then
                message="Generating & Applying ReplayGain to FLAC files..."
                sub_message="Testing"
@@ -680,7 +664,7 @@ __message() {
                sub_message="Applying"
             fi
          ;;
-         retag_*)
+         'retag_'*)
             if [[ "${1}" == 'retag_analyze' ]] ; then
                message="Re-Tagging FLAC files..."
                sub_message="Analyzing"
@@ -688,8 +672,8 @@ __message() {
                sub_message="Re-Tagging"
             fi
          ;;
-         extract_images)      message="Extracting artwork from FLAC files..."   ;;
-         prune)
+         'extract_images')      message="Extracting artwork from FLAC files..."   ;;
+         'prune')
             if [[ "${remove_artwork}" != "true" ]] ; then
                # Keep artwork
                message="Removing METADATA blocks [Except: STREAMINFO,VORBIS_COMMENT,PICTURE]..."
@@ -716,16 +700,16 @@ __message() {
 
 __update_operation_status () {
    case "${1}" in
-      aucdtect*)         operation_summary['Validate with auCDtect']="${2}" ;;
-      md5_check)         operation_summary['Check MD5 Signature']="${2}"    ;;
-      compress_*)        operation_summary['Compress FLACs']="${2}"         ;;
-      test)              operation_summary['Test FLACs']="${2}"             ;;
-      replaygain_test)   operation_summary['>> Testing']="${2}"             ;;
-      replaygain*apply)  operation_summary['>> Applying']="${2}"            ;;
-      retag_analyze)     operation_summary['>> Analyzing']="${2}"           ;;
-      retag_apply)       operation_summary['>> Re-Tagging']="${2}"          ;;
-      extract_images)    operation_summary['Extracting Artwork']="${2}"     ;;
-      prune)             operation_summary['Prune METADATA Blocks']="${2}"  ;;
+      'aucdtect'*)         operation_summary['Validate with auCDtect']="${2}" ;;
+      'md5_check')         operation_summary['Check MD5 Signature']="${2}"    ;;
+      'compress_'*)        operation_summary['Compress FLACs']="${2}"         ;;
+      'test')              operation_summary['Test FLACs']="${2}"             ;;
+      'replaygain_test')   operation_summary['>> Testing']="${2}"             ;;
+      'replaygain'*'apply')  operation_summary['>> Applying']="${2}"          ;;
+      'retag_analyze')     operation_summary['>> Analyzing']="${2}"           ;;
+      'retag_apply')       operation_summary['>> Re-Tagging']="${2}"          ;;
+      'extract_images')    operation_summary['Extracting Artwork']="${2}"     ;;
+      'prune')             operation_summary['Prune METADATA Blocks']="${2}"  ;;
    esac
 }
 
@@ -1383,11 +1367,11 @@ __exit_cleanup() {
    #   prune
    #--
    case "${1}" in
-      aucdtect*)
+      'aucdtect'*)
          # Remove temporarily created WAV files (if any)
          rm -f "${directory}"/**/*_redoflacs_"$$".wav
       ;;
-      compress_*)
+      'compress_'*)
          # Remove temporarily encoded FLAC files
          rm -f "${directory}"/**/*.tmp,fl-ac+en\'c
       ;;
@@ -2390,8 +2374,8 @@ __process_positional_parameters() {
    # Add case where only one argument is specified
    if (( ${#} == 1 )) ; then
       case "${1}" in
-         --version|-v)     __print_version ; exit 0 ;;
-         --help|-h)
+         '--version'|'-v')     __print_version ; exit 0 ;;
+         '--help'|'-h')
             # Create the temporary file in which a man page will be
             # generated
             tmp_man_page="/tmp/redoflacs_man_$$.1"
@@ -2407,7 +2391,7 @@ __process_positional_parameters() {
 
             exit 0
          ;;
-         --new-config|-o)  __new_config ; exit 0 ;;
+         '--new-config'|'-o')  __new_config ; exit 0 ;;
          *)                __usage      ; exit 1 ;;
       esac
    fi
@@ -2416,11 +2400,11 @@ __process_positional_parameters() {
    # arguments called are not to have anything after them
    if (( ${#} == 2 )) ; then
       case "${1}" in
-         --jobs=[[:digit:]]*|-j[[:digit:]]*)  __usage ; exit 1 ;;
-         --no-color|-n)                       __usage ; exit 1 ;;
-         --version|-v)                        __usage ; exit 1 ;;
-         --new-config|-o)                     __usage ; exit 1 ;;
-         --help|-h)                           __usage ; exit 1 ;;
+         '--jobs='[[:digit:]]*|'-j'[[:digit:]]*)  __usage ; exit 1 ;;
+         '--no-color'|'-n')                       __usage ; exit 1 ;;
+         '--version'|'-v')                        __usage ; exit 1 ;;
+         '--new-config'|'-o')                     __usage ; exit 1 ;;
+         '--help'|'-h')                           __usage ; exit 1 ;;
       esac
    fi
 
@@ -2452,28 +2436,28 @@ __process_positional_parameters() {
    if [[ -n "${long_style_arguments_array[@]}" ]] ; then
       for i in "${long_style_arguments_array[@]}" ; do
          case "${i}" in
-            --aucdtect)             converted_arguments_array+=( -a )   ;;
-            --aucdtect-spectrogram) converted_arguments_array+=( -A )   ;;
-            --md5check)             converted_arguments_array+=( -m )   ;;
-            --compress)             converted_arguments_array+=( -c )   ;;
-            --compress-notest)      converted_arguments_array+=( -C )   ;;
-            --test)                 converted_arguments_array+=( -t )   ;;
-            --replaygain)           converted_arguments_array+=( -g )   ;;
-            --replaygain-noforce)   converted_arguments_array+=( -G )   ;;
-            --retag)                converted_arguments_array+=( -r )   ;;
-            --extract-artwork)      converted_arguments_array+=( -e )   ;;
-            --prune)                converted_arguments_array+=( -p )   ;;
-            --all)                  converted_arguments_array+=( -l )   ;;
-            --reallyall)            converted_arguments_array+=( -L )   ;;
-            --no-color)             converted_arguments_array+=( -n )   ;;
+            '--aucdtect')             converted_arguments_array+=( -a )   ;;
+            '--aucdtect-spectrogram') converted_arguments_array+=( -A )   ;;
+            '--md5check')             converted_arguments_array+=( -m )   ;;
+            '--compress')             converted_arguments_array+=( -c )   ;;
+            '--compress-notest')      converted_arguments_array+=( -C )   ;;
+            '--test')                 converted_arguments_array+=( -t )   ;;
+            '--replaygain')           converted_arguments_array+=( -g )   ;;
+            '--replaygain-noforce')   converted_arguments_array+=( -G )   ;;
+            '--retag')                converted_arguments_array+=( -r )   ;;
+            '--extract-artwork')      converted_arguments_array+=( -e )   ;;
+            '--prune')                converted_arguments_array+=( -p )   ;;
+            '--all')                  converted_arguments_array+=( -l )   ;;
+            '--reallyall')            converted_arguments_array+=( -L )   ;;
+            '--no-color')             converted_arguments_array+=( -n )   ;;
 
             # Set number of jobs to run via the required
             # integer argument after '-j'
-            --jobs=[[:digit:]]*)    jobs="${i##*=}"                     ;;
+            '--jobs='[[:digit:]]*)    jobs="${i##*=}"                     ;;
 
-            --version)     __usage ; exit 1 ;;
-            --help)        __usage ; exit 1 ;;
-            --new-config)  __usage ; exit 1 ;;
+            '--version')     __usage ; exit 1 ;;
+            '--help')        __usage ; exit 1 ;;
+            '--new-config')  __usage ; exit 1 ;;
             *)
                # Set invalid argument into array
                invalid_arguments_array+=( "${i}" )
@@ -2568,19 +2552,19 @@ __process_positional_parameters() {
    # functions
    for i in "${converted_arguments_array[@]}" ; do
       case "${i}" in
-         -l) all="true"                            ;;
-         -L) reallyall="true"                      ;;
-         -a) operations[0]='aucdtect'              ;;
-         -A)
+         '-l') all="true"                            ;;
+         '-L') reallyall="true"                      ;;
+         '-a') operations[0]='aucdtect'              ;;
+         '-A')
             #operations[1]='aucdtect_spectrogram'
             operations[1]='aucdtect'
             create_spectrogram='true'
          ;;
-         -m) operations[2]='md5_check'             ;;
-         -c) operations[3]='compress_verify'       ;;
-         -C) operations[4]='compress_no_verify'    ;;
-         -t) operations[5]='test'                  ;;
-         -g|-G)
+         '-m') operations[2]='md5_check'             ;;
+         '-c') operations[3]='compress_verify'       ;;
+         '-C') operations[4]='compress_no_verify'    ;;
+         '-t') operations[5]='test'                  ;;
+         '-g'|'-G')
             operations[6]='replaygain_test'
             if [[ "${i}" == '-g' ]] ; then
                operations[7]='replaygain_force_apply'
@@ -2588,24 +2572,24 @@ __process_positional_parameters() {
                operations[7]='replaygain_apply'
             fi
          ;;
-         -r)
+         '-r')
             operations[8]='retag_analyze'
             operations[9]='retag_apply'
          ;;
-         -e)
+         '-e')
             operations[10]='extract_images'
             check_artwork_dir="true"
          ;;
-         -p) operations[11]='prune'                ;;
-         -n) no_color="true"                       ;;
-         -j)
+         '-p') operations[11]='prune'                ;;
+         '-n') no_color="true"                       ;;
+         '-j')
             # Do nothing, ${jobs} has already been stored
             # in previous getopts loop
             :
          ;;
-         -v) __usage ; exit 1 ;;
-         -h) __usage ; exit 1 ;;
-         -o) __usage ; exit 1 ;;
+         '-v') __usage ; exit 1 ;;
+         '-h') __usage ; exit 1 ;;
+         '-o') __usage ; exit 1 ;;
       esac
    done
 
