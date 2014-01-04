@@ -667,14 +667,14 @@ __message() {
    # Print title message if $1 is not NULL
    if [[ -n "${1}" ]] ; then
       case "${1}" in
-         aucdtect)            message="auCDtect Analysis"    ;;
-         md5_check)           message="MD5 Check"            ;;
-         compress_verify)     message="Compressing & Verifying ${magenta}[Level 8]${normal}"  ;;
-         compress_no_verify)  message="Compressing ${magenta}[Level 8]${normal}"              ;;
-         test)                message="Testing"              ;;
+         aucdtect)            message="Validating FLAC files with auCDtect..."                                         ;;
+         md5_check)           message="Verifying FLAC files MD5 Signature..."                                          ;;
+         compress_verify)     message="Compressing & Verifying FLAC files [Compression Lvl: ${compression_level}]..."  ;;
+         compress_no_verify)  message="Compressing FLAC files [Compression Lvl: ${compression_level}]..."              ;;
+         test)                message="Testing integrity of FLAC files..."                                             ;;
          replaygain_*)
             if [[ "${1}" == 'replaygain_test' ]] ; then
-               message="Generating & Applying ReplayGain"
+               message="Generating & Applying ReplayGain to FLAC files..."
                sub_message="Testing"
             else  #  'replaygain'*'apply'
                sub_message="Applying"
@@ -682,20 +682,20 @@ __message() {
          ;;
          retag_*)
             if [[ "${1}" == 'retag_analyze' ]] ; then
-               message="Re-Tagging"
+               message="Re-Tagging FLAC files..."
                sub_message="Analyzing"
             else  #  'retag_apply'
-               sub_message="Re-Applying"
+               sub_message="Re-Tagging"
             fi
          ;;
-         extract_images)      message="Extracting Artwork"   ;;
+         extract_images)      message="Extracting artwork from FLAC files..."   ;;
          prune)
             if [[ "${remove_artwork}" != "true" ]] ; then
                # Keep artwork
-               message="Pruning All Blocks [Except: ${cyan}STREAMINFO${normal}, ${cyan}VORBIS_COMMENT${normal} & ${cyan}PICTURE${normal}]"
+               message="Removing METADATA blocks [Except: STREAMINFO,VORBIS_COMMENT,PICTURE]..."
             else
                # Remove artwork
-               message="Pruning All Blocks [Except: ${cyan}STREAMINFO${normal} & ${cyan}VORBIS_COMMENT${normal}]"
+               message="Removing METADATA blocks [Except: STREAMINFO,VORBIS_COMMENT]..."
             fi
          ;;
       esac
@@ -707,7 +707,7 @@ __message() {
 
       # Print sub title message, if applicable
       if [[ -n "${sub_message}" ]] ; then
-         printf "\033[$(__row);4H${green}>${normal} ${sub_message}\n"
+         printf "\033[$(__row);3H${green}>>${normal} ${sub_message}\n"
       fi
    fi
 }
@@ -720,10 +720,10 @@ __update_operation_status () {
       md5_check)         operation_summary['Check MD5 Signature']="${2}"    ;;
       compress_*)        operation_summary['Compress FLACs']="${2}"         ;;
       test)              operation_summary['Test FLACs']="${2}"             ;;
-      replaygain_test)   operation_summary['> Testing']="${2}"              ;;
-      replaygain*apply)  operation_summary['> Applying']="${2}"             ;;
-      retag_analyze)     operation_summary['> Analyzing']="${2}"            ;;
-      retag_apply)       operation_summary['> Re-Tagging']="${2}"             ;;
+      replaygain_test)   operation_summary['>> Testing']="${2}"             ;;
+      replaygain*apply)  operation_summary['>> Applying']="${2}"            ;;
+      retag_analyze)     operation_summary['>> Analyzing']="${2}"           ;;
+      retag_apply)       operation_summary['>> Re-Tagging']="${2}"          ;;
       extract_images)    operation_summary['Extracting Artwork']="${2}"     ;;
       prune)             operation_summary['Prune METADATA Blocks']="${2}"  ;;
    esac
@@ -2883,31 +2883,36 @@ __summary() {
    printf "\033[$(__row);2H${blue}%s${normal}\n" \
    "---------------------------------------------------"
    printf "                Summary Of Operations\n"
-   printf "${normal} ${blue}-------------------------+-------------------------${normal}\n" \
+   printf "${normal} ${blue}%s${normal}\n" \
+   "-------------------------+-------------------------"
 
-   operation_msgs=(
+   operation_keys=(
       'Validate with auCDtect'
       'Check MD5 Signature'
       'Compress FLACs'
       'Test FLACs'
-      '> Testing'
-      '> Applying'
-      '> Analyzing'
-      '> Re-Tagging'
+      '>> Testing'
+      '>> Applying'
+      '>> Analyzing'
+      '>> Re-Tagging'
       'Extracting Artwork'
       'Prune METADATA Blocks'
    )
 
-   for key in "${operation_msgs[@]}" ; do
+   for key in "${operation_keys[@]}" ; do
       if [[ -n "${operation_summary[$key]}" ]] ; then
-         if [[ "${key}" == '> '* ]] ; then
-            if [[ "${key}" == '> Testing' ]] ; then
+         if [[ "${key}" == '>> '* ]] ; then
+            if [[ "${key}" == '>> Testing' ]] ; then
                printf "${yellow}%25s ${blue}|${normal}\n" 'Applying ReplayGain'
-            elif [[ "${key}" == '> Analyzing' ]] ; then
+            elif [[ "${key}" == '>> Analyzing' ]] ; then
                printf "${yellow}%25s ${blue}|${normal}\n" 'Retagging FLACs'
             fi
 
-            printf "${magenta}%25s ${blue}|${normal}" "${key}"
+            printf -v sub_message "%25s" "${key}"  # Store right aligned message
+
+            # Color '>>' as yellow and message as magenta
+            printf "${yellow}%s${magenta}%s ${blue}|${normal}" \
+               "${sub_message%%>> *}>>" "${sub_message##*>>}"
          else
             printf "${yellow}%25s ${blue}|${normal}" "${key}"
          fi
@@ -2922,7 +2927,7 @@ __summary() {
             'Operation Did Not Run')
                printf " ${magenta}%s${normal}\n" "${operation_summary[$key]}"
             ;;
-            *Issue*)
+            *'Issue'*)
                printf " ${red}%s${normal}\n" "${operation_summary[$key]}"
             ;;
          esac
