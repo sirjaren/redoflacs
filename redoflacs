@@ -699,17 +699,30 @@ __message() {
 #-------------------------------------------------------------------------------
 
 __update_operation_status () {
+   # Update $operation_summary[@] with the current operation status
+   #
+   # $1 determines which operational index to update; possible values:
+   #   aucdtect          aucdtect_spectrogram        md5_check
+   #   compress_verify   compress_no_verify          test
+   #   replaygain_test   replaygain_force_apply      replaygain_apply
+   #   retag_analyze     retag_apply                 extract_images
+   #   prune
+   #
+   # $2 is the operational status, the values of which, can be:
+   #   Operation Completed       Operation Interrupted
+   #   Operation Did Not Run     [integer> Issues
+   #--
    case "${1}" in
-      'aucdtect'*)         operation_summary['Validate with auCDtect']="${2}" ;;
-      'md5_check')         operation_summary['Check MD5 Signature']="${2}"    ;;
-      'compress_'*)        operation_summary['Compress FLACs']="${2}"         ;;
-      'test')              operation_summary['Test FLACs']="${2}"             ;;
-      'replaygain_test')   operation_summary['>> Testing']="${2}"             ;;
-      'replaygain'*'apply')  operation_summary['>> Applying']="${2}"          ;;
-      'retag_analyze')     operation_summary['>> Analyzing']="${2}"           ;;
-      'retag_apply')       operation_summary['>> Re-Tagging']="${2}"          ;;
-      'extract_images')    operation_summary['Extracting Artwork']="${2}"     ;;
-      'prune')             operation_summary['Prune METADATA Blocks']="${2}"  ;;
+      'aucdtect'*)          operation_summary['Validate with auCDtect']="${2}" ;;
+      'md5_check')          operation_summary['Check MD5 Signature']="${2}"    ;;
+      'compress_'*)         operation_summary['Compress FLACs']="${2}"         ;;
+      'test')               operation_summary['Test FLACs']="${2}"             ;;
+      'replaygain_test')    operation_summary['>> Testing']="${2}"             ;;
+      'replaygain'*'apply') operation_summary['>> Applying']="${2}"            ;;
+      'retag_analyze')      operation_summary['>> Analyzing']="${2}"           ;;
+      'retag_apply')        operation_summary['>> Re-Tagging']="${2}"          ;;
+      'extract_images')     operation_summary['Extracting Artwork']="${2}"     ;;
+      'prune')              operation_summary['Prune METADATA Blocks']="${2}"  ;;
    esac
 }
 
@@ -2859,9 +2872,8 @@ __check_conflicting_operations() {
 
 #-------------------------------------------------------------------------------
 
-# Display the summary of operations chart
 __summary() {
-   # Begin printing the table
+   # Display the summary of operations chart
    #--
    # Title
    printf "\033[$(__row);2H${blue}%s${normal}\n" \
@@ -2870,6 +2882,7 @@ __summary() {
    printf "${normal} ${blue}%s${normal}\n" \
    "-------------------------+-------------------------"
 
+   # Correct order to display operational status to process
    operation_keys=(
       'Validate with auCDtect'
       'Check MD5 Signature'
@@ -2883,55 +2896,52 @@ __summary() {
       'Prune METADATA Blocks'
    )
 
-   for key in "${operation_keys[@]}" ; do
-      if [[ -n "${operation_summary[$key]}" ]] ; then
-         if [[ "${key}" == '>> '* ]] ; then
-            if [[ "${key}" == '>> Testing' ]] ; then
+   for operation in "${operation_keys[@]}" ; do
+      # Display each operational line with the status of that operation, if it
+      # was called
+      #--
+      if [[ -n "${operation_summary[$operation]}" ]] ; then
+         # Check for sub messages, and apply additional formatting
+         if [[ "${operation}" == '>> '* ]] ; then
+            if [[ "${operation}" == '>> Testing' ]] ; then
                printf "${yellow}%25s ${blue}|${normal}\n" 'Applying ReplayGain'
-            elif [[ "${key}" == '>> Analyzing' ]] ; then
+            elif [[ "${operation}" == '>> Analyzing' ]] ; then
                printf "${yellow}%25s ${blue}|${normal}\n" 'Retagging FLACs'
             fi
 
-            printf -v sub_message "%25s" "${key}"  # Store right aligned message
+            printf -v sub_message "%25s" "${operation}"  # Store right aligned message
 
             # Color '>>' as yellow and message as magenta
             printf "${yellow}%s${magenta}%s ${blue}|${normal}" \
                "${sub_message%%>> *}>>" "${sub_message##*>>}"
          else
-            printf "${yellow}%25s ${blue}|${normal}" "${key}"
+            printf "${yellow}%25s ${blue}|${normal}" "${operation}"
          fi
 
-         case "${operation_summary[$key]}" in
+         # Colorize the operational status
+         case "${operation_summary[$operation]}" in
             'Operation Completed')
-               printf " ${green}%s${normal}\n" "${operation_summary[$key]}"
+               printf " ${green}%s${normal}\n" "${operation_summary[$operation]}"
             ;;
             'Operation Interrupted')
-               printf " ${cyan}%s${normal}\n" "${operation_summary[$key]}"
+               printf " ${cyan}%s${normal}\n" "${operation_summary[$operation]}"
             ;;
             'Operation Did Not Run')
-               printf " ${magenta}%s${normal}\n" "${operation_summary[$key]}"
+               printf " ${magenta}%s${normal}\n" "${operation_summary[$operation]}"
             ;;
             *'Issue'*)
-               printf " ${red}%s${normal}\n" "${operation_summary[$key]}"
+               printf " ${red}%s${normal}\n" "${operation_summary[$operation]}"
             ;;
          esac
       fi
    done
 
-   printf "${normal}%s${blue}%s${normal}\n" \
-   " " "-------------------------+-------------------------"
+   # Last line of chart
+   printf " ${blue}%s${normal}\n" \
+      "-------------------------+-------------------------"
 
-   # Remove temporary FIFO and leave just the file
-   # descriptor available
-   rm -f "${tmp_fifo}"
-
-   # Remove temporary FIFO and leave just the file
-   # descriptor available
-   rm -f "${tmp_aucdtect_fd}"
-
-   # Remove temporary FIFO and leave just the file
-   # descriptor available
-   rm -f "${issue_ticks}"
+   # Remove temporary FIFOs and files
+   rm -f "${tmp_fifo}" "${tmp_aucdtect_fd}" "${issue_ticks}"
 
    printf "\033[?25h"   # Restore cursor
 }
