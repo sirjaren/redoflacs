@@ -710,7 +710,7 @@ __update_operation_status () {
    #
    # $2 is the operational status, the values of which, can be:
    #   Operation Completed       Operation Interrupted
-   #   Operation Did Not Run     [integer> Issues
+   #   Operation Did Not Run     <integer> Issues
    #--
    case "${1}" in
       'aucdtect'*)          operation_summary['Validate with auCDtect']="${2}" ;;
@@ -1624,7 +1624,7 @@ __store_position() {
    else
       # Print the position of the current jobs into file descriptor (3) to be
       # stored by 'read' upon starting the next job
-      printf "${previous_operation_position}\n" >&3
+      printf "${previous_placement}\n" >&3
    fi
 }
 
@@ -2875,6 +2875,10 @@ __check_conflicting_operations() {
 __summary() {
    # Display the summary of operations chart
    #--
+   # Set up local variables/arrays
+   declare     operation  sub_message
+   declare -a  operation_keys
+
    # Title
    printf "\033[$(__row);2H${blue}%s${normal}\n" \
    "---------------------------------------------------"
@@ -2948,82 +2952,53 @@ __summary() {
 
 #-------------------------------------------------------------------------------
 
-# Function to run commands/operations that are by
-# files _ONLY_
 __run_parallel() {
-   # Forces iteration to start at 0, in the event that
-   # multiple operations are going to be run
-   iteration=0
+   # Run a given operation with a specified number of jobs
+   #
+   # $1 is the operational function to run multiple jobs, which can be:
+   #   __aucdtect          __aucdtect_spectrogram     __md5_check
+   #   __compress_verify   __compress_no_verify       __test
+   #   __replaygain_test   __replaygain_force_apply   __replaygain_apply
+   #   __retag_analyze     __retag_apply              __extract_artwork
+   #   __prune
+   #--
+   # Set up local variables/arrays
+   declare      item
+   declare  -i  row_state  placement  previous_placement  iteration=0
 
-   # This is the parallel operation to run
-   # specified by ${1} when calling this function
-   parallel_operation="${1}"
+   row_state=$(__row)                       # Current cursor row position state
 
-   row_state=$(__row)
-
-   # Start as many processes as determined by ${jobs}
    for i in "${total_items[@]:0:${jobs}}" ; do
-      # This is the first set of jobs to run, so the placement of each file to
-      # display is the current row the cursor is on plus the iteration (the
-      # current file [number] being processed), which is zero-based
-      placement=$((row_state + iteration))
-
-      # Add one to the iteration to enforce we print one or more, not zero
-      ((iteration++))
-
-      # Run the specified operation in the background
-      "${parallel_operation}" &
+      # Run as many operations (from $total_items[@]) in the background,
+      # specified via $jobs
+      #--
+      placement=$((row_state + iteration))  # Placement of file/dir processed
+      ((iteration++))                       # After placement to not print 0
+      "$1" &                                # Fork operation
    done
 
-   # If the FLAC files to process are greater than the # of ${jobs}
-   # available, continue processing them, else quit
+   # Continue only if there are more items than jobs specified
    if (( ${#total_items[@]} > jobs )) ; then
-
-      # After each newline is read from FIFO, start a new process, storing the
-      # value of the line into ${previous_operation_position}, which houses
-      # the previous operation's position (relative to the position _after_
-      # the current row)
-      while read previous_operation_position ; do
-
-         # Since this is _NOT_ the first set of jobs to run, the
-         # placement of each file to display is the current row the
-         # cursor is on plus the position of the last completed location
-         # of the file, which allows us to dynamically place new jobs
-         # where other jobs have completed
-         placement=$((row_state + previous_operation_position))
+      while read -r previous_placement ; do
+         # An operation is completed with a newline sent to a FIFO.  For each
+         # newline read in, process another file/dir from $total_items[@]
+         #--
+         # Placement of file/dir relative to previous operation's placement
+         placement=$((row_state + previous_placement))
 
          # If current number of FLACs to process is less than total FLACs
          # found, add another FLAC to process
-         if (( iteration < (${#total_items[@]} - 1) )) ; then
-            # Set the current filename ($i) to the current file in the array
-            i="${total_items[${iteration}]}"
-
-            # Add one to the iteration
-            ((iteration++))
-
-            # Run the specified operation in the background
-            "${parallel_operation}" &
-
-         # Below is processed only if the current FLAC file is equal to the
-         # last ${total_items[@]} index
+         if (( iteration < ${#total_items[@]} )) ; then
+            i="${total_items[${iteration}]}"     # Current file/dir to process
+            ((iteration++))                      # Increase count
+            "$1" &                               # Fork operation
          else
-            # Set the current filename ($i) to the current file in the array
-            i="${total_items[${iteration}]}"
-
-            # Add one to the iteration
-            ((iteration++))
-
-            # Run the specified operation in the background
-            "${parallel_operation}" &
-
-            # Break out of loop to prevent hanging FIFO
-            break
+            break                                # Prevent read hanging FIFO
          fi
-      done <&3
+      done <&3                                   # Read from FIFO
    fi
 
-   # Wait for children processes
-   wait
+   wait  # Wait for children processes
 }
 
 #-------------------------------------------------------------------------------
