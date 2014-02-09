@@ -469,7 +469,7 @@ __message_log_exists() {
    # $1 determines the log file to use, as well as how many lines are printed
    # out to correctly set the current row.  Possible values:
    #   aucdtect          aucdtect_spectrogram        md5_check
-   #   compress_verify   compress_no_verify          test
+   #   compress_verify   compress_no_test            test
    #   replaygain_test   replaygain_force_apply      replaygain_apply
    #   retag_analyze     retag_apply                 extract_images
    #   prune
@@ -509,14 +509,15 @@ __create_log() {
    #
    # $1 determines the log file to create, and is any one of these values:
    #   aucdtect          aucdtect_spectrogram        md5_check
-   #   compress_verify   compress_no_verify          test
+   #   compress_verify   compress_no_test            test
    #   replaygain_test   replaygain_force_apply      replaygain_apply
    #   retag_analyze     retag_apply                 extract_images
    #   prune
    #--
    # Set up local variables/arrays
-   declare -a header  log_array
-   declare    error_msg  filename  length  line
+   declare    error_msg  filename  line
+   declare -i length
+   declare -a header     log_array
 
    # Set log file and the type of header to prepend based on how this function
    # was called, via $1
@@ -640,7 +641,7 @@ __message() {
    #
    # $1 determines which title message to print (if any).  Possible values:
    #   aucdtect          aucdtect_spectrogram        md5_check
-   #   compress_verify   compress_no_verify          test
+   #   compress_verify   compress_no_test            test
    #   replaygain_test   replaygain_force_apply      replaygain_apply
    #   retag_analyze     retag_apply                 extract_images
    #   prune
@@ -654,7 +655,7 @@ __message() {
          'aucdtect')            message="Validating FLAC files with auCDtect..."                                         ;;
          'md5_check')           message="Verifying FLAC files MD5 Signature..."                                          ;;
          'compress_verify')     message="Compressing & Verifying FLAC files [Compression Lvl: ${compression_level}]..."  ;;
-         'compress_no_verify')  message="Compressing FLAC files [Compression Lvl: ${compression_level}]..."              ;;
+         'compress_no_test')    message="Compressing FLAC files [Compression Lvl: ${compression_level}]..."              ;;
          'test')                message="Testing integrity of FLAC files..."                                             ;;
          'replaygain_'*)
             if [[ "${1}" == 'replaygain_test' ]] ; then
@@ -703,7 +704,7 @@ __update_operation_status () {
    #
    # $1 determines which operational index to update; possible values:
    #   aucdtect          aucdtect_spectrogram        md5_check
-   #   compress_verify   compress_no_verify          test
+   #   compress_verify   compress_no_test            test
    #   replaygain_test   replaygain_force_apply      replaygain_apply
    #   retag_analyze     retag_apply                 extract_images
    #   prune
@@ -728,582 +729,174 @@ __update_operation_status () {
 
 #-------------------------------------------------------------------------------
 
-# Print the current FLAC file being operated on
-__print_current_flac() {
-   # This stores the current file number processed out of the total files:
-   #  [56/213]
-   number_completed="[${iteration}/${#total_items[@]}]"
+__print_item() {
+   # $1 is the filename to print
+   # $2 is the filename length
+   # $3 is the number completed, ie [12/345]
+   # $4 determines whether this is a sub operational item to print
+   #--
+   # Set up local variables
+   declare -i  print_spacing='1'
 
-   # This is the maximum length of a string to be displayed based on column width,
-   # obtained via the number of columns minus the length of displayed characters:
-   #
-   #             ${columns}:  Width of terminal
-   #   ${#number_completed}:  FLACs processed and total FLACs, ie: [56/213]
-   #                     11:  Length of:
-   #                            (4) Spaces
-   #                            (1) Gap and ellipsis: '…'
-   #                            (6) Percentage: '  100%' or '    3%'
-   max_filename_length="$(( columns - ${#number_completed} - 11 ))"
+   (( max_length >= $2 )) && print_spacing=$(( max_length - $2 ))
 
-   # Create and cull filename if needed returned as ${filename}
-   __filename
-
-   printf "\033[${placement};9H%s%$(__current_length)s${magenta}%s${normal}" \
-   "${filename}" "" "${number_completed}"
+   case "$4" in
+      '')
+         #       08 - track.flac                           [12/345]
+         printf "\033[${placement};9H%s%${print_spacing}s${magenta}%s${normal}" \
+            "$1" '' "${3}"
+      ;;
+      'sub')
+         #      50% 08 - track.flac                        [12/345]
+         printf "\033[${placement};6H${yellow}%s${normal} %s%${print_spacing}s${magenta}%s${normal}" \
+            " 50%" "$1" '' "${3}"
+      ;;
+      'half')
+         #   50% 08 - track.flac                           [12/345]
+         printf "\033[${placement};4H${yellow}%s${normal} %s%${print_spacing}s${magenta}%s${normal}" \
+            " 50%" "$1" '' "${3}"
+      ;;
+      'decode')
+         #       [decoding->WAV] 08 - track.flac           [12/345]
+         print_spacing=$(( print_spacing - 16 ))
+         printf "\033[${placement};9H${cyan}[decoding->WAV]${normal} %s%${print_spacing}s${magenta}%s${normal}" \
+            "$1" '' "${3}"
+      ;;
+      'aucdtect_fast')
+         #       [auCDtect:fast] 08 - track.flac           [12/345]
+         print_spacing=$(( print_spacing - 16 ))
+         printf "\033[${placement};9H${cyan}[auCDtect:fast]${normal} %s%${print_spacing}s${magenta}%s${normal}" \
+            "$1" '' "${3}"
+      ;;
+      'aucdtect_slow')
+         #       [auCDtect:slow] 08 - track.flac           [12/345]
+         print_spacing=$(( print_spacing - 16 ))
+         printf "\033[${placement};9H${cyan}[auCDtect:slow]${normal} %s%${print_spacing}s${magenta}%s${normal}" \
+            "$1" '' "${3}"
+      ;;
+      'spectrogram')
+         #       [spectral->PNG] 08 - track.flac           [12/345]
+         print_spacing=$(( print_spacing - 16 ))
+         printf "\033[${placement};9H${cyan}[spectral->PNG]${normal} %s%${print_spacing}s${magenta}%s${normal}" \
+            "$1" '' "${3}"
+      ;;
+   esac
 }
 
 #-------------------------------------------------------------------------------
 
-# Print the current FLAC file being pruned
-__print_current_half() {
-   # This stores the current file number processed out of the total files:
-   #  [56/213]
-   number_completed="[${iteration}/${#total_items[@]}]"
+__print_status() {
+   # $1 is the file/dir operation result, of which, can be:
+   #   ok   fail   issue   skip
+   # $2 is the basename of the file/dir
+   # $3 is the filename length
+   # $4 determines whether this is a sub operational message to print
+   # $5 determines the action that's printed per item
+   #--
+   # Set up local variables
+   declare -i print_spacing='0' column_placement='4'
 
-   # This is the maximum length of a string to be displayed based on column width,
-   # obtained via the number of columns minus the length of displayed characters:
-   #
-   #             ${columns}:  Width of terminal
-   #   ${#number_completed}:  FLACs processed and total FLACs, ie: [56/213]
-   #                     11:  Length of:
-   #                            (4) Spaces
-   #                            (1) Gap and ellipsis: '…'
-   #                            (6) Percentage: '  100%' or '    3%'
-   max_filename_length="$(( columns - ${#number_completed} - 11 ))"
+   case "$1" in
+      'ok')     color="${green}"   result="100%"  ;;
+      'fail')   color="${red}"     result="fail"  ;;
+      'issue')  color="${yellow}"  result="chck"  ;;
+      'skip')   color="${yellow}"  result="skip"  ;;
+   esac
 
-   # Create and cull filename if needed returned as ${filename}
-   __filename
+   (( max_length >= $3 )) && print_spacing=$(( max_length - $3 ))
+   [[ "$4" == 'sub' ]] && column_placement='6'
 
-   printf "\033[${placement};4H${yellow}%s${normal} %s%$(__current_length)s${magenta}%s${normal}" \
-   " 50%" "${filename}" "" "${number_completed}"
+   case "$5" in
+      'decode')
+         action="${cyan}[decoding->WAV]${normal} "
+         (( print_spacing != 0 )) && print_spacing=$(( print_spacing - 16 ))
+      ;;
+      'aucdtect_fast')
+         action="${cyan}[auCDtect:fast]${normal} "
+         (( print_spacing != 0 )) && print_spacing=$(( print_spacing - 16 ))
+      ;;
+      'aucdtect_slow')
+         action="${cyan}[auCDtect:slow]${normal} "
+         (( print_spacing != 0 )) && print_spacing=$(( print_spacing - 16 ))
+      ;;
+      'spectrogram')
+         action="${cyan}[spectral->PNG]${normal} "
+         (( print_spacing != 0 )) && print_spacing=$(( print_spacing - 16 ))
+      ;;
+   esac
+
+   printf "\033[${placement};${column_placement}H${color}%s${normal} ${action}%s%${print_spacing}s" \
+      "${result}" "$2" ""
 }
 
 #-------------------------------------------------------------------------------
 
-# Print the current directory being operated on
-__print_current_directory() {
-   # This stores the current directory number processed out of the total
-   # number of directories:
-   #  [6/34]
-   number_completed="[${iteration}/${#total_items[@]}]"
-
-   # This is the maximum length of a string to be displayed based on column width,
-   # obtained via the number of columns minus the length of displayed characters:
-   #
-   #             ${columns}:  Width of terminal
-   #   ${#number_completed}:  Dirs processed and total dirs, ie: [6/34]
-   #                     13:  Length of:
-   #                            (4) Spaces
-   #                            (1) Gap and ellipsis: '…'
-   #                            (8) Percentage: '    100%' or '      3%'
-   max_filename_length="$(( columns - ${#number_completed} - 13 ))"
-
-   # Create and cull filename if needed returned as ${filename}
-   __filename
-
-   printf "\033[${placement};6H${yellow}%s${normal} %s%$(__current_length)s${magenta}%s${normal}" \
-   " 50%" "${filename}" "" "${number_completed}"
-}
-
-#-------------------------------------------------------------------------------
-
-# Print the current FLAC file being operated on (for sub messages)
-__print_sub_current_flac() {
-   # This stores the current file number processed out of the total files:
-   #  [56/213]
-   number_completed="[${iteration}/${#total_items[@]}]"
-
-   # This is the maximum length of a string to be displayed based on column width,
-   # obtained via the number of columns minus the length of displayed characters:
-   #
-   #             ${columns}:  Width of terminal
-   #   ${#number_completed}:  FLACs processed and total FLACs, ie: [56/213]
-   #                     11:  Length of:
-   #                            (4) Spaces
-   #                            (1) Gap and ellipsis: '…'
-   #                            (8) Percentage: '  100%' or '    3%'
-   max_filename_length="$(( columns - ${#number_completed} - 13 ))"
-
-   # Create and cull filename if needed returned as ${filename}
-   __filename
-
-   printf "\033[${placement};11H%s%$(__current_length)s${magenta}%s${normal}" \
-   "${filename}" "" "${number_completed}"
-}
-
-#-------------------------------------------------------------------------------
-
-# Print the current FLAC file being operated on with skip message
-__print_skip_flac() {
-   # This stores the current file number processed out of the total files:
-   #  [56/213]
-   number_completed="[${iteration}/${#total_items[@]}]"
-
-   # This is the maximum length of a string to be displayed based on column width,
-   # obtained via the number of columns minus the length of displayed characters:
-   #
-   #             ${columns}:  Width of terminal
-   #   ${#number_completed}:  FLACs processed and total FLACs, ie: [56/213]
-   #                     11:  Length of:
-   #                            (4) Spaces
-   #                            (1) Gap and ellipsis: '…'
-   #                            (6) Percentage: '100%' or '  3%'
-   max_filename_length="$(( columns - ${#number_completed} - 11 ))"
-
-   # Create and cull filename if needed returned as ${filename}
-   __filename
-
-   printf "\033[${placement};4H${yellow}skip${normal} %s%$(__current_length)s${magenta}%s${normal}" \
-   "${filename}" "" "${number_completed}"
-}
-
-#-------------------------------------------------------------------------------
-
-# Print the current FLAC file being decoded
-__print_decoding_flac() {
-   # This stores the current file number processed out of the total files:
-   #  [56/213]
-   number_completed="[${iteration}/${#total_items[@]}]"
-
-   # This is the maximum length of a string to be displayed based on column width,
-   # obtained via the number of columns minus the length of displayed characters:
-   #
-   #             ${columns}:  Width of terminal
-   #   ${#number_completed}:  FLACs processed and total FLACs, ie: [56/213]
-   #                     22:  Length of:
-   #                            (4) Spaces
-   #                            (1) Gap and ellipsis: '…'
-   #                            (6) Percentage: '  100%' or '    3%'
-   #                            (11) '[Decoding] '
-   max_filename_length="$(( columns - ${#number_completed} - 22 ))"
-
-   # Create and cull filename if needed returned as ${filename}
-   __filename
-
-   printf "\033[${placement};9H${cyan}[Decoding]${normal} %s%$(__current_length)s${magenta}%s${normal}" \
-   "${filename}" "" "${number_completed}"
-}
-
-#-------------------------------------------------------------------------------
-
-# Display the filename, clearing the progress bar and display the progress
-# percentage as 100% (since FLAC stops at 99%) in green
-__print_decoding_ok() {
-   if (( current_filename_length < max_filename_length )) ; then
-      printf "\033[${placement};4H${green}%s${normal} ${cyan}%s${normal} %s%$(( max_filename_length - current_filename_length + 1 ))s" \
-      "100%" "[Decoding]" "${filename}" ""
-   else
-      printf "\033[${placement};4H${green}%s${normal} ${cyan}%s${normal} %s" \
-      "100%" "[Decoding]" "${filename}"
-   fi
-}
-
-#-------------------------------------------------------------------------------
-
-# Display the filename, clearing the progress bar and display the progress
-# percentage as fail (since the file failed to decode the properly)
-__print_decoding_fail() {
-   if (( current_filename_length < max_filename_length )) ; then
-      printf "\033[${placement};4H${red}%s${normal} ${cyan}%s${normal} %s%$(( max_filename_length - current_filename_length + 1 ))s" \
-      "fail" "[Decoding]" "${filename}" ""
-   else
-      printf "\033[${placement};4H${red}%s${normal} ${cyan}%s${normal} %s" \
-      "fail" "[Decoding]" "${filename}"
-   fi
-}
-
-#-------------------------------------------------------------------------------
-
-# Print the current FLAC file being analyzed with auCDtect [fast]
-__print_current_aucdtect_fast() {
-   # This stores the current file number processed out of the total files:
-   #  [56/213]
-   number_completed="[${iteration}/${#total_items[@]}]"
-
-   # This is the maximum length of a string to be displayed based on column width,
-   # obtained via the number of columns minus the length of displayed characters:
-   #
-   #             ${columns}:  Width of terminal
-   #   ${#number_completed}:  FLACs processed and total FLACs, ie: [56/213]
-   #                     28:  Length of:
-   #                            (4) Spaces
-   #                            (1) Gap and ellipsis: '…'
-   #                            (6) Percentage: '  100%' or '    3%'
-   #                            (17) '[auCDtect: fast] '
-   max_filename_length="$(( columns - ${#number_completed} - 28 ))"
-
-   # Create and cull filename if needed returned as ${filename}
-   __filename
-
-   printf "\033[${placement};9H${cyan}[auCDtect: fast]${normal} %s%$(__current_length)s${magenta}%s${normal}" "${filename}" "" "${number_completed}"
-}
-
-#-------------------------------------------------------------------------------
-
-# Display the filename, clearing the progress bar and display the progress
-# percentage as 100% (since FLAC stops at 99%) in green
-__print_aucdtect_fast_ok() {
-   if (( current_filename_length < max_filename_length )) ; then
-      printf "\033[${placement};4H${green}%4s${normal} ${cyan}%s${normal}%s%$(( max_filename_length - current_filename_length + 1 ))s" \
-      "100%" "[auCDtect: Fast]" " ${filename}" ""
-   else
-      printf "\033[${placement};4H${green}%4s${normal} ${cyan}%s${normal}%s" \
-      "100%" "[auCDtect: Fast]" " ${filename}"
-   fi
-}
-
-#-------------------------------------------------------------------------------
-
-# Display the filename, clearing the progress bar and display the progress as an
-# error in red
-__print_aucdtect_fast_fail() {
-   if (( current_filename_length < max_filename_length )) ; then
-      printf "\033[${placement};4H${red}%4s${normal} ${cyan}%s${normal}%s%$(( max_filename_length - current_filename_length + 1 ))s" \
-      "fail" "[auCDtect: Fast]" "${filename}" ""
-   else
-      printf "\033[${placement};4H${red}%4s${normal} ${cyan}%s${normal}%s" \
-      "fail" "[auCDtect: Fast]" "${filename}"
-   fi
-}
-
-#-------------------------------------------------------------------------------
-
-# Print the current FLAC file being analyzed with auCDtect [slow]
-__print_current_aucdtect_slow() {
-   # This stores the current file number processed out of the total files:
-   #  [56/213]
-   number_completed="[${iteration}/${#total_items[@]}]"
-
-   # This is the maximum length of a string to be displayed based on column width,
-   # obtained via the number of columns minus the length of displayed characters:
-   #
-   #             ${columns}:  Width of terminal
-   #   ${#number_completed}:  FLACs processed and total FLACs, ie: [56/213]
-   #                     28:  Length of:
-   #                            (4) Spaces
-   #                            (1) Gap and ellipsis: '…'
-   #                            (6) Percentage: '  100%' or '    3%'
-   #                            (17) '[auCDtect: slow] '
-   max_filename_length="$(( columns - ${#number_completed} - 28 ))"
-
-   # Create and cull filename if needed returned as ${filename}
-   __filename
-
-   printf "\033[${placement};9H${cyan}[auCDtect: Slow]${normal} %s%$(__current_length)s${magenta}%s${normal}" \
-   "${filename}" "" "${number_completed}"
-}
-
-#-------------------------------------------------------------------------------
-
-# Display the filename, clearing the progress bar and display the progress
-# percentage as 100% (since FLAC stops at 99%) in green
-__print_aucdtect_slow_ok() {
-   if (( current_filename_length < max_filename_length )) ; then
-      printf "\033[${placement};4H${green}%s${normal} ${cyan}%s${normal} %s%$(( max_filename_length - current_filename_length + 1 ))s" \
-      "100%" "[auCDtect: Slow]" "${filename}" ""
-   else
-      printf "\033[${placement};4H${green}%s${normal} ${cyan}%s${normal} %s" \
-      "100%" "[auCDtect: Slow]" "${filename}"
-   fi
-}
-
-#-------------------------------------------------------------------------------
-
-# Display the filename, clearing the progress bar and display the progress as an
-# error in red
-__print_aucdtect_slow_fail() {
-   if (( current_filename_length < max_filename_length )) ; then
-      printf "\033[${placement};4H${red}%s${normal} ${cyan}%s${normal} %s%$(( max_filename_length - current_filename_length + 1 ))s" \
-      "fail" "[auCDtect: Slow]" "${filename}" ""
-   else
-      printf "\033[${placement};4H${red}%s${normal} ${cyan}%s${normal} %s" \
-      "fail" "[auCDtect: Slow]" "${filename}"
-   fi
-}
-
-#-------------------------------------------------------------------------------
-
-# Display the filename, clearing the progress bar and display the progress as an
-# error in yellow color
-__print_aucdtect_issue() {
-   if (( current_filename_length < max_filename_length )) ; then
-      printf "\033[${placement};4H${yellow}%s${normal} ${cyan}%s${normal} %s%$(( max_filename_length - current_filename_length + 1 ))s" \
-      "chck" "[auCDtect: Slow]" "${filename}" ""
-   else
-      printf "\033[${placement};4H${yellow}%s${normal} ${cyan}%s${normal} %s" \
-      "chck" "[auCDtect: Slow]" "${filename}"
-   fi
-}
-
-#-------------------------------------------------------------------------------
-
-# Print the current FLAC file, detailing a spectrogram is being created
-__print_current_spectrogram() {
-   # This stores the current file number processed out of the total files:
-   #  [56/213]
-   number_completed="[${iteration}/${#total_items[@]}]"
-
-   # This is the maximum length of a string to be displayed based on column width,
-   # obtained via the number of columns minus the length of displayed characters:
-   #
-   #             ${columns}:  Width of terminal
-   #   ${#number_completed}:  FLACs processed and total FLACs, ie: [56/213]
-   #                     25:  Length of:
-   #                            (4) Spaces
-   #                            (1) Gap and ellipsis: '…'
-   #                            (6) Percentage: '  100%' or '    3%'
-   #                            (14) '[Spectrogram] '
-   max_filename_length="$(( columns - ${#number_completed} - 25 ))"
-
-   # Create and cull filename if needed returned as ${filename}
-   __filename
-
-   printf "\033[${placement};9H${cyan}[Spectrogram]${normal} %s%$(__current_length)s${magenta}%s${normal}" "${filename}" "" "${number_completed}"
-}
-
-#-------------------------------------------------------------------------------
-
-# Display the filename, clearing the progress bar and display the progress as an
-# error in red
-__print_spectrogram_issue() {
-   if (( current_filename_length < max_filename_length )) ; then
-      printf "\033[${placement};4H${yellow}%s${normal} ${cyan}%s${normal} %s%$(( max_filename_length - current_filename_length + 1 ))s" \
-      "chck" "[Spectrogram]" "${filename}" ""
-   else
-      printf "\033[${placement};4H${yellow}%s${normal} ${cyan}%s${normal} %s" \
-      "chck" "[Spectrogram]" "${filename}"
-   fi
-}
-
-#-------------------------------------------------------------------------------
-
-# Display filename and current progress of operation
 __print_progress() {
-   # Obtain the percentage of the current operation, the was it's obtained
-   # was defined earlier and stored in the below variable
-   ${obtain_percentage}
-
+   # Display filename and current progress of operation
+   #--
+   # $1 is:
+   #   aucdtect          aucdtect_spectrogram        md5_check
+   #   compress_verify   compress_no_test            test
+   #   replaygain_test   replaygain_force_apply      replaygain_apply
+   #   retag_analyze     retag_apply                 extract_images
+   #   prune             decode
+   #
+   # $2 is percent
+   # $3 is filename to print (may be truncated)
+   # $4 is filename length
+   #--
    # This is the length of the progress bar represented as the maxmimum
    # filename we can use.  The progress bar is displayed by taking the
    # percentage completed thus far and using the percentage to display that
    # same percentage of the filename's length (including spaces that may appear
    # after it)
-   progress_bar_length=$(( ( max_filename_length * percent_complete ) / 100 ))
+   #progress_bar_length=$(( ( max_length * $2 ) / 100 ))
+
+   case "$5" in
+      'decode')
+         action="${cyan}[decoding->WAV]${normal} "
+         # max_length - 16: '[decoding -> WAV] ' is 18 characters long
+         progress_bar_length=$(( ( ( max_length - 16 ) * $2 ) / 100 ))
+      ;;
+      'aucdtect_fast')
+         action="${cyan}[auCDtect:fast]${normal} "
+         # max_length - 16: '[auCDtect - fast] ' is 18 characters long
+         progress_bar_length=$(( ( ( max_length - 16 ) * $2 ) / 100 ))
+      ;;
+      'aucdtect_slow')
+         action="${cyan}[auCDtect:slow]${normal} "
+         # max_length - 16: '[auCDtect: slow] ' is 16 characters long
+         progress_bar_length=$(( ( ( max_length - 16 ) * $2 ) / 100 ))
+      ;;
+      'spectrogram')
+         action="${cyan}[spectral->PNG]${normal} "
+         # max_length - 16: '[spectral->PNG] ' is 16 characters long
+         progress_bar_length=$(( ( ( max_length - 16 ) * $2 ) / 100 ))
+      ;;
+      '')
+         progress_bar_length=$(( ( max_length * $2 ) / 100 ))
+      ;;
+   esac
 
    # If the progress bar to display is less than or equal to the filename's
    # length, print out the part of the filename that matches the percentage
    # completed, inverting the colors.  Otherwise, print out the filename,
    # inverted as well as the percentage of spacing that may be after the
    # filename (matching the percentage of completed); also inverted
-   if (( progress_bar_length < current_filename_length )) ; then
-
+   if (( progress_bar_length < $4 )) ; then
       # Below takes the current filename and 'trims' off the part of the
       # filename that hasn't doesn't match the percentage length of what's
       # completed so far (trim meaning, not highlighting that portion of the
       # filename)
-      printf "\033[${placement};4H${yellow}%4s${normal} ${invert}%s${normal}%s" \
-      "${percent_complete}%" "${filename:0:$(( progress_bar_length + 1 ))}"
+      printf "\033[${placement};4H${yellow}%4s${normal} ${action}${invert}%s${normal}" \
+         "${2}%" "${3:0:${progress_bar_length}}"
    else
-
-      # This prints out the the filename, inverted, as well as the current
-      # progress bar length.  Used only if the filename is less than the width
-      # of the progress bar maximum's length
-      printf "\033[${placement};4H${yellow}%4s${normal} ${invert}%s%$(( progress_bar_length - current_filename_length + 1 ))s${normal}" \
-      "${percent_complete}%" "${filename}" ""
-   fi
-}
-
-#-------------------------------------------------------------------------------
-
-# Display filename and current progress of decoding FLAC files
-__print_decoding_progress() {
-   # Obtain the percentage of the current operation, the was it's obtained
-   # was defined earlier and stored in the below variable
-   ${obtain_percentage}
-
-   # This is the length of the progress bar represented as the maxmimum
-   # filename we can use.  The progress bar is displayed by taking the
-   # percentage completed thus far and using the percentage to display that
-   # same percentage of the filename's length (including spaces that may appear
-   # after it)
-   progress_bar_length=$(( ( max_filename_length * percent_complete ) / 100 ))
-
-   # If the progress bar to display is less than or equal to the filename's
-   # length, print out the part of the filename that matches the percentage
-   # completed, inverting the colors.  Otherwise, print out the filename,
-   # inverted as well as the percentage of spacing that may be after the
-   # filename (matching the percentage of completed); also inverted
-   if (( progress_bar_length < current_filename_length )) ; then
-
-      # Below takes the current filename and 'trims' off the part of the
-      # filename that hasn't doesn't match the percentage length of what's
-      # completed so far (trim meaning, not highlighting that portion of the
-      # filename)
-      printf "\033[${placement};4H${yellow}%4s${normal} ${cyan}%s${normal}${invert}%s${normal}%s" \
-      "${percent_complete}%" "[Decoding] " "${filename:0:$(( progress_bar_length + 1 ))}"
-   else
-
-      # This prints out the the filename, inverted, as well as the current
-      # progress bar length.  Used only if the filename is less than the width
-      # of the progress bar maximum's length
-      printf "\033[${placement};4H${yellow}%4s${normal} ${cyan}%s${normal}${invert}%s%$(( progress_bar_length - current_filename_length + 1 ))s${normal}" \
-      "${percent_complete}%" "[Decoding] " "${filename}" ""
-   fi
-}
-
-#-------------------------------------------------------------------------------
-
-# Display filename and current progress of auCDtect [fast] analysis
-__print_progress_aucdtect_fast() {
-   # Obtain the percentage of the current operation, the was it's obtained
-   # was defined earlier and stored in the below variable
-   ${obtain_percentage}
-
-   # This is the length of the progress bar represented as the maxmimum
-   # filename we can use.  The progress bar is displayed by taking the
-   # percentage completed thus far and using the percentage to display that
-   # same percentage of the filename's length (including spaces that may appear
-   # after it)
-   progress_bar_length=$(( ( max_filename_length * percent_complete ) / 100 ))
-
-   # If the progress bar to display is less than or equal to the filename's
-   # length, print out the part of the filename that matches the percentage
-   # completed, inverting the colors.  Otherwise, print out the filename,
-   # inverted as well as the percentage of spacing that may be after the
-   # filename (matching the percentage of completed); also inverted
-   if (( progress_bar_length < current_filename_length )) ; then
-
-      # Below takes the current filename and 'trims' off the part of the
-      # filename that hasn't doesn't match the percentage length of what's
-      # completed so far (trim meaning, not highlighting that portion of the
-      # filename)
-      printf "\033[${placement};4H${yellow}%4s${normal} ${cyan}%s${normal}${invert}%s${normal}%s" \
-      "${percent_complete}%" "[auCDtect: Fast] " "${filename:0:$(( progress_bar_length + 1 ))}"
-   else
-
-      # This prints out the the filename, inverted, as well as the current
-      # progress bar length.  Used only if the filename is less than the width
-      # of the progress bar maximum's length
-      printf "\033[${placement};4H${yellow}%4s${normal} ${cyan}%s${normal}${invert}%s%$(( progress_bar_length - current_filename_length + 1 ))s${normal}" \
-      "${percent_complete}%" "[auCDtect: Fast] " "${filename}" ""
-   fi
-}
-
-#-------------------------------------------------------------------------------
-
-# Display filename and current progress of auCDtect [slow] analysis
-__print_progress_aucdtect_slow() {
-   # Obtain the percentage of the current operation, the was it's obtained
-   # was defined earlier and stored in the below variable
-   ${obtain_percentage}
-
-   # This is the length of the progress bar represented as the maxmimum
-   # filename we can use.  The progress bar is displayed by taking the
-   # percentage completed thus far and using the percentage to display that
-   # same percentage of the filename's length (including spaces that may appear
-   # after it)
-   progress_bar_length=$(( ( max_filename_length * percent_complete ) / 100 ))
-
-   # If the progress bar to display is less than or equal to the filename's
-   # length, print out the part of the filename that matches the percentage
-   # completed, inverting the colors.  Otherwise, print out the filename,
-   # inverted as well as the percentage of spacing that may be after the
-   # filename (matching the percentage of completed); also inverted
-   if (( progress_bar_length < current_filename_length )) ; then
-
-      # Below takes the current filename and 'trims' off the part of the
-      # filename that hasn't doesn't match the percentage length of what's
-      # completed so far (trim meaning, not highlighting that portion of the
-      # filename)
-      printf "\033[${placement};4H${yellow}%4s${normal} ${cyan}%s${normal}${invert}%s${normal}%s" \
-      "${percent_complete}%" "[auCDtect: Slow] " "${filename:0:$(( progress_bar_length + 1 ))}"
-   else
-
-      # This prints out the the filename, inverted, as well as the current
-      # progress bar length.  Used only if the filename is less than the width
-      # of the progress bar maximum's length
-      printf "\033[${placement};4H${yellow}%4s${normal} ${cyan}%s${normal}${invert}%s%$(( progress_bar_length - current_filename_length + 1 ))s${normal}" \
-      "${percent_complete}%" "[auCDtect: Slow] " "${filename}" ""
-   fi
-}
-
-#-------------------------------------------------------------------------------
-
-# Display filename and current progress of creating a spectrogram
-__print_progress_spectrogram() {
-   # Obtain the percentage of the current operation, the was it's obtained
-   # was defined earlier and stored in the below variable
-   ${obtain_percentage}
-
-   # This is the length of the progress bar represented as the maxmimum
-   # filename we can use.  The progress bar is displayed by taking the
-   # percentage completed thus far and using the percentage to display that
-   # same percentage of the filename's length (including spaces that may appear
-   # after it)
-   progress_bar_length=$(( ( max_filename_length * percent_complete ) / 100 ))
-
-   # If the progress bar to display is less than or equal to the filename's
-   # length, print out the part of the filename that matches the percentage
-   # completed, inverting the colors.  Otherwise, print out the filename,
-   # inverted as well as the percentage of spacing that may be after the
-   # filename (matching the percentage of completed); also inverted
-   if (( progress_bar_length < current_filename_length )) ; then
-
-      # Below takes the current filename and 'trims' off the part of the
-      # filename that hasn't doesn't match the percentage length of what's
-      # completed so far (trim meaning, not highlighting that portion of the
-      # filename)
-      printf "\033[${placement};4H${yellow}%4s${normal} ${cyan}%s${normal}${invert}%s${normal}%s" \
-      "${percent_complete}%" "[Spectrogram] " "${filename:0:$(( progress_bar_length + 1 ))}"
-   else
-
-      # This prints out the the filename, inverted, as well as the current
-      # progress bar length.  Used only if the filename is less than the width
-      # of the progress bar maximum's length
-      printf "\033[${placement};4H${yellow}%4s${normal} ${cyan}%s${normal}${invert}%s%$(( progress_bar_length - current_filename_length + 1 ))s${normal}" \
-      "${percent_complete}%" "[Spectrogram] " "${filename}" ""
-   fi
-}
-
-#-------------------------------------------------------------------------------
-
-# Display the filename, clearing the progress bar and display the progress
-# percentage as 100% (since FLAC stops at 99%) in green
-__print_progress_ok() {
-   if (( current_filename_length < max_filename_length )) ; then
-      printf "\033[${placement};4H${green}%4s${normal} %s%$(( max_filename_length - current_filename_length + 1 ))s" \
-      "100%" "${filename}" ""
-   else
-      printf "\033[${placement};4H${green}%4s${normal} %s" \
-      "100%" "${filename}"
-   fi
-}
-
-#-------------------------------------------------------------------------------
-
-# Display the filename, clearing the progress bar and display the progress as an
-# error in yellow color
-__print_progress_issue() {
-   if (( current_filename_length < max_filename_length )) ; then
-      printf "\033[${placement};4H${yellow}%s${normal} %s%$(( max_filename_length - current_filename_length + 1 ))s" \
-      "chck" "${filename}" ""
-   else
-      printf "\033[${placement};4H${yellow}%s${normal} %s" \
-      "chck" "${filename}"
-   fi
-}
-
-#-------------------------------------------------------------------------------
-
-# Display the filename, clearing the progress bar and display the progress as an
-# error in red color
-__print_progress_failed() {
-   if (( current_filename_length < max_filename_length )) ; then
-      printf "\033[${placement};4H${red}%s${normal} %s%$(( max_filename_length - current_filename_length + 1 ))s" \
-      "fail" "${filename}" ""
-   else
-      printf "\033[${placement};4H${red}%s${normal} %s" \
-      "fail" "${filename}"
+#
+#      # This prints out the the filename, inverted, as well as the current
+#      # progress bar length.  Used only if the filename is less than the width
+#      # of the progress bar maximum's length
+      printf "\033[${placement};4H${yellow}%4s${normal} ${action}${invert}%s%$(( progress_bar_length - $4 ))s${normal}" \
+         "${2}%" "${3}" ""
    fi
 }
 
@@ -1346,7 +939,7 @@ __trap_sigint() {
    # $2 determines which additional cleanup may need to be performed when
    # starting '__exit_cleanup'.  Possible values:
    #   aucdtect          aucdtect_spectrogram        md5_check
-   #   compress_verify   compress_no_verify          test
+   #   compress_verify   compress_no_test            test
    #   replaygain_test   replaygain_force_apply      replaygain_apply
    #   retag_analyze     retag_apply                 extract_images
    #   prune
@@ -1374,7 +967,7 @@ __exit_cleanup() {
    # normally obtained from $2 in the '__trap_sigint' function.  Possible
    # values:
    #   aucdtect          aucdtect_spectrogram        md5_check
-   #   compress_verify   compress_no_verify          test
+   #   compress_verify   compress_no_test            test
    #   replaygain_test   replaygain_force_apply      replaygain_apply
    #   retag_analyze     retag_apply                 extract_images
    #   prune
@@ -1530,87 +1123,46 @@ __scroll_terminal() {
 
 #-------------------------------------------------------------------------------
 
-# Obtain the current progress completed percentage while compressing FLAC files
-__obtain_compress_percentage() {
-   # Remove backspace sequences used by the FLAC command line interface
-   percent_complete="${percent_complete//$'\b'/}"
+__get_percent_complete() {
+   # $1 is the operation to choose how to obtain the percentage, which can be:
+   #   aucdtect          aucdtect_spectrogram        md5_check
+   #   compress_verify   compress_no_test            test
+   #   replaygain_test   replaygain_force_apply      replaygain_apply
+   #   retag_analyze     retag_apply                 extract_images
+   #   prune             decode
+   #
+   # $2 is a (possibly multiline) string of text from a command binary's output
+   # with the percentage contained within
+   #--
+   case "$1" in
+      'compress_'*)
+         percent="${2//$'\b'/}"                        # Remove backspaces
+         percent="${percent##*: }"                     # complete0, ratio=0.307
+         percent="${percent##*complete, ratio=?.???}"  # Percent (integer)
+      ;;
+      'test')
+         percent="${2##* }"                            # Percent (integer)
+      ;;
+      'decode')
+         percent="${2//$'\b'}"                         # Remove backspaces
+         percent="${percent##*: }"                     # complete0
+         percent="${percent##*complete}"               # Percent (integer)
+      ;;
+      'aucdtect')
+         percent="${2##*[}"                            # Percent (integer)
+      ;;
+      'spectrogram')
+         percent="${2##*In:}"                          # Percent (floating)
+         percent="${percent%%.*}"                      # Percent (integer)
+      ;;
+   esac
 
-   # Remove the first part of the line leaving only the percent integer as well
-   # as other information:
-   #  '0 complete, ratio=0.307'
-   percent_complete="${percent_complete##*: }"
-
-   # Remove the last part part of the percent_complete string, leaving the
-   # percent stored as an integer
-   percent_complete="${percent_complete##*complete, ratio=?.???}"
-
-   # Enforce an integer for ${percent_complete}, defaulting to '0' if not an
-   # integer
-   [[ "${percent_complete}" =~ ^[[:digit:]]+$ ]] || percent_complete=0
-}
-
-#-------------------------------------------------------------------------------
-
-# Obtain the current progress completed percentage while testing FLAC file
-__obtain_test_percentage() {
-   # Remove the first part of the line to leave the resultant percent stored as
-   # an integer (no '%' appended)
-   percent_complete="${percent_complete##* }"
-
-   # Enforce an integer for ${percent_complete}, defaulting to '0' if not an
-   # integer
-   [[ "${percent_complete}" =~ ^[[:digit:]]+$ ]] || percent_complete=0
-}
-
-#-------------------------------------------------------------------------------
-
-# Obtain the current progress completed percentage while decoding FLAC file
-__obtain_decode_percentage() {
-   # Remove backspace sequences used by the FLAC command line interface
-   percent_complete="${percent_complete//$'\b'}"
-
-   # Remove the first part of the line leaving only the percent integer as well
-   # as well as other information:
-   #  'complete0
-   percent_complete="${percent_complete##*: }"
-
-   # Remove the last part part of the percent_complete string, leaving the
-   # percent stored as an integer
-   percent_complete="${percent_complete##*complete}"
-
-   # Enforce an integer for ${percent_complete}, defaulting to '0' if not an
-   # integer
-   [[ "${percent_complete}" =~ ^[[:digit:]]+$ ]] || percent_complete=0
-}
-
-#-------------------------------------------------------------------------------
-
-# Obtain the current progress completed percentage while using auCDtect
-__obtain_aucdtect_percentage() {
-   # Remove the first part of the line to leave the resultant percent stored as
-   # an integer (no '%' appended)
-   percent_complete="${percent_complete##*[}"
-
-   # Enforce an integer for ${percent_complete}, defaulting to '0' if not an
-   # integer
-   [[ "${percent_complete}" =~ ^[[:digit:]]+$ ]] || percent_complete=0
-}
-
-#-------------------------------------------------------------------------------
-
-# Obtain the current progress completed percentage while using auCDtect
-__obtain_spectrogram_percentage() {
-   # Remove the first part of the line leaving only the percent which is
-   # represented as a floating point number:
-   #  '32.3'
-   percent_complete="${percent_complete##*In:}"
-
-   # Remove the floating point part of the percentage to leave only an integer
-   percent_complete="${percent_complete%%.*}"
-
-   # Enforce an integer for ${percent_complete}, defaulting to '0' if not an
-   # integer
-   [[ "${percent_complete}" =~ ^[[:digit:]]+$ ]] || percent_complete=0
+   # Default to '0' if percentage is not an integer
+   if [[ "${percent}" =~ ^[[:digit:]]+$ ]] ; then
+      printf "%d" $percent
+   else
+      printf "%d" 0
+   fi
 }
 
 #-------------------------------------------------------------------------------
@@ -1930,73 +1482,51 @@ __check_config_version() {
 
 #-------------------------------------------------------------------------------
 
-# Creates filename of current FLAC and culls it if the length
-# is bigger than then width of the terminal
-__filename() {
-   if [[ "${i#"${i%?}"}" == '/' ]] ; then
-      filename="${i%?}"
-      filename="${filename##*/}/"
+__truncate_filename() {
+   # Truncate the processed item's filename if it's bigger than terminal width,
+   # returning the filename (possibly truncated) as well as the length of the
+   # filename (in characters)
+   #
+   # $1 is the filename to truncate/process
+   #--
+   # Set up local variables
+   declare    filename
+   declare -i filename_length  truncated_length
+
+   # Basename of file/directory
+   if [[ "${1#"${1%?}"}" == '/' ]] ; then  # Last character is a '/'
+      # Directory
+      filename="${1%?}"                    # Remove last character
+      filename="${filename##*/}/"          # Basename of directory, append '/'
    else
-      filename="${i##*/}"
+      # File
+      filename="${1##*/}"                  # Basename of file
    fi
-   # Replace possible newlines in filename with '?' (like 'ls' output)
-   filename="${filename//$'\n'/?}"
 
-   # Obtain filename length.  We cannot use ${#filename} in the event there are
-   # multibyte characters -- the width would not be equal to characters since
-   # the characters can take up more than one block in a terminal
-   current_filename_length="$(wc -L <<< "${filename}")"
+   filename="${filename//$'\n'/?}"         # Replace '\n' with '?'
 
-   # Cull filename and add an ellipsis if the filename is too long
-   if (( current_filename_length > max_filename_length )) ; then
+   # Column length of filename. 'wc -L' handles multi-byte characters correctly
+   filename_length="$(wc -L <<< "${filename}")"
 
-      # Grab the current filename length after it's been culled by the maximum
-      # length allowed by ${columns}
-      culled_filename_length="$(wc -L <<< "${filename:0:${max_filename_length}}")"
+   # If filename is longer than the width allowed in the terminal, truncate it
+   if (( filename_length > max_length )) ; then
+      # Truncate filename by $max_length and grab the _real_ length
+      truncated_length="$(wc -L <<< "${filename:0:${max_length}}")"
 
-      # Set a placeholder ${max_filename_length} to be changed in the loop
-      # below
-      max_length="${max_filename_length}"
-
-      # Keep looping until the culled filename length equals the maximum
-      # length allowed via ${columns}
-      until (( culled_filename_length == max_filename_length )) ; do
-
-         # Decrement placeholder ${max_length} by one (1)
+      until (( truncated_length == max_length )) ; do
+         # Multibyte characters can make $truncated_length smaller than
+         # $max_length, so keep slicing a character off $max_length
+         # until $truncated_length equals $max_length
+         #--
          ((--max_length))
-
-         # Obtain the new culled filename length
-         culled_filename_length="$(wc -L <<< "${filename:0:${max_length}}")"
-
+         truncated_length="$(wc -L <<< "${filename:0:${max_length}}")"
       done
 
-      # Set the culled filename to display slicing the correct amount of
-      # characters determined from ${max_length}
-      filename="${filename:0:${max_length}}… "
+      # Return truncated filename with ellipsis and filename length
+      printf "%s${unit_separator}%d" "${filename:0:$((max_length - 2))}…" "${filename_length}"
    else
-      # Set the default filename with a gap at the end for spacing
-      filename="${filename} "
-   fi
-}
-
-#-------------------------------------------------------------------------------
-
-# Display current length spacing between filename and operation message
-__current_length() {
-   # The current length is obtained via the length of what's printed now minus
-   # the length of the filename and gaps:
-   #
-   #  [1234/123456] 07 - Some_FLAC_Filename.flac <- ${current_length} -> [ Operation Message ]
-   #                                             ^^^^^^^^^^^^^^^^^^^^^^^
-   #  ${current_filename_length}:  Length of the current filename from __filename
-   #  ${max_filename_length} + 1:  Total length of what's printed minus the operation
-   #                               message plus one because we do not want the ellipsis
-   #                               from ${max_filename_length}, just the space/gap
-   #
-   # Only print out ${current_length} if the current filename length is less
-   # than the maximum file length allowed
-   if (( current_filename_length <= max_filename_length )) ; then
-      printf %d $(( max_filename_length - current_filename_length + 1 ))
+      # Return filename and filename length
+      printf "%s${unit_separator}%d" "${filename}" "${filename_length}"
    fi
 }
 
@@ -2047,15 +1577,15 @@ __find_cores() {
 # an array to be processed
 __find_artwork() {
    # Grab all the PICTURE blocks from current FLAC file, storing into an array
-   mapfile -n0 -t artwork_blocks < <(metaflac --list --block-type=PICTURE "${i}")
+   mapfile -n0 -t artwork_blocks < <(metaflac --list --block-type=PICTURE "${1}")
 
    # Run through each line obtained above (stored into an array) and parse out
    # the block type we want
-   for j in "${!artwork_blocks[@]}" ; do   # We want the current index (!)
+   for j in "${!artwork_blocks[@]}" ; do
 
       # If the current line has shows the type of block but isn't (PICTURE),
       # then we have the correct line (block type)
-      if [[ "${artwork_blocks[${j}]}" == "  type: "* ]] && [[ "${artwork_blocks[${j}]}" != "  type: 6 (PICTURE)" ]] ; then
+      if [[ "${artwork_blocks[${j}]}" == '  type: '* ]] && [[ "${artwork_blocks[${j}]}" != '  type: 6 (PICTURE)' ]] ; then
 
          # Obtain the METADATA block ID (4 lines above matched line)
          artwork_block_id="${artwork_blocks[$(( j - 4 ))]##* #}"
@@ -2215,15 +1745,15 @@ __top_banner() {
       "-------------------------+-------------------------"
 
    # Script version
-   printf "           Script Version ${blue}|${normal} ${cyan}%s${normal}\n" \
+   printf "                redoflacs ${blue}|${normal} ${cyan}%s${normal}\n" \
       "${version}"
 
    # FLAC version
-   printf "             FLAC Version ${blue}|${normal} ${cyan}%s${normal}\n" \
+   printf "                     FLAC ${blue}|${normal} ${cyan}%s${normal}\n" \
       "${flac_version}"
 
    # Number of Jobs
-   printf "            Parallel Jobs ${blue}|${normal} ${cyan}%s %s${normal}\n" \
+   printf "                     Jobs ${blue}|${normal} ${cyan}%s %s${normal}\n" \
       "${jobs}" "${jobs_display}"
 
    # Log directory
@@ -2575,7 +2105,7 @@ __process_positional_parameters() {
          ;;
          '-m') operations[2]='md5_check'             ;;
          '-c') operations[3]='compress_verify'       ;;
-         '-C') operations[4]='compress_no_verify'    ;;
+         '-C') operations[4]='compress_no_test'      ;;
          '-t') operations[5]='test'                  ;;
          '-g'|'-G')
             operations[6]='replaygain_test'
@@ -2956,31 +2486,55 @@ __run_parallel() {
    # Run a given operation with a specified number of jobs
    #
    # $1 is the operational function to run multiple jobs, which can be:
-   #   __aucdtect          __aucdtect_spectrogram     __md5_check
-   #   __compress_verify   __compress_no_verify       __test
-   #   __replaygain_test   __replaygain_force_apply   __replaygain_apply
-   #   __retag_analyze     __retag_apply              __extract_artwork
-   #   __prune
+   #   aucdtect          aucdtect_spectrogram     md5_check
+   #   compress_verify   compress_no_test         test
+   #   replaygain_test   replaygain_force_apply   replaygain_apply
+   #   retag_analyze     retag_apply              extract_artwork
+   #   prune
    #--
    # Set up local variables/arrays
    declare      item
    declare  -i  row_state  placement  previous_placement  iteration=0
 
+   case "$1" in
+      replaygain_* | retag_*)  spacing='11'  ;;
+      *)                       spacing='9'   ;;
+   esac
+
+   # This is the current item processed out of the total items:
+   #number_completed="[${iteration}/${#total_items[@]}]"  # eg. [56/213]
+
+   # This is the maximum length of a string to be displayed based on column width,
+   # obtained via the number of columns minus the length of displayed characters:
+   #
+   #             ${columns}:  Width of terminal
+   #   ${#number_completed}:  FLACs processed and total FLACs, ie: [56/213]
+   #                     11:  Length of:
+   #                            (4) Spaces
+   #                            (1) Gap and ellipsis: '…'
+   #                            (6) Percentage: '  100%' or '    3%'
+   #max_length="$(( columns - ${#number_completed} - 9 ))"
+
    row_state=$(__row)                       # Current cursor row position state
 
-   for i in "${total_items[@]:0:${jobs}}" ; do
+   for item in "${total_items[@]:0:${jobs}}" ; do
       # Run as many operations (from $total_items[@]) in the background,
       # specified via $jobs
       #--
       placement=$((row_state + iteration))  # Placement of file/dir processed
       ((iteration++))                       # After placement to not print 0
-      "$1" &                                # Fork operation
+      number_completed="[${iteration}/${#total_items[@]}]"  # eg. [56/213]
+
+      # Max filename allowed (to fit within screen)
+      max_length="$(( columns - ${#number_completed} - spacing ))"
+      __$1 "${item}" "$1" "${number_completed}" &           # Fork operation
    done
 
    # Continue only if there are more items than jobs specified
    if (( ${#total_items[@]} > jobs )) ; then
       while read -r previous_placement ; do
-         # An operation is completed with a newline sent to a FIFO.  For each
+         # An operation is completed with an integer and newline sent to a FIFO.
+         # The integer is that row position an operation was on.  For each
          # newline read in, process another file/dir from $total_items[@]
          #--
          # Placement of file/dir relative to previous operation's placement
@@ -2989,9 +2543,13 @@ __run_parallel() {
          # If current number of FLACs to process is less than total FLACs
          # found, add another FLAC to process
          if (( iteration < ${#total_items[@]} )) ; then
-            i="${total_items[${iteration}]}"     # Current file/dir to process
+            item="${total_items[${iteration}]}"  # Current file/dir to process
             ((iteration++))                      # Increase count
-            "$1" &                               # Fork operation
+            number_completed="[${iteration}/${#total_items[@]}]"  # eg. [56/213]
+
+            # Max filename allowed (to fit within screen)
+            max_length="$(( columns - ${#number_completed} - spacing ))"
+            __$1 "${item}" "$1" "${number_completed}" &           # Fork operation
          else
             break                                # Prevent read hanging FIFO
          fi
@@ -3003,26 +2561,43 @@ __run_parallel() {
 
 #-------------------------------------------------------------------------------
 
-# Test ReplayGain
 __replaygain_test() {
+   # Test FLAC file's for ReplayGain application
+   #--
+   # $1 is the filename
+   # $2 is the operation that's currently being run, of which, can be:
+   #   aucdtect          aucdtect_spectrogram     md5_check
+   #   compress_verify   compress_no_test         test
+   #   replaygain_test   replaygain_force_apply   replaygain_apply
+   #   retag_analyze     retag_apply              extract_artwork
+   #   prune
+   # $3 is a string representing number items processed, eg: [43/439]
+   #--
    trap '__kill_jobs "$(jobs -rp)"' EXIT
 
+   # Set up local variables
+   declare    file_basename
+   declare -i file_length
+
+   # Truncate file, if necessary, and grab file information, splitting on
+   # Unit Separator (\037)
+   IFS=$'\037' read -r file_basename file_length < <(__truncate_filename "$1")
+
    # Print current FLAC being processed
-   __print_sub_current_flac
+   __print_item "${file_basename}" "${file_length}" "$3" 'sub'
 
    # Check if file is a FLAC file (capture output) via obtaining the sample
    # rate of the current file.  The sample rate captured will be tested against
    # later on.  Hide STDERR as we'll test the exit code instead
-   current_sample_rate="$(metaflac --show-sample-rate "${i}" 2>/dev/null)"
+   current_sample_rate="$(metaflac --show-sample-rate "${1}" 2>/dev/null)"
 
-   # Exit code 130 is SIGINT so only check for exit code '1'
+   # Exit code 1 implies failure (130 is SIGINT)
    if (( ${?} == 1 )) ; then
-
       # Error with FLAC file, display failed/error
-      __print_sub_progress_failed
+      __print_status 'fail' "${file_basename}" "${file_length}" 'sub'
 
       # Log FLAC failure
-      printf "%s__redoflacs::delimiter__Not a real FLAC file\n" "${i}" \
+      printf "%s__redoflacs::delimiter__Not a real FLAC file\n" "${1}" \
          >> "${log_file}"
 
       # Add one to fail fd
@@ -3036,22 +2611,23 @@ __replaygain_test() {
          # version of `metaflac' is greater than 1.2.1
          if (( $(__metaflac_version) < 3 )) ; then
             # Old version of `metaflac' installed, display skipped
-            __print_sub_progress_issue
+            __print_status 'skip' "${file_basename}" "${file_length}" 'sub'
 
             # The `metaflac' version installed is NOT greater than 1.2.1 so
             # skip processing current FLAC file, logging why it was skipped
-            printf "%s__redoflacs::delimiter__FLAC 1.3.0 or higher needed for sample rates >48kHz\n" "${i}" \
+            printf "%s__redoflacs::delimiter__FLAC 1.3.0 or higher needed for sample rates >48kHz\n" "${1}" \
                >> "${log_file}"
 
             # Add one to fail fd
             printf '.' >> "${issue_ticks}"
          else
             # FLAC is ok, display ok
-            __print_sub_progress_ok
+            __print_status 'ok' "${file_basename}" "${file_length}" 'sub'
+
          fi
       else
          # FLAC is ok, display ok
-         __print_sub_progress_ok
+         __print_status 'ok' "${file_basename}" "${file_length}" 'sub'
       fi
    fi
 
@@ -3063,18 +2639,36 @@ __replaygain_test() {
 
 #-------------------------------------------------------------------------------
 
-# Process Replaygain (only add values if missing)
 __replaygain_apply() {
+   # Apply ReplayGain to each directory of FLAC files (if values are missing)
+   #--
+   # $1 is the directory
+   # $2 is the operation that's currently being run, of which, can be:
+   #   aucdtect          aucdtect_spectrogram     md5_check
+   #   compress_verify   compress_no_test         test
+   #   replaygain_test   replaygain_force_apply   replaygain_apply
+   #   retag_analyze     retag_apply              extract_artwork
+   #   prune
+   # $3 is a string representing number items processed, eg: [43/439]
+   #--
    trap '__kill_jobs "$(jobs -rp)"' EXIT
 
-   # Print current directory being processed
-   __print_current_directory
+   # Set up local variables
+   declare file_basename percent_complete
+   declare -i file_length
+   declare -a replaygain_tags
 
-   # ${i} is the parent directory to the FLAC files
-   # ${j} is a FLAC file -> under ${i}
-   for j in "${i}"/*${flac_extension} ; do
+   # Truncate file, if necessary, and grab file information, splitting on
+   # Unit Separator (\037)
+   IFS=$'\037' read -r file_basename file_length < <(__truncate_filename "$1")
+
+   # Print current FLAC being processed
+   __print_item "${file_basename}" "${file_length}" "$3" 'sub'
+
+   # ${j} is a FLAC file -> under a directory, ${1}
+   for j in "${1}"/*${flac_extension} ; do
       # Grab all of the ReplayGain tags
-      mapfile -n0 -t replaygain_array < \
+      mapfile -n0 -t replaygain_tags < \
       <(
          metaflac \
             --show-tag=REPLAYGAIN_REFERENCE_LOUDNESS \
@@ -3085,46 +2679,42 @@ __replaygain_apply() {
             "${j}"
       )
 
-      # Strip out the tag fields (eg. REPLAYGAIN_TRACK_GAIN=)
-      replaygain_array="${replaygain_array[@]#*=}"
-
       # Test if any ReplayGain values are empty (if there are less
       # than 5 values in the replaygain array)
-      if (( ${#replaygain_array[@]} < 5 )) ; then
+      if (( ${#replaygain_tags[@]} < 5 )) ; then
          # At _least_ one tag is missing from current file, so
          # apply new ReplayGain values
          #
          # Add ReplayGain to FLAC files under directory.  Metaflac
          # automatically removes old ReplayGain values (if any) before
          # proceeding
-         metaflac --add-replay-gain "${i}"/*${flac_extension} >/dev/null 2>&1
+         metaflac --add-replay-gain "${1}"/*${flac_extension} >/dev/null 2>&1
 
          # Exit code 130 is SIGINT so only check for exit code '1'
          if (( ${?} == 1 )) ; then
-
-            # Failed applyig replaygain values, display failed/error
-            __print_sub_progress_failed
+            # Failed applying ReplayGain values, display failed/error
+            __print_status 'fail' "${file_basename}" "${file_length}" 'sub'
 
             # Log ReplayGain error
-            printf "%s__redoflacs::delimiter__Corrupt FLAC(s) or differing sample rates (album ReplayGain)\n" "${i}" \
+            printf "%s__redoflacs::delimiter__Corrupt FLAC(s) or differing sample rates (album ReplayGain)\n" "${1}" \
                >> "${log_file}"
 
             # Add one to fail fd
             printf '.' >> "${issue_ticks}"
 
-            # Placeholder variable tested after this loop
-            # if the loop completes with 'break'
+            # Placeholder variable tested after this loop if the loop completes
+            # with 'break'
             broke_out_of_loop="true"
 
             # Break out of loop and on to next directory
             break
          else
-            # FLAC is ok, display ok
-            __print_sub_progress_ok
+            # Applied ReplayGain successfully
+            __print_status 'ok' "${file_basename}" "${file_length}" 'sub'
          fi
       else
-         # FLAC is ok, display ok
-         __print_sub_progress_ok
+         # All FLACs have ReplayGain applied
+         __print_status 'ok' "${file_basename}" "${file_length}" 'sub'
       fi
    done
 
@@ -3136,31 +2726,48 @@ __replaygain_apply() {
 
 #-------------------------------------------------------------------------------
 
-# Process ReplayGain (force new values)
 __replaygain_force_apply() {
+   # Apply ReplayGain to each directory of FLAC files (force new values)
+   #--
+   # $1 is the directory
+   # $2 is the operation that's currently being run, of which, can be:
+   #   aucdtect          aucdtect_spectrogram     md5_check
+   #   compress_verify   compress_no_test         test
+   #   replaygain_test   replaygain_force_apply   replaygain_apply
+   #   retag_analyze     retag_apply              extract_artwork
+   #   prune
+   # $3 is a string representing number items processed, eg: [43/439]
+   #--
    trap '__kill_jobs "$(jobs -rp)"' EXIT
 
-   # Print current directory being processed
-   __print_current_directory
+   # Set up local variables
+   declare    file_basename  percent_complete
+   declare -i file_length
+
+   # Truncate file, if necessary, and grab file information, splitting on
+   # Unit Separator (\037)
+   IFS=$'\037' read -r file_basename file_length < <(__truncate_filename "$1")
+
+   # Print current FLAC being processed
+   __print_item "${file_basename}" "${file_length}" "$3" 'sub'
 
    # Add ReplayGain to FLAC files under directory
-   metaflac --add-replay-gain "${i}"/*${flac_extension} >/dev/null 2>&1
+   metaflac --add-replay-gain "${1}"/*${flac_extension} >/dev/null 2>&1
 
    # Exit code 130 is SIGINT so only check for exit code '1'
    if (( ${?} == 1 )) ; then
-
-      # Error with FLAC file, display failed/error
-      __print_sub_progress_failed
+      # Failed applying ReplayGain values, display failed/error
+      __print_status 'fail' "${file_basename}" "${file_length}" 'sub'
 
       # Log ReplayGain error
-      printf "%s__redoflacs::delimiter__Corrupt FLAC(s) or differing sample rates (album ReplayGain)\n" "${i}" \
+      printf "%s__redoflacs::delimiter__Corrupt FLAC(s) or differing sample rates (album ReplayGain)\n" "${1}" \
          >> "${log_file}"
 
       # Add one to fail fd
       printf '.' >> "${issue_ticks}"
    else
-      # FLAC is ok, display ok
-      __print_sub_progress_ok
+      # Applied ReplayGain successfully
+      __print_status 'ok' "${file_basename}" "${file_length}" 'sub'
    fi
 
    # Store the position of where the line of the FLAC file is displayed in file
@@ -3172,174 +2779,215 @@ __replaygain_force_apply() {
 #-------------------------------------------------------------------------------
 
 __compress_verify() {
+   # Compress FLACs with user-defined compression level, verifying its integrity
+   #--
+   # $1 is the directory
+   # $2 is the operation that's currently being run, of which, can be:
+   #   aucdtect          aucdtect_spectrogram     md5_check
+   #   compress_verify   compress_no_test         test
+   #   replaygain_test   replaygain_force_apply   replaygain_apply
+   #   retag_analyze     retag_apply              extract_artwork
+   #   prune
+   # $3 is a string representing number items processed, eg: [43/439]
+   #--
    trap '__kill_jobs "$(jobs -rp)"' EXIT
 
-   # Test for COMPRESSION level in FLAC file. Hide error output since
-   # we'll be verifying the FLAC file later
-   COMPRESSION="$(metaflac --show-tag=COMPRESSION "${i}" 2> /dev/null)"
-   COMPRESSION="${COMPRESSION#*=}"
+   # Set up local variables
+   declare    file_basename percent_complete
+   declare -i file_length
 
-   if (( COMPRESSION != compression_level )) ; then
-      # Print current FLAC being processed
-      __print_current_flac
-
-      # This is a variable to determine which type of process is used to get
-      # the current percentage during the operation
-      obtain_percentage="__obtain_compress_percentage"
-
-      # Compress FLAC file
-      # Display the current file with progress completed thus far via a
-      # percentage and progress bar
-      flac --no-error-on-compression-fail -f -${compression_level} -V "${i}" 2> >(while read -r -d% percent_complete ; do
-         __print_progress
-      done) >/dev/null
-
-
-      # Exit code 130 is SIGINT so only check for exit code '1'
-      if (( ${?} == 1 )) ; then
-
-         # Error with FLAC file, display failed/error
-         __print_progress_failed
-
-         # Log FLAC failure
-         printf "%s__redoflacs::delimiter__Failed verification\n" "${i}" \
-            >> "${log_file}"
-
-         # Add one to fail fd
-         printf '.' >> "${issue_ticks}"
-      else
-         metaflac \
-            --remove-tag=COMPRESSION \
-            --set-tag=COMPRESSION=${compression_level} "${i}"
-
-         # FLAC is ok, display ok
-         __print_progress_ok
-      fi
-
-   # If already at compression_level, test the FLAC file instead
-   else
-      # Print current FLAC being processed
-      __print_current_flac
-
-      # This is a variable to determine which type of process is used to
-      # get the current percentage during the operation
-      obtain_percentage="__obtain_test_percentage"
-
-      # Test FLAC file
-      # Display the current file with progress completed thus far via a
-      # percentage and progress bar
-      flac -t "${i}" 2> >(while read -r -d% percent_complete ; do
-         __print_progress
-      done) >/dev/null
-
-      # Exit code 130 is SIGINT so only check for exit code '1'
-      if (( ${?} == 1 )) ; then
-
-         # Error with FLAC file, display failed/error
-         __print_progress_failed
-
-         # Log FLAC failure
-         printf "%s__redoflacs::delimiter__Failed verification\n" "${i}" \
-            >> "${log_file}"
-
-         # Add one to fail fd
-         printf '.' >> "${issue_ticks}"
-      else
-         # FLAC is ok, display ok
-         __print_progress_ok
-      fi
-   fi
-
-   # Store the position of where the line of the FLAC file is displayed in file
-   # descriptor (3), to be used by the next job, terminated by a newline to
-   # indicate job completed
-   __store_position
-}
-
-#-------------------------------------------------------------------------------
-
-__compress_no_verify() {
-   trap '__kill_jobs "$(jobs -rp)"' EXIT
-
-   # Test for COMPRESSION level in FLAC file. Hide error output since
-   # we'll be verifying the FLAC file later
-   COMPRESSION="$(metaflac --show-tag=COMPRESSION "${i}" 2> /dev/null)"
-   COMPRESSION="${COMPRESSION#*=}"
-
-   if (( COMPRESSION != compression_level )) ; then
-      # Print current FLAC being processed
-      __print_current_flac
-
-      # This is a variable to determine which type of process is used to get
-      # the current percentage during the operation
-      obtain_percentage="__obtain_compress_percentage"
-
-      # Compress FLAC file
-      # Display the current file with progress completed thus far via a
-      # percentage and progress bar
-      flac --no-error-on-compression-fail -f -${compression_level} -V "${i}" 2> >(while read -r -d% percent_complete ; do
-         __print_progress
-      done) >/dev/null
-
-
-      # Exit code 130 is SIGINT so only check for exit code '1'
-      if (( ${?} == 1 )) ; then
-
-         # Error with FLAC file, display failed/error
-         __print_progress_failed
-
-         # Log FLAC failure
-         printf "%s__redoflacs::delimiter__Failed verification\n" "${i}" \
-            >> "${log_file}"
-
-         # Add one to fail fd
-         printf '.' >> "${issue_ticks}"
-      else
-         metaflac \
-            --remove-tag=COMPRESSION \
-            --set-tag=COMPRESSION=${compression_level} "${i}"
-
-         # FLAC is ok, display ok
-         __print_progress_ok
-      fi
-
-   # If already at compression_level, skip the FLAC file
-   else
-      # Print skipped FLAC
-      __print_skip_flac
-   fi
-
-   # Store the position of where the line of the FLAC file is displayed in file
-   # descriptor (3), to be used by the next job, terminated by a newline to
-   # indicate job completed
-   __store_position
-}
-
-#-------------------------------------------------------------------------------
-
-# Test FLAC files
-__test() {
-   trap '__kill_jobs "$(jobs -rp)"' EXIT
+   # Truncate file, if necessary, and grab file information, splitting on
+   # Unit Separator (\037)
+   IFS=$'\037' read -r file_basename file_length < <(__truncate_filename "$1")
 
    # Print current FLAC being processed
-   __print_current_flac
+   __print_item "${file_basename}" "${file_length}" "$3"
 
-   # This is a variable to determine which type of process is used to get the
-   # current percentage during the operation
-   obtain_percentage="__obtain_test_percentage"
+   # Test for COMPRESSION level in FLAC file. Hide error output since
+   # we'll be verifying the FLAC file later
+   COMPRESSION="$(metaflac --show-tag=COMPRESSION "${1}" 2> /dev/null)"
+   COMPRESSION="${COMPRESSION#*=}"
 
-   # Test FLAC file
-   # Display the current file with progress completed thus far via a
-   # percentage and progress bar
-   flac -t "${i}" 2> >(while read -r -d% percent_complete ; do
-      __print_progress
+   if (( COMPRESSION != compression_level )) ; then
+      flac --no-error-on-compression-fail -f -${compression_level} -V "${1}" 2> >(while read -r -d'%' percent_complete ; do
+         # Compress given FLAC file, verifying with a progress bar
+         #--
+         # Current percent complete
+         percent_complete="$( __get_percent_complete "$2" "${percent_complete}" )"
+
+         # Print operation progress bar and percent complete
+         __print_progress "$2" "${percent_complete}" "${file_basename}" "${file_length}"
+      done) >/dev/null
+
+      # Exit code 1 implies failure (130 is SIGINT)
+      if (( ${?} == 1 )) ; then
+         # Error with FLAC file, display failed/error
+         __print_status 'fail' "${file_basename}" "${file_length}"
+
+         # Log FLAC failure
+         printf "%s__redoflacs::delimiter__Failed verification\n" "${1}" \
+            >> "${log_file}"
+
+         # Add one to fail fd
+         printf '.' >> "${issue_ticks}"
+      else
+         metaflac \
+            --remove-tag=COMPRESSION \
+            --set-tag=COMPRESSION=${compression_level} "${1}"
+
+         # FLAC is ok, display ok
+         __print_status 'ok' "${file_basename}" "${file_length}"
+      fi
+   else
+      # If already at compression_level, test the FLAC file instead
+      flac -t "${1}" 2> >(while read -r -d'%' percent_complete ; do
+         # Test given FLAC file, with a progress bar
+         #--
+         # Current percent complete
+         percent_complete="$( __get_percent_complete 'test' "${percent_complete}" )"
+
+         # Print operation progress bar and percent complete
+         __print_progress 'test' "${percent_complete}" "${file_basename}" "${file_length}"
+      done) >/dev/null
+
+      # Exit code 1 implies failure (130 is SIGINT)
+      if (( ${?} == 1 )) ; then
+         # Error with FLAC file, display failed/error
+         __print_status 'fail' "${file_basename}" "${file_length}"
+
+         # Log FLAC failure
+         printf "%s__redoflacs::delimiter__Failed verification\n" "${i}" \
+            >> "${log_file}"
+
+         # Add one to fail fd
+         printf '.' >> "${issue_ticks}"
+      else
+         # FLAC is ok, display ok
+         __print_status 'ok' "${file_basename}" "${file_length}"
+      fi
+   fi
+
+   # Store the position of where the line of the FLAC file is displayed in file
+   # descriptor (3), to be used by the next job, terminated by a newline to
+   # indicate job completed
+   __store_position
+}
+
+#-------------------------------------------------------------------------------
+
+__compress_no_test() {
+   # Compress FLACs with user-defined compression level, verifying its integrity
+   # and _not_ falling back to __test() if the compression level is already set
+   #--
+   # $1 is the directory
+   # $2 is the operation that's currently being run, of which, can be:
+   #   aucdtect          aucdtect_spectrogram     md5_check
+   #   compress_verify   compress_no_test         test
+   #   replaygain_test   replaygain_force_apply   replaygain_apply
+   #   retag_analyze     retag_apply              extract_artwork
+   #   prune
+   # $3 is a string representing number items processed, eg: [43/439]
+   #--
+   trap '__kill_jobs "$(jobs -rp)"' EXIT
+
+   # Set up local variables
+   declare    file_basename percent_complete
+   declare -i file_length
+
+   # Truncate file, if necessary, and grab file information, splitting on
+   # Unit Separator (\037)
+   IFS=$'\037' read -r file_basename file_length < <(__truncate_filename "$1")
+
+   # Print current FLAC being processed
+   __print_item "${file_basename}" "${file_length}" "$3"
+
+   # Test for COMPRESSION level in FLAC file. Hide error output since
+   # we'll be verifying the FLAC file later
+   COMPRESSION="$(metaflac --show-tag=COMPRESSION "${1}" 2> /dev/null)"
+   COMPRESSION="${COMPRESSION#*=}"
+
+   if (( COMPRESSION != compression_level )) ; then
+      flac --no-error-on-compression-fail -f -${compression_level} -V "${1}" 2> >(while read -r -d'%' percent_complete ; do
+         # Compress given FLAC file, verifying with a progress bar
+         #--
+         # Current percent complete
+         percent_complete="$( __get_percent_complete "$2" "${percent_complete}" )"
+
+         # Print operation progress bar and percent complete
+         __print_progress "$2" "${percent_complete}" "${file_basename}" "${file_length}"
+      done) >/dev/null
+
+      # Exit code 1 implies failure (130 is SIGINT)
+      if (( ${?} == 1 )) ; then
+         # Error with FLAC file, display failed/error
+         __print_status 'fail' "${file_basename}" "${file_length}"
+
+         # Log FLAC failure
+         printf "%s__redoflacs::delimiter__Failed verification\n" "${1}" \
+            >> "${log_file}"
+
+         # Add one to fail fd
+         printf '.' >> "${issue_ticks}"
+      else
+         metaflac \
+            --remove-tag=COMPRESSION \
+            --set-tag=COMPRESSION=${compression_level} "${1}"
+
+         # FLAC is ok, display ok
+         __print_status 'ok' "${file_basename}" "${file_length}"
+      fi
+   else
+      # Already at compression_level, print skipped FLAC file
+      __print_status 'skip' "${file_basename}" "${file_length}"
+   fi
+
+   # Store the position of where the line of the FLAC file is displayed in file
+   # descriptor (3), to be used by the next job, terminated by a newline to
+   # indicate job completed
+   __store_position
+}
+
+#-------------------------------------------------------------------------------
+
+__test() {
+   # Test FLAC file integrity
+   #--
+   # $1 is the filename
+   # $2 is the operation that's currently being run, of which, can be:
+   #   aucdtect          aucdtect_spectrogram     md5_check
+   #   compress_verify   compress_no_test         test
+   #   replaygain_test   replaygain_force_apply   replaygain_apply
+   #   retag_analyze     retag_apply              extract_artwork
+   #   prune
+   # $3 is a string representing number items processed, eg: [43/439]
+   #--
+   trap '__kill_jobs "$(jobs -rp)"' EXIT
+
+   # Set up local variables
+   declare    file_basename percent_complete
+   declare -i file_length
+
+   # Truncate file, if necessary, and grab file information, splitting on
+   # Unit Separator (\037)
+   IFS=$'\037' read -r file_basename file_length < <(__truncate_filename "$1")
+
+   # Print current FLAC being processed
+   __print_item "${file_basename}" "${file_length}" "$3"
+
+   flac -t "${1}" 2> >(while read -r -d'%' percent_complete ; do
+      # Test given FLAC file, with a progress bar
+      #--
+      # Current percent complete
+      percent_complete="$( __get_percent_complete "$2" "${percent_complete}" )"
+
+      # Print operation progress bar and percent complete
+      __print_progress "$2" "${percent_complete}" "${file_basename}" "${file_length}"
    done) >/dev/null
 
-   # Exit code 130 is SIGINT so only check for exit code '1'
+   # Exit code 1 implies failure (130 is SIGINT)
    if (( ${?} == 1 )) ; then
-
       # Error with FLAC file, display failed/error
-      __print_progress_failed
+      __print_status 'fail' "${file_basename}" "${file_length}"
 
       # Log FLAC failure
       printf "%s__redoflacs::delimiter__Failed testing\n" "${i}" >> "${log_file}"
@@ -3348,7 +2996,7 @@ __test() {
       printf '.' >> "${issue_ticks}"
    else
       # FLAC is ok, display ok
-      __print_progress_ok
+      __print_status 'ok' "${file_basename}" "${file_length}"
    fi
 
    # Store the position of where the line of the FLAC file is displayed in file
@@ -3359,27 +3007,45 @@ __test() {
 
 #-------------------------------------------------------------------------------
 
-# Test FLAC validity with auCDtect
 __aucdtect() {
+   # Test FLAC validity with auCDtect
+   #--
+   # $1 is the filename
+   # $2 is the operation that's currently being run, of which, can be:
+   #   aucdtect          aucdtect_spectrogram     md5_check
+   #   compress_verify   compress_no_test         test
+   #   replaygain_test   replaygain_force_apply   replaygain_apply
+   #   retag_analyze     retag_apply              extract_artwork
+   #   prune
+   # $3 is a string representing number items processed, eg: [43/439]
+   #--
    trap '__kill_jobs "$(jobs -rp)"' EXIT
 
+   # Set up local arrays/variables
+   declare    file_basename percent_complete
+   declare -i file_length
+   declare -a bits_mastering
+
+   # Truncate file, if necessary, and grab file information, splitting on
+   # Unit Separator (\037)
+   IFS=$'\037' read -r file_basename file_length < <(__truncate_filename "$1")
+
    # Print current FLAC being processed
-   __print_current_flac
+   __print_item "${file_basename}" "${file_length}" "$3"
 
    # Get the bit depth and MASTERING tag of a FLAC file.  Also used to check if
    # FLAC file is real.  Hide STDERR output.  The array indices are:
    #   bits_mastering[0] = bit depth (eg, 16)
-   #   bits_mastering[1] = MASTERING tag value (eg, MASTERING=Lossy)
-   bits_mastering=( $(metaflac --show-bps --show-tag=MASTERING "${i}" 2>/dev/null) )
+   #   bits_mastering[1] = MASTERING tag & value (eg, MASTERING=Lossy)
+   bits_mastering=( $(metaflac --show-bps --show-tag=MASTERING "$1" 2>/dev/null) )
 
-   # Exit code 130 is SIGINT so only check for exit code '1'
+   # Exit code 1 implies failure (130 is SIGINT)
    if (( ${?} == 1 )) ; then
-
       # Error with FLAC file, display failed/error
-      __print_progress_failed
+      __print_status 'fail' "${file_basename}" "${file_length}"
 
       # Log FLAC failure
-      printf "%s__redoflacs::delimiter__Not a real FLAC file\n" "${i}" \
+      printf "%s__redoflacs::delimiter__Not a real FLAC file\n" "$1" \
          >> "${log_file}"
 
       # Add one to fail fd
@@ -3389,12 +3055,11 @@ __aucdtect() {
    # than 16 since auCDtect doesn't support audio
    # files with a higher resolution than a CD.
    elif (( ${bits_mastering[0]} > 16 )) ; then
-
       # Print skipped FLAC
-      __print_skip_flac
+      __print_status 'skip' "${file_basename}" "${file_length}"
 
       # Log skipped FLAC file
-      printf "%s__redoflacs::delimiter__auCDtect does not support a bit depth >16\n" "${i}" \
+      printf "%s__redoflacs::delimiter__auCDtect does not support a bit depth >16\n" "$1" \
          >> "${log_file}"
 
       # Add one to fail fd
@@ -3404,13 +3069,12 @@ __aucdtect() {
    # MASTERING tag.  This is only done if the value of 'skip_lossy' is 'true',
    # set in the configuration file.  We make sure to remove 'MASTERING=' before
    # testing the tag field
-   elif [[ "${bits_mastering[1]#*=}" == "Lossy" ]] ; then
-
+   elif [[ "${bits_mastering[1]#*=}" == 'Lossy' ]] ; then
       # Print skipped FLAC
-      __print_skip_flac
+      __print_status 'skip' "${file_basename}" "${file_length}"
 
       # Log skipped FLAC file
-      printf "%s__redoflacs::delimiter__MASTERING=Lossy value found; skipping ('skip_lossy' configuration)\n" "${i}" \
+      printf "%s__redoflacs::delimiter__MASTERING=Lossy value found; skipping ('skip_lossy' configuration)\n" "${1}" \
          >> "${log_file}"
 
       # Add one to fail fd
@@ -3419,72 +3083,67 @@ __aucdtect() {
    # FLAC checks out, continue processing
    else
       # Print current FLAC being processed
-      __print_decoding_flac
+      __print_item "${file_basename}" "${file_length}" "$3" 'decode'
 
       # The WAV file to be created from current FLAC file
-      decoded_wav="${i%${flac_extension}}_redoflacs_"$$".wav"
+      decoded_wav="${1%${flac_extension}}_redoflacs_$$.wav"
 
-      # This is a variable to determine which type of process is used to get
-      # the current percentage during the operation
-      obtain_percentage="__obtain_decode_percentage"
+      flac -d "${1}" -o "${decoded_wav}" 2> >(while read -r -d'%' percent_complete ; do
+         # Decode FLAC to WAV so auCDtect can read the audio file
+         #--
+         # Current percent complete
+         percent_complete="$( __get_percent_complete 'decode' "${percent_complete}" )"
 
-      # Decompress FLAC to WAV so auCDtect can read the audio file
-      # Display the current file with progress completed thus far via a
-      # percentage and progress bar
-      flac -d "${i}" -o "${decoded_wav}" 2> >(while read -r -d% percent_complete ; do
-         __print_decoding_progress
+         # Print operation progress bar and percent complete
+         __print_progress "$2" "${percent_complete}" "${file_basename}" "${file_length}" 'decode'
       done) >/dev/null
 
       # Exit code 130 is SIGINT so only check for exit code '1'.  If FLAC file
       # failed decoding to WAV, log error, otherwise continue processing
       if (( ${?} == 1 )) ; then
-
          # Error with FLAC file, display failed/error
-         __print_decoding_fail
+         __print_status 'fail' "${file_basename}" "${file_length}" '' 'decode'
 
          # Log FLAC failure
-         printf "%s__redoflacs::delimiter__Failed decoding to WAV\n" "${i}" \
+         printf "%s__redoflacs::delimiter__Failed decoding to WAV\n" "${1}" \
             >> "${log_file}"
 
          # Add one to fail fd
          printf '.' >> "${issue_ticks}"
-
       else
          # Decoded FLAC is ok, display ok
-         __print_decoding_ok
-
-         # This is a variable to determine which type of process is used to get
-         # the current percentage during the operation
-         obtain_percentage="__obtain_aucdtect_percentage"
+         __print_status 'ok' "${file_basename}" "${file_length}" '' 'decode'
 
          # Print current FLAC being processed, auCDtect: fast
-         __print_current_aucdtect_fast
+         __print_item "${file_basename}" "${file_length}" "$3" 'aucdtect_fast'
 
          # 'export MALLOC_CHECK_' allows the dynamic linked version of
          # `auCDTECT' to run without throwing errors
          export MALLOC_CHECK_="0"
 
-         # The actual auCDtect command with lowest accuracy setting (for
+         # The actual auCDtect command with medium accuracy setting (for
          # speed).  STDOUT is sent to file descriptor '4'
-         auCDtect -m40 "${decoded_wav}" 2> >(while read -r -d% percent_complete ; do
-            # Display the current file with progress completed thus far via
-            # a percentage and progress bar
-            __print_progress_aucdtect_fast
+         auCDtect -m20 "${decoded_wav}" 2> >(while read -r -d'%' percent_complete ; do
+            # Check FLAC validity by checking decoded WAV via auCDtect (fast)
+            #--
+            # Current percent complete
+            percent_complete="$( __get_percent_complete "$2" "${percent_complete}" )"
+
+            # Print operation progress bar and percent complete
+            __print_progress "$2" "${percent_complete}" "${file_basename}" "${file_length}" 'aucdtect_fast'
          done) >&4
 
          # Exit code 130 is SIGINT so only check for exit code '1'
          if (( ${?} == 1 )) ; then
-
             # Error with FLAC file, display failed/error
-            __print_aucdtect_fast_fail
+            __print_status 'fail' "${file_basename}" "${file_length}" '' 'aucdtect_fast'
 
             # Log FLAC failure
-            printf "%s__redoflacs::delimiter__Failed analyzing decoded FLAC\n" "${i}" \
+            printf "%s__redoflacs::delimiter__Failed analyzing decoded FLAC\n" "${1}" \
                >> "${log_file}"
 
             # Add one to fail fd
             printf '.' >> "${issue_ticks}"
-
          else
             # Grab the conclusion of auCDtect's command
             # Below options prevents hanging FIFO by only reading
@@ -3498,27 +3157,29 @@ __aucdtect() {
 
             # If there is an issue with the processed FLAC file, run
             # auCDtect once again with highest setting
-            if [[ "${aucdtect_check_array[0]}" != "This track looks like CDDA with probability 100%" ]] ; then
-
+            if [[ "${aucdtect_check_array[0]}" != 'This track looks like CDDA with probability 100%' ]] ; then
                # Print current FLAC being processed, auCDtect: slow
-               __print_current_aucdtect_slow
+               __print_item "${file_basename}" "${file_length}" "$3" 'aucdtect_slow'
 
                # The actual auCDtect command with highest accuracy setting.
                # STDOUT is sent to file descriptor '4'
-               auCDtect -m0 "${decoded_wav}" 2> >(while read -r -d% percent_complete ; do
-                  # Display the current file with progress completed thus far via
-                  # a percentage and progress bar
-                  __print_progress_aucdtect_slow
+               auCDtect -m0 "${decoded_wav}" 2> >(while read -r -d'%' percent_complete ; do
+                  # Check FLAC validity by checking decoded WAV via auCDtect (slow)
+                  #--
+                  # Current percent complete
+                  percent_complete="$( __get_percent_complete "$2" "${percent_complete}" )"
+
+                  # Print operation progress bar and percent complete
+                  __print_progress "$2" "${percent_complete}" "${file_basename}" "${file_length}" 'aucdtect_slow'
                done) >&4
 
                # Exit code 130 is SIGINT so only check for exit code '1'
                if (( ${?} == 1 )) ; then
-
                   # Error with FLAC file, display failed/error
-                  __print_aucdtect_slow_fail
+                  __print_status 'fail' "${file_basename}" "${file_length}" '' 'aucdtect_slow'
 
                   # Log FLAC failure
-                  printf "%s__redoflacs::delimiter__Failed analyzing decoded FLAC\n" "${i}" \
+                  printf "%s__redoflacs::delimiter__Failed analyzing decoded FLAC\n" "${1}" \
                      >> "${log_file}"
 
                   # Add one to fail fd
@@ -3536,19 +3197,17 @@ __aucdtect() {
                   mapfile -s7 -n2 -t -u4 aucdtect_check_array
 
                   # There is an issue with the processed FLAC file
-                  if [[ "${aucdtect_check_array[0]}" != "This track looks like CDDA with probability 100%" ]] ; then
-
+                  if [[ "${aucdtect_check_array[0]}" != 'This track looks like CDDA with probability 100%' ]] ; then
                      # If user specified '-A, --aucdtect-spectrogram', then
                      # create a spectrogram with SoX and change logging accordingly
-                     if [[ "${create_spectrogram}" == "true" ]] ; then
-
+                     if [[ "${create_spectrogram}" == 'true' ]] ; then
                         # Check whether to place spectrogram images in user-defined location
                         if [[ -z "${spectrogram_location}" ]] ; then
                            # Obtain basename of current FLAC file
-                           flac_file="${i##*/}"
+                           flac_file="${1##*/}"
 
                            # Obtain dirname of current FLAC file
-                           spectrogram_dirname="${i%/*}"
+                           spectrogram_dirname="${1%/*}"
 
                            # Create the spectrogram with '.png' as the
                            # file extension, placed in the same
@@ -3556,7 +3215,7 @@ __aucdtect() {
                            spectrogram_picture="${spectrogram_dirname}/[${iteration}] ${flac_file%${flac_extension}}.png"
                         else
                            # Obtain basename of current FLAC file
-                           flac_file="${i##*/}"
+                           flac_file="${1##*/}"
 
                            # Create the spectrogram with '.png' as the
                            # file extension, placed in the user-defined
@@ -3565,12 +3224,7 @@ __aucdtect() {
                         fi
 
                         # Print current FLAC being processed
-                        __print_current_spectrogram
-
-                        # This is a variable to determine which type of
-                        # process is used to get the current percentage
-                        # during the operation
-                        obtain_percentage="__obtain_spectrogram_percentage"
+                        __print_item "${file_basename}" "${file_length}" "$3" 'spectrogram'
 
                         # SoX command to create the spectrogram and
                         # place it in spectrogram_picture.  Use the
@@ -3578,7 +3232,7 @@ __aucdtect() {
                         # resolution spectrograms:
                         #   -x 5000
                         #   -y 1025
-                        "${sox_command}" "${decoded_wav}" \
+                        sox "${decoded_wav}" \
                            -S \
                            -n spectrogram \
                            -c '' \
@@ -3591,30 +3245,32 @@ __aucdtect() {
                            -x 1800 \
                            -y 513 \
                            -o "${spectrogram_picture}" 2> >(
-                              while read -r -d% percent_complete ; do
-                                 # Display the current file with
-                                 # progress completed thus far via a
-                                 # percentage and progress bar
-                                 __print_progress_spectrogram
+                              while read -r -d'%' percent_complete ; do
+                                 # Create spectrogram PNG image of given FLAC
+                                 #--
+                                 # Current percent complete
+                                 percent_complete="$( __get_percent_complete "$2" "${percent_complete}" )"
+
+                                 # Print operation progress bar and percent complete
+                                 __print_progress "$2" "${percent_complete}" "${file_basename}" "${file_length}" 'spectrogram'
                               done
                            ) >/dev/null
 
-                        # Error with FLAC file, display failed/error
-                        __print_spectrogram_issue
+                        # Error creating spectrogram, display issue
+                        __print_status 'issue' "${file_basename}" "${file_length}" '' 'spectrogram'
 
                         # Log auCDtect report
-                        printf "%s__redoflacs::delimiter__%s (%s)\n" "$i" "${aucdtect_check_array[0]}" "${spectrogram_picture}" \
+                        printf "%s__redoflacs::delimiter__%s (%s)\n" "$1" "${aucdtect_check_array[0]}" "${spectrogram_picture}" \
                            >> "${log_file}"
 
                         # Add one to fail fd
                         printf '.' >> "${issue_ticks}"
-
                      else
-                        # Error with FLAC file, display failed/error
-                        __print_aucdtect_issue
+                        # Issue with FLAC authenticity, display issue
+                        __print_status 'issue' "${file_basename}" "${file_length}" '' 'aucdtect_slow'
 
                         # Log auCDtect report
-                        printf "%s__redoflacs::delimiter__%s\n" "$i" "${aucdtect_check_array[0]}" \
+                        printf "%s__redoflacs::delimiter__%s\n" "$1" "${aucdtect_check_array[0]}" \
                            >> "${log_file}"
 
                         # Add one to fail fd
@@ -3622,12 +3278,12 @@ __aucdtect() {
                      fi
                   else
                      # FLAC is ok, display ok
-                     __print_aucdtect_slow_ok
+                     __print_status 'ok' "${file_basename}" "${file_length}" '' 'aucdtect_slow'
                   fi
                fi
             else
                # FLAC is ok, display ok
-               __print_aucdtect_fast_ok
+               __print_status 'ok' "${file_basename}" "${file_length}" '' 'aucdtect_fast'
             fi
 
             # Remove temporary WAV file
@@ -3644,47 +3300,62 @@ __aucdtect() {
 
 #-------------------------------------------------------------------------------
 
-# Check MD5 in each FLAC file
 __md5_check() {
+   # Check for valid MD5 checksum in FLAC file
+   #--
+   # $1 is the filename
+   # $2 is the operation that's currently being run, of which, can be:
+   #   aucdtect          aucdtect_spectrogram     md5_check
+   #   compress_verify   compress_no_test         test
+   #   replaygain_test   replaygain_force_apply   replaygain_apply
+   #   retag_analyze     retag_apply              extract_artwork
+   #   prune
+   # $3 is a string representing number items processed, eg: [43/439]
+   #--
    trap '__kill_jobs "$(jobs -rp)"' EXIT
 
+   # Set up local variables
+   declare    file_basename percent_complete md5_sum
+   declare -i file_length
+
+   # Truncate file, if necessary, and grab file information, splitting on
+   # Unit Separator (\037)
+   IFS=$'\037' read -r file_basename file_length < <(__truncate_filename "$1")
+
    # Print current FLAC being processed
-   __print_current_flac
+   __print_item "${file_basename}" "${file_length}" "$3"
 
    # Get the MD5 checksum (hide stderr output).  Also
    # used to check if FLAC file is real
-   md5_sum="$(metaflac --show-md5sum "${i}" 2> /dev/null)"
+   md5_sum="$(metaflac --show-md5sum "$1" 2>/dev/null)"
 
-   # Exit code 130 is SIGINT so only check for exit code '1'
+   # Exit code 1 implies failure (130 is SIGINT)
    if (( ${?} == 1 )) ; then
-
       # Error with FLAC file, display failed/error
-      __print_progress_failed
+      __print_status 'fail' "${file_basename}" "${file_length}"
 
       # Log FLAC failure
-      printf "%s__redoflacs::delimiter__Not a real FLAC file\n" "${i}" \
+      printf "%s__redoflacs::delimiter__Not a real FLAC file\n" "${1}" \
          >> "${log_file}"
 
       # Add one to fail fd
       printf '.' >> "${issue_ticks}"
-
    # FLAC file is real, check for unset MD5 checksum.  We cannot use an
    # arithmetic expression as any amount of 0's will equal the expression
    # below
    elif [[ "${md5_sum}" == "00000000000000000000000000000000" ]] ; then
-
       # Error with FLAC file, display failed/error
-      __print_progress_failed
+      __print_status 'fail' "${file_basename}" "${file_length}"
 
       # Log FLAC failure
-      printf "%s__redoflacs::delimiter__Unset MD5 signature (00000000000000000000000000000000)\n" "${i}" \
+      printf "%s__redoflacs::delimiter__Unset MD5 signature (00000000000000000000000000000000)\n" "${1}" \
          >> "${log_file}"
 
       # Add one to fail fd
       printf '.' >> "${issue_ticks}"
    else
       # FLAC is ok, display ok
-      __print_progress_ok
+      __print_status 'ok' "${file_basename}" "${file_length}"
    fi
 
    # Store the position of where the line of the FLAC file is displayed in file
@@ -3695,24 +3366,41 @@ __md5_check() {
 
 #-------------------------------------------------------------------------------
 
-# Analyze FLAC tags
 __retag_analyze() {
+   # Check for missing VORBIS tags from a given FLAC
+   #--
+   # $1 is the filename
+   # $2 is the operation that's currently being run, of which, can be:
+   #   aucdtect          aucdtect_spectrogram     md5_check
+   #   compress_verify   compress_no_test         test
+   #   replaygain_test   replaygain_force_apply   replaygain_apply
+   #   retag_analyze     retag_apply              extract_artwork
+   #   prune
+   # $3 is a string representing number items processed, eg: [43/439]
+   #--
    trap '__kill_jobs "$(jobs -rp)"' EXIT
 
+   # Set up local variables
+   declare    file_basename
+   declare -i file_length
+
+   # Truncate file, if necessary, and grab file information, splitting on
+   # Unit Separator (\037)
+   IFS=$'\037' read -r file_basename file_length < <(__truncate_filename "$1")
+
    # Print current FLAC being processed
-   __print_sub_current_flac
+   __print_item "${file_basename}" "${file_length}" "$3" 'sub'
 
    # Check if file is a FLAC file (variable hides output)
-   check_flac="$(metaflac --show-md5sum "${i}" 2>&1)"
+   check_flac="$(metaflac --show-md5sum "${1}" 2>&1)"
 
-   # If above command return anything other than '0', log output
-   if (( ${?} != 0 )) ; then
-
+   # Exit code 1 implies failure (130 is SIGINT)
+   if (( ${?} == 1 )) ; then
       # Error with FLAC file, display failed/error
-      __print_sub_progress_failed
+      __print_status 'fail' "${file_basename}" "${file_length}" 'sub'
 
       # Log FLAC failure
-      printf "%s__redoflacs::delimiter__Not a real FLAC file\n" "${i}" \
+      printf "%s__redoflacs::delimiter__Not a real FLAC file\n" "${1}" \
          >> "${log_file}"
 
       # Add one to fail fd
@@ -3728,13 +3416,13 @@ __retag_analyze() {
             # 'ALBUM ARTIST' or 'ALBUM_ARTIST')
 
             # "ALBUMARTIST" or "ALBUM ARTIST" or "ALBUM_ARTIST", case-insensitive
-            if [[ -n "$(metaflac --show-tag=ALBUMARTIST "${i}")" ]] ; then
+            if [[ -n "$(metaflac --show-tag=ALBUMARTIST "${1}")" ]] ; then
                show_tag_list+=( "--show-tag=ALBUMARTIST" )
 
-            elif [[ -n "$(metaflac --show-tag="ALBUM ARTIST" "${i}")" ]] ; then
+            elif [[ -n "$(metaflac --show-tag="ALBUM ARTIST" "${1}")" ]] ; then
                show_tag_list+=( "--show-tag='ALBUM ARTIST'" )
 
-            elif [[ -n "$(metaflac --show-tag="ALBUM_ARTIST" "${i}")" ]] ; then
+            elif [[ -n "$(metaflac --show-tag="ALBUM_ARTIST" "${1}")" ]] ; then
                show_tag_list+=( "--show-tag=ALBUM_ARTIST" )
             fi
          else
@@ -3748,7 +3436,7 @@ __retag_analyze() {
       <(
          metaflac \
             "${show_tag_list[@]}" \
-            "${i}"
+            "${1}"
       )
 
       # Take above tag values and create an associative
@@ -3830,18 +3518,18 @@ __retag_analyze() {
       # If missing_tags_array is not empty, there are missing
       # tags in the current file so log output
       if [[ -n "${missing_tags}" ]] ; then
-         # FLAC file has missing tags, display failed/error
-         __print_sub_progress_failed
+         # Error with FLAC file, display failed/error
+         __print_status 'fail' "${file_basename}" "${file_length}" 'sub'
 
          # Log the missing tags
-         printf "%s__redoflacs::delimiter__Missing tags: ${missing_tags%, }\n" "${i}" \
+         printf "%s__redoflacs::delimiter__Missing tags: ${missing_tags%, }\n" "${1}" \
             >> "${log_file}"
 
          # Add one to fail fd
          printf '.' >> "${issue_ticks}"
       else
-         # FLAC is ok, display ok
-         __print_sub_progress_ok
+         # There are no missing tags, display ok
+         __print_status 'ok' "${file_basename}" "${file_length}" 'sub'
       fi
    fi
 
@@ -3853,12 +3541,30 @@ __retag_analyze() {
 
 #-------------------------------------------------------------------------------
 
-# Re-tag FLAC files
 __retag_apply() {
+   # Re-apply the VORBIS tags specified in the config file, removing all others
+   #--
+   # $1 is the filename
+   # $2 is the operation that's currently being run, of which, can be:
+   #   aucdtect          aucdtect_spectrogram     md5_check
+   #   compress_verify   compress_no_test         test
+   #   replaygain_test   replaygain_force_apply   replaygain_apply
+   #   retag_analyze     retag_apply              extract_artwork
+   #   prune
+   # $3 is a string representing number items processed, eg: [43/439]
+   #--
    trap '__kill_jobs "$(jobs -rp)"' EXIT
 
+   # Set up local variables
+   declare    file_basename
+   declare -i file_length
+
+   # Truncate file, if necessary, and grab file information, splitting on
+   # Unit Separator (\037)
+   IFS=$'\037' read -r file_basename file_length < <(__truncate_filename "$1")
+
    # Print current FLAC being processed
-   __print_sub_current_flac
+   __print_item "${file_basename}" "${file_length}" "$3" 'sub'
 
    # Remove and set new tags
    #
@@ -3872,13 +3578,13 @@ __retag_apply() {
          # 'ALBUM ARTIST' or 'ALBUM_ARTIST')
 
          # "ALBUMARTIST"
-         if [[ -n "$(metaflac --show-tag=ALBUMARTIST "${i}")" ]] ; then
+         if [[ -n "$(metaflac --show-tag=ALBUMARTIST "${1}")" ]] ; then
             show_tag_list+=( "--show-tag=ALBUMARTIST" )
 
-         elif [[ -n "$(metaflac --show-tag="ALBUM ARTIST" "${i}")" ]] ; then
+         elif [[ -n "$(metaflac --show-tag="ALBUM ARTIST" "${1}")" ]] ; then
             show_tag_list+=( "--show-tag='ALBUM ARTIST'" )
 
-         elif [[ -n "$(metaflac --show-tag="ALBUM_ARTIST" "${i}")" ]] ; then
+         elif [[ -n "$(metaflac --show-tag="ALBUM_ARTIST" "${1}")" ]] ; then
             show_tag_list+=( "--show-tag=ALBUM_ARTIST" )
          fi
       else
@@ -3892,7 +3598,7 @@ __retag_apply() {
    <(
       metaflac \
          "${show_tag_list[@]}" \
-         "${i}"
+         "${1}"
    )
 
    # Create a copy of ${metaflac_tag_array[@]} with just the tag fields
@@ -3913,14 +3619,11 @@ __retag_apply() {
    # configuration file, enforce the TRACKNUMBER and TRACKTOTAL tags to have a
    # '0' prepended before singular numbers
    if [[ "${prepend_zero}" == "true" ]] ; then
-
       # Prepend a '0' for TRACKNUMBER and TRACKTOTAL
       for j in "${!tag_field_array[@]}" ; do
-
          # Add in the tag field and value as an index
          if [[ "${tag_field_array[${j}]}" == "TRACKNUMBER" ||
               "${tag_field_array[${j}]}" == "TRACKTOTAL" ]] ; then
-
             # Format tag value with '0' prepended for single values.  We
             # force arithmetic expansion and explicitly specify base 10
             # in order to prevent octal errors if the value is either '08'
@@ -3942,7 +3645,6 @@ __retag_apply() {
       # ${prepend_zero} is not set as 'true', add each tag field and tag value
       # into ${metaflac_tag_array[@]}
       for j in "${!tag_field_array[@]}" ; do
-
          # Add in the tag field and value as an index
          metaflac_tag_array+=(
             # Tag field (eg. ARTIST) = Tag value (eg. Kamelot)
@@ -3955,7 +3657,7 @@ __retag_apply() {
    # on a separate line to STDOUT.  This will be read in by metaflac.
    # Use process substitution to allow this to finish if user
    # invokes SIGINT
-   metaflac --remove-all-tags --import-tags-from=- "${i}" < \
+   metaflac --remove-all-tags --import-tags-from=- "${1}" < \
    <(
       # This prints each tag key and value pair
       # (eg. ARTIST=Kamelot)
@@ -3963,7 +3665,7 @@ __retag_apply() {
    )
 
    # Display ok
-   __print_sub_progress_ok
+   __print_status 'ok' "${file_basename}" "${file_length}" 'sub'
 
    # Store the position of where the line of the FLAC file is displayed in file
    # descriptor (3), to be used by the next job, terminated by a newline to
@@ -3973,30 +3675,48 @@ __retag_apply() {
 
 #-------------------------------------------------------------------------------
 
-# Extract artwork from FLAC files
 __extract_images() {
+   # Extact embedded artwork from a given FLAC
+   #--
+   # $1 is the filename
+   # $2 is the operation that's currently being run, of which, can be:
+   #   aucdtect          aucdtect_spectrogram     md5_check
+   #   compress_verify   compress_no_test         test
+   #   replaygain_test   replaygain_force_apply   replaygain_apply
+   #   retag_analyze     retag_apply              extract_artwork
+   #   prune
+   # $3 is a string representing number items processed, eg: [43/439]
+   #--
    trap '__kill_jobs "$(jobs -rp)"' EXIT
 
-   # Print current FLAC with artwork to be extracted
-   __print_current_half
+   # Set up local variables
+   declare    file_basename
+   declare -i file_length
+
+   # Truncate file, if necessary, and grab file information, splitting on
+   # Unit Separator (\037)
+   IFS=$'\037' read -r file_basename file_length < <(__truncate_filename "$1")
+
+   # Print current FLAC being processed
+   __print_item "${file_basename}" "${file_length}" "$3" 'half'
 
    # Check if file is a FLAC file (hide output)
-   metaflac --show-md5sum "${i}" >/dev/null 2>&1
+   metaflac --show-md5sum "${1}" >/dev/null 2>&1
 
-   # Exit code 130 is SIGINT so only check for exit code '1'
+   # Exit code 1 implies failure (130 is SIGINT)
    if (( ${?} == 1 )) ; then
       # Error with FLAC file, display failed/error
-      __print_progress_failed
+      __print_status 'fail' "${file_basename}" "${file_length}"
 
       # Log FLAC failure
-      printf "%s__redoflacs::delimiter__Not a real FLAC file\n" "${i}" \
+      printf "%s__redoflacs::delimiter__Not a real FLAC file\n" "${1}" \
          >> "${log_file}"
 
       # Add one to fail fd
       printf '.' >> "${issue_ticks}"
    else
       # Find all the artwork blocks available in the current FLAC file
-      __find_artwork
+      __find_artwork "$1"
 
       # If the user chose a location to store extracted artwork, then prepend
       # a counter in front of the directory to prevent clobbering since all
@@ -4005,10 +3725,10 @@ __extract_images() {
       # located
       if [[ -n "${artwork_location}" ]] ; then
          # Example: /artwork_location/[1] 01.flac_[redoflacs_art]_8792
-         artwork_directory="${artwork_location}/[${iteration}] ${i##*/}_[redoflacs_art]_$$"
+         artwork_directory="${artwork_location}/[${iteration}] ${1##*/}_[redoflacs_art]_$$"
       else
          # Example: /path/to/current/flac/01.flac_[redoflacs_art]_8792
-         artwork_directory="${i}_[redoflacs_art]_$$"
+         artwork_directory="${1}_[redoflacs_art]_$$"
       fi
 
       #~~~~~~~
@@ -4582,7 +4302,7 @@ __extract_images() {
          artwork_publisher_logo
 
       # FLAC is ok, display ok
-      __print_progress_ok
+      __print_status 'ok' "${file_basename}" "${file_length}"
    fi
 
    # Store the position of where the line of the FLAC file is displayed in file
@@ -4654,8 +4374,9 @@ yellow="\033[33m"
 invert="\033[7m"
 normal="\033[0m"
 
-# Initialize an array housing all the operational states
-declare -Ag operation_summary
+declare -Ag operation_summary  # Stores all the operational states
+declare -ig max_length         # Max filename to fit inside terminal width
+declare unit_separator=$'\037' # ASCII unit separator
 
 # Check if user is running under Cygwin
 # and if so, warn user and exit
@@ -4910,7 +4631,7 @@ for operation in "${operations[@]}" ; do
    #   operations[1]='aucdtect_spectrogram'
    #   operations[2]='md5_check'
    #   operations[3]='compress_verify'
-   #   operations[4]='compress_no_verify'
+   #   operations[4]='compress_no_test'
    #   operations[5]='test'
    #   operations[6]='replaygain_test'
    #   operations[7]='replaygain_force_apply'   # Conditionally set
@@ -4964,7 +4685,7 @@ for operation in "${operations[@]}" ; do
    trap '__trap_sigint "$post_row" "${operation}"' SIGINT
 
    # Run parallel operations, that which is specified as ${1}
-   __run_parallel "__${operation}"
+   __run_parallel "${operation}"
 
    printf "\033[${post_row}H"
 
