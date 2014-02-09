@@ -30,7 +30,7 @@
 #    0: STDIN
 #    1: STDOUT
 #    2: STDERR
-#    3: FIFO process manager
+#    3: Jobs process manager (FIFO)
 #    4: auCDtect's STDOUT output
 #-------------------------------------------------------------------------------
 
@@ -465,7 +465,7 @@ __usage() { printf " Usage: redoflacs [operations] [options] [target] ...\n" ;} 
 __message_log_exists() {
    # Print out the correct operational message regarding a log file's existence
    # and what infomration that log may contain
-   #
+   #--
    # $1 determines the log file to use, as well as how many lines are printed
    # out to correctly set the current row.  Possible values:
    #   aucdtect          aucdtect_spectrogram        md5_check
@@ -506,7 +506,7 @@ __message_log_exists() {
 __create_log() {
    # Take log file from the current operation, prepending a header to it as
    # as well as formatting/aligning log lines
-   #
+   #--
    # $1 determines the log file to create, and is any one of these values:
    #   aucdtect          aucdtect_spectrogram        md5_check
    #   compress_verify   compress_no_test            test
@@ -638,7 +638,7 @@ __create_log() {
 
 __message() {
    # Print out current operation message.
-   #
+   #--
    # $1 determines which title message to print (if any).  Possible values:
    #   aucdtect          aucdtect_spectrogram        md5_check
    #   compress_verify   compress_no_test            test
@@ -701,7 +701,7 @@ __message() {
 
 __update_operation_status () {
    # Update $operation_summary[@] with the current operation status
-   #
+   #--
    # $1 determines which operational index to update; possible values:
    #   aucdtect          aucdtect_spectrogram        md5_check
    #   compress_verify   compress_no_test            test
@@ -730,6 +730,8 @@ __update_operation_status () {
 #-------------------------------------------------------------------------------
 
 __print_item() {
+   # Display the current item being that's to be run through an operation
+   #--
    # $1 is the filename to print
    # $2 is the filename length
    # $3 is the number completed, ie [12/345]
@@ -786,6 +788,8 @@ __print_item() {
 #-------------------------------------------------------------------------------
 
 __print_status() {
+   # Display the result of current item that was operated on
+   #--
    # $1 is the file/dir operation result, of which, can be:
    #   ok   fail   issue   skip
    # $2 is the basename of the file/dir
@@ -845,12 +849,8 @@ __print_progress() {
    # $3 is filename to print (may be truncated)
    # $4 is filename length
    #--
-   # This is the length of the progress bar represented as the maxmimum
-   # filename we can use.  The progress bar is displayed by taking the
-   # percentage completed thus far and using the percentage to display that
-   # same percentage of the filename's length (including spaces that may appear
-   # after it)
-   #progress_bar_length=$(( ( max_length * $2 ) / 100 ))
+   # Set up local variables
+   declare  action  progress_bar_length
 
    case "$5" in
       'decode')
@@ -891,10 +891,9 @@ __print_progress() {
       printf "\033[${placement};4H${yellow}%4s${normal} ${action}${invert}%s${normal}" \
          "${2}%" "${3:0:${progress_bar_length}}"
    else
-#
-#      # This prints out the the filename, inverted, as well as the current
-#      # progress bar length.  Used only if the filename is less than the width
-#      # of the progress bar maximum's length
+      # This prints out the the filename, inverted, as well as the current
+      # progress bar length.  Used only if the filename is less than the width
+      # of the progress bar maximum's length
       printf "\033[${placement};4H${yellow}%4s${normal} ${action}${invert}%s%$(( progress_bar_length - $4 ))s${normal}" \
          "${2}%" "${3}" ""
    fi
@@ -902,37 +901,10 @@ __print_progress() {
 
 #-------------------------------------------------------------------------------
 
-# Display the filename, clearing the progress bar and display the progress as an
-# error in yellow color (for sub messages)
-__print_sub_progress_issue() {
-   printf "\033[${placement};6H${yellow}%s${normal} %s" \
-   "chck" "${filename}"
-}
-
-#-------------------------------------------------------------------------------
-
-# Display the filename, clearing the progress bar and display the progress
-# percentage as 100% (since FLAC stops at 99%) in green (for sub messages)
-__print_sub_progress_ok() {
-   printf "\033[${placement};6H${green}%s${normal} %s" \
-   "100%" "${filename}"
-}
-
-#-------------------------------------------------------------------------------
-
-# Display the filename, clearing the progress bar and display the progress as an
-# error in red color (for sub messages)
-__print_sub_progress_failed() {
-   printf "\033[${placement};6H${red}%s${normal} %s" \
-   "fail" "${filename}"
-}
-
-#-------------------------------------------------------------------------------
-
 __trap_sigint() {
    # Kill any children process and display the correct interrupt message when
    # a user sends SIGINT during script execution.
-   #
+   #--
    # $1 is where to place the cursor (row-wise) in order to not overwrite
    # files/directories displayed already.
    #
@@ -962,7 +934,7 @@ __trap_sigint() {
 __exit_cleanup() {
    # Do any additional cleanup and check for the existence of a log file before
    # exiting script.
-   #
+   #--
    # $1 determines which operation requires additional cleanup.  This value is
    # normally obtained from $2 in the '__trap_sigint' function.  Possible
    # values:
@@ -987,26 +959,14 @@ __exit_cleanup() {
    __update_operation_status "${1}" 'Operation Interrupted'
 
    if [[ -f "${log_file}" ]] ; then
-      # Print out log exists to STDERR
-      __message_log_exists "${1}"
-
-      # Create and format log
-      __create_log "${1}"
+      __message_log_exists "${1}"  # Print out log exists to STDERR
+      __create_log "${1}"          # Create and format log
    fi
 
-   # Restore old stty settings, make stty happy
-   # by redirecting /dev/stderr
-   stty ${old_stty} < /dev/stderr
-
-   # Restore the cursor
-   printf "\033[?25h"
-
-   # Remove temporary FIFO and leave just the file
-   # descriptor available
-   rm -f "${tmp_fifo}"
-
-   # Display Summary Of Operations
-   __summary
+   stty ${old_stty} < /dev/stderr  # Restore old stty settings
+   printf "\033[?25h"              # Restore the cursor
+   rm -f "${tmp_fifo}"             # Remove temporary FIFO
+   __summary                       # Display Summary Of Operations
 
    exit 130
 }
@@ -1023,9 +983,7 @@ __metaflac_version() {
    #--
    # Metaflacs version (ie: '2' in 1.2.1)
    IFS='.' read -r _ metaflac_version _ < <(metaflac --version)
-
-   # Return the above integer
-   printf "%s" "${metaflac_version}"
+   printf "%s" "${metaflac_version}"   # Return the above integer
 }
 
 #-------------------------------------------------------------------------------
@@ -1035,8 +993,8 @@ __kill_jobs() {
    # the shell's notification of terminated jobs
    #--
    for pid in $@ ; do
-      kill $pid 2>/dev/null
-      wait $pid 2>/dev/null
+      kill ${pid} 2>/dev/null
+      wait ${pid} 2>/dev/null
    done
 }
 
@@ -1063,27 +1021,33 @@ __row() {
 
 #-------------------------------------------------------------------------------
 
-# Check if we need to scroll the terminal up depending on how much room is left,
-# relative to the number of jobs to process
 __scroll_terminal() {
-   # Grab the first line of 'stty -a' output
+   # Scroll the terminal, dependant on the number of jobs to process, in needed
+   #--
+   # $1 is the file/dir operation result, of which, can be:
+   #   ok   fail   issue   skip
+   # $2 is the basename of the file/dir
+   # $3 is the filename length
+   # $4 determines whether this is a sub operational message to print
+   # $5 determines the action that's printed per item
+   #--
+   # Set up local variables
+   declare    lines   remove_from_scroll  remaining_lines
+   declare -g columns
+
    # Redirecting '/dev/stderr' to 'stty' allows valid arguments
    read -r _ _ _ _ lines _ columns _ < <(stty -a < /dev/stderr)
 
    # Remove semicolons from obtain columns and lines
    #--
-   # Terminal width
-   columns="${columns%;}"
-
-   # Terminal height
-   lines="${lines%;}"
+   columns="${columns%;}"   # Terminal width
+   lines="${lines%;}"       # Terminal height
 
    # If the total number of files to process is less than jobs specified,
    # then set the number of lines to remove from the terminal scroll as the
    # difference of the number of jobs minus the total number of files
    if (( ${#total_items[@]} < jobs )) ; then
-      # This variable will be used for '__scroll_terminal' as ${1}
-      local remove_from_scroll="$(( jobs - ${#total_items[@]} ))"
+      remove_from_scroll="$(( jobs - ${#total_items[@]} ))"
    fi
 
    # If ${remove_from_scroll} is NULL, then the remaining lines we have left is
@@ -1107,7 +1071,7 @@ __scroll_terminal() {
    # current operations to be printed correctly
    if (( remaining_lines < jobs )) ; then
       # Obtain the number of lines need to equal the current number of jobs
-      local lines_to_scroll=$(( jobs - remaining_lines ))
+      lines_to_scroll=$(( jobs - remaining_lines ))
 
       # This scrolls the terminal up by the number of lines to scroll
       # This can be accomplished via (not very portable):
@@ -1134,6 +1098,9 @@ __get_percent_complete() {
    # $2 is a (possibly multiline) string of text from a command binary's output
    # with the percentage contained within
    #--
+   # Set up local variables
+   declare percent
+
    case "$1" in
       'compress_'*)
          percent="${2//$'\b'/}"                        # Remove backspaces
@@ -1161,14 +1128,15 @@ __get_percent_complete() {
    if [[ "${percent}" =~ ^[[:digit:]]+$ ]] ; then
       printf "%d" $percent
    else
-      printf "%d" 0
+      printf "%d" '0'
    fi
 }
 
 #-------------------------------------------------------------------------------
 
-# Store the position of the current job being displayed
 __store_position() {
+   # Store the (row) position of the current job to be displayed
+   #--
    # If the current job(s) are the first set, we'll use the iteration
    # (starting at 0 -- hence the minus 1) of the job to start
    if (( iteration <= jobs )) ; then
@@ -1182,13 +1150,14 @@ __store_position() {
 
 #-------------------------------------------------------------------------------
 
-# Force the creation of a new configuration file
 __new_config() {
+   # Force the creation of a new configuration file
+   #--
    # Check if configuration file exists based of ${EUID}.  If it doesn't
    # exist, create one
    if (( EUID == 0 )) ; then
       # User is root
-      #
+      #--
       # Configuration file location
       config_file="/etc/redoflacs.conf"
 
@@ -1198,7 +1167,7 @@ __new_config() {
       fi
    else
       # User is _NOT_ root
-      #
+      #--
       # Configuration file location
       config_file="${HOME}/.config/redoflacs/config"
 
@@ -1232,8 +1201,12 @@ __new_config() {
 
 #-------------------------------------------------------------------------------
 
-# Create a configuration file
 __create_config() {
+   # Create a configuration file
+   #--
+   # Set up local variable
+   declare create_config
+
    create_config="################################################################################
 #                                                                              #
 #                         REDOFLACS USER CONFIGURATION                         #
@@ -1407,10 +1380,14 @@ prepend_zero=\"false\"
 
 __parse_config() {
    # Parse the user/system configuration file
-   #
+   #--
    # Load the config file into an array and process each line, grabbing the
    # user-specified FLAC tags and setting up the configuration variables
    #--
+   # Set up local variables/arrays
+   declare    config_option
+   declare -a config_array
+
    mapfile -n0 -t config_array < "${config_file}"
 
    for line in "${config_array[@]}" ; do
@@ -1436,16 +1413,20 @@ __check_config_version() {
    # Check current configuration, if the version in the script is newer
    # warn user and display a countdown before starting script
    #--
+   # Set up local variables/arrays
+   declare    config_file  config_last_line  user_config_revision
+   declare -a config_array
+
    # Check if configuration file exists based of ${EUID}.  If it doesn't
    # exist, create one
    if (( EUID == 0 )) ; then
       # User is root
-      #
+      #--
       # Configuration file location
       config_file="/etc/redoflacs.conf"
    else
       # User is _NOT_ root
-      #
+      #--
       # Configuration file location
       config_file="${HOME}/.config/redoflacs/config"
    fi
@@ -1486,7 +1467,7 @@ __truncate_filename() {
    # Truncate the processed item's filename if it's bigger than terminal width,
    # returning the filename (possibly truncated) as well as the length of the
    # filename (in characters)
-   #
+   #--
    # $1 is the filename to truncate/process
    #--
    # Set up local variables
@@ -1532,39 +1513,36 @@ __truncate_filename() {
 
 #-------------------------------------------------------------------------------
 
-# Determine number of jobs to run via the number
-# of CPUs/cores available
 __find_cores() {
+   # Determine number of jobs to run via the number CPUs/cores available
+   #--
    # Check if /proc is mounted by comparing device numbers of
    # /proc and / and see if they don't match (ie, /proc is mounted)
    if (( $(stat -c %d /proc) == $(stat -c %d /) )) ; then
       # /proc is not mounted, default to 2 jobs
       jobs_display="(Default)"
-      jobs=2
+      jobs='2'
    else
       # /proc is mounted, check for cpuinfo
       if [[ ! -f /proc/cpuinfo ]] ; then
          # /proc/cpuinfo doesn't exist
          jobs_display="(Default)"
-         jobs=2
+         jobs='2'
       else
-         # /proc/cpuinfo exists, find total number
-         # of cores to use
-
-         # Store contents of /proc/cpuinfo into
-         # cores_array
+         # /proc/cpuinfo exists, find total number of cores to use
+         #--
+         # Store contents of /proc/cpuinfo inta core_array
          mapfile -n0 -t cores_array < /proc/cpuinfo
 
-         # For each line, if matched string is found,
-         # add processor number to jobs variable
          for i in "${cores_array[@]}" ; do
+            # For each line, add processor number to jobs if matched
+            #--
             if [[ "${i}" == processor$'\t':\ * ]] ; then
                jobs="${i#processor$'\t': }"
             fi
          done
 
-         # Add +1 to jobs since the number of useable cores
-         # starts at 0
+         # Add +1 to jobs since the number of useable cores starts at 0
          ((jobs++))
          jobs_display="(/proc/cpuinfo)"
       fi
@@ -1573,20 +1551,22 @@ __find_cores() {
 
 #-------------------------------------------------------------------------------
 
-# Find all the artwork blocks in the current FLAC file, storing each instance in
-# an array to be processed
 __find_artwork() {
+   # Find all the artwork blocks in a given FLAC file, storing each instance
+   # into an array
+   #--
+   # Set up local array
+   declare -a artwork_blocks
+
    # Grab all the PICTURE blocks from current FLAC file, storing into an array
    mapfile -n0 -t artwork_blocks < <(metaflac --list --block-type=PICTURE "${1}")
 
    # Run through each line obtained above (stored into an array) and parse out
    # the block type we want
    for j in "${!artwork_blocks[@]}" ; do
-
       # If the current line has shows the type of block but isn't (PICTURE),
       # then we have the correct line (block type)
       if [[ "${artwork_blocks[${j}]}" == '  type: '* ]] && [[ "${artwork_blocks[${j}]}" != '  type: 6 (PICTURE)' ]] ; then
-
          # Obtain the METADATA block ID (4 lines above matched line)
          artwork_block_id="${artwork_blocks[$(( j - 4 ))]##* #}"
 
@@ -1711,88 +1691,77 @@ __find_artwork() {
 
 #-------------------------------------------------------------------------------
 
-# Extract artwork image from the specified artwork block ID in the PICTURE block
-# of the current FLAC file
 __do_extract() {
-   # $@ is the name of the artwork filename with the extension
+   # Extract artwork image from a specified artwork block ID in the PICTURE
+   # block of the current FLAC file
+   #--
+   # $1 is the filename to extract the artwork
+   # $@ ($2-$n) is the name of the artwork filename with file extension
+   #--
+   # Set up local variables/arrays
+   declare filename="$1"
+
+   shift  # Remove filename from $@
    metaflac \
       --block-number="${artwork_block_id}" \
       --export-picture-to="${artwork_directory}/${@}" \
-      "${i}"
+      "${filename}"
 }
 
 #-------------------------------------------------------------------------------
 
-# Top banner displaying invocation settings
 __top_banner() {
+   # Top banner displaying invocation settings
+   #--
    # If Redo Tags is called, create the necessary spacing
    if [[ "${retag_flac}" == "true" ]] ; then
       printf '\n\n'
    fi
 
-   # Find FLAC version
-   read -r _ flac_version < <(flac --version)
+   read -r _ flac_version < <(flac --version)                # Flac Version
 
-   # Top title line
    printf " ${blue}%s${normal}\n" \
-      "---------------------------------------------------"
+      "---------------------------------------------------"  # Top title line
 
-   # Title
-   printf "%16sRuntime Information\n"
+   printf "%16sRuntime Information\n"                        # Title
 
-   # Bottom title line
    printf " ${blue}%s${normal}\n" \
-      "-------------------------+-------------------------"
+      "-------------------------+-------------------------"  # Bottom title line
 
-   # Script version
    printf "                redoflacs ${blue}|${normal} ${cyan}%s${normal}\n" \
-      "${version}"
+      "${version}"                                           # Script version
 
-   # FLAC version
    printf "                     FLAC ${blue}|${normal} ${cyan}%s${normal}\n" \
-      "${flac_version}"
+      "${flac_version}"                                      # Flac version
 
-   # Number of Jobs
    printf "                     Jobs ${blue}|${normal} ${cyan}%s %s${normal}\n" \
-      "${jobs}" "${jobs_display}"
+      "${jobs}" "${jobs_display}"                            # Number of jobs
 
-   # Log directory
    printf "            Log Directory ${blue}|${normal} ${cyan}%s${normal}\n" \
-      "${error_log}/"
+      "${error_log}/"                                        # Log directory
 
-   # Configuration directory
+   # Set configuration directory
    if (( EUID == 0 )) ; then
-      # Root: System-wide configuration
-      config_directory="/etc/"
+      config_directory="/etc/"                               # System config
    else
-      # Non root: User configuration
-      config_directory="~/.config/redoflacs/"
+      config_directory="~/.config/redoflacs/"                # User config
    fi
+
    printf "         Config Directory ${blue}|${normal} ${cyan}%s${normal}\n" \
-      "${config_directory}"
+      "${config_directory}"                                  # Config directory
 
-   # Bottom banner line
    printf " ${blue}%s${normal}\n" \
-      "-------------------------+-------------------------"
+      "-------------------------+-------------------------"  # End banner line
 
-   # Message indicating the searching of FLAC files
-   __info "Finding FLAC files to process..."
-}
-
-# Below creates the '[ ok ]' message to print after the info
-# line above.  This will be displayed when all the FLAC files
-# have been mapped to an array
-__processed_flacs_ok() {
-   printf "%11s${blue}[ ${green}ok${blue} ]${normal}\n" ""
+   __info "Finding FLAC files to process..."                 # Show FLAC search
 }
 
 #-------------------------------------------------------------------------------
 
-# Create a countdown function for the metadata
-# to allow user to quit script safely
 __countdown_metadata() {
-   # Trap SIGINT (Control-C) to abort cleanly
-   trap __trap_sigint SIGINT
+   # Display countdown before retagging to allow user to quit script safely
+   #--
+   trap __trap_sigint SIGINT     # Trap SIGINT to abort cleanly
 
    # Warning message
    __error "${yellow}CAUTION!${normal} These are the tag fields that will be kept\n" >&2
@@ -1819,7 +1788,7 @@ __countdown_metadata() {
    # 10 second countdown
    for count in {10..1} ; do
       printf "${red}%d ${normal}" "$count"
-      read -t1  # Sleep 1
+      read -t1                   # Sleep 1
    done
 
    printf '\n'  # Advance countdown to next line
@@ -1827,11 +1796,10 @@ __countdown_metadata() {
 
 #-------------------------------------------------------------------------------
 
-# Displays a countdown after a newer config is found than what
-# the user has.  Allows user to quit script before proceeding
 __countdown_config() {
-   # Trap SIGINT (Control-C) to abort cleanly
-   trap __trap_sigint SIGINT
+   # Displays countdown if a newer config is found to allow user to quit safely
+   #--
+   trap __trap_sigint SIGINT     # Trap SIGINT to abort cleanly
 
    # Warning message
    __info "There is a newer configuration file available!\n\n"
@@ -1851,8 +1819,8 @@ __countdown_config() {
 
    # 10 second countdown
    for count in {10..1} ; do
-      printf "${red}%s${normal}%s" "$count" " "
-      read -t1 # Sleep 1
+      printf "${red}%s${normal}%s" "$count" ' '
+      read -t1                   # Sleep 1
    done
 }
 
@@ -1877,14 +1845,13 @@ __get_directory_list() {
 
 #-------------------------------------------------------------------------------
 
-# Clear old file descriptor (3) and create a new
-# FIFO that's tied to file discriptor 3
-__clear_tmp_fd() {
-   # Close FIFO (if already open)
-   exec 3<&- 3>&-
-
-   # Open FIFO for reading and writing on file descriptor '3'
-   exec 3<>"${tmp_fifo}"
+__clear_jobs_fd() {
+   # Clear job manager file descriptor (tied to FIFO) by closing and reopening
+   #--
+   # $1 is the FIFO to tie the file descriptor to
+   #--
+   exec 3<&- 3>&-   # Close file descriptor
+   exec 3<>"$1"     # Open file descriptor read/write
 }
 
 #-------------------------------------------------------------------------------
@@ -1894,6 +1861,8 @@ __num_issues() {
    # number of ticks from the temporary issues_count file, returning the proper
    # message for use with the Summary Of Operations table
    #--
+   declare fail_count   # Set up local variable
+
    read -r fail_count < "${issue_ticks}"   # Read in number of issue ticks
 
    if (( ${#fail_count} == 1 )) ; then
@@ -1905,9 +1874,9 @@ __num_issues() {
 
 #-------------------------------------------------------------------------------
 
-# Obtain and process the positional parameters invoked
-# with the script
 __process_positional_parameters() {
+   # Obtain and process the positional parameters invoked with the script
+   #--
    # If no arguments are made to the script show usage & short help
    if (( ${#} == 0 )) ; then
       __short_help
@@ -2153,60 +2122,53 @@ __process_positional_parameters() {
 
 #-------------------------------------------------------------------------------
 
-# Check for missing programs vital to this script
 __check_missing_programs() {
-   # Check if each command can be found in $PATH
-   rm_exists="$(type -P rm)"
-   stty_exists="$(type -P stty)"
-   stat_exists="$(type -P stat)"
-   mkdir_exists="$(type -P mkdir)"
-   mkfifo_exists="$(type -P mkfifo)"
-   wc_exists="$(type -P wc)"
-   metaflac_exists="$(type -P metaflac)"
-   flac_exists="$(type -P flac)"
+   # Check for missing programs vital to this script
+   #--
+   # Set up local variables/arrays
+   declare -a command_exists
 
-   # Go through and test if each command was found (by displaying its $PATH).  If
-   # it's empty, add where you can find the package to an array to be displayed.
-   if [[ -z "${rm_exists}" ]] ; then
-      command_exists_array+=( "   Missing ${cyan}rm${normal}        ->  Part of ${cyan}coreutils${normal}" )
+   # Add each command that's needed to the an array to be displayed
+   if ! type -P rm >/dev/null ; then
+      command_exists+=( "   Missing ${cyan}rm${normal}        ->  Part of ${cyan}coreutils${normal}" )
    fi
 
-   if [[ -z "${stty_exists}" ]] ; then
-      command_exists_array+=( "   Missing ${cyan}stty${normal}      ->  Part of ${cyan}coreutils${normal}" )
+   if ! type -P stty >/dev/null ; then
+      command_exists+=( "   Missing ${cyan}stty${normal}      ->  Part of ${cyan}coreutils${normal}" )
    fi
 
-   if [[ -z "${stat_exists}" ]] ; then
-      command_exists_array+=( "   Missing ${cyan}stat${normal}      ->  Part of ${cyan}coreutils${normal}" )
+   if ! type -P stat >/dev/null ; then
+      command_exists+=( "   Missing ${cyan}stat${normal}      ->  Part of ${cyan}coreutils${normal}" )
    fi
 
-   if [[ -z "${mkdir_exists}" ]] ; then
-      command_exists_array+=( "   Missing ${cyan}mkdir${normal}     ->  Part of ${cyan}coreutils${normal}" )
+   if ! type -P mkdir >/dev/null ; then
+      command_exists+=( "   Missing ${cyan}mkdir${normal}     ->  Part of ${cyan}coreutils${normal}" )
    fi
 
-   if [[ -z "${mkfifo_exists}" ]] ; then
-      command_exists_array+=( "   Missing ${cyan}mkfifo${normal}    ->  Part of ${cyan}coreutils${normal}" )
+   if ! type -P mkfifo >/dev/null ; then
+      command_exists+=( "   Missing ${cyan}mkfifo${normal}    ->  Part of ${cyan}coreutils${normal}" )
    fi
 
-   if [[ -z "${wc_exists}" ]] ; then
-      command_exists_array+=( "   Missing ${cyan}wc${normal}        ->  Part of ${cyan}coreutils${normal}" )
+   if ! type -P wc >/dev/null ; then
+      command_exists+=( "   Missing ${cyan}wc${normal}        ->  Part of ${cyan}coreutils${normal}" )
    fi
 
-   if [[ -z "${metaflac_exists}" ]] ; then
-      command_exists_array+=( "   Missing ${cyan}metaflac${normal}  ->  Part of ${cyan}flac${normal}" )
+   if ! type -P metaflac >/dev/null ; then
+      command_exists+=( "   Missing ${cyan}metaflac${normal}  ->  Part of ${cyan}flac${normal}" )
    fi
 
-   if [[ -z "${flac_exists}" ]] ; then
-      command_exists_array+=( "   Missing ${cyan}flac${normal}      ->  Part of ${cyan}flac${normal}" )
+   if ! type -P flac >/dev/null ; then
+      command_exists+=( "   Missing ${cyan}flac${normal}      ->  Part of ${cyan}flac${normal}" )
    fi
 
    # If all the programs above were found, continue with script.  Else
    # display warning and exit script, printing out which package has
    # the missing programs
-   if [[ -n "${command_exists_array[@]}" ]] ; then
+   if [[ -n "${command_exists[@]}" ]] ; then
       __display_missing_commands_header
 
       # Iterate through array and print each value
-      for i in "${command_exists_array[@]}" ; do
+      for i in "${command_exists[@]}" ; do
          __warn "${i}\n" >&2
       done
 
@@ -2266,8 +2228,9 @@ __check_missing_programs() {
 
 #-------------------------------------------------------------------------------
 
-# Check for any conflicting operations/arguments
 __check_conflicting_operations() {
+   # Check for any conflicting operations/arguments
+   #--
    # If "-l, --all" and "-L, --reallyall" are both called, warn and exit
    if [[ "${all}" == "true" && "${reallyall}" == "true" ]] ; then
       __error "Running both ${cyan}-l, --all${normal} and ${cyan}-L, --reallyall${normal} conflict!\n" >&2
@@ -2484,7 +2447,7 @@ __summary() {
 
 __run_parallel() {
    # Run a given operation with a specified number of jobs
-   #
+   #--
    # $1 is the operational function to run multiple jobs, which can be:
    #   aucdtect          aucdtect_spectrogram     md5_check
    #   compress_verify   compress_no_test         test
@@ -2496,24 +2459,11 @@ __run_parallel() {
    declare      item
    declare  -i  row_state  placement  previous_placement  iteration=0
 
+   # Determine the whitespace to make up max length by operation
    case "$1" in
       replaygain_* | retag_*)  spacing='11'  ;;
       *)                       spacing='9'   ;;
    esac
-
-   # This is the current item processed out of the total items:
-   #number_completed="[${iteration}/${#total_items[@]}]"  # eg. [56/213]
-
-   # This is the maximum length of a string to be displayed based on column width,
-   # obtained via the number of columns minus the length of displayed characters:
-   #
-   #             ${columns}:  Width of terminal
-   #   ${#number_completed}:  FLACs processed and total FLACs, ie: [56/213]
-   #                     11:  Length of:
-   #                            (4) Spaces
-   #                            (1) Gap and ellipsis: '…'
-   #                            (6) Percentage: '  100%' or '    3%'
-   #max_length="$(( columns - ${#number_completed} - 9 ))"
 
    row_state=$(__row)                       # Current cursor row position state
 
@@ -2527,7 +2477,7 @@ __run_parallel() {
 
       # Max filename allowed (to fit within screen)
       max_length="$(( columns - ${#number_completed} - spacing ))"
-      __$1 "${item}" "$1" "${number_completed}" &           # Fork operation
+      __$1 "${item}" "$1" "${number_completed}" &           # Fork process
    done
 
    # Continue only if there are more items than jobs specified
@@ -2549,7 +2499,7 @@ __run_parallel() {
 
             # Max filename allowed (to fit within screen)
             max_length="$(( columns - ${#number_completed} - spacing ))"
-            __$1 "${item}" "$1" "${number_completed}" &           # Fork operation
+            __$1 "${item}" "$1" "${number_completed}" &           # Fork process
          else
             break                                # Prevent read hanging FIFO
          fi
@@ -2600,8 +2550,7 @@ __replaygain_test() {
       printf "%s__redoflacs::delimiter__Not a real FLAC file\n" "${1}" \
          >> "${log_file}"
 
-      # Add one to fail fd
-      printf '.' >> "${issue_ticks}"
+      printf '.' >> "${issue_ticks}"  # Add one tick to total issues
    else
       # File is OK, test if sample rate is above 48kHz and the version of
       # `metaflac' installed is greater than 1.2.1
@@ -2618,8 +2567,7 @@ __replaygain_test() {
             printf "%s__redoflacs::delimiter__FLAC 1.3.0 or higher needed for sample rates >48kHz\n" "${1}" \
                >> "${log_file}"
 
-            # Add one to fail fd
-            printf '.' >> "${issue_ticks}"
+            printf '.' >> "${issue_ticks}"  # Add one tick to total issues
          else
             # FLAC is ok, display ok
             __print_status 'ok' "${file_basename}" "${file_length}" 'sub'
@@ -2699,8 +2647,7 @@ __replaygain_apply() {
             printf "%s__redoflacs::delimiter__Corrupt FLAC(s) or differing sample rates (album ReplayGain)\n" "${1}" \
                >> "${log_file}"
 
-            # Add one to fail fd
-            printf '.' >> "${issue_ticks}"
+            printf '.' >> "${issue_ticks}"  # Add one tick to total issues
 
             # Placeholder variable tested after this loop if the loop completes
             # with 'break'
@@ -2763,8 +2710,7 @@ __replaygain_force_apply() {
       printf "%s__redoflacs::delimiter__Corrupt FLAC(s) or differing sample rates (album ReplayGain)\n" "${1}" \
          >> "${log_file}"
 
-      # Add one to fail fd
-      printf '.' >> "${issue_ticks}"
+      printf '.' >> "${issue_ticks}"  # Add one tick to total issues
    else
       # Applied ReplayGain successfully
       __print_status 'ok' "${file_basename}" "${file_length}" 'sub'
@@ -2828,8 +2774,7 @@ __compress_verify() {
          printf "%s__redoflacs::delimiter__Failed verification\n" "${1}" \
             >> "${log_file}"
 
-         # Add one to fail fd
-         printf '.' >> "${issue_ticks}"
+         printf '.' >> "${issue_ticks}"  # Add one tick to total issues
       else
          metaflac \
             --remove-tag=COMPRESSION \
@@ -2859,8 +2804,7 @@ __compress_verify() {
          printf "%s__redoflacs::delimiter__Failed verification\n" "${i}" \
             >> "${log_file}"
 
-         # Add one to fail fd
-         printf '.' >> "${issue_ticks}"
+         printf '.' >> "${issue_ticks}"  # Add one tick to total issues
       else
          # FLAC is ok, display ok
          __print_status 'ok' "${file_basename}" "${file_length}"
@@ -2926,8 +2870,7 @@ __compress_no_test() {
          printf "%s__redoflacs::delimiter__Failed verification\n" "${1}" \
             >> "${log_file}"
 
-         # Add one to fail fd
-         printf '.' >> "${issue_ticks}"
+         printf '.' >> "${issue_ticks}"  # Add one tick to total issues
       else
          metaflac \
             --remove-tag=COMPRESSION \
@@ -2992,8 +2935,7 @@ __test() {
       # Log FLAC failure
       printf "%s__redoflacs::delimiter__Failed testing\n" "${i}" >> "${log_file}"
 
-      # Add one to fail fd
-      printf '.' >> "${issue_ticks}"
+      printf '.' >> "${issue_ticks}"  # Add one tick to total issues
    else
       # FLAC is ok, display ok
       __print_status 'ok' "${file_basename}" "${file_length}"
@@ -3048,8 +2990,7 @@ __aucdtect() {
       printf "%s__redoflacs::delimiter__Not a real FLAC file\n" "$1" \
          >> "${log_file}"
 
-      # Add one to fail fd
-      printf '.' >> "${issue_ticks}"
+      printf '.' >> "${issue_ticks}"  # Add one tick to total issues
 
    # Skip the FLAC file if it has a bit depth greater
    # than 16 since auCDtect doesn't support audio
@@ -3062,8 +3003,7 @@ __aucdtect() {
       printf "%s__redoflacs::delimiter__auCDtect does not support a bit depth >16\n" "$1" \
          >> "${log_file}"
 
-      # Add one to fail fd
-      printf '.' >> "${issue_ticks}"
+      printf '.' >> "${issue_ticks}"  # Add one tick to total issues
 
    # Skip the FLAC file if it already has the 'Lossy' value set for the
    # MASTERING tag.  This is only done if the value of 'skip_lossy' is 'true',
@@ -3077,8 +3017,7 @@ __aucdtect() {
       printf "%s__redoflacs::delimiter__MASTERING=Lossy value found; skipping ('skip_lossy' configuration)\n" "${1}" \
          >> "${log_file}"
 
-      # Add one to fail fd
-      printf '.' >> "${issue_ticks}"
+      printf '.' >> "${issue_ticks}"  # Add one tick to total issues
 
    # FLAC checks out, continue processing
    else
@@ -3108,8 +3047,7 @@ __aucdtect() {
          printf "%s__redoflacs::delimiter__Failed decoding to WAV\n" "${1}" \
             >> "${log_file}"
 
-         # Add one to fail fd
-         printf '.' >> "${issue_ticks}"
+         printf '.' >> "${issue_ticks}"  # Add one tick to total issues
       else
          # Decoded FLAC is ok, display ok
          __print_status 'ok' "${file_basename}" "${file_length}" '' 'decode'
@@ -3142,8 +3080,7 @@ __aucdtect() {
             printf "%s__redoflacs::delimiter__Failed analyzing decoded FLAC\n" "${1}" \
                >> "${log_file}"
 
-            # Add one to fail fd
-            printf '.' >> "${issue_ticks}"
+            printf '.' >> "${issue_ticks}"  # Add one tick to total issues
          else
             # Grab the conclusion of auCDtect's command
             # Below options prevents hanging FIFO by only reading
@@ -3182,9 +3119,7 @@ __aucdtect() {
                   printf "%s__redoflacs::delimiter__Failed analyzing decoded FLAC\n" "${1}" \
                      >> "${log_file}"
 
-                  # Add one to fail fd
-                  printf '.' >> "${issue_ticks}"
-
+                  printf '.' >> "${issue_ticks}"  # Add one tick to total issues
                else
                   # Grab the conclusion of auCDtect's command
                   # Below options prevents hanging FIFO by only reading
@@ -3263,8 +3198,7 @@ __aucdtect() {
                         printf "%s__redoflacs::delimiter__%s (%s)\n" "$1" "${aucdtect_check_array[0]}" "${spectrogram_picture}" \
                            >> "${log_file}"
 
-                        # Add one to fail fd
-                        printf '.' >> "${issue_ticks}"
+                        printf '.' >> "${issue_ticks}"  # Add one tick to total issues
                      else
                         # Issue with FLAC authenticity, display issue
                         __print_status 'issue' "${file_basename}" "${file_length}" '' 'aucdtect_slow'
@@ -3273,8 +3207,7 @@ __aucdtect() {
                         printf "%s__redoflacs::delimiter__%s\n" "$1" "${aucdtect_check_array[0]}" \
                            >> "${log_file}"
 
-                        # Add one to fail fd
-                        printf '.' >> "${issue_ticks}"
+                        printf '.' >> "${issue_ticks}"  # Add one tick to total issues
                      fi
                   else
                      # FLAC is ok, display ok
@@ -3338,8 +3271,7 @@ __md5_check() {
       printf "%s__redoflacs::delimiter__Not a real FLAC file\n" "${1}" \
          >> "${log_file}"
 
-      # Add one to fail fd
-      printf '.' >> "${issue_ticks}"
+      printf '.' >> "${issue_ticks}"  # Add one tick to total issues
    # FLAC file is real, check for unset MD5 checksum.  We cannot use an
    # arithmetic expression as any amount of 0's will equal the expression
    # below
@@ -3351,8 +3283,7 @@ __md5_check() {
       printf "%s__redoflacs::delimiter__Unset MD5 signature (00000000000000000000000000000000)\n" "${1}" \
          >> "${log_file}"
 
-      # Add one to fail fd
-      printf '.' >> "${issue_ticks}"
+      printf '.' >> "${issue_ticks}"  # Add one tick to total issues
    else
       # FLAC is ok, display ok
       __print_status 'ok' "${file_basename}" "${file_length}"
@@ -3403,8 +3334,7 @@ __retag_analyze() {
       printf "%s__redoflacs::delimiter__Not a real FLAC file\n" "${1}" \
          >> "${log_file}"
 
-      # Add one to fail fd
-      printf '.' >> "${issue_ticks}"
+      printf '.' >> "${issue_ticks}"  # Add one tick to total issues
    else
       # Iterate through each tag field and check if tag is missing
       for j in "${tags[@]}" ; do
@@ -3525,8 +3455,7 @@ __retag_analyze() {
          printf "%s__redoflacs::delimiter__Missing tags: ${missing_tags%, }\n" "${1}" \
             >> "${log_file}"
 
-         # Add one to fail fd
-         printf '.' >> "${issue_ticks}"
+         printf '.' >> "${issue_ticks}"  # Add one tick to total issues
       else
          # There are no missing tags, display ok
          __print_status 'ok' "${file_basename}" "${file_length}" 'sub'
@@ -3690,7 +3619,14 @@ __extract_images() {
    trap '__kill_jobs "$(jobs -rp)"' EXIT
 
    # Set up local variables
-   declare    file_basename
+   declare    artwork_type_number  artwork_type_description  artwork_file_icon \
+              artwork_other_file_icon  artwork_cover_front  artwork_cover_back \
+              artwork_leaflet  artwork_media_label  artwork_lead_artist \
+              artwork_artist  artwork_conductor  artwork_band \
+              artwork_composer  artwork_lyricist  artwork_recording_location \
+              artwork_during_recording  artwork_during_performance \
+              artwork_movie  artwork_fish  artwork_illustration \
+              artwork_band_logo  artwork_publisher_logo  file_basename
    declare -i file_length
 
    # Truncate file, if necessary, and grab file information, splitting on
@@ -3712,8 +3648,7 @@ __extract_images() {
       printf "%s__redoflacs::delimiter__Not a real FLAC file\n" "${1}" \
          >> "${log_file}"
 
-      # Add one to fail fd
-      printf '.' >> "${issue_ticks}"
+      printf '.' >> "${issue_ticks}"  # Add one tick to total issues
    else
       # Find all the artwork blocks available in the current FLAC file
       __find_artwork "$1"
@@ -3743,7 +3678,7 @@ __extract_images() {
          # extract it, otherwise make sure to add a number at the end of the
          # image in case there is more than one to prevent clobbering
          if (( ${#artwork_other[@]} == 1 )) ; then
-            __do_extract "${artwork_other[0]}"
+            __do_extract "$1" "${artwork_other[0]}"
          else
 
             # Run through the images found in the file for the given artwork
@@ -3752,7 +3687,7 @@ __extract_images() {
             # extracting the images
             for art_file in "${!artwork_other[@]}" ; do
                artwork_extension="${artwork_other[${art_file}]##*.}"
-               __do_extract "${artwork_other[${art_file}]%.*} ($(( art_file + 1 ))).${artwork_extension}"
+               __do_extract "$1" "${artwork_other[${art_file}]%.*} ($(( art_file + 1 ))).${artwork_extension}"
             done
          fi
       fi
@@ -3769,7 +3704,7 @@ __extract_images() {
          # extract it, otherwise make sure to add a number at the end of the
          # image in case there is more than one to prevent clobbering
          if (( ${#artwork_file_icon[@]} == 1 )) ; then
-            __do_extract "${artwork_file_icon[0]}"
+            __do_extract "$1" "${artwork_file_icon[0]}"
          else
 
             # Run through the images found in the file for the given artwork
@@ -3778,7 +3713,7 @@ __extract_images() {
             # extracting the images
             for art_file in "${!artwork_file_icon[@]}" ; do
                artwork_extension="${artwork_file_icon[${art_file}]##*.}"
-               __do_extract "${artwork_file_icon[${art_file}]%.*} ($(( art_file + 1 ))).${artwork_extension}"
+               __do_extract "$1" "${artwork_file_icon[${art_file}]%.*} ($(( art_file + 1 ))).${artwork_extension}"
             done
          fi
       fi
@@ -3795,7 +3730,7 @@ __extract_images() {
          # extract it, otherwise make sure to add a number at the end of the
          # image in case there is more than one to prevent clobbering
          if (( ${#artwork_other_file_icon[@]} == 1 )) ; then
-            __do_extract "${artwork_other_file_icon[0]}"
+            __do_extract "$1" "${artwork_other_file_icon[0]}"
          else
 
             # Run through the images found in the file for the given artwork
@@ -3804,7 +3739,7 @@ __extract_images() {
             # extracting the images
             for art_file in "${!artwork_other_file_icon[@]}" ; do
                artwork_extension="${artwork_other_file_icon[${art_file}]##*.}"
-               __do_extract "${artwork_other_file_icon[${art_file}]%.*} ($(( art_file + 1 ))).${artwork_extension}"
+               __do_extract "$1" "${artwork_other_file_icon[${art_file}]%.*} ($(( art_file + 1 ))).${artwork_extension}"
             done
          fi
       fi
@@ -3821,7 +3756,7 @@ __extract_images() {
          # extract it, otherwise make sure to add a number at the end of the
          # image in case there is more than one to prevent clobbering
          if (( ${#artwork_cover_front[@]} == 1 )) ; then
-            __do_extract "${artwork_cover_front[0]}"
+            __do_extract "$1" "${artwork_cover_front[0]}"
          else
 
             # Run through the images found in the file for the given artwork
@@ -3830,7 +3765,7 @@ __extract_images() {
             # extracting the images
             for art_file in "${!artwork_cover_front[@]}" ; do
                artwork_extension="${artwork_cover_front[${art_file}]##*.}"
-               __do_extract "${artwork_cover_front[${art_file}]%.*} ($(( art_file + 1 ))).${artwork_extension}"
+               __do_extract "$1" "${artwork_cover_front[${art_file}]%.*} ($(( art_file + 1 ))).${artwork_extension}"
             done
          fi
       fi
@@ -3847,7 +3782,7 @@ __extract_images() {
          # extract it, otherwise make sure to add a number at the end of the
          # image in case there is more than one to prevent clobbering
          if (( ${#artwork_cover_back[@]} == 1 )) ; then
-            __do_extract "${artwork_cover_back[0]}"
+            __do_extract "$1" "${artwork_cover_back[0]}"
          else
 
             # Run through the images found in the file for the given artwork
@@ -3856,7 +3791,7 @@ __extract_images() {
             # extracting the images
             for art_file in "${!artwork_cover_back[@]}" ; do
                artwork_extension="${artwork_cover_back[${art_file}]##*.}"
-               __do_extract "${artwork_cover_back[${art_file}]%.*} ($(( art_file + 1 ))).${artwork_extension}"
+               __do_extract "$1" "${artwork_cover_back[${art_file}]%.*} ($(( art_file + 1 ))).${artwork_extension}"
             done
          fi
       fi
@@ -3873,7 +3808,7 @@ __extract_images() {
          # extract it, otherwise make sure to add a number at the end of the
          # image in case there is more than one to prevent clobbering
          if (( ${#artwork_leaflet[@]} == 1 )) ; then
-            __do_extract "${artwork_leaflet[0]}"
+            __do_extract "$1" "${artwork_leaflet[0]}"
          else
 
             # Run through the images found in the file for the given artwork
@@ -3882,7 +3817,7 @@ __extract_images() {
             # extracting the images
             for art_file in "${!artwork_leaflet[@]}" ; do
                artwork_extension="${artwork_leaflet[${art_file}]##*.}"
-               __do_extract "${artwork_leaflet[${art_file}]%.*} ($(( art_file + 1 ))).${artwork_extension}"
+               __do_extract "$1" "${artwork_leaflet[${art_file}]%.*} ($(( art_file + 1 ))).${artwork_extension}"
             done
          fi
       fi
@@ -3899,7 +3834,7 @@ __extract_images() {
          # extract it, otherwise make sure to add a number at the end of the
          # image in case there is more than one to prevent clobbering
          if (( ${#artwork_media_label[@]} == 1 )) ; then
-            __do_extract "${artwork_media_label[0]}"
+            __do_extract "$1" "${artwork_media_label[0]}"
          else
 
             # Run through the images found in the file for the given artwork
@@ -3908,7 +3843,7 @@ __extract_images() {
             # extracting the images
             for art_file in "${!artwork_media_label[@]}" ; do
                artwork_extension="${artwork_media_label[${art_file}]##*.}"
-               __do_extract "${artwork_media_label[${art_file}]%.*} ($(( art_file + 1 ))).${artwork_extension}"
+               __do_extract "$1" "${artwork_media_label[${art_file}]%.*} ($(( art_file + 1 ))).${artwork_extension}"
             done
          fi
       fi
@@ -3925,7 +3860,7 @@ __extract_images() {
          # extract it, otherwise make sure to add a number at the end of the
          # image in case there is more than one to prevent clobbering
          if (( ${#artwork_lead_artist[@]} == 1 )) ; then
-            __do_extract "${artwork_lead_artist[0]}"
+            __do_extract "$1" "${artwork_lead_artist[0]}"
          else
 
             # Run through the images found in the file for the given artwork
@@ -3934,7 +3869,7 @@ __extract_images() {
             # extracting the images
             for art_file in "${!artwork_lead_artist[@]}" ; do
                artwork_extension="${artwork_lead_artist[${art_file}]##*.}"
-               __do_extract "${artwork_lead_artist[${art_file}]%.*} ($(( art_file + 1 ))).${artwork_extension}"
+               __do_extract "$1" "${artwork_lead_artist[${art_file}]%.*} ($(( art_file + 1 ))).${artwork_extension}"
             done
          fi
       fi
@@ -3951,7 +3886,7 @@ __extract_images() {
          # extract it, otherwise make sure to add a number at the end of the
          # image in case there is more than one to prevent clobbering
          if (( ${#artwork_artist[@]} == 1 )) ; then
-            __do_extract "${artwork_artist[0]}"
+            __do_extract "$1" "${artwork_artist[0]}"
          else
 
             # Run through the images found in the file for the given artwork
@@ -3960,7 +3895,7 @@ __extract_images() {
             # extracting the images
             for art_file in "${!artwork_artist[@]}" ; do
                artwork_extension="${artwork_artist[${art_file}]##*.}"
-               __do_extract "${artwork_artist[${art_file}]%.*} ($(( art_file + 1 ))).${artwork_extension}"
+               __do_extract "$1" "${artwork_artist[${art_file}]%.*} ($(( art_file + 1 ))).${artwork_extension}"
             done
          fi
       fi
@@ -3977,7 +3912,7 @@ __extract_images() {
          # extract it, otherwise make sure to add a number at the end of the
          # image in case there is more than one to prevent clobbering
          if (( ${#artwork_conductor[@]} == 1 )) ; then
-            __do_extract "${artwork_conductor[0]}"
+            __do_extract "$1" "${artwork_conductor[0]}"
          else
 
             # Run through the images found in the file for the given artwork
@@ -3986,7 +3921,7 @@ __extract_images() {
             # extracting the images
             for art_file in "${!artwork_conductor[@]}" ; do
                artwork_extension="${artwork_conductor[${art_file}]##*.}"
-               __do_extract "${artwork_conductor[${art_file}]%.*} ($(( art_file + 1 ))).${artwork_extension}"
+               __do_extract "$1" "${artwork_conductor[${art_file}]%.*} ($(( art_file + 1 ))).${artwork_extension}"
             done
          fi
       fi
@@ -4003,7 +3938,7 @@ __extract_images() {
          # extract it, otherwise make sure to add a number at the end of the
          # image in case there is more than one to prevent clobbering
          if (( ${#artwork_band[@]} == 1 )) ; then
-            __do_extract "${artwork_band[0]}"
+            __do_extract "$1" "${artwork_band[0]}"
          else
 
             # Run through the images found in the file for the given artwork
@@ -4012,7 +3947,7 @@ __extract_images() {
             # extracting the images
             for art_file in "${!artwork_band[@]}" ; do
                artwork_extension="${artwork_band[${art_file}]##*.}"
-               __do_extract "${artwork_band[${art_file}]%.*} ($(( art_file + 1 ))).${artwork_extension}"
+               __do_extract "$1" "${artwork_band[${art_file}]%.*} ($(( art_file + 1 ))).${artwork_extension}"
             done
          fi
       fi
@@ -4029,7 +3964,7 @@ __extract_images() {
          # extract it, otherwise make sure to add a number at the end of the
          # image in case there is more than one to prevent clobbering
          if (( ${#artwork_composer[@]} == 1 )) ; then
-            __do_extract "${artwork_composer[0]}"
+            __do_extract "$1" "${artwork_composer[0]}"
          else
 
             # Run through the images found in the file for the given artwork
@@ -4038,7 +3973,7 @@ __extract_images() {
             # extracting the images
             for art_file in "${!artwork_composer[@]}" ; do
                artwork_extension="${artwork_composer[${art_file}]##*.}"
-               __do_extract "${artwork_composer[${art_file}]%.*} ($(( art_file + 1 ))).${artwork_extension}"
+               __do_extract "$1" "${artwork_composer[${art_file}]%.*} ($(( art_file + 1 ))).${artwork_extension}"
             done
          fi
       fi
@@ -4055,7 +3990,7 @@ __extract_images() {
          # extract it, otherwise make sure to add a number at the end of the
          # image in case there is more than one to prevent clobbering
          if (( ${#artwork_lyricist[@]} == 1 )) ; then
-            __do_extract "${artwork_lyricist[0]}"
+            __do_extract "$1" "${artwork_lyricist[0]}"
          else
 
             # Run through the images found in the file for the given artwork
@@ -4064,7 +3999,7 @@ __extract_images() {
             # extracting the images
             for art_file in "${!artwork_lyricist[@]}" ; do
                artwork_extension="${artwork_lyricist[${art_file}]##*.}"
-               __do_extract "${artwork_lyricist[${art_file}]%.*} ($(( art_file + 1 ))).${artwork_extension}"
+               __do_extract "$1" "${artwork_lyricist[${art_file}]%.*} ($(( art_file + 1 ))).${artwork_extension}"
             done
          fi
       fi
@@ -4081,7 +4016,7 @@ __extract_images() {
          # extract it, otherwise make sure to add a number at the end of the
          # image in case there is more than one to prevent clobbering
          if (( ${#artwork_recording_location[@]} == 1 )) ; then
-            __do_extract "${artwork_recording_location[0]}"
+            __do_extract "$1" "${artwork_recording_location[0]}"
          else
 
             # Run through the images found in the file for the given artwork
@@ -4090,7 +4025,7 @@ __extract_images() {
             # extracting the images
             for art_file in "${!artwork_recording_location[@]}" ; do
                artwork_extension="${artwork_recording_location[${art_file}]##*.}"
-               __do_extract "${artwork_recording_location[${art_file}]%.*} ($(( art_file + 1 ))).${artwork_extension}"
+               __do_extract "$1" "${artwork_recording_location[${art_file}]%.*} ($(( art_file + 1 ))).${artwork_extension}"
             done
          fi
       fi
@@ -4107,7 +4042,7 @@ __extract_images() {
          # extract it, otherwise make sure to add a number at the end of the
          # image in case there is more than one to prevent clobbering
          if (( ${#artwork_during_recording[@]} == 1 )) ; then
-            __do_extract "${artwork_during_recording[0]}"
+            __do_extract "$1" "${artwork_during_recording[0]}"
          else
 
             # Run through the images found in the file for the given artwork
@@ -4116,7 +4051,7 @@ __extract_images() {
             # extracting the images
             for art_file in "${!artwork_during_recording[@]}" ; do
                artwork_extension="${artwork_during_recording[${art_file}]##*.}"
-               __do_extract "${artwork_during_recording[${art_file}]%.*} ($(( art_file + 1 ))).${artwork_extension}"
+               __do_extract "$1" "${artwork_during_recording[${art_file}]%.*} ($(( art_file + 1 ))).${artwork_extension}"
             done
          fi
       fi
@@ -4133,7 +4068,7 @@ __extract_images() {
          # extract it, otherwise make sure to add a number at the end of the
          # image in case there is more than one to prevent clobbering
          if (( ${#artwork_during_performance[@]} == 1 )) ; then
-            __do_extract "${artwork_during_performance[0]}"
+            __do_extract "$1" "${artwork_during_performance[0]}"
          else
 
             # Run through the images found in the file for the given artwork
@@ -4142,7 +4077,7 @@ __extract_images() {
             # extracting the images
             for art_file in "${!artwork_during_performance[@]}" ; do
                artwork_extension="${artwork_during_performance[${art_file}]##*.}"
-               __do_extract "${artwork_during_performance[${art_file}]%.*} ($(( art_file + 1 ))).${artwork_extension}"
+               __do_extract "$1" "${artwork_during_performance[${art_file}]%.*} ($(( art_file + 1 ))).${artwork_extension}"
             done
          fi
       fi
@@ -4159,7 +4094,7 @@ __extract_images() {
          # extract it, otherwise make sure to add a number at the end of the
          # image in case there is more than one to prevent clobbering
          if (( ${#artwork_movie[@]} == 1 )) ; then
-            __do_extract "${artwork_movie[0]}"
+            __do_extract "$1" "${artwork_movie[0]}"
          else
 
             # Run through the images found in the file for the given artwork
@@ -4168,7 +4103,7 @@ __extract_images() {
             # extracting the images
             for art_file in "${!artwork_movie[@]}" ; do
                artwork_extension="${artwork_movie[${art_file}]##*.}"
-               __do_extract "${artwork_movie[${art_file}]%.*} ($(( art_file + 1 ))).${artwork_extension}"
+               __do_extract "$1" "${artwork_movie[${art_file}]%.*} ($(( art_file + 1 ))).${artwork_extension}"
             done
          fi
       fi
@@ -4185,7 +4120,7 @@ __extract_images() {
          # extract it, otherwise make sure to add a number at the end of the
          # image in case there is more than one to prevent clobbering
          if (( ${#artwork_fish[@]} == 1 )) ; then
-            __do_extract "${artwork_fish[0]}"
+            __do_extract "$1" "${artwork_fish[0]}"
          else
 
             # Run through the images found in the file for the given artwork
@@ -4194,7 +4129,7 @@ __extract_images() {
             # extracting the images
             for art_file in "${!artwork_fish[@]}" ; do
                artwork_extension="${artwork_fish[${art_file}]##*.}"
-               __do_extract "${artwork_fish[${art_file}]%.*} ($(( art_file + 1 ))).${artwork_extension}"
+               __do_extract "$1" "${artwork_fish[${art_file}]%.*} ($(( art_file + 1 ))).${artwork_extension}"
             done
          fi
       fi
@@ -4211,7 +4146,7 @@ __extract_images() {
          # extract it, otherwise make sure to add a number at the end of the
          # image in case there is more than one to prevent clobbering
          if (( ${#artwork_illustration[@]} == 1 )) ; then
-            __do_extract "${artwork_illustration[0]}"
+            __do_extract "$1" "${artwork_illustration[0]}"
          else
 
             # Run through the images found in the file for the given artwork
@@ -4220,7 +4155,7 @@ __extract_images() {
             # extracting the images
             for art_file in "${!artwork_illustration[@]}" ; do
                artwork_extension="${artwork_illustration[${art_file}]##*.}"
-               __do_extract "${artwork_illustration[${art_file}]%.*} ($(( art_file + 1 ))).${artwork_extension}"
+               __do_extract "$1" "${artwork_illustration[${art_file}]%.*} ($(( art_file + 1 ))).${artwork_extension}"
             done
          fi
       fi
@@ -4237,7 +4172,7 @@ __extract_images() {
          # extract it, otherwise make sure to add a number at the end of the
          # image in case there is more than one to prevent clobbering
          if (( ${#artwork_band_logo[@]} == 1 )) ; then
-            __do_extract "${artwork_band_logo[0]}"
+            __do_extract "$1" "${artwork_band_logo[0]}"
          else
 
             # Run through the images found in the file for the given artwork
@@ -4246,7 +4181,7 @@ __extract_images() {
             # extracting the images
             for art_file in "${!artwork_band_logo[@]}" ; do
                artwork_extension="${artwork_band_logo[${art_file}]##*.}"
-               __do_extract "${artwork_band_logo[${art_file}]%.*} ($(( art_file + 1 ))).${artwork_extension}"
+               __do_extract "$1" "${artwork_band_logo[${art_file}]%.*} ($(( art_file + 1 ))).${artwork_extension}"
             done
          fi
       fi
@@ -4263,7 +4198,7 @@ __extract_images() {
          # extract it, otherwise make sure to add a number at the end of the
          # image in case there is more than one to prevent clobbering
          if (( ${#artwork_publisher_logo[@]} == 1 )) ; then
-            __do_extract "${artwork_publisher_logo[0]}"
+            __do_extract "$1" "${artwork_publisher_logo[0]}"
          else
 
             # Run through the images found in the file for the given artwork
@@ -4272,7 +4207,7 @@ __extract_images() {
             # extracting the images
             for art_file in "${!artwork_publisher_logo[@]}" ; do
                artwork_extension="${artwork_publisher_logo[${art_file}]##*.}"
-               __do_extract "${artwork_publisher_logo[${art_file}]%.*} ($(( art_file + 1 ))).${artwork_extension}"
+               __do_extract "$1" "${artwork_publisher_logo[${art_file}]%.*} ($(( art_file + 1 ))).${artwork_extension}"
             done
          fi
       fi
@@ -4313,7 +4248,6 @@ __extract_images() {
 
 #-------------------------------------------------------------------------------
 
-# Prune FLACS
 __prune() {
    # Prune given FLAC by removing various BLOCKs (defined in user configuration)
    #--
@@ -4351,8 +4285,7 @@ __prune() {
       printf "%s__redoflacs::delimiter__Not a real FLAC file\n" "${1}" \
          >> "${log_file}"
 
-      # Add one to fail fd
-      printf '.' >> "${issue_ticks}"
+      printf '.' >> "${issue_ticks}"  # Add one tick to total issues
    else
       # Remove all information but STREAMINFO,VORBIS_COMMENTs, and
       # possibly METADATA_BLOCK_PICTURE
@@ -4368,6 +4301,7 @@ __prune() {
    __store_position
 }
 
+#-------------------------------------------------------------------------------
 # .: PRE-SCRIPT CHECKS :.
 #-------------------------------------------------------------------------------
 # Enable BASH 4 globstar
@@ -4384,14 +4318,14 @@ script_config_revision="2"
 flac_extension=".[Ff][Ll][Aa][Cc]"
 
 # Colors on by default
-blue="\033[34m"
-green="\033[32m"
-red="\033[31m"
-cyan="\033[36m"
-magenta="\033[35m"
-yellow="\033[33m"
 invert="\033[7m"
 normal="\033[0m"
+red="\033[31m"
+green="\033[32m"
+yellow="\033[33m"
+blue="\033[34m"
+magenta="\033[35m"
+cyan="\033[36m"
 
 declare -Ag operation_summary  # Stores all the operational states
 declare -ig max_length         # Max filename to fit inside terminal width
@@ -4639,7 +4573,7 @@ __top_banner
 total_items=( "${directory}"/**/*${flac_extension} )
 
 # This displays '[ ok ]' after 'Finding FLAC files to process...'
-__processed_flacs_ok
+printf "%11s${blue}[ ${green}ok${blue} ]${normal}\n" ""
 
 #-------------------------------------------------------------------------------
 
@@ -4687,8 +4621,7 @@ for operation in "${operations[@]}" ; do
    # Scroll terminal, if needed
    __scroll_terminal
 
-   # Make sure to clear file descriptor '3' before proceeding
-   __clear_tmp_fd
+   __clear_jobs_fd "${tmp_fifo}"   # Clear job manager file descriptor (3)
 
    # Set the cursor to the correct row depending on whether there were more
    # or less files to process than the number of jobs to run
