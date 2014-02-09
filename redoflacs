@@ -4315,32 +4315,51 @@ __extract_images() {
 
 # Prune FLACS
 __prune() {
+   # Prune given FLAC by removing various BLOCKs (defined in user configuration)
+   #--
+   # $1 is the filename
+   # $2 is the operation that's currently being run, of which, can be:
+   #   aucdtect          aucdtect_spectrogram     md5_check
+   #   compress_verify   compress_no_test         test
+   #   replaygain_test   replaygain_force_apply   replaygain_apply
+   #   retag_analyze     retag_apply              extract_artwork
+   #   prune
+   # $3 is a string representing number items processed, eg: [43/439]
+   #--
    trap '__kill_jobs "$(jobs -rp)"' EXIT
 
-   # Print current FLAC being pruned
-   __print_current_half
+   # Set up local variables
+   declare    file_basename
+   declare -i file_length
+
+   # Truncate file, if necessary, and grab file information, splitting on
+   # Unit Separator (\037)
+   IFS=$'\037' read -r file_basename file_length < <(__truncate_filename "$1")
+
+   # Print current FLAC being processed
+   __print_item "${file_basename}" "${file_length}" "$3" 'half'
 
    # Check if file is a FLAC file (hide output)
-   metaflac --show-md5sum "${i}" >/dev/null 2>&1
+   metaflac --show-md5sum "${1}" >/dev/null 2>&1
 
-   # Exit code 130 is SIGINT so only check for exit code '1'
+   # Exit code 1 implies failure (130 is SIGINT)
    if (( ${?} == 1 )) ; then
       # Error with FLAC file, display failed/error
-      __print_progress_failed
+      __print_status 'fail' "${file_basename}" "${file_length}"
 
       # Log FLAC failure
-      printf "%s__redoflacs::delimiter__Not a real FLAC file\n" "${i}" \
+      printf "%s__redoflacs::delimiter__Not a real FLAC file\n" "${1}" \
          >> "${log_file}"
 
       # Add one to fail fd
-      printf '.' >> ${issue_ticks}
+      printf '.' >> "${issue_ticks}"
    else
       # Remove all information but STREAMINFO,VORBIS_COMMENTs, and
       # possibly METADATA_BLOCK_PICTURE
-      metaflac --remove --dont-use-padding --except-block-type="${dont_prune_flac_metadata}" "${i}"
+      metaflac --remove --dont-use-padding --except-block-type="${dont_prune_flac_metadata}" "${1}"
 
       # FLAC is ok, display ok
-      __print_progress_ok
+      __print_status 'ok' "${file_basename}" "${file_length}"
    fi
 
    # Store the position of where the line of the FLAC file is displayed in file
