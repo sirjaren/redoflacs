@@ -4307,32 +4307,25 @@ __prune() {
 # Enable BASH 4 globstar
 shopt -s globstar
 
-# Version
-version="0.23_pre"
+version="0.23_pre"                     # Redoflacs version
+flac_extension=".[Ff][Ll][Aa][Cc]"     # FLAC extension (case-insensitive)
+unit_separator=$'\037'                 # ASCII unit separator
 
-# This sets the script configuration revision (used to compare against the user
-# configuration revision)
-script_config_revision="2"
-
-# Set FLAC extension for easy use later
-flac_extension=".[Ff][Ll][Aa][Cc]"
+declare -i script_config_revision='2'  # Script user configuration revision
+declare -i max_length                  # Max filename length within terminal
+declare -A operation_summary           # Stores all the operational states
 
 # Colors on by default
-invert="\033[7m"
-normal="\033[0m"
-red="\033[31m"
-green="\033[32m"
-yellow="\033[33m"
-blue="\033[34m"
-magenta="\033[35m"
-cyan="\033[36m"
+normal='\033[0m'
+invert='\033[7m'
+red='\033[31m'
+green='\033[32m'
+yellow='\033[33m'
+blue='\033[34m'
+magenta='\033[35m'
+cyan='\033[36m'
 
-declare -Ag operation_summary  # Stores all the operational states
-declare -ig max_length         # Max filename to fit inside terminal width
-declare unit_separator=$'\037' # ASCII unit separator
-
-# Check if user is running under Cygwin
-# and if so, warn user and exit
+# Check if user is running under Cygwin and if so, warn user and exit
 os_name="$(uname -o)"
 if [[ "${os_name}" == "Cygwin" ]] ; then
    __error "This version of redoflacs is meant to be run under\n" >&2
@@ -4345,13 +4338,11 @@ fi
 
 #-------------------------------------------------------------------------------
 
-# Check if configuration file exists based of ${EUID}.  If it doesn't
-# exist, create one
+# Check if config file exists based of $EUID.  Create config if it doesn't exist
 if (( EUID == 0 )) ; then
    # User is root
-   #
-   # Configuration file location
-   config_file="/etc/redoflacs.conf"
+   #--
+   config_file="/etc/redoflacs.conf"                # System config location
 
    # Check if system-wide configuration doesn't exist
    if [[ ! -f "${config_file}" ]] ; then
@@ -4372,9 +4363,9 @@ if (( EUID == 0 )) ; then
    fi
 else
    # User is _NOT_ root
-   #
+   #--
    # Configuration file location
-   config_file="${HOME}/.config/redoflacs/config"
+   config_file="${HOME}/.config/redoflacs/config"   # User config location
 
    # Check if user configuration doesn't exist
    if [[ ! -f "${config_file}" ]] ; then
@@ -4413,15 +4404,11 @@ done
 
 #-------------------------------------------------------------------------------
 
-# Handle CLI arguments
-__process_positional_parameters "${@}"
+__process_positional_parameters "${@}"   # Process CLI arguments
 
 #-------------------------------------------------------------------------------
 
-# Check if user set '-n, --no-color'.  This must come before everything (and
-# after the positional parameters) to ensure color is set/unset.  The normal
-# variable is always set, to reset the inverted colors (color or no-color)
-# during progress bar output
+# Disable color if user called '-n, --no-color'.  $normal color is always set
 if [[ "${no_color}" == "true" ]] ; then
    blue=""
    green=""
@@ -4442,8 +4429,7 @@ fi
 
 #-------------------------------------------------------------------------------
 
-# Check for any conflicting operations/arguments called
-# at script invocation and warn user
+# Check for any conflicting operations/arguments called and warn user
 __check_conflicting_operations
 
 #-------------------------------------------------------------------------------
@@ -4455,9 +4441,7 @@ for operation in "${operations[@]}" ; do
 done
 #-------------------------------------------------------------------------------
 
-# Check for any missing programs vital for this script
-# to operate correctly, and exit if any programs are found
-# to be missing
+# Check for any missing programs vital for this script and exit if there are
 __check_missing_programs
 
 #-------------------------------------------------------------------------------
@@ -4527,6 +4511,7 @@ else
    jobs_display="(User Defined)"
 fi
 
+#-------------------------------------------------------------------------------
 # .: START SCRIPT :.
 #-------------------------------------------------------------------------------
 # Store current stty settings
