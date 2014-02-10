@@ -4363,7 +4363,6 @@ if (( EUID == 0 )) ; then
 else
    # User is _NOT_ root
    #--
-   # Configuration file location
    config_file="${HOME}/.config/redoflacs/config"   # User config location
 
    # Check if user configuration doesn't exist
@@ -4464,37 +4463,30 @@ fi
 
 #-------------------------------------------------------------------------------
 
-# If "-e, --extract-artwork" was called, make sure artwork_location is a valid
-# location, if user-defined
+# If '-e, --extract-artwork' was called, make sure $artwork_location is a valid
 if [[ "${check_artwork_dir}" == "true" ]] ; then
-
    # Check if artwork_location is user-defined
    if [[ -n "${artwork_location}" ]] ; then
-
       # Put extracted artwork in user-defined location, testing to make sure
       # the directory exists
       if [[ ! -d "${artwork_location}" ]] ; then
          __error "${cyan}${artwork_location}${normal} doesn't exist!\n" >&2
          __error "Please set a valid directory in the configuration file!\n" >&2
-
          exit 1
       fi
    fi
 fi
 
-# If "-A, --aucdtect-spectrogram" was called, make sure spectrogram_location is
+# If '-A, --aucdtect-spectrogram' was called, make sure $spectrogram_location is
 # a valid location, if user-defined
 if [[ "${create_spectrogram}" == "true" ]] ; then
-
    # Check if spectrogram_location is user-defined
    if [[ -n "${spectrogram_location}" ]] ; then
-
       # Put spectrograms in user-defined location, testing to make sure the
       # directory exists
       if [[ ! -d "${spectrogram_location}" ]] ; then
          __error "${cyan}${spectrogram_location}${normal} doesn't exist!\n" >&2
          __error "Please set a valid directory in the configuration file!\n" >&2
-
          exit 1
       fi
    fi
@@ -4502,8 +4494,7 @@ fi
 
 #-------------------------------------------------------------------------------
 
-# If ${jobs} wasn't set upon invocation, check in /proc
-# to see how many jobs should be run
+# If $jobs wasn't set on invocation, check in /proc determine the number of jobs
 if [[ -z "${jobs}" ]] ; then
    __find_cores
 else
@@ -4513,48 +4504,24 @@ fi
 #-------------------------------------------------------------------------------
 # .: START SCRIPT :.
 #-------------------------------------------------------------------------------
-# Store current stty settings
-old_stty="$(stty -g)"
+old_stty="$(stty -g)"              # Store current stty settings
+stty -ctlecho 2> /dev/null         # Disable ctrl+c '^C'
+printf "\033[?25l"                 # Hide cursor
+__check_config_version             # Check if script config is newer than user's
+tmp_fifo="/tmp/redoflacs_fifo_$$"  # Job manager FIFO
 
-# Prevent Control-C from displaying '^C'.  May already be set
-stty -ctlecho 2> /dev/null
+tmp_aucdtect_fd="/tmp/redoflacs_aucdtect_fifo_$$"    # auCDtect's STDOUT FIFO
+trap 'rm -f "${tmp_fifo}" "${tmp_aucdtect_fd}"' EXIT # Allow for FIFO removal
+mkfifo "${tmp_fifo}" "${tmp_aucdtect_fd}"            # Create needed FIFO's
+exec 4<>"${tmp_aucdtect_fd}"                         # Open read/write on fd '4'
 
-# Hide the cursor
-printf "\033[?25l"
-
-# Check to see if config file in script is newer than user config, warning
-# user if their config is older displaying a countdown before continuing
-__check_config_version
-
-# Temporary FIFO location
-tmp_fifo="/tmp/redoflacs_fifo_$$"
-
-# Set up a temporary FIFO location.  The variable
-# is set up here, to prevent it from being called
-# upon script invocation when auCDtect isn't going
-# to be run
-tmp_aucdtect_fd="/tmp/redoflacs_aucdtect_fifo_$$"
-
-# Enforce FIFO is removed right away if user invokes SIGINT _immediately_ after
-# script invocation
-trap 'rm -f "${tmp_fifo}" "${tmp_aucdtect_fd}"' EXIT
-
-mkfifo "${tmp_fifo}" "${tmp_aucdtect_fd}"
-
-# Open auCDtect FIFO for reading and writing on file descriptor '4'
-exec 4<>"${tmp_aucdtect_fd}"
-
-# File where a tick is placed for each issue found
-issue_ticks="/tmp/redoflacs_issue_file_$$"
+issue_ticks="/tmp/redoflacs_issue_file_$$"           # Issues/Errors file
 
 # Display a countdown if retagging FLACs
 [[ "${operations[8]}" == 'retag_analyze' ]] && __countdown_metadata
 
-# Display top banner
-__top_banner
-
-# Grab the total flacs to process
-total_items=( "${directory}"/**/*${flac_extension} )
+__top_banner                                         # Display top banner
+total_items=( "${directory}"/**/*${flac_extension} ) # Total FLACs to process
 
 # This displays '[ ok ]' after 'Finding FLAC files to process...'
 printf "%11s${blue}[ ${green}ok${blue} ]${normal}\n" ""
@@ -4578,66 +4545,53 @@ for operation in "${operations[@]}" ; do
    #   operations[10]='extract_artwork'
    #   operations[11]='prune'
    #--
-   if [[ "${operation}" == 'replaygain_'*'apply' ]] ; then
-      # Change current directory to absolute pathname
-      [[ "${directory}" == "." ]] && directory="${PWD}"
+   case "${operation}" in
+      'repalygain_'*'apply')
+         # Make absolute pathname
+         [[ "${directory}" == '.' ]] && directory="${PWD}"
 
-      # List of directories to process
-      total_items_backup=( "${total_items[@]}" )  # Total FLACs backup array
-      __get_directory_list "${total_items[@]}"    # Returns $total_dirs[@]
-      total_items=( "${total_dirs[@]}" )          # Now process directories
-   fi
+         total_items_backup=( "${total_items[@]}" )  # Total FLACs backup array
+         __get_directory_list "${total_items[@]}"    # Returns $total_dirs[@]
+         total_items=( "${total_dirs[@]}" )          # Now process directories
+      ;;
+      'prune')
+         # Set which FLAC metadata BLOCKS to remove
+         if [[ "${remove_artwork}" == 'true' ]] ; then
+            # Remove PICTURE block
+            dont_prune_flac_metadata="STREAMINFO,VORBIS_COMMENT"
+         else
+            # Do not remove PICTURE block
+            dont_prune_flac_metadata="STREAMINFO,PICTURE,VORBIS_COMMENT"
+         fi
+      ;;
+   esac
 
-   if [[ "${operation}" == 'prune' ]] ; then
-      # Set which FLAC metadata BLOCKS to remove
-      if [[ "${remove_artwork}" == "true" ]] ; then
-         # Remove artwork
-         dont_prune_flac_metadata="STREAMINFO,VORBIS_COMMENT"
-      else
-         # Don't remove artwork
-         dont_prune_flac_metadata="STREAMINFO,PICTURE,VORBIS_COMMENT"
-      fi
-   fi
-
-   # Prints title message of current operation
-   __message "${operation}"
-
-   # Scroll terminal, if needed
-   __scroll_terminal
-
+   __message "${operation}"        # Display title message of current operation
+   __scroll_terminal               # Scroll terminal up (if needed)
    __clear_jobs_fd "${tmp_fifo}"   # Clear job manager file descriptor (3)
 
-   # Set the cursor to the correct row depending on whether there were more
-   # or less files to process than the number of jobs to run
    if (( ${#total_items[@]} < jobs )) ; then
-      # Less files than jobs to run, so only add the number of files
-      # processed
+      # Set row position to place cursor after completing an operation or trap
+      #--
+      # If the items to process are less than the number of jobs, add the number
+      # of items to the current row position, else add the number of jobs to run
       post_row=$(( $(__row) + ${#total_items[@]} ))
    else
-      # More files than jobs to run, so add the number of jobs processed
       post_row=$(( $(__row) + jobs ))
    fi
 
-   trap '__trap_sigint "$post_row" "${operation}"' SIGINT
-
-   # Run parallel operations, that which is specified as ${1}
-   __run_parallel "${operation}"
-
-   printf "\033[${post_row}H"
+   trap '__trap_sigint "$post_row" "${operation}"' SIGINT # Clean exit on SIGINT
+   __run_parallel "${operation}"   # Run a given operation with parallel jobs
+   printf "\033[${post_row}H"      # Place cursor after operation ran
 
    if [[ -f "${log_file}" ]] ; then
-      # Print out log exists to STDERR
-      __message_log_exists "${operation}"
-
-      # Create and format log
-      __create_log "${operation}"
+      __message_log_exists "${operation}"  # Print out log exists to STDERR
+      __create_log "${operatoin}"          # Create and format log
 
       # Update status for the current operation
       __update_operation_status "${operation}" "$(__num_issues)"
 
-      # Display Summary Of Operations
-      __summary
-
+      __summary                            # Display Summary Of Operations
       exit 1
    fi
 
@@ -4650,5 +4604,4 @@ done
 
 #-------------------------------------------------------------------------------
 
-# Display Summary Of Operations
-__summary
+__summary  # Display Summary Of Operations
