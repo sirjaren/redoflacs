@@ -4546,7 +4546,7 @@ for operation in "${operations[@]}" ; do
    #   operations[11]='prune'
    #--
    case "${operation}" in
-      'repalygain_'*'apply')
+      'replaygain_'*'apply')
          # Make absolute pathname
          [[ "${directory}" == '.' ]] && directory="${PWD}"
 
