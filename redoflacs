@@ -2589,7 +2589,7 @@ __replaygain_test() {
 __replaygain_apply() {
    # Apply ReplayGain to each directory of FLAC files (if values are missing)
    #--
-   # $1 is the directory
+   # $1 is the directory (includes a slash, ie 'dir/'
    # $2 is the operation that's currently being run, of which, can be:
    #   aucdtect          aucdtect_spectrogram     md5_check
    #   compress_verify   compress_no_test         test
@@ -2613,7 +2613,7 @@ __replaygain_apply() {
    __print_item "${file_basename}" "${file_length}" "$3" 'sub'
 
    # ${j} is a FLAC file -> under a directory, ${1}
-   for j in "${1}"/*${flac_extension} ; do
+   for j in "${1}"*${flac_extension} ; do
       # Grab all of the ReplayGain tags
       mapfile -n0 -t replaygain_tags < \
       <(
@@ -2675,7 +2675,7 @@ __replaygain_apply() {
 __replaygain_force_apply() {
    # Apply ReplayGain to each directory of FLAC files (force new values)
    #--
-   # $1 is the directory
+   # $1 is the directory (includes a slash, ie 'dir/'
    # $2 is the operation that's currently being run, of which, can be:
    #   aucdtect          aucdtect_spectrogram     md5_check
    #   compress_verify   compress_no_test         test
@@ -2698,7 +2698,7 @@ __replaygain_force_apply() {
    __print_item "${file_basename}" "${file_length}" "$3" 'sub'
 
    # Add ReplayGain to FLAC files under directory
-   metaflac --add-replay-gain "${1}"/*${flac_extension} >/dev/null 2>&1
+   metaflac --add-replay-gain "${1}"*${flac_extension} >/dev/null 2>&1
 
    # Exit code 130 is SIGINT so only check for exit code '1'
    if (( ${?} == 1 )) ; then
@@ -4586,7 +4586,7 @@ for operation in "${operations[@]}" ; do
 
    if [[ -f "${log_file}" ]] ; then
       __message_log_exists "${operation}"  # Print out log exists to STDERR
-      __create_log "${operatoin}"          # Create and format log
+      __create_log "${operation}"          # Create and format log
 
       # Update status for the current operation
       __update_operation_status "${operation}" "$(__num_issues)"
