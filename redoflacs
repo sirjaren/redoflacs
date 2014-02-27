@@ -793,8 +793,7 @@ __print_status() {
    #   ok   fail   issue   skip
    # $2 is the basename of the file/dir
    # $3 is the filename length
-   # $4 determines whether this is a sub operational message to print
-   # $5 determines the action that's printed per item
+   # $4 determines whether item is a sub operation or which action is being done
    #--
    # Set up local variables
    declare -i print_spacing='0' column_placement='4'
@@ -807,9 +806,11 @@ __print_status() {
    esac
 
    (( max_length >= $3 )) && print_spacing=$(( max_length - $3 ))
-   [[ "$4" == 'sub' ]] && column_placement='6'
 
-   case "$5" in
+   case "$4" in
+      'sub')
+         column_placement='6'
+      ;;
       'decode')
          action="${cyan}[decoding->WAV]${normal} "
          (( print_spacing != 0 )) && print_spacing=$(( print_spacing - 16 ))
@@ -837,12 +838,13 @@ __print_status() {
 __print_progress() {
    # Display filename and current progress of operation
    #--
-   # $1 is:
+   # $1 is either the operation:
    #   aucdtect          aucdtect_spectrogram        md5_check
    #   compress_verify   compress_no_test            test
    #   replaygain_test   replaygain_force_apply      replaygain_apply
    #   retag_analyze     retag_apply                 extract_images
-   #   prune             decode
+   #   prune             decode                      aucdtect_fast
+   #   aucdtect_slow     spectrogram
    #
    # $2 is percent
    # $3 is filename to print (may be truncated)
@@ -851,7 +853,7 @@ __print_progress() {
    # Set up local variables
    declare  action  progress_bar_length
 
-   case "$5" in
+   case "$1" in
       'decode')
          action="${cyan}[decoding->WAV]${normal} "
          # max_length - 16: '[decoding -> WAV] ' is 18 characters long
@@ -872,27 +874,22 @@ __print_progress() {
          # max_length - 16: '[spectral->PNG] ' is 16 characters long
          progress_bar_length=$(( ( ( max_length - 16 ) * $2 ) / 100 ))
       ;;
-      '')
+      *)
          progress_bar_length=$(( ( max_length * $2 ) / 100 ))
       ;;
    esac
 
-   # If the progress bar to display is less than or equal to the filename's
-   # length, print out the part of the filename that matches the percentage
-   # completed, inverting the colors.  Otherwise, print out the filename,
-   # inverted as well as the percentage of spacing that may be after the
-   # filename (matching the percentage of completed); also inverted
    if (( progress_bar_length < $4 )) ; then
-      # Below takes the current filename and 'trims' off the part of the
-      # filename that hasn't doesn't match the percentage length of what's
-      # completed so far (trim meaning, not highlighting that portion of the
-      # filename)
+      # Print out the current item name as well as the progress bar
+      #--
+      # If $progress_bar_length is less than the current item's name length,
+      # print out the item's name with the progress bar a part of the name.
+      #
+      # Otherwise, print out the item's name, and the progress bar after the
+      # item's name
       printf "\033[${placement};4H${yellow}%4s${normal} ${action}${invert}%s${normal}" \
          "${2}%" "${3:0:${progress_bar_length}}"
    else
-      # This prints out the the filename, inverted, as well as the current
-      # progress bar length.  Used only if the filename is less than the width
-      # of the progress bar maximum's length
       printf "\033[${placement};4H${yellow}%4s${normal} ${action}${invert}%s%$(( progress_bar_length - $4 ))s${normal}" \
          "${2}%" "${3}" ""
    fi
@@ -944,14 +941,10 @@ __exit_cleanup() {
    #   prune
    #--
    case "${1}" in
-      'aucdtect'*)
-         # Remove temporarily created WAV files (if any)
-         rm -f "${directory}"/**/*_redoflacs_"$$".wav
-      ;;
-      'compress_'*)
-         # Remove temporarily encoded FLAC files
-         rm -f "${directory}"/**/*.tmp,fl-ac+en\'c
-      ;;
+      # Remove temporary script-created files
+      #--
+      'aucdtect'*)   rm -f "${directory}"/**/*_redoflacs_"$$".wav  ;;
+      'compress_'*)  rm -f "${directory}"/**/*.tmp,fl-ac+en\'c     ;;
    esac
 
    # Update status for the current operation
@@ -964,7 +957,7 @@ __exit_cleanup() {
 
    stty ${old_stty} < /dev/stderr  # Restore old stty settings
    printf "\033[?25h"              # Restore the cursor
-   rm -f "${tmp_fifo}"             # Remove temporary FIFO
+   rm -f "${job_fifo}"             # Remove temporary FIFO
    __summary                       # Display Summary Of Operations
 
    exit 130
@@ -972,17 +965,17 @@ __exit_cleanup() {
 
 #-------------------------------------------------------------------------------
 
-# Display script version
+# Display redoflacs version
 __print_version() { printf "Version %s\n" "${version}" ;}
 
 #-------------------------------------------------------------------------------
 
 __metaflac_version() {
-   # Obtain metaflac version information to test on
+   # Return metaflac version
    #--
    # Metaflacs version (ie: '2' in 1.2.1)
    IFS='.' read -r _ metaflac_version _ < <(metaflac --version)
-   printf "%s" "${metaflac_version}"   # Return the above integer
+   printf "%s" "${metaflac_version}"
 }
 
 #-------------------------------------------------------------------------------
@@ -1021,72 +1014,51 @@ __row() {
 #-------------------------------------------------------------------------------
 
 __scroll_terminal() {
-   # Scroll the terminal, dependant on the number of jobs to process, in needed
+   # Scroll the terminal, dependant on the number of jobs to process.  If it's
+   # not necessary, scrolling may not occur
    #--
-   # $1 is the file/dir operation result, of which, can be:
-   #   ok   fail   issue   skip
-   # $2 is the basename of the file/dir
-   # $3 is the filename length
-   # $4 determines whether this is a sub operational message to print
-   # $5 determines the action that's printed per item
+   # $1 is the current cursor position in number of rows
    #--
    # Set up local variables
-   declare    lines   remove_from_scroll  remaining_lines
+   declare    lines   remaining_lines   to_scroll
    declare -g columns
 
    # Redirecting '/dev/stderr' to 'stty' allows valid arguments
    read -r _ _ _ _ lines _ columns _ < <(stty -a < /dev/stderr)
 
-   # Remove semicolons from obtain columns and lines
-   #--
-   columns="${columns%;}"   # Terminal width
-   lines="${lines%;}"       # Terminal height
+   columns="${columns%;}"   # Terminal width - remove trailing semicolon
+   lines="${lines%;}"       # Terminal height - remove trailing semicolon
 
-   # If the total number of files to process is less than jobs specified,
-   # then set the number of lines to remove from the terminal scroll as the
-   # difference of the number of jobs minus the total number of files
    if (( ${#total_items[@]} < jobs )) ; then
-      remove_from_scroll="$(( jobs - ${#total_items[@]} ))"
-   fi
-
-   # If ${remove_from_scroll} is NULL, then the remaining lines we have left is
-   # the number of lines available (in the terminal) minus the row we are
-   # currently on.  If ${remove_from_scroll} is _NOT_ NULL, the remaining lines
-   # we have left is the same with the addition of ${remove_from_scroll}.  This
-   # enforces we are able to scroll the terminal correctly in the event the user
-   # specified more jobs than there are files/directories to process
-   if [[ -z "${remove_from_scroll}" ]] ; then
-      # Obtain the remaining lines left in the current terminal
-      remaining_lines=$(( lines - $(__row) ))
+      # Determine the remaining lines to the bottom of the terminal screen
+      #--
+      # If there are less items to process than jobs specified, add the
+      # difference of lines to the remaining lines (obtained by the total number
+      # of lines in the terminal minus the current row position)
+      remaining_lines=$(( lines - $1 + (jobs - ${#total_items[@]}) ))
    else
-      # Obtain the remaining lines left in the current terminal as well as
-      # adding in the the number of lines we don't want to scroll
-      remaining_lines=$(( lines - $(__row) + remove_from_scroll ))
+      remaining_lines=$(( lines - $1 ))
    fi
 
-   # If the remaining lines is less than the jobs used, the terminal will not
-   # have enough room for the script to place lines, so we will have to
-   # non-descructively scroll the terminal up enough lines to allow for the
-   # current operations to be printed correctly
-   if (( remaining_lines < jobs )) ; then
-      # Obtain the number of lines need to equal the current number of jobs
-      lines_to_scroll=$(( jobs - remaining_lines ))
+   if (( jobs > remaining_lines )) ; then
+      # Scroll the terminal if there are more jobs than lines available
+      #--
+      to_scroll=$(( jobs - remaining_lines ))  # Number of lines to scroll
 
-      # This scrolls the terminal up by the number of lines to scroll
-      # This can be accomplished via (not very portable):
-      #   printf "\033[<integer>S"    # Doesn't work in screen/tmux
-      for ((i=1 ; i<=lines_to_scroll ; i++)) ; do
-         printf "\n"
+      # Scroll terminal by printing as many newlines as determined above
+      for ((i=1 ; i<=to_scroll ; i++)) ; do
+         printf '\n'
       done
 
-      # The cursor is set to the difference of the lines to scroll
-      printf "\033[$(( $(__row) - lines_to_scroll ))H"
+      printf "\033[$(( $1 - to_scroll ))H"  # Place cursor up $to_scroll lines
    fi
 }
 
 #-------------------------------------------------------------------------------
 
 __get_percent_complete() {
+   # Return the an operation's completion percentage, expressed as an integer
+   #--
    # $1 is the operation to choose how to obtain the percentage, which can be:
    #   aucdtect          aucdtect_spectrogram        md5_check
    #   compress_verify   compress_no_test            test
@@ -1095,7 +1067,7 @@ __get_percent_complete() {
    #   prune             decode
    #
    # $2 is a (possibly multiline) string of text from a command binary's output
-   # with the percentage contained within
+   # with a percentage string contained within
    #--
    # Set up local variables
    declare percent
@@ -1128,22 +1100,6 @@ __get_percent_complete() {
       printf "%d" $percent
    else
       printf "%d" '0'
-   fi
-}
-
-#-------------------------------------------------------------------------------
-
-__store_position() {
-   # Store the (row) position of the current job to be displayed
-   #--
-   # If the current job(s) are the first set, we'll use the iteration
-   # (starting at 0 -- hence the minus 1) of the job to start
-   if (( iteration <= jobs )) ; then
-      printf "$(( iteration - 1 ))\n" >&3
-   else
-      # Print the position of the current jobs into file descriptor (3) to be
-      # stored by 'read' upon starting the next job
-      printf "${previous_placement}\n" >&3
    fi
 }
 
@@ -2437,7 +2393,7 @@ __summary() {
       "-------------------------+-------------------------"
 
    # Remove temporary FIFOs and files
-   rm -f "${tmp_fifo}" "${tmp_aucdtect_fd}" "${issue_ticks}"
+   rm -f "${job_fifo}" "${tmp_aucdtect_fd}" "${issue_ticks}"
 
    printf "\033[?25h"   # Restore cursor
 }
@@ -2476,7 +2432,9 @@ __run_parallel() {
 
       # Max filename allowed (to fit within screen)
       max_length="$(( columns - ${#number_completed} - spacing ))"
-      __$1 "${item}" "$1" "${number_completed}" &           # Fork process
+
+      # Fork process
+      __$1 "${item}" "$1" "${number_completed}" $((iteration - 1)) &
    done
 
    # Continue only if there are more items than jobs specified
@@ -2498,11 +2456,13 @@ __run_parallel() {
 
             # Max filename allowed (to fit within screen)
             max_length="$(( columns - ${#number_completed} - spacing ))"
-            __$1 "${item}" "$1" "${number_completed}" &           # Fork process
+
+            # Fork process
+            __$1 "${item}" "$1" "${number_completed}" "${previous_placement}" &
          else
-            break                                # Prevent read hanging FIFO
+            break                         # Prevent read hanging FIFO
          fi
-      done <&3                                   # Read from FIFO
+      done <&3                            # Read from FIFO
    fi
 
    wait  # Wait for children processes
@@ -2521,6 +2481,7 @@ __replaygain_test() {
    #   retag_analyze     retag_apply              extract_artwork
    #   prune
    # $3 is a string representing number items processed, eg: [43/439]
+   # $4 is the current operation's row placement
    #--
    trap '__kill_jobs "$(jobs -rp)"' EXIT
 
@@ -2577,11 +2538,7 @@ __replaygain_test() {
          __print_status 'ok' "${file_basename}" "${file_length}" 'sub'
       fi
    fi
-
-   # Store the position of where the line of the FLAC file is displayed in file
-   # descriptor (3), to be used by the next job, terminated by a newline to
-   # indicate job completed
-   __store_position
+   printf "$4\n" >&3  # Store row position and end operation
 }
 
 #-------------------------------------------------------------------------------
@@ -2597,6 +2554,7 @@ __replaygain_apply() {
    #   retag_analyze     retag_apply              extract_artwork
    #   prune
    # $3 is a string representing number items processed, eg: [43/439]
+   # $4 is the current operation's row placement
    #--
    trap '__kill_jobs "$(jobs -rp)"' EXIT
 
@@ -2663,11 +2621,7 @@ __replaygain_apply() {
          __print_status 'ok' "${file_basename}" "${file_length}" 'sub'
       fi
    done
-
-   # Store the position of where the line of the FLAC file is displayed in file
-   # descriptor (3), to be used by the next job, terminated by a newline to
-   # indicate job completed
-   __store_position
+   printf "$4\n" >&3  # Store row position and end operation
 }
 
 #-------------------------------------------------------------------------------
@@ -2683,6 +2637,7 @@ __replaygain_force_apply() {
    #   retag_analyze     retag_apply              extract_artwork
    #   prune
    # $3 is a string representing number items processed, eg: [43/439]
+   # $4 is the current operation's row placement
    #--
    trap '__kill_jobs "$(jobs -rp)"' EXIT
 
@@ -2714,11 +2669,7 @@ __replaygain_force_apply() {
       # Applied ReplayGain successfully
       __print_status 'ok' "${file_basename}" "${file_length}" 'sub'
    fi
-
-   # Store the position of where the line of the FLAC file is displayed in file
-   # descriptor (3), to be used by the next job, terminated by a newline to
-   # indicate job completed
-   __store_position
+   printf "$4\n" >&3  # Store row position and end operation
 }
 
 #-------------------------------------------------------------------------------
@@ -2734,6 +2685,7 @@ __compress_verify() {
    #   retag_analyze     retag_apply              extract_artwork
    #   prune
    # $3 is a string representing number items processed, eg: [43/439]
+   # $4 is the current operation's row placement
    #--
    trap '__kill_jobs "$(jobs -rp)"' EXIT
 
@@ -2809,11 +2761,7 @@ __compress_verify() {
          __print_status 'ok' "${file_basename}" "${file_length}"
       fi
    fi
-
-   # Store the position of where the line of the FLAC file is displayed in file
-   # descriptor (3), to be used by the next job, terminated by a newline to
-   # indicate job completed
-   __store_position
+   printf "$4\n" >&3  # Store row position and end operation
 }
 
 #-------------------------------------------------------------------------------
@@ -2830,6 +2778,7 @@ __compress_no_test() {
    #   retag_analyze     retag_apply              extract_artwork
    #   prune
    # $3 is a string representing number items processed, eg: [43/439]
+   # $4 is the current operation's row placement
    #--
    trap '__kill_jobs "$(jobs -rp)"' EXIT
 
@@ -2882,11 +2831,7 @@ __compress_no_test() {
       # Already at compression_level, print skipped FLAC file
       __print_status 'skip' "${file_basename}" "${file_length}"
    fi
-
-   # Store the position of where the line of the FLAC file is displayed in file
-   # descriptor (3), to be used by the next job, terminated by a newline to
-   # indicate job completed
-   __store_position
+   printf "$4\n" >&3  # Store row position and end operation
 }
 
 #-------------------------------------------------------------------------------
@@ -2902,6 +2847,7 @@ __test() {
    #   retag_analyze     retag_apply              extract_artwork
    #   prune
    # $3 is a string representing number items processed, eg: [43/439]
+   # $4 is the current operation's row placement
    #--
    trap '__kill_jobs "$(jobs -rp)"' EXIT
 
@@ -2939,11 +2885,7 @@ __test() {
       # FLAC is ok, display ok
       __print_status 'ok' "${file_basename}" "${file_length}"
    fi
-
-   # Store the position of where the line of the FLAC file is displayed in file
-   # descriptor (3), to be used by the next job, terminated by a newline to
-   # indicate job completed
-   __store_position
+   printf "$4\n" >&3  # Store row position and end operation
 }
 
 #-------------------------------------------------------------------------------
@@ -2959,6 +2901,7 @@ __aucdtect() {
    #   retag_analyze     retag_apply              extract_artwork
    #   prune
    # $3 is a string representing number items processed, eg: [43/439]
+   # $4 is the current operation's row placement
    #--
    trap '__kill_jobs "$(jobs -rp)"' EXIT
 
@@ -3033,14 +2976,14 @@ __aucdtect() {
          percent_complete="$( __get_percent_complete 'decode' "${percent_complete}" )"
 
          # Print operation progress bar and percent complete
-         __print_progress "$2" "${percent_complete}" "${file_basename}" "${file_length}" 'decode'
+         __print_progress 'decode' "${percent_complete}" "${file_basename}" "${file_length}"
       done) >/dev/null
 
       # Exit code 130 is SIGINT so only check for exit code '1'.  If FLAC file
       # failed decoding to WAV, log error, otherwise continue processing
       if (( ${?} == 1 )) ; then
          # Error with FLAC file, display failed/error
-         __print_status 'fail' "${file_basename}" "${file_length}" '' 'decode'
+         __print_status 'fail' "${file_basename}" "${file_length}" 'decode'
 
          # Log FLAC failure
          printf "%s${unit_separator}Failed decoding to WAV\n" "${1}" \
@@ -3049,7 +2992,7 @@ __aucdtect() {
          printf '.' >> "${issue_ticks}"  # Add one tick to total issues
       else
          # Decoded FLAC is ok, display ok
-         __print_status 'ok' "${file_basename}" "${file_length}" '' 'decode'
+         __print_status 'ok' "${file_basename}" "${file_length}" 'decode'
 
          # Print current FLAC being processed, auCDtect: fast
          __print_item "${file_basename}" "${file_length}" "$3" 'aucdtect_fast'
@@ -3067,13 +3010,13 @@ __aucdtect() {
             percent_complete="$( __get_percent_complete "$2" "${percent_complete}" )"
 
             # Print operation progress bar and percent complete
-            __print_progress "$2" "${percent_complete}" "${file_basename}" "${file_length}" 'aucdtect_fast'
+            __print_progress 'aucdtect_fast' "${percent_complete}" "${file_basename}" "${file_length}"
          done) >&4
 
          # Exit code 130 is SIGINT so only check for exit code '1'
          if (( ${?} == 1 )) ; then
             # Error with FLAC file, display failed/error
-            __print_status 'fail' "${file_basename}" "${file_length}" '' 'aucdtect_fast'
+            __print_status 'fail' "${file_basename}" "${file_length}" 'aucdtect_fast'
 
             # Log FLAC failure
             printf "%s${unit_separator}Failed analyzing decoded FLAC\n" "${1}" \
@@ -3106,13 +3049,13 @@ __aucdtect() {
                   percent_complete="$( __get_percent_complete "$2" "${percent_complete}" )"
 
                   # Print operation progress bar and percent complete
-                  __print_progress "$2" "${percent_complete}" "${file_basename}" "${file_length}" 'aucdtect_slow'
+                  __print_progress 'aucdtect_slow' "${percent_complete}" "${file_basename}" "${file_length}"
                done) >&4
 
                # Exit code 130 is SIGINT so only check for exit code '1'
                if (( ${?} == 1 )) ; then
                   # Error with FLAC file, display failed/error
-                  __print_status 'fail' "${file_basename}" "${file_length}" '' 'aucdtect_slow'
+                  __print_status 'fail' "${file_basename}" "${file_length}" 'aucdtect_slow'
 
                   # Log FLAC failure
                   printf "%s${unit_separator}Failed analyzing decoded FLAC\n" "${1}" \
@@ -3186,12 +3129,12 @@ __aucdtect() {
                                  percent_complete="$( __get_percent_complete "$2" "${percent_complete}" )"
 
                                  # Print operation progress bar and percent complete
-                                 __print_progress "$2" "${percent_complete}" "${file_basename}" "${file_length}" 'spectrogram'
+                                 __print_progress 'spectrogram' "${percent_complete}" "${file_basename}" "${file_length}"
                               done
                            ) >/dev/null
 
                         # Error creating spectrogram, display issue
-                        __print_status 'issue' "${file_basename}" "${file_length}" '' 'spectrogram'
+                        __print_status 'issue' "${file_basename}" "${file_length}" 'spectrogram'
 
                         # Log auCDtect report
                         printf "%s${unit_separator}%s (%s)\n" "$1" "${aucdtect_check_array[0]}" "${spectrogram_picture}" \
@@ -3200,7 +3143,7 @@ __aucdtect() {
                         printf '.' >> "${issue_ticks}"  # Add one tick to total issues
                      else
                         # Issue with FLAC authenticity, display issue
-                        __print_status 'issue' "${file_basename}" "${file_length}" '' 'aucdtect_slow'
+                        __print_status 'issue' "${file_basename}" "${file_length}" 'aucdtect_slow'
 
                         # Log auCDtect report
                         printf "%s${unit_separator}%s\n" "$1" "${aucdtect_check_array[0]}" \
@@ -3210,12 +3153,12 @@ __aucdtect() {
                      fi
                   else
                      # FLAC is ok, display ok
-                     __print_status 'ok' "${file_basename}" "${file_length}" '' 'aucdtect_slow'
+                     __print_status 'ok' "${file_basename}" "${file_length}" 'aucdtect_slow'
                   fi
                fi
             else
                # FLAC is ok, display ok
-               __print_status 'ok' "${file_basename}" "${file_length}" '' 'aucdtect_fast'
+               __print_status 'ok' "${file_basename}" "${file_length}" 'aucdtect_fast'
             fi
 
             # Remove temporary WAV file
@@ -3223,11 +3166,7 @@ __aucdtect() {
          fi
       fi
    fi
-
-   # Store the position of where the line of the FLAC file is displayed in file
-   # descriptor (3), to be used by the next job, terminated by a newline to
-   # indicate job completed
-   __store_position
+   printf "$4\n" >&3  # Store row position and end operation
 }
 
 #-------------------------------------------------------------------------------
@@ -3243,6 +3182,7 @@ __md5_check() {
    #   retag_analyze     retag_apply              extract_artwork
    #   prune
    # $3 is a string representing number items processed, eg: [43/439]
+   # $4 is the current operation's row placement
    #--
    trap '__kill_jobs "$(jobs -rp)"' EXIT
 
@@ -3287,11 +3227,7 @@ __md5_check() {
       # FLAC is ok, display ok
       __print_status 'ok' "${file_basename}" "${file_length}"
    fi
-
-   # Store the position of where the line of the FLAC file is displayed in file
-   # descriptor (3), to be used by the next job, terminated by a newline to
-   # indicate job completed
-   __store_position
+   printf "$4\n" >&3  # Store row position and end operation
 }
 
 #-------------------------------------------------------------------------------
@@ -3460,11 +3396,7 @@ __retag_analyze() {
          __print_status 'ok' "${file_basename}" "${file_length}" 'sub'
       fi
    fi
-
-   # Store the position of where the line of the FLAC file is displayed in file
-   # descriptor (3), to be used by the next job, terminated by a newline to
-   # indicate job completed
-   __store_position
+   printf "$4\n" >&3  # Store row position and end operation
 }
 
 #-------------------------------------------------------------------------------
@@ -3480,6 +3412,7 @@ __retag_apply() {
    #   retag_analyze     retag_apply              extract_artwork
    #   prune
    # $3 is a string representing number items processed, eg: [43/439]
+   # $4 is the current operation's row placement
    #--
    trap '__kill_jobs "$(jobs -rp)"' EXIT
 
@@ -3595,10 +3528,7 @@ __retag_apply() {
    # Display ok
    __print_status 'ok' "${file_basename}" "${file_length}" 'sub'
 
-   # Store the position of where the line of the FLAC file is displayed in file
-   # descriptor (3), to be used by the next job, terminated by a newline to
-   # indicate job completed
-   __store_position
+   printf "$4\n" >&3  # Store row position and end operation
 }
 
 #-------------------------------------------------------------------------------
@@ -3614,6 +3544,7 @@ __extract_images() {
    #   retag_analyze     retag_apply              extract_artwork
    #   prune
    # $3 is a string representing number items processed, eg: [43/439]
+   # $4 is the current operation's row placement
    #--
    trap '__kill_jobs "$(jobs -rp)"' EXIT
 
@@ -4238,11 +4169,7 @@ __extract_images() {
       # FLAC is ok, display ok
       __print_status 'ok' "${file_basename}" "${file_length}"
    fi
-
-   # Store the position of where the line of the FLAC file is displayed in file
-   # descriptor (3), to be used by the next job, terminated by a newline to
-   # indicate job completed
-   __store_position
+   printf "$4\n" >&3  # Store row position and end operation
 }
 
 #-------------------------------------------------------------------------------
@@ -4258,6 +4185,7 @@ __prune() {
    #   retag_analyze     retag_apply              extract_artwork
    #   prune
    # $3 is a string representing number items processed, eg: [43/439]
+   # $4 is the current operation's row placement
    #--
    trap '__kill_jobs "$(jobs -rp)"' EXIT
 
@@ -4293,11 +4221,7 @@ __prune() {
       # FLAC is ok, display ok
       __print_status 'ok' "${file_basename}" "${file_length}"
    fi
-
-   # Store the position of where the line of the FLAC file is displayed in file
-   # descriptor (3), to be used by the next job, terminated by a newline to
-   # indicate job completed
-   __store_position
+   printf "$4\n" >&3  # Store row position and end operation
 }
 
 #-------------------------------------------------------------------------------
@@ -4508,11 +4432,11 @@ old_stty="$(stty -g)"              # Store current stty settings
 stty -ctlecho 2> /dev/null         # Disable ctrl+c '^C'
 printf "\033[?25l"                 # Hide cursor
 __check_config_version             # Check if script config is newer than user's
-tmp_fifo="/tmp/redoflacs_fifo_$$"  # Job manager FIFO
+job_fifo="/tmp/redoflacs_fifo_$$"  # Job manager FIFO
 
 tmp_aucdtect_fd="/tmp/redoflacs_aucdtect_fifo_$$"    # auCDtect's STDOUT FIFO
-trap 'rm -f "${tmp_fifo}" "${tmp_aucdtect_fd}"' EXIT # Allow for FIFO removal
-mkfifo "${tmp_fifo}" "${tmp_aucdtect_fd}"            # Create needed FIFO's
+trap 'rm -f "${job_fifo}" "${tmp_aucdtect_fd}"' EXIT # Allow for FIFO removal
+mkfifo "${job_fifo}" "${tmp_aucdtect_fd}"            # Create needed FIFO's
 exec 4<>"${tmp_aucdtect_fd}"                         # Open read/write on fd '4'
 
 issue_ticks="/tmp/redoflacs_issue_file_$$"           # Issues/Errors file
@@ -4567,8 +4491,8 @@ for operation in "${operations[@]}" ; do
    esac
 
    __message "${operation}"        # Display title message of current operation
-   __scroll_terminal               # Scroll terminal up (if needed)
-   __clear_jobs_fd "${tmp_fifo}"   # Clear job manager file descriptor (3)
+   __scroll_terminal "$(__row)"    # Scroll terminal up (if needed)
+   __clear_jobs_fd "${job_fifo}"   # Clear job manager file descriptor (3)
 
    if (( ${#total_items[@]} < jobs )) ; then
       # Set row position to place cursor after completing an operation or trap
