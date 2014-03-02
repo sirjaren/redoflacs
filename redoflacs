@@ -34,9 +34,9 @@
 #    4: auCDtect's STDOUT output
 #-------------------------------------------------------------------------------
 
-__info()  { printf " ${green}*${normal} ${@}"  ;}   # Bold green message
-__warn()  { printf " ${yellow}*${normal} ${@}" ;}   # Yellow message
-__error() { printf " ${red}*${normal} ${@}"    ;}   # Bold red message
+__info()  { printf " ${green}*${reset} ${@}"  ;}   # Bold green message
+__warn()  { printf " ${yellow}*${reset} ${@}" ;}   # Yellow message
+__error() { printf " ${red}*${reset} ${@}"    ;}   # Bold red message
 
 #-------------------------------------------------------------------------------
 
@@ -497,7 +497,7 @@ __message_log_exists() {
    esac
 
    # Print the bottom half of the message (uniform across all operations)
-   __error "${cyan}${log_file}${normal}\n"
+   __error "${cyan}${log_file}${reset}\n"
    __error "for details.\n"
 } >&2
 
@@ -686,12 +686,12 @@ __message() {
 
       # Print title message, if applicable
       if [[ -n "${message}" ]] ; then
-         printf "\033[$(__row)H ${green}*${normal} ${message}\n"
+         printf "\033[$(__row)H ${green}*${reset} ${message}\n"
       fi
 
       # Print sub title message, if applicable
       if [[ -n "${sub_message}" ]] ; then
-         printf "\033[$(__row);3H${green}>>${normal} ${sub_message}\n"
+         printf "\033[$(__row);3H${green}>>${reset} ${sub_message}\n"
       fi
    fi
 }
@@ -744,41 +744,41 @@ __print_item() {
    case "$4" in
       '')
          #       08 - track.flac                           [12/345]
-         printf "\033[${placement};9H%s%${print_spacing}s${magenta}%s${normal}" \
+         printf "\033[${placement};9H%s%${print_spacing}s${magenta}%s${reset}" \
             "$1" '' "${3}"
       ;;
       'sub')
          #      50% 08 - track.flac                        [12/345]
-         printf "\033[${placement};6H${yellow}%s${normal} %s%${print_spacing}s${magenta}%s${normal}" \
+         printf "\033[${placement};6H${yellow}%s${reset} %s%${print_spacing}s${magenta}%s${reset}" \
             " 50%" "$1" '' "${3}"
       ;;
       'half')
          #   50% 08 - track.flac                           [12/345]
-         printf "\033[${placement};4H${yellow}%s${normal} %s%${print_spacing}s${magenta}%s${normal}" \
+         printf "\033[${placement};4H${yellow}%s${reset} %s%${print_spacing}s${magenta}%s${reset}" \
             " 50%" "$1" '' "${3}"
       ;;
       'decode')
          #       [decoding->WAV] 08 - track.flac           [12/345]
          print_spacing=$(( print_spacing - 16 ))
-         printf "\033[${placement};9H${cyan}[decoding->WAV]${normal} %s%${print_spacing}s${magenta}%s${normal}" \
+         printf "\033[${placement};9H${cyan}[decoding->WAV]${reset} %s%${print_spacing}s${magenta}%s${reset}" \
             "$1" '' "${3}"
       ;;
       'aucdtect_fast')
          #       [auCDtect:fast] 08 - track.flac           [12/345]
          print_spacing=$(( print_spacing - 16 ))
-         printf "\033[${placement};9H${cyan}[auCDtect:fast]${normal} %s%${print_spacing}s${magenta}%s${normal}" \
+         printf "\033[${placement};9H${cyan}[auCDtect:fast]${reset} %s%${print_spacing}s${magenta}%s${reset}" \
             "$1" '' "${3}"
       ;;
       'aucdtect_slow')
          #       [auCDtect:slow] 08 - track.flac           [12/345]
          print_spacing=$(( print_spacing - 16 ))
-         printf "\033[${placement};9H${cyan}[auCDtect:slow]${normal} %s%${print_spacing}s${magenta}%s${normal}" \
+         printf "\033[${placement};9H${cyan}[auCDtect:slow]${reset} %s%${print_spacing}s${magenta}%s${reset}" \
             "$1" '' "${3}"
       ;;
       'spectrogram')
          #       [spectral->PNG] 08 - track.flac           [12/345]
          print_spacing=$(( print_spacing - 16 ))
-         printf "\033[${placement};9H${cyan}[spectral->PNG]${normal} %s%${print_spacing}s${magenta}%s${normal}" \
+         printf "\033[${placement};9H${cyan}[spectral->PNG]${reset} %s%${print_spacing}s${magenta}%s${reset}" \
             "$1" '' "${3}"
       ;;
    esac
@@ -812,24 +812,24 @@ __print_status() {
          column_placement='6'
       ;;
       'decode')
-         action="${cyan}[decoding->WAV]${normal} "
+         action="${cyan}[decoding->WAV]${reset} "
          (( print_spacing != 0 )) && print_spacing=$(( print_spacing - 16 ))
       ;;
       'aucdtect_fast')
-         action="${cyan}[auCDtect:fast]${normal} "
+         action="${cyan}[auCDtect:fast]${reset} "
          (( print_spacing != 0 )) && print_spacing=$(( print_spacing - 16 ))
       ;;
       'aucdtect_slow')
-         action="${cyan}[auCDtect:slow]${normal} "
+         action="${cyan}[auCDtect:slow]${reset} "
          (( print_spacing != 0 )) && print_spacing=$(( print_spacing - 16 ))
       ;;
       'spectrogram')
-         action="${cyan}[spectral->PNG]${normal} "
+         action="${cyan}[spectral->PNG]${reset} "
          (( print_spacing != 0 )) && print_spacing=$(( print_spacing - 16 ))
       ;;
    esac
 
-   printf "\033[${placement};${column_placement}H${color}%s${normal} ${action}%s%${print_spacing}s" \
+   printf "\033[${placement};${column_placement}H${color}%s${reset} ${action}%s%${print_spacing}s" \
       "${result}" "$2" ""
 }
 
@@ -855,22 +855,22 @@ __print_progress() {
 
    case "$1" in
       'decode')
-         action="${cyan}[decoding->WAV]${normal} "
+         action="${cyan}[decoding->WAV]${reset} "
          # max_length - 16: '[decoding -> WAV] ' is 18 characters long
          progress_bar_length=$(( ( ( max_length - 16 ) * $2 ) / 100 ))
       ;;
       'aucdtect_fast')
-         action="${cyan}[auCDtect:fast]${normal} "
+         action="${cyan}[auCDtect:fast]${reset} "
          # max_length - 16: '[auCDtect - fast] ' is 18 characters long
          progress_bar_length=$(( ( ( max_length - 16 ) * $2 ) / 100 ))
       ;;
       'aucdtect_slow')
-         action="${cyan}[auCDtect:slow]${normal} "
+         action="${cyan}[auCDtect:slow]${reset} "
          # max_length - 16: '[auCDtect: slow] ' is 16 characters long
          progress_bar_length=$(( ( ( max_length - 16 ) * $2 ) / 100 ))
       ;;
       'spectrogram')
-         action="${cyan}[spectral->PNG]${normal} "
+         action="${cyan}[spectral->PNG]${reset} "
          # max_length - 16: '[spectral->PNG] ' is 16 characters long
          progress_bar_length=$(( ( ( max_length - 16 ) * $2 ) / 100 ))
       ;;
@@ -887,10 +887,10 @@ __print_progress() {
       #
       # Otherwise, print out the item's name, and the progress bar after the
       # item's name
-      printf "\033[${placement};4H${yellow}%4s${normal} ${action}${invert}%s${normal}" \
+      printf "\033[${placement};4H${yellow}%4s${reset} ${action}${invert}%s${reset}" \
          "${2}%" "${3:0:${progress_bar_length}}"
    else
-      printf "\033[${placement};4H${yellow}%4s${normal} ${action}${invert}%s%$(( progress_bar_length - $4 ))s${normal}" \
+      printf "\033[${placement};4H${yellow}%4s${reset} ${action}${invert}%s%$(( progress_bar_length - $4 ))s${reset}" \
          "${2}%" "${3}" ""
    fi
 }
@@ -917,9 +917,9 @@ __trap_sigint() {
    # If $1 is NULL, it means that the user invoked SIGINT before any operation
    # started (eg, retag countdown or config countdown)
    if [[ -n "${1}" ]] ; then
-      printf "\033[${1};2H${green}*${normal} Control-C received, generating summary. Please wait...\n"
+      printf "\033[${1};2H${green}*${reset} Control-C received, generating summary. Please wait...\n"
    else
-      printf "\n ${green}*${normal} Control-C received, generating summary. Please wait...\n"
+      printf "\n ${green}*${reset} Control-C received, generating summary. Please wait...\n"
    fi
 
    __exit_cleanup "${2}"
@@ -1137,7 +1137,7 @@ __new_config() {
 
    # Explain to user where to find the new configuration file
    __info "A new configuration file has been created here:\n"
-   __info "${cyan}${config_file}${normal}\n\n"
+   __info "${cyan}${config_file}${reset}\n\n"
 
    __info "It's recommended to review the new configuration file\n"
    __info "and transfer over any changes you made in your old\n"
@@ -1148,9 +1148,9 @@ __new_config() {
    __info "name.  Here is the command you could use:\n"
 
    if (( EUID == 0 )) ; then
-      __info "${cyan}mv${normal} ${cyan}${config_file}${normal} ${cyan}/etc/redoflacs.conf${normal}\n"
+      __info "${cyan}mv${reset} ${cyan}${config_file}${reset} ${cyan}/etc/redoflacs.conf${reset}\n"
    else
-      __info "${cyan}mv${normal} ${cyan}${config_file}${normal} ${cyan}${HOME}/.config/redoflacs/config${normal}\n"
+      __info "${cyan}mv${reset} ${cyan}${config_file}${reset} ${cyan}${HOME}/.config/redoflacs/config${reset}\n"
    fi
 }
 
@@ -1635,7 +1635,7 @@ __find_artwork() {
             *)
                # Shouldn't happen as the valid artwork types are only 0-20
                __error "This is a BUG! Please report to:\n" >&2
-               __error "${cyan}https://github.com/sirjaren/redoflacs/issues/new${normal}\n" >&2
+               __error "${cyan}https://github.com/sirjaren/redoflacs/issues/new${reset}\n" >&2
 
                exit 1
             ;;
@@ -1651,7 +1651,7 @@ __do_extract() {
    # block of the current FLAC file
    #--
    # $1 is the filename to extract the artwork
-   # $@ ($2-$n) is the name of the artwork filename with file extension
+   # $2...$n is the name of the artwork filename with file extension
    #--
    # Set up local variables/arrays
    declare filename="$1"
@@ -1675,24 +1675,24 @@ __top_banner() {
 
    read -r _ flac_version < <(flac --version)                # Flac Version
 
-   printf " ${blue}%s${normal}\n" \
+   printf " ${blue}%s${reset}\n" \
       "---------------------------------------------------"  # Top title line
 
    printf "%16sRuntime Information\n"                        # Title
 
-   printf " ${blue}%s${normal}\n" \
+   printf " ${blue}%s${reset}\n" \
       "-------------------------+-------------------------"  # Bottom title line
 
-   printf "                redoflacs ${blue}|${normal} ${cyan}%s${normal}\n" \
+   printf "                redoflacs ${blue}|${reset} ${cyan}%s${reset}\n" \
       "${version}"                                           # Script version
 
-   printf "                     FLAC ${blue}|${normal} ${cyan}%s${normal}\n" \
+   printf "                     FLAC ${blue}|${reset} ${cyan}%s${reset}\n" \
       "${flac_version}"                                      # Flac version
 
-   printf "                     Jobs ${blue}|${normal} ${cyan}%s %s${normal}\n" \
+   printf "                     Jobs ${blue}|${reset} ${cyan}%s %s${reset}\n" \
       "${jobs}" "${jobs_display}"                            # Number of jobs
 
-   printf "            Log Directory ${blue}|${normal} ${cyan}%s${normal}\n" \
+   printf "            Log Directory ${blue}|${reset} ${cyan}%s${reset}\n" \
       "${error_log}/"                                        # Log directory
 
    # Set configuration directory
@@ -1702,10 +1702,10 @@ __top_banner() {
       config_directory="~/.config/redoflacs/"                # User config
    fi
 
-   printf "         Config Directory ${blue}|${normal} ${cyan}%s${normal}\n" \
+   printf "         Config Directory ${blue}|${reset} ${cyan}%s${reset}\n" \
       "${config_directory}"                                  # Config directory
 
-   printf " ${blue}%s${normal}\n" \
+   printf " ${blue}%s${reset}\n" \
       "-------------------------+-------------------------"  # End banner line
 
    __info "Finding FLAC files to process..."                 # Show FLAC search
@@ -1719,7 +1719,7 @@ __countdown_metadata() {
    trap __trap_sigint SIGINT     # Trap SIGINT to abort cleanly
 
    # Warning message
-   __error "${yellow}CAUTION!${normal} These are the tag fields that will be kept\n" >&2
+   __error "${yellow}CAUTION!${reset} These are the tag fields that will be kept\n" >&2
    __error "when re-tagging the selected files:\n" >&2
 
    # Creates the listing of tags to be kept
@@ -1728,21 +1728,21 @@ __countdown_metadata() {
    done
 
    # Warning message about embedded coverart
-   __error "By default, this script will ${cyan}REMOVE${normal} the legacy ${cyan}COVERART${normal} tag.\n" >&2
-   __error "Add the ${cyan}COVERART${normal} tag to the list of tags to be kept in the\n" >&2
-   __error "${cyan}TAGGING SECTION${normal} of the configuration file.\n\n" >&2
+   __error "By default, this script will ${cyan}REMOVE${reset} the legacy ${cyan}COVERART${reset} tag.\n" >&2
+   __error "Add the ${cyan}COVERART${reset} tag to the list of tags to be kept in the\n" >&2
+   __error "${cyan}TAGGING SECTION${reset} of the configuration file.\n\n" >&2
 
-   __error "Keep in mind, if the ${cyan}remove_artwork${normal} option is set to ${cyan}false${normal},\n" >&2
-   __error "embedded artwork in the ${cyan}PICTURE${normal} block will be kept when using\n" >&2
-   __error "the ${cyan}-p, --prune${normal} option as well.\n\n" >&2
+   __error "Keep in mind, if the ${cyan}remove_artwork${reset} option is set to ${cyan}false${reset},\n" >&2
+   __error "embedded artwork in the ${cyan}PICTURE${reset} block will be kept when using\n" >&2
+   __error "the ${cyan}-p, --prune${reset} option as well.\n\n" >&2
 
-   __warn "Waiting ${red}10${normal} seconds before starting program...\n" >&2
+   __warn "Waiting ${red}10${reset} seconds before starting program...\n" >&2
    __warn "Ctrl+C (Control-C) to abort...\n" >&2
    __info "Starting in: "
 
    # 10 second countdown
    for count in {10..1} ; do
-      printf "${red}%d ${normal}" "$count"
+      printf "${red}%d ${reset}" "$count"
       read -t1                   # Sleep 1
    done
 
@@ -1763,7 +1763,7 @@ __countdown_config() {
    __warn "file for use with this program.\n\n" >&2
 
    __warn "To generate a new configuration file, run:\n" >&2
-   __warn "${cyan}redoflacs --new-config${normal}\n\n" >&2
+   __warn "${cyan}redoflacs --new-config${reset}\n\n" >&2
 
    __warn "The above command will _NOT_ overwrite your\n" >&2
    __warn "current configuration file.\n\n" >&2
@@ -1774,7 +1774,7 @@ __countdown_config() {
 
    # 10 second countdown
    for count in {10..1} ; do
-      printf "${red}%s${normal}%s" "$count" ' '
+      printf "${red}%s${reset}%s" "$count" ' '
       read -t1                   # Sleep 1
    done
 }
@@ -1963,7 +1963,7 @@ __process_positional_parameters() {
                if (( jobs == 0 )) ; then
                   # Currently, this is just for '-j' so we can explicity
                   # specify it
-                  parameter_errors_array+=( "${cyan}-j${normal} requires a non-zero integer after it (eg. ${cyan}-j11${normal})." )
+                  parameter_errors_array+=( "${cyan}-j${reset} requires a non-zero integer after it (eg. ${cyan}-j11${reset})." )
                else
                   converted_arguments_array+=( -j )
                fi
@@ -1976,7 +1976,7 @@ __process_positional_parameters() {
             :)
                # Currently, this is just for '-j' so we can explicity
                # specify it
-               parameter_errors_array+=( "${cyan}-${OPTARG}${normal} requires a non-zero integer after it (eg. ${cyan}-${OPTARG}11${normal})." )
+               parameter_errors_array+=( "${cyan}-${OPTARG}${reset} requires a non-zero integer after it (eg. ${cyan}-${OPTARG}11${reset})." )
             ;;
             ?)
                # Set invalid argument from getopts into array using
@@ -1996,7 +1996,7 @@ __process_positional_parameters() {
          __error "\nInvalid options:" >&2
 
          for i in "${invalid_arguments_array[@]}" ; do
-            printf " ${cyan}${i}${normal}" >&2
+            printf " ${cyan}${i}${reset}" >&2
          done
 
          printf '\n' >&2
@@ -2085,35 +2085,35 @@ __check_missing_programs() {
 
    # Add each command that's needed to the an array to be displayed
    if ! type -P rm >/dev/null ; then
-      command_exists+=( "   Missing ${cyan}rm${normal}        ->  Part of ${cyan}coreutils${normal}" )
+      command_exists+=( "   Missing ${cyan}rm${reset}        ->  Part of ${cyan}coreutils${reset}" )
    fi
 
    if ! type -P stty >/dev/null ; then
-      command_exists+=( "   Missing ${cyan}stty${normal}      ->  Part of ${cyan}coreutils${normal}" )
+      command_exists+=( "   Missing ${cyan}stty${reset}      ->  Part of ${cyan}coreutils${reset}" )
    fi
 
    if ! type -P stat >/dev/null ; then
-      command_exists+=( "   Missing ${cyan}stat${normal}      ->  Part of ${cyan}coreutils${normal}" )
+      command_exists+=( "   Missing ${cyan}stat${reset}      ->  Part of ${cyan}coreutils${reset}" )
    fi
 
    if ! type -P mkdir >/dev/null ; then
-      command_exists+=( "   Missing ${cyan}mkdir${normal}     ->  Part of ${cyan}coreutils${normal}" )
+      command_exists+=( "   Missing ${cyan}mkdir${reset}     ->  Part of ${cyan}coreutils${reset}" )
    fi
 
    if ! type -P mkfifo >/dev/null ; then
-      command_exists+=( "   Missing ${cyan}mkfifo${normal}    ->  Part of ${cyan}coreutils${normal}" )
+      command_exists+=( "   Missing ${cyan}mkfifo${reset}    ->  Part of ${cyan}coreutils${reset}" )
    fi
 
    if ! type -P wc >/dev/null ; then
-      command_exists+=( "   Missing ${cyan}wc${normal}        ->  Part of ${cyan}coreutils${normal}" )
+      command_exists+=( "   Missing ${cyan}wc${reset}        ->  Part of ${cyan}coreutils${reset}" )
    fi
 
    if ! type -P metaflac >/dev/null ; then
-      command_exists+=( "   Missing ${cyan}metaflac${normal}  ->  Part of ${cyan}flac${normal}" )
+      command_exists+=( "   Missing ${cyan}metaflac${reset}  ->  Part of ${cyan}flac${reset}" )
    fi
 
    if ! type -P flac >/dev/null ; then
-      command_exists+=( "   Missing ${cyan}flac${normal}      ->  Part of ${cyan}flac${normal}" )
+      command_exists+=( "   Missing ${cyan}flac${reset}      ->  Part of ${cyan}flac${reset}" )
    fi
 
    # If all the programs above were found, continue with script.  Else
@@ -2143,16 +2143,16 @@ __check_missing_programs() {
 
       if [[ -z "${aucdtect_exists}" ]] ; then
          # auCDtect can't be found, exit
-         __error "It appears ${cyan}auCDtect${normal} is not installed. Please verify you\n" >&2
-         __error "have this program installed and can be found in ${cyan}\$PATH${normal}\n" >&2
+         __error "It appears ${cyan}auCDtect${reset} is not installed. Please verify you\n" >&2
+         __error "have this program installed and can be found in ${cyan}\$PATH${reset}\n" >&2
 
          exit 1
       else
          # Check if auCDtect is executable and warn user if it isn't
          if [[ ! -x "${aucdtect_exists}" ]] ; then
-            __error "It appears ${cyan}auCDtect${normal} is not executable.  In order to make\n" >&2
-            __error "${cyan}auCDtect${normal} executable, run:\n" >&2
-            __error "${cyan}chmod +x \"${aucdtect_exists}\"${normal}\n" >&2
+            __error "It appears ${cyan}auCDtect${reset} is not executable.  In order to make\n" >&2
+            __error "${cyan}auCDtect${reset} executable, run:\n" >&2
+            __error "${cyan}chmod +x \"${aucdtect_exists}\"${reset}\n" >&2
 
             exit 1
          fi
@@ -2170,8 +2170,8 @@ __check_missing_programs() {
 
       if [[ -z "${sox_exists}" ]] ; then
          # SoX can't be found, exit
-         __error "It appears ${cyan}SoX${normal} is not installed. Please verify you\n" >&2
-         __error "have this program installed and can be found in ${cyan}\$PATH${normal}\n" >&2
+         __error "It appears ${cyan}SoX${reset} is not installed. Please verify you\n" >&2
+         __error "have this program installed and can be found in ${cyan}\$PATH${reset}\n" >&2
 
          exit 1
       else
@@ -2188,7 +2188,7 @@ __check_conflicting_operations() {
    #--
    # If "-l, --all" and "-L, --reallyall" are both called, warn and exit
    if [[ "${all}" == "true" && "${reallyall}" == "true" ]] ; then
-      __error "Running both ${cyan}-l, --all${normal} and ${cyan}-L, --reallyall${normal} conflict!\n" >&2
+      __error "Running both ${cyan}-l, --all${reset} and ${cyan}-L, --reallyall${reset} conflict!\n" >&2
       __error "Please choose one or the other.\n" >&2
 
       exit 1
@@ -2251,15 +2251,15 @@ __check_conflicting_operations() {
       if [[ -n "${argument_conflict_array[@]}" ]] ; then
          # "-l, --all"
          if [[ "${all}" == "true" ]] ; then
-            __error "The below options conflict with ${cyan}-l, --all${normal}:\n" >&2
+            __error "The below options conflict with ${cyan}-l, --all${reset}:\n" >&2
          # "-L, --reallyall"
          elif [[ "${reallyall}" == "true" ]] ; then
-            __error "The below options conflict with ${cyan}-L, --reallyall${normal}:\n" >&2
+            __error "The below options conflict with ${cyan}-L, --reallyall${reset}:\n" >&2
          fi
 
          # Iterate through array and print each value
          for i in "${argument_conflict_array[@]}" ; do
-            __error "     ${cyan}${i}${normal}\n" >&2
+            __error "     ${cyan}${i}${reset}\n" >&2
          done
 
          __error "Please remove incompatible options.\n" >&2
@@ -2270,28 +2270,28 @@ __check_conflicting_operations() {
 
    # If "-C, --compress-notest" and "-c, --compress" are both called, warn and exit
    if [[ "${skip_test}" == "true" && "${compress_test}" == "true" ]] ; then
-      __error "Running both ${cyan}-c, --compress${normal} and ${cyan}-C, --compress-notest${normal} conflict!\n" >&2
+      __error "Running both ${cyan}-c, --compress${reset} and ${cyan}-C, --compress-notest${reset} conflict!\n" >&2
       __error "Please choose one or the other.\n" >&2
       exit 1
    fi
 
    # If "-c, --compress" and "-t, --test" are both called, warn and exit
    if [[ "${compress_test}" == "true" && "${test_flac}" == "true" ]] ; then
-      __error "Running both ${cyan}-c, --compress${normal} and ${cyan}-t, --test${normal} conflict!\n" >&2
+      __error "Running both ${cyan}-c, --compress${reset} and ${cyan}-t, --test${reset} conflict!\n" >&2
       __error "Please choose one or the other.\n" >&2
       exit 1
    fi
 
    # If "-g, --replaygain" and "-G, --replaygain-noforce" are both called, warn and exit
    if [[ "${replaygain_force}" == "true" && "${replaygain_noforce}" == "true" ]] ; then
-      __error "Running both ${cyan}-g, --replaygain${normal} and ${cyan}-G, --replaygain-noforce${normal} conflict!\n" >&2
+      __error "Running both ${cyan}-g, --replaygain${reset} and ${cyan}-G, --replaygain-noforce${reset} conflict!\n" >&2
       __error "Please choose one or the other.\n" >&2
       exit 1
    fi
 
    # If "-a, --aucdtect" and "-A, --aucdtect-spectrogram" are both called, warn and exit
    if [[ "${no_spectrogram}" == "true"  && "${create_spectrogram}" == "true" ]] ; then
-      __error "Running both ${cyan}-a, --aucdtect${normal} and ${cyan}-A, --aucdtect-spectrogram${normal} conflict!\n" >&2
+      __error "Running both ${cyan}-a, --aucdtect${reset} and ${cyan}-A, --aucdtect-spectrogram${reset} conflict!\n" >&2
       __error "Please choose one or the other.\n" >&2
       exit 1
    fi
@@ -2328,10 +2328,10 @@ __summary() {
    declare -a  operation_keys
 
    # Title
-   printf "\033[$(__row);2H${blue}%s${normal}\n" \
+   printf "\033[$(__row);2H${blue}%s${reset}\n" \
    "---------------------------------------------------"
    printf "                Summary Of Operations\n"
-   printf "${normal} ${blue}%s${normal}\n" \
+   printf "${reset} ${blue}%s${reset}\n" \
    "-------------------------+-------------------------"
 
    # Correct order to display operational status to process
@@ -2356,40 +2356,40 @@ __summary() {
          # Check for sub messages, and apply additional formatting
          if [[ "${operation}" == '>> '* ]] ; then
             if [[ "${operation}" == '>> Testing' ]] ; then
-               printf "${yellow}%25s ${blue}|${normal}\n" 'Applying ReplayGain'
+               printf "${yellow}%25s ${blue}|${reset}\n" 'Applying ReplayGain'
             elif [[ "${operation}" == '>> Analyzing' ]] ; then
-               printf "${yellow}%25s ${blue}|${normal}\n" 'Retagging FLACs'
+               printf "${yellow}%25s ${blue}|${reset}\n" 'Retagging FLACs'
             fi
 
             printf -v sub_message "%25s" "${operation}"  # Store right aligned message
 
             # Color '>>' as yellow and message as magenta
-            printf "${yellow}%s${magenta}%s ${blue}|${normal}" \
+            printf "${yellow}%s${magenta}%s ${blue}|${reset}" \
                "${sub_message%%>> *}>>" "${sub_message##*>>}"
          else
-            printf "${yellow}%25s ${blue}|${normal}" "${operation}"
+            printf "${yellow}%25s ${blue}|${reset}" "${operation}"
          fi
 
          # Colorize the operational status
          case "${operation_summary[$operation]}" in
             'Operation Completed')
-               printf " ${green}%s${normal}\n" "${operation_summary[$operation]}"
+               printf " ${green}%s${reset}\n" "${operation_summary[$operation]}"
             ;;
             'Operation Interrupted')
-               printf " ${cyan}%s${normal}\n" "${operation_summary[$operation]}"
+               printf " ${cyan}%s${reset}\n" "${operation_summary[$operation]}"
             ;;
             'Operation Did Not Run')
-               printf " ${magenta}%s${normal}\n" "${operation_summary[$operation]}"
+               printf " ${magenta}%s${reset}\n" "${operation_summary[$operation]}"
             ;;
             *'Issue'*)
-               printf " ${red}%s${normal}\n" "${operation_summary[$operation]}"
+               printf " ${red}%s${reset}\n" "${operation_summary[$operation]}"
             ;;
          esac
       fi
    done
 
    # Last line of chart
-   printf " ${blue}%s${normal}\n" \
+   printf " ${blue}%s${reset}\n" \
       "-------------------------+-------------------------"
 
    # Remove temporary FIFOs and files
@@ -4239,7 +4239,7 @@ declare -i max_length                  # Max filename length within terminal
 declare -A operation_summary           # Stores all the operational states
 
 # Colors on by default
-normal='\033[0m'
+reset='\033[0m'
 invert='\033[7m'
 red='\033[31m'
 green='\033[32m'
@@ -4252,71 +4252,43 @@ cyan='\033[36m'
 os_name="$(uname -o)"
 if [[ "${os_name}" == "Cygwin" ]] ; then
    __error "This version of redoflacs is meant to be run under\n" >&2
-   __error "${cyan}UNIX/Linux/BSD${normal}.  Please use the ${cyan}Windows (Cygwin)${normal}\n" >&2
+   __error "${cyan}UNIX/Linux/BSD${reset}.  Please use the ${cyan}Windows (Cygwin)${reset}\n" >&2
    __error "version located here:\n" >&2
-   __error "${cyan}https://github.com/sirjaren/redoflacsw/tags${normal}\n" >&2
+   __error "${cyan}https://github.com/sirjaren/redoflacsw/tags${reset}\n" >&2
 
    exit 1
 fi
 
 #-------------------------------------------------------------------------------
 
-# Check if config file exists based of $EUID.  Create config if it doesn't exist
+# Create/source either system or user config
 if (( EUID == 0 )) ; then
-   # User is root
-   #--
-   config_file="/etc/redoflacs.conf"                # System config location
-
-   # Check if system-wide configuration doesn't exist
-   if [[ ! -f "${config_file}" ]] ; then
-      # Create system-wide configuration file
-      __create_config
-
-      # Inform user of created configuration file, reminding them to check
-      # it over before running program
-      __info "A configuration file has been created here:\n"
-      __info "${cyan}${config_file}${normal}\n\n"
-
-      __info "Please review it before running this program.\n"
-
-      exit 0
-   else
-      # Configuration file exists, parse it
-      __parse_config
-   fi
+   config_file="/etc/redoflacs.conf"               # System (root) config
 else
-   # User is _NOT_ root
-   #--
-   config_file="${HOME}/.config/redoflacs/config"   # User config location
+   config_file="${HOME}/.config/redoflacs/config"  # User config
+fi
 
-   # Check if user configuration doesn't exist
-   if [[ ! -f "${config_file}" ]] ; then
-      # Create '.config/redoflacs' directory (if it doesn't exist)
-      mkdir -p "${config_file%/*}"
+# Check if system-wide configuration doesn't exist
+if [[ ! -f "${config_file}" ]] ; then
+   mkdir -p "${config_file%/*}"  # Create directory if it doesn't exist
+   __create_config               # Create configuration file
 
-      # Create user configuration file
-      __create_config
+   __info "A configuration file has been created here:\n"
+   __info "${cyan}${config_file}${reset}\n\n"
 
-      # Inform user of created configuration file, reminding them to check
-      # it over before running program
-      __info "A configuration file has been created here:\n"
-      __info "${cyan}${config_file}${normal}\n\n"
+   __info "Please review it before running this program.\n"
 
-      __info "Please review it before running this program.\n"
-
-      exit 0
-   else
-      # Configuration file exists, parse it
-      __parse_config
-   fi
+   exit 0
+else
+   __parse_config                # Parse and source configuration file
 fi
 
 #-------------------------------------------------------------------------------
 
 # Generate log file location
 #--
-# Ensure we don't overwrite an existing log file by incrementing the current
-# PID by 1 until the log file that is to be set, doesn't exist
+# Ensure we don't overwrite an existing log file by incrementing the current PID
+# by 1 until the log file that is to be set, doesn't exist
 pid="$$"
 log_file="${error_log}/redoflacs_${pid}.log"
 
@@ -4326,11 +4298,11 @@ done
 
 #-------------------------------------------------------------------------------
 
-__process_positional_parameters "${@}"   # Process CLI arguments
+__process_positional_parameters "${@}"  # Process CLI arguments
 
 #-------------------------------------------------------------------------------
 
-# Disable color if user called '-n, --no-color'.  $normal color is always set
+# Disable color if user called '-n, --no-color'
 if [[ "${no_color}" == "true" ]] ; then
    blue=""
    green=""
@@ -4344,7 +4316,7 @@ fi
 
 # Make sure we are running BASH 4 or greater
 if (( ${BASH_VERSINFO[0]} < 4 )) ; then
-   __error "You must be running ${cyan}BASH 4${normal} or greater to use\n" >&2
+   __error "You must be running ${cyan}BASH 4${reset} or greater to use\n" >&2
    __error "this program!\n" >&2
    exit 1
 fi
@@ -4363,7 +4335,7 @@ for operation in "${operations[@]}" ; do
 done
 #-------------------------------------------------------------------------------
 
-# Check for any missing programs vital for this script and exit if there are
+# Check for any missing programs vital for this script, exiting if there are
 __check_missing_programs
 
 #-------------------------------------------------------------------------------
@@ -4394,7 +4366,7 @@ if [[ "${check_artwork_dir}" == "true" ]] ; then
       # Put extracted artwork in user-defined location, testing to make sure
       # the directory exists
       if [[ ! -d "${artwork_location}" ]] ; then
-         __error "${cyan}${artwork_location}${normal} doesn't exist!\n" >&2
+         __error "${cyan}${artwork_location}${reset} doesn't exist!\n" >&2
          __error "Please set a valid directory in the configuration file!\n" >&2
          exit 1
       fi
@@ -4409,7 +4381,7 @@ if [[ "${create_spectrogram}" == "true" ]] ; then
       # Put spectrograms in user-defined location, testing to make sure the
       # directory exists
       if [[ ! -d "${spectrogram_location}" ]] ; then
-         __error "${cyan}${spectrogram_location}${normal} doesn't exist!\n" >&2
+         __error "${cyan}${spectrogram_location}${reset} doesn't exist!\n" >&2
          __error "Please set a valid directory in the configuration file!\n" >&2
          exit 1
       fi
@@ -4429,7 +4401,7 @@ fi
 # .: START SCRIPT :.
 #-------------------------------------------------------------------------------
 old_stty="$(stty -g)"              # Store current stty settings
-stty -ctlecho 2> /dev/null         # Disable ctrl+c '^C'
+stty -ctlecho 2>/dev/null          # Disable ctrl+c '^C'
 printf "\033[?25l"                 # Hide cursor
 __check_config_version             # Check if script config is newer than user's
 job_fifo="/tmp/redoflacs_fifo_$$"  # Job manager FIFO
@@ -4448,7 +4420,7 @@ __top_banner                                         # Display top banner
 total_items=( "${directory}"/**/*${flac_extension} ) # Total FLACs to process
 
 # This displays '[ ok ]' after 'Finding FLAC files to process...'
-printf "%11s${blue}[ ${green}ok${blue} ]${normal}\n" ""
+printf "%11s${blue}[ ${green}ok${blue} ]${reset}\n" ""
 
 #-------------------------------------------------------------------------------
 
