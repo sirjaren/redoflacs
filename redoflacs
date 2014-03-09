@@ -1471,19 +1471,13 @@ __truncate_filename() {
 __find_cores() {
    # Determine number of jobs to run via the number CPUs/cores available
    #--
-   # Check if /proc is mounted by comparing device numbers of
-   # /proc and / and see if they don't match (ie, /proc is mounted)
-   if (( $(stat -c %d /proc) == $(stat -c %d /) )) ; then
-      # /proc is not mounted, default to 2 jobs
-      jobs_display="(Default)"
-      jobs='2'
-   else
-      # /proc is mounted, check for cpuinfo
-      if [[ ! -f /proc/cpuinfo ]] ; then
-         # /proc/cpuinfo doesn't exist
-         jobs_display="(Default)"
-         jobs='2'
-      else
+   # Set up local variable
+   declare -gi jobs='2'                  # By default, set $jobs to '2'
+   declare -g  jobs_display='(Default)'  # Default $jobs determination
+
+   # Check /proc/cpuinfo if /proc is mounted by comparing device numbers to /
+   if (( $(stat -c %d /proc) != $(stat -c %d /) )) ; then
+      if [[ -f /proc/cpuinfo ]] ; then
          # /proc/cpuinfo exists, find total number of cores to use
          #--
          # Store contents of /proc/cpuinfo inta core_array
@@ -1492,14 +1486,11 @@ __find_cores() {
          for i in "${cores_array[@]}" ; do
             # For each line, add processor number to jobs if matched
             #--
-            if [[ "${i}" == processor$'\t':\ * ]] ; then
-               jobs="${i#processor$'\t': }"
-            fi
+            [[ "${i}" == 'processor'*:' '* ]] && jobs="${i#processor*: }"
          done
 
-         # Add +1 to jobs since the number of useable cores starts at 0
-         ((jobs++))
-         jobs_display="(/proc/cpuinfo)"
+         ((jobs++))  # +1 to $jobs since 'processor' starts at '0'
+         jobs_display="(/proc/cpuinfo)"  # $jobs dynamically determined
       fi
    fi
 }
