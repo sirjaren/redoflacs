@@ -1057,7 +1057,7 @@ __scroll_terminal() {
 #-------------------------------------------------------------------------------
 
 __get_percent_complete() {
-   # Return the an operation's completion percentage, expressed as an integer
+   # Return an operation's completion percentage, expressed as an integer
    #--
    # $1 is the operation to choose how to obtain the percentage, which can be:
    #   aucdtect          aucdtect_spectrogram        md5_check
@@ -1508,159 +1508,59 @@ __find_cores() {
 
 __find_artwork() {
    # Find all the artwork blocks in a given FLAC file, storing each instance
-   # into an array
+   # into an array, to be returned as $artwork[@]
    #--
-   # Set up local array
+   # Set up local variables/array
    declare -a artwork_blocks
+   declare tmp_picture_blocks="/tmp/redoflacs_picture_blocks_$$"
 
    # Grab all the PICTURE blocks from current FLAC file, storing into an array
-   mapfile -n0 -t artwork_blocks < <(metaflac --list --block-type=PICTURE "${1}")
+   #--
+   # It's much faster to read in from a temporary file than via process
+   # substitution
+   metaflac --list --block-type=PICTURE "${1}" > "$tmp_picture_blocks"
 
-   # Run through each line obtained above (stored into an array) and parse out
-   # the block type we want
-   for j in "${!artwork_blocks[@]}" ; do
-      # If the current line has shows the type of block but isn't (PICTURE),
-      # then we have the correct line (block type)
-      if [[ "${artwork_blocks[${j}]}" == '  type: '* ]] && [[ "${artwork_blocks[${j}]}" != '  type: 6 (PICTURE)' ]] ; then
-         # Obtain the METADATA block ID (4 lines above matched line)
-         artwork_block_id="${artwork_blocks[$(( j - 4 ))]##* #}"
+   # Only read in the lines we care about and store into array
+   mapfile -n0 -t artwork_blocks < \
+   <(
+      while read -r ; do
+         # We only care about the block, picture and MIME type lines
+         [[ "$REPLY" == 'METADATA'* || "$REPLY" == '  '[tM]* ]] && printf "%s\n" "$REPLY"
+      done < "$tmp_picture_blocks"
+   )
 
-         # Obtain the MIME type of the image stored in the METADATA block,
-         # to be used as the file extension
-         artwork_extension="${artwork_blocks[$(( j + 1 ))]##  MIME type: */}"
+   rm -f "$tmp_picture_blocks"  # Remove temporary 'metaflac' listing
 
-         # If the image found is 'jpeg', use 'jpg' instead for consistency
-         artwork_extension="${artwork_extension/jpeg/jpg}"
+   # Run through each line obtained and parse out the information wanted
+   #--
+   # $artwork_blocks[@] looks something like this:
+   #   'METADATA block #2'
+   #   '  type: 6 (PICTURE)'
+   #   '  type: 5 (Leaflet page)'
+   #   '  MIME type: image/jpeg'
+   #   'METADATA block #3'
+   #   '  type: 6 (PICTURE)'
+   #   '  type: 6 (Media (e.g. label side of CD))'
+   #   '  MIME type: image/jpeg'
+   #   'METADATA block #4'
+   #   '  type: 6 (PICTURE)'
+   #   '  type: 7 (Lead artist/lead performer/soloist)'
+   #   '  MIME type: image/jpg'
+   #--
+   for i in "${!artwork_blocks[@]}" ; do
+      if [[ "${artwork_blocks[$i]}" == 'METADATA'* ]] ; then
+         block_id="${artwork_blocks[$i]##* #}"  # METADATA block #4 -> 4
 
-         # Obtain the PICTURE type, represented as a number
-         artwork_type_number="${artwork_blocks[${j}]#  type: }"
-         artwork_type_number="${artwork_type_number%% *}"
+         # type: 8 (Artist/Performer) -> art_id='8', art_desc='(Artist-Performer)'
+         read -r _ art_id art_desc <<< "${artwork_blocks[$((i + 2))]//\//-}"
 
-         # Obtain the PICTURE type, represented as a string/description.  All
-         # forward slashes '/' are converted to hyphens '-', since this
-         # description will be used as part of the image filename
-         artwork_type_description="${artwork_blocks[${j}]#  type: * (}"
-         artwork_type_description="${artwork_type_description%)}"
-         artwork_type_description="${artwork_type_description//\//-}"
+         # MIME type: image/jpeg -> 'jpg'
+         IFS='/' read -r _ art_ext <<< "${artwork_blocks[$((i + 3))]/jpeg/jpg}"
 
-         # Check the PICTURE number we obtained and store the PICTURE
-         # description and image extension into it's own array.  This will
-         # allow for multiple artwork images of the same type to be stored
-         # successfully and extracted
-         case "${artwork_type_number}" in
-            0)
-               # [Artwork Description] Other
-               artwork_other+=( "${artwork_type_description}.${artwork_extension}" )
-            ;;
-            1)
-               # [Artwork Description] 32x32 pixels 'file icon' (PNG only)
-               artwork_file_icon+=( "${artwork_type_description}.${artwork_extension}" )
-            ;;
-            2)
-               # [Artwork Description] Other file icon
-               artwork_other_file_icon+=( "${artwork_type_description}.${artwork_extension}" )
-            ;;
-            3)
-               # [Artwork Description] Cover (front)
-               artwork_cover_front+=( "${artwork_type_description}.${artwork_extension}" )
-            ;;
-            4)
-               # [Artwork Description] Cover (back)
-               artwork_cover_back+=( "${artwork_type_description}.${artwork_extension}" )
-            ;;
-            5)
-               # [Artwork Description] Leaflet page
-               artwork_leaflet+=( "${artwork_type_description}.${artwork_extension}" )
-            ;;
-            6)
-               # [Artwork Description] Media (e.g. label side of CD)
-               artwork_media_label+=( "${artwork_type_description}.${artwork_extension}" )
-            ;;
-            7)
-               # [Artwork Description] Lead artist/lead performer/soloist
-               artwork_lead_artist+=( "${artwork_type_description}.${artwork_extension}" )
-            ;;
-            8)
-               # [Artwork Description] Artist/performer
-               artwork_artist+=( "${artwork_type_description}.${artwork_extension}" )
-            ;;
-            9)
-               # [Artwork Description] Conductor
-               artwork_conductor+=( "${artwork_type_description}.${artwork_extension}" )
-            ;;
-            10)
-               # [Artwork Description] Band/Orchestra
-               artwork_band+=( "${artwork_type_description}.${artwork_extension}" )
-            ;;
-            11)
-               # [Artwork Description] Composer
-               artwork_composer+=( "${artwork_type_description}.${artwork_extension}" )
-            ;;
-            12)
-               # [Artwork Description] Lyricist/text writer
-               artwork_lyricist+=( "${artwork_type_description}.${artwork_extension}" )
-            ;;
-            13)
-               # [Artwork Description] Recording Location
-               artwork_recording_location+=( "${artwork_type_description}.${artwork_extension}" )
-            ;;
-            14)
-               # [Artwork Description] During recording
-               artwork_during_recording+=( "${artwork_type_description}.${artwork_extension}" )
-            ;;
-            15)
-               # [Artwork Description] During performance
-               artwork_during_performance+=( "${artwork_type_description}.${artwork_extension}" )
-            ;;
-            16)
-               # [Artwork Description] Movie/video screen capture
-               artwork_movie+=( "${artwork_type_description}.${artwork_extension}" )
-            ;;
-            17)
-               # [Artwork Description] A bright coloured fish
-               artwork_fish+=( "${artwork_type_description}.${artwork_extension}" )
-            ;;
-            18)
-               # [Artwork Description] Illustration
-               artwork_illustration+=( "${artwork_type_description}.${artwork_extension}" )
-            ;;
-            19)
-               # [Artwork Description] Band/artist logotype
-               artwork_band_logo+=( "${artwork_type_description}.${artwork_extension}" )
-            ;;
-            20)
-               # [Artwork Description] Publisher/Studio logotype
-               artwork_publisher_logo+=( "${artwork_type_description}.${artwork_extension}" )
-            ;;
-            *)
-               # Shouldn't happen as the valid artwork types are only 0-20
-               __error "This is a BUG! Please report to:\n" >&2
-               __error "${cyan}https://github.com/sirjaren/redoflacs/issues/new${reset}\n" >&2
-
-               exit 1
-            ;;
-         esac
+         # Store artwork information into array as a single index
+         artwork+=( "${block_id}:${art_id} ${art_desc}.${art_ext}" )
       fi
    done
-}
-
-#-------------------------------------------------------------------------------
-
-__do_extract() {
-   # Extract artwork image from a specified artwork block ID in the PICTURE
-   # block of the current FLAC file
-   #--
-   # $1 is the filename to extract the artwork
-   # $2...$n is the name of the artwork filename with file extension
-   #--
-   # Set up local variables/arrays
-   declare filename="$1"
-
-   shift  # Remove filename from $@
-   metaflac \
-      --block-number="${artwork_block_id}" \
-      --export-picture-to="${artwork_directory}/${@}" \
-      "${filename}"
 }
 
 #-------------------------------------------------------------------------------
@@ -3549,15 +3449,7 @@ __extract_images() {
    trap '__kill_jobs "$(jobs -rp)"' EXIT
 
    # Set up local variables
-   declare    artwork_type_number  artwork_type_description  artwork_file_icon \
-              artwork_other_file_icon  artwork_cover_front  artwork_cover_back \
-              artwork_leaflet  artwork_media_label  artwork_lead_artist \
-              artwork_artist  artwork_conductor  artwork_band \
-              artwork_composer  artwork_lyricist  artwork_recording_location \
-              artwork_during_recording  artwork_during_performance \
-              artwork_movie  artwork_fish  artwork_illustration \
-              artwork_band_logo  artwork_publisher_logo  file_basename
-   declare -i file_length
+   declare -i file_length backup='1'
 
    # Truncate file, if necessary, and grab file information, splitting on
    # Unit Separator (\037)
@@ -3580,591 +3472,48 @@ __extract_images() {
 
       printf '.' >> "${issue_ticks}"  # Add one tick to total issues
    else
-      # Find all the artwork blocks available in the current FLAC file
+      # Find all the artwork blocks available in the current FLAC file, returned
+      # as an array: $artwork[@]
       __find_artwork "$1"
-
-      # If the user chose a location to store extracted artwork, then prepend
-      # a counter in front of the directory to prevent clobbering since all
-      # the artwork will be housed in one directory.  Otherwise the artwork
-      # will be placed in a subdirectory where the current FLAC file is
-      # located
-      if [[ -n "${artwork_location}" ]] ; then
-         # Example: /artwork_location/[1] 01.flac_[redoflacs_art]_8792
-         artwork_directory="${artwork_location}/[${iteration}] ${1##*/}_[redoflacs_art]_$$"
-      else
-         # Example: /path/to/current/flac/01.flac_[redoflacs_art]_8792
-         artwork_directory="${1}_[redoflacs_art]_$$"
-      fi
-
-      #~~~~~~~
-      # Other
-      #~~~~~~~
-      # Only extact the artwork if any was found
-      if [[ -n "${artwork_other[@]}" ]] ; then
-         # Create the directory where extracted artwork will be placed
-         mkdir -p "${artwork_directory}"
-
-         # If there was only one image for the given artwork type, then
-         # extract it, otherwise make sure to add a number at the end of the
-         # image in case there is more than one to prevent clobbering
-         if (( ${#artwork_other[@]} == 1 )) ; then
-            __do_extract "$1" "${artwork_other[0]}"
+ 
+      # Continue only if there were artwork to be extracted
+      if [[ -n "${artwork[@]}" ]] ; then
+         # Determine where to put extracted artwork by checking user config
+         if [[ -n "${artwork_location}" ]] ; then
+            # $artwork_location/file.flac_art
+            artwork_directory="${artwork_location}/${1##*/}_art"
          else
-
-            # Run through the images found in the file for the given artwork
-            # type, stripping the extension, adding a number indicating
-            # image number was found and appending the extension back before
-            # extracting the images
-            for art_file in "${!artwork_other[@]}" ; do
-               artwork_extension="${artwork_other[${art_file}]##*.}"
-               __do_extract "$1" "${artwork_other[${art_file}]%.*} ($(( art_file + 1 ))).${artwork_extension}"
-            done
+            # /path/to/current/flac/file.flac_art
+            artwork_directory="${1}_art"
          fi
-      fi
 
-      #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-      # 32x32 pixels 'file icon' (PNG only)
-      #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-      # Only extact the artwork if any was found
-      if [[ -n "${artwork_file_icon[@]}" ]] ; then
-         # Create the directory where extracted artwork will be placed
-         mkdir -p "${artwork_directory}"
+         # Prevent directory clobbering by creating an incremental version
+         until [[ ! -d "${artwork_directory}" ]] ; do
+            artwork_directory="${artwork_directory}~$((backup++))~"
+         done
 
-         # If there was only one image for the given artwork type, then
-         # extract it, otherwise make sure to add a number at the end of the
-         # image in case there is more than one to prevent clobbering
-         if (( ${#artwork_file_icon[@]} == 1 )) ; then
-            __do_extract "$1" "${artwork_file_icon[0]}"
-         else
+         mkdir -p "${artwork_directory}"  # Create artwork directory
 
-            # Run through the images found in the file for the given artwork
-            # type, stripping the extension, adding a number indicating
-            # image number was found and appending the extension back before
-            # extracting the images
-            for art_file in "${!artwork_file_icon[@]}" ; do
-               artwork_extension="${artwork_file_icon[${art_file}]##*.}"
-               __do_extract "$1" "${artwork_file_icon[${art_file}]%.*} ($(( art_file + 1 ))).${artwork_extension}"
+         for image in "${artwork[@]}" ; do
+            # Run through all the artwork found in the current FLAC by looking
+            # at $artwork[@], of which, each index looks like:
+            #   artwork[0]="${block_id}:${art_id}_${art_desc}.${art_ext}"
+            # and extract each image by it's METADATA block number
+            #--
+            # Prevent file clobbering by creating an incremental version
+            backup='1'
+            extracted_image="${artwork_directory}/${image#*:}"
+            until [[ ! -f "${extracted_image}" ]] ; do
+               extracted_image="${artwork_directory}/${image#*:}~$((backup++))~"
             done
-         fi
+
+            # Extract image by the METADATA block number to the art directory
+            metaflac \
+               --block-number="${image%%:*}" \
+               --export-picture-to="${extracted_image}" \
+               "$1"
+         done
       fi
-
-      #~~~~~~~~~~~~~~~~~
-      # Other file icon
-      #~~~~~~~~~~~~~~~~~
-      # Only extact the artwork if any was found
-      if [[ -n "${artwork_other_file_icon[@]}" ]] ; then
-         # Create the directory where extracted artwork will be placed
-         mkdir -p "${artwork_directory}"
-
-         # If there was only one image for the given artwork type, then
-         # extract it, otherwise make sure to add a number at the end of the
-         # image in case there is more than one to prevent clobbering
-         if (( ${#artwork_other_file_icon[@]} == 1 )) ; then
-            __do_extract "$1" "${artwork_other_file_icon[0]}"
-         else
-
-            # Run through the images found in the file for the given artwork
-            # type, stripping the extension, adding a number indicating
-            # image number was found and appending the extension back before
-            # extracting the images
-            for art_file in "${!artwork_other_file_icon[@]}" ; do
-               artwork_extension="${artwork_other_file_icon[${art_file}]##*.}"
-               __do_extract "$1" "${artwork_other_file_icon[${art_file}]%.*} ($(( art_file + 1 ))).${artwork_extension}"
-            done
-         fi
-      fi
-
-      #~~~~~~~~~~~~~~~
-      # Cover (front)
-      #~~~~~~~~~~~~~~~
-      # Only extact the artwork if any was found
-      if [[ -n "${artwork_cover_front[@]}" ]] ; then
-         # Create the directory where extracted artwork will be placed
-         mkdir -p "${artwork_directory}"
-
-         # If there was only one image for the given artwork type, then
-         # extract it, otherwise make sure to add a number at the end of the
-         # image in case there is more than one to prevent clobbering
-         if (( ${#artwork_cover_front[@]} == 1 )) ; then
-            __do_extract "$1" "${artwork_cover_front[0]}"
-         else
-
-            # Run through the images found in the file for the given artwork
-            # type, stripping the extension, adding a number indicating
-            # image number was found and appending the extension back before
-            # extracting the images
-            for art_file in "${!artwork_cover_front[@]}" ; do
-               artwork_extension="${artwork_cover_front[${art_file}]##*.}"
-               __do_extract "$1" "${artwork_cover_front[${art_file}]%.*} ($(( art_file + 1 ))).${artwork_extension}"
-            done
-         fi
-      fi
-
-      #~~~~~~~~~~~~~~
-      # Cover (back)
-      #~~~~~~~~~~~~~~
-      # Only extact the artwork if any was found
-      if [[ -n "${artwork_cover_back[@]}" ]] ; then
-         # Create the directory where extracted artwork will be placed
-         mkdir -p "${artwork_directory}"
-
-         # If there was only one image for the given artwork type, then
-         # extract it, otherwise make sure to add a number at the end of the
-         # image in case there is more than one to prevent clobbering
-         if (( ${#artwork_cover_back[@]} == 1 )) ; then
-            __do_extract "$1" "${artwork_cover_back[0]}"
-         else
-
-            # Run through the images found in the file for the given artwork
-            # type, stripping the extension, adding a number indicating
-            # image number was found and appending the extension back before
-            # extracting the images
-            for art_file in "${!artwork_cover_back[@]}" ; do
-               artwork_extension="${artwork_cover_back[${art_file}]##*.}"
-               __do_extract "$1" "${artwork_cover_back[${art_file}]%.*} ($(( art_file + 1 ))).${artwork_extension}"
-            done
-         fi
-      fi
-
-      #~~~~~~~~~~~~~~
-      # Leaflet page
-      #~~~~~~~~~~~~~~
-      # Only extact the artwork if any was found
-      if [[ -n "${artwork_leaflet[@]}" ]] ; then
-         # Create the directory where extracted artwork will be placed
-         mkdir -p "${artwork_directory}"
-
-         # If there was only one image for the given artwork type, then
-         # extract it, otherwise make sure to add a number at the end of the
-         # image in case there is more than one to prevent clobbering
-         if (( ${#artwork_leaflet[@]} == 1 )) ; then
-            __do_extract "$1" "${artwork_leaflet[0]}"
-         else
-
-            # Run through the images found in the file for the given artwork
-            # type, stripping the extension, adding a number indicating
-            # image number was found and appending the extension back before
-            # extracting the images
-            for art_file in "${!artwork_leaflet[@]}" ; do
-               artwork_extension="${artwork_leaflet[${art_file}]##*.}"
-               __do_extract "$1" "${artwork_leaflet[${art_file}]%.*} ($(( art_file + 1 ))).${artwork_extension}"
-            done
-         fi
-      fi
-
-      #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-      # Media (e.g. label side of CD)
-      #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-      # Only extact the artwork if any was found
-      if [[ -n "${artwork_media_label[@]}" ]] ; then
-         # Create the directory where extracted artwork will be placed
-         mkdir -p "${artwork_directory}"
-
-         # If there was only one image for the given artwork type, then
-         # extract it, otherwise make sure to add a number at the end of the
-         # image in case there is more than one to prevent clobbering
-         if (( ${#artwork_media_label[@]} == 1 )) ; then
-            __do_extract "$1" "${artwork_media_label[0]}"
-         else
-
-            # Run through the images found in the file for the given artwork
-            # type, stripping the extension, adding a number indicating
-            # image number was found and appending the extension back before
-            # extracting the images
-            for art_file in "${!artwork_media_label[@]}" ; do
-               artwork_extension="${artwork_media_label[${art_file}]##*.}"
-               __do_extract "$1" "${artwork_media_label[${art_file}]%.*} ($(( art_file + 1 ))).${artwork_extension}"
-            done
-         fi
-      fi
-
-      #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-      # Lead artist/lead performer/soloist
-      #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-      # Only extact the artwork if any was found
-      if [[ -n "${artwork_lead_artist[@]}" ]] ; then
-         # Create the directory where extracted artwork will be placed
-         mkdir -p "${artwork_directory}"
-
-         # If there was only one image for the given artwork type, then
-         # extract it, otherwise make sure to add a number at the end of the
-         # image in case there is more than one to prevent clobbering
-         if (( ${#artwork_lead_artist[@]} == 1 )) ; then
-            __do_extract "$1" "${artwork_lead_artist[0]}"
-         else
-
-            # Run through the images found in the file for the given artwork
-            # type, stripping the extension, adding a number indicating
-            # image number was found and appending the extension back before
-            # extracting the images
-            for art_file in "${!artwork_lead_artist[@]}" ; do
-               artwork_extension="${artwork_lead_artist[${art_file}]##*.}"
-               __do_extract "$1" "${artwork_lead_artist[${art_file}]%.*} ($(( art_file + 1 ))).${artwork_extension}"
-            done
-         fi
-      fi
-
-      #~~~~~~~~~~~~~~~~~~
-      # Artist/performer
-      #~~~~~~~~~~~~~~~~~~
-      # Only extact the artwork if any was found
-      if [[ -n "${artwork_artist[@]}" ]] ; then
-         # Create the directory where extracted artwork will be placed
-         mkdir -p "${artwork_directory}"
-
-         # If there was only one image for the given artwork type, then
-         # extract it, otherwise make sure to add a number at the end of the
-         # image in case there is more than one to prevent clobbering
-         if (( ${#artwork_artist[@]} == 1 )) ; then
-            __do_extract "$1" "${artwork_artist[0]}"
-         else
-
-            # Run through the images found in the file for the given artwork
-            # type, stripping the extension, adding a number indicating
-            # image number was found and appending the extension back before
-            # extracting the images
-            for art_file in "${!artwork_artist[@]}" ; do
-               artwork_extension="${artwork_artist[${art_file}]##*.}"
-               __do_extract "$1" "${artwork_artist[${art_file}]%.*} ($(( art_file + 1 ))).${artwork_extension}"
-            done
-         fi
-      fi
-
-      #~~~~~~~~~~~
-      # Conductor
-      #~~~~~~~~~~~
-      # Only extact the artwork if any was found
-      if [[ -n "${artwork_conductor[@]}" ]] ; then
-         # Create the directory where extracted artwork will be placed
-         mkdir -p "${artwork_directory}"
-
-         # If there was only one image for the given artwork type, then
-         # extract it, otherwise make sure to add a number at the end of the
-         # image in case there is more than one to prevent clobbering
-         if (( ${#artwork_conductor[@]} == 1 )) ; then
-            __do_extract "$1" "${artwork_conductor[0]}"
-         else
-
-            # Run through the images found in the file for the given artwork
-            # type, stripping the extension, adding a number indicating
-            # image number was found and appending the extension back before
-            # extracting the images
-            for art_file in "${!artwork_conductor[@]}" ; do
-               artwork_extension="${artwork_conductor[${art_file}]##*.}"
-               __do_extract "$1" "${artwork_conductor[${art_file}]%.*} ($(( art_file + 1 ))).${artwork_extension}"
-            done
-         fi
-      fi
-
-      #~~~~~~~~~~~~~~~~
-      # Band/Orchestra
-      #~~~~~~~~~~~~~~~~
-      # Only extact the artwork if any was found
-      if [[ -n "${artwork_band[@]}" ]] ; then
-         # Create the directory where extracted artwork will be placed
-         mkdir -p "${artwork_directory}"
-
-         # If there was only one image for the given artwork type, then
-         # extract it, otherwise make sure to add a number at the end of the
-         # image in case there is more than one to prevent clobbering
-         if (( ${#artwork_band[@]} == 1 )) ; then
-            __do_extract "$1" "${artwork_band[0]}"
-         else
-
-            # Run through the images found in the file for the given artwork
-            # type, stripping the extension, adding a number indicating
-            # image number was found and appending the extension back before
-            # extracting the images
-            for art_file in "${!artwork_band[@]}" ; do
-               artwork_extension="${artwork_band[${art_file}]##*.}"
-               __do_extract "$1" "${artwork_band[${art_file}]%.*} ($(( art_file + 1 ))).${artwork_extension}"
-            done
-         fi
-      fi
-
-      #~~~~~~~~~~
-      # Composer
-      #~~~~~~~~~~
-      # Only extact the artwork if any was found
-      if [[ -n "${artwork_composer[@]}" ]] ; then
-         # Create the directory where extracted artwork will be placed
-         mkdir -p "${artwork_directory}"
-
-         # If there was only one image for the given artwork type, then
-         # extract it, otherwise make sure to add a number at the end of the
-         # image in case there is more than one to prevent clobbering
-         if (( ${#artwork_composer[@]} == 1 )) ; then
-            __do_extract "$1" "${artwork_composer[0]}"
-         else
-
-            # Run through the images found in the file for the given artwork
-            # type, stripping the extension, adding a number indicating
-            # image number was found and appending the extension back before
-            # extracting the images
-            for art_file in "${!artwork_composer[@]}" ; do
-               artwork_extension="${artwork_composer[${art_file}]##*.}"
-               __do_extract "$1" "${artwork_composer[${art_file}]%.*} ($(( art_file + 1 ))).${artwork_extension}"
-            done
-         fi
-      fi
-
-      #~~~~~~~~~~~~~~~~~~~~~~
-      # Lyricist/text writer
-      #~~~~~~~~~~~~~~~~~~~~~~
-      # Only extact the artwork if any was found
-      if [[ -n "${artwork_lyricist[@]}" ]] ; then
-         # Create the directory where extracted artwork will be placed
-         mkdir -p "${artwork_directory}"
-
-         # If there was only one image for the given artwork type, then
-         # extract it, otherwise make sure to add a number at the end of the
-         # image in case there is more than one to prevent clobbering
-         if (( ${#artwork_lyricist[@]} == 1 )) ; then
-            __do_extract "$1" "${artwork_lyricist[0]}"
-         else
-
-            # Run through the images found in the file for the given artwork
-            # type, stripping the extension, adding a number indicating
-            # image number was found and appending the extension back before
-            # extracting the images
-            for art_file in "${!artwork_lyricist[@]}" ; do
-               artwork_extension="${artwork_lyricist[${art_file}]##*.}"
-               __do_extract "$1" "${artwork_lyricist[${art_file}]%.*} ($(( art_file + 1 ))).${artwork_extension}"
-            done
-         fi
-      fi
-
-      #~~~~~~~~~~~~~~~~~~~~
-      # Recording Location
-      #~~~~~~~~~~~~~~~~~~~~
-      # Only extact the artwork if any was found
-      if [[ -n "${artwork_recording_location[@]}" ]] ; then
-         # Create the directory where extracted artwork will be placed
-         mkdir -p "${artwork_directory}"
-
-         # If there was only one image for the given artwork type, then
-         # extract it, otherwise make sure to add a number at the end of the
-         # image in case there is more than one to prevent clobbering
-         if (( ${#artwork_recording_location[@]} == 1 )) ; then
-            __do_extract "$1" "${artwork_recording_location[0]}"
-         else
-
-            # Run through the images found in the file for the given artwork
-            # type, stripping the extension, adding a number indicating
-            # image number was found and appending the extension back before
-            # extracting the images
-            for art_file in "${!artwork_recording_location[@]}" ; do
-               artwork_extension="${artwork_recording_location[${art_file}]##*.}"
-               __do_extract "$1" "${artwork_recording_location[${art_file}]%.*} ($(( art_file + 1 ))).${artwork_extension}"
-            done
-         fi
-      fi
-
-      #~~~~~~~~~~~~~~~~~~
-      # During recording
-      #~~~~~~~~~~~~~~~~~~
-      # Only extact the artwork if any was found
-      if [[ -n "${artwork_during_recording[@]}" ]] ; then
-         # Create the directory where extracted artwork will be placed
-         mkdir -p "${artwork_directory}"
-
-         # If there was only one image for the given artwork type, then
-         # extract it, otherwise make sure to add a number at the end of the
-         # image in case there is more than one to prevent clobbering
-         if (( ${#artwork_during_recording[@]} == 1 )) ; then
-            __do_extract "$1" "${artwork_during_recording[0]}"
-         else
-
-            # Run through the images found in the file for the given artwork
-            # type, stripping the extension, adding a number indicating
-            # image number was found and appending the extension back before
-            # extracting the images
-            for art_file in "${!artwork_during_recording[@]}" ; do
-               artwork_extension="${artwork_during_recording[${art_file}]##*.}"
-               __do_extract "$1" "${artwork_during_recording[${art_file}]%.*} ($(( art_file + 1 ))).${artwork_extension}"
-            done
-         fi
-      fi
-
-      #~~~~~~~~~~~~~~~~~~~~
-      # During performance
-      #~~~~~~~~~~~~~~~~~~~~
-      # Only extact the artwork if any was found
-      if [[ -n "${artwork_during_performance[@]}" ]] ; then
-         # Create the directory where extracted artwork will be placed
-         mkdir -p "${artwork_directory}"
-
-         # If there was only one image for the given artwork type, then
-         # extract it, otherwise make sure to add a number at the end of the
-         # image in case there is more than one to prevent clobbering
-         if (( ${#artwork_during_performance[@]} == 1 )) ; then
-            __do_extract "$1" "${artwork_during_performance[0]}"
-         else
-
-            # Run through the images found in the file for the given artwork
-            # type, stripping the extension, adding a number indicating
-            # image number was found and appending the extension back before
-            # extracting the images
-            for art_file in "${!artwork_during_performance[@]}" ; do
-               artwork_extension="${artwork_during_performance[${art_file}]##*.}"
-               __do_extract "$1" "${artwork_during_performance[${art_file}]%.*} ($(( art_file + 1 ))).${artwork_extension}"
-            done
-         fi
-      fi
-
-      #~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-      # Movie/video screen capture
-      #~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-      # Only extact the artwork if any was found
-      if [[ -n "${artwork_movie[@]}" ]] ; then
-         # Create the directory where extracted artwork will be placed
-         mkdir -p "${artwork_directory}"
-
-         # If there was only one image for the given artwork type, then
-         # extract it, otherwise make sure to add a number at the end of the
-         # image in case there is more than one to prevent clobbering
-         if (( ${#artwork_movie[@]} == 1 )) ; then
-            __do_extract "$1" "${artwork_movie[0]}"
-         else
-
-            # Run through the images found in the file for the given artwork
-            # type, stripping the extension, adding a number indicating
-            # image number was found and appending the extension back before
-            # extracting the images
-            for art_file in "${!artwork_movie[@]}" ; do
-               artwork_extension="${artwork_movie[${art_file}]##*.}"
-               __do_extract "$1" "${artwork_movie[${art_file}]%.*} ($(( art_file + 1 ))).${artwork_extension}"
-            done
-         fi
-      fi
-
-      #~~~~~~~~~~~~~~~~~~~~~~~~
-      # A bright coloured fish
-      #~~~~~~~~~~~~~~~~~~~~~~~~
-      # Only extact the artwork if any was found
-      if [[ -n "${artwork_fish[@]}" ]] ; then
-         # Create the directory where extracted artwork will be placed
-         mkdir -p "${artwork_directory}"
-
-         # If there was only one image for the given artwork type, then
-         # extract it, otherwise make sure to add a number at the end of the
-         # image in case there is more than one to prevent clobbering
-         if (( ${#artwork_fish[@]} == 1 )) ; then
-            __do_extract "$1" "${artwork_fish[0]}"
-         else
-
-            # Run through the images found in the file for the given artwork
-            # type, stripping the extension, adding a number indicating
-            # image number was found and appending the extension back before
-            # extracting the images
-            for art_file in "${!artwork_fish[@]}" ; do
-               artwork_extension="${artwork_fish[${art_file}]##*.}"
-               __do_extract "$1" "${artwork_fish[${art_file}]%.*} ($(( art_file + 1 ))).${artwork_extension}"
-            done
-         fi
-      fi
-
-      #~~~~~~~~~~~~~~
-      # Illustration
-      #~~~~~~~~~~~~~~
-      # Only extact the artwork if any was found
-      if [[ -n "${artwork_illustration[@]}" ]] ; then
-         # Create the directory where extracted artwork will be placed
-         mkdir -p "${artwork_directory}"
-
-         # If there was only one image for the given artwork type, then
-         # extract it, otherwise make sure to add a number at the end of the
-         # image in case there is more than one to prevent clobbering
-         if (( ${#artwork_illustration[@]} == 1 )) ; then
-            __do_extract "$1" "${artwork_illustration[0]}"
-         else
-
-            # Run through the images found in the file for the given artwork
-            # type, stripping the extension, adding a number indicating
-            # image number was found and appending the extension back before
-            # extracting the images
-            for art_file in "${!artwork_illustration[@]}" ; do
-               artwork_extension="${artwork_illustration[${art_file}]##*.}"
-               __do_extract "$1" "${artwork_illustration[${art_file}]%.*} ($(( art_file + 1 ))).${artwork_extension}"
-            done
-         fi
-      fi
-
-      #~~~~~~~~~~~~~~~~~~~~~~
-      # Band/artist logotype
-      #~~~~~~~~~~~~~~~~~~~~~~
-      # Only extact the artwork if any was found
-      if [[ -n "${artwork_band_logo[@]}" ]] ; then
-         # Create the directory where extracted artwork will be placed
-         mkdir -p "${artwork_directory}"
-
-         # If there was only one image for the given artwork type, then
-         # extract it, otherwise make sure to add a number at the end of the
-         # image in case there is more than one to prevent clobbering
-         if (( ${#artwork_band_logo[@]} == 1 )) ; then
-            __do_extract "$1" "${artwork_band_logo[0]}"
-         else
-
-            # Run through the images found in the file for the given artwork
-            # type, stripping the extension, adding a number indicating
-            # image number was found and appending the extension back before
-            # extracting the images
-            for art_file in "${!artwork_band_logo[@]}" ; do
-               artwork_extension="${artwork_band_logo[${art_file}]##*.}"
-               __do_extract "$1" "${artwork_band_logo[${art_file}]%.*} ($(( art_file + 1 ))).${artwork_extension}"
-            done
-         fi
-      fi
-
-      #~~~~~~~~~~~~~~~~~~~~~~~~~~~
-      # Publisher/Studio logotype
-      #~~~~~~~~~~~~~~~~~~~~~~~~~~~
-      # Only extact the artwork if any was found
-      if [[ -n "${artwork_publisher_logo[@]}" ]] ; then
-         # Create the directory where extracted artwork will be placed
-         mkdir -p "${artwork_directory}"
-
-         # If there was only one image for the given artwork type, then
-         # extract it, otherwise make sure to add a number at the end of the
-         # image in case there is more than one to prevent clobbering
-         if (( ${#artwork_publisher_logo[@]} == 1 )) ; then
-            __do_extract "$1" "${artwork_publisher_logo[0]}"
-         else
-
-            # Run through the images found in the file for the given artwork
-            # type, stripping the extension, adding a number indicating
-            # image number was found and appending the extension back before
-            # extracting the images
-            for art_file in "${!artwork_publisher_logo[@]}" ; do
-               artwork_extension="${artwork_publisher_logo[${art_file}]##*.}"
-               __do_extract "$1" "${artwork_publisher_logo[${art_file}]%.*} ($(( art_file + 1 ))).${artwork_extension}"
-            done
-         fi
-      fi
-
-      # Unset all the arrays used so we don't pollute other files
-      unset -v \
-         artwork_other \
-         artwork_file_icon \
-         artwork_other_file_icon \
-         artwork_cover_front \
-         artwork_cover_back \
-         artwork_leaflet \
-         artwork_media_label \
-         artwork_lead_artist \
-         artwork_artist \
-         artwork_conductor \
-         artwork_band \
-         artwork_composer \
-         artwork_lyricist \
-         artwork_recording_location \
-         artwork_during_recording \
-         artwork_during_performance \
-         artwork_movie \
-         artwork_fish \
-         artwork_illustration \
-         artwork_band_logo \
-         artwork_publisher_logo
 
       # FLAC is ok, display ok
       __print_status 'ok' "${file_basename}" "${file_length}"
