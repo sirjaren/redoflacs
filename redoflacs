@@ -40,16 +40,6 @@ __error() { printf " ${red}*${reset} ${@}"    ;}   # Bold red message
 
 #-------------------------------------------------------------------------------
 
-__display_missing_commands_header() {
-   # Display message that system is missing vital programs
-   #--
-   __error "You seem to be missing one or more necessary programs\n"
-   __error "to run this script reliably.  Below shows the program(s)\n"
-   __error "missing, as well as where you can install them from:\n"
-} >&2
-
-#-------------------------------------------------------------------------------
-
 __long_help() {
    # Display a lot of help
    #--
@@ -1955,102 +1945,79 @@ __check_missing_programs() {
    # Check for missing programs vital to this script
    #--
    # Set up local variables/arrays
-   declare -a command_exists
+   declare -a missing_commands
 
-   # Add each command that's needed to the an array to be displayed
+   # Add each command that's needed to an array to be displayed
    if ! type -P rm >/dev/null ; then
-      command_exists+=( "   Missing ${cyan}rm${reset}        ->  Part of ${cyan}coreutils${reset}" )
+      missing_commands+=( "   Missing ${cyan}rm${reset}        ->  Part of ${cyan}coreutils${reset}" )
    fi
-
    if ! type -P stty >/dev/null ; then
-      command_exists+=( "   Missing ${cyan}stty${reset}      ->  Part of ${cyan}coreutils${reset}" )
+      missing_commands+=( "   Missing ${cyan}stty${reset}      ->  Part of ${cyan}coreutils${reset}" )
    fi
-
    if ! type -P stat >/dev/null ; then
-      command_exists+=( "   Missing ${cyan}stat${reset}      ->  Part of ${cyan}coreutils${reset}" )
+      missing_commands+=( "   Missing ${cyan}stat${reset}      ->  Part of ${cyan}coreutils${reset}" )
    fi
-
    if ! type -P mkdir >/dev/null ; then
-      command_exists+=( "   Missing ${cyan}mkdir${reset}     ->  Part of ${cyan}coreutils${reset}" )
+      missing_commands+=( "   Missing ${cyan}mkdir${reset}     ->  Part of ${cyan}coreutils${reset}" )
    fi
-
    if ! type -P mkfifo >/dev/null ; then
-      command_exists+=( "   Missing ${cyan}mkfifo${reset}    ->  Part of ${cyan}coreutils${reset}" )
+      missing_commands+=( "   Missing ${cyan}mkfifo${reset}    ->  Part of ${cyan}coreutils${reset}" )
    fi
-
    if ! type -P wc >/dev/null ; then
-      command_exists+=( "   Missing ${cyan}wc${reset}        ->  Part of ${cyan}coreutils${reset}" )
+      missing_commands+=( "   Missing ${cyan}wc${reset}        ->  Part of ${cyan}coreutils${reset}" )
    fi
-
    if ! type -P metaflac >/dev/null ; then
-      command_exists+=( "   Missing ${cyan}metaflac${reset}  ->  Part of ${cyan}flac${reset}" )
+      missing_commands+=( "   Missing ${cyan}metaflac${reset}  ->  Part of ${cyan}flac${reset}" )
    fi
-
    if ! type -P flac >/dev/null ; then
-      command_exists+=( "   Missing ${cyan}flac${reset}      ->  Part of ${cyan}flac${reset}" )
+      missing_commands+=( "   Missing ${cyan}flac${reset}      ->  Part of ${cyan}flac${reset}" )
    fi
 
-   # If all the programs above were found, continue with script.  Else
-   # display warning and exit script, printing out which package has
-   # the missing programs
-   if [[ -n "${command_exists[@]}" ]] ; then
-      __display_missing_commands_header
-
-      # Iterate through array and print each value
-      for i in "${command_exists[@]}" ; do
+   if [[ -n "${missing_commands[@]}" ]] ; then
+      # Display message that system is missing vital programs
+      #--
+      __error "You seem to be missing one or more necessary programs\n"    >&2
+      __error "to run this script reliably.  Below shows the program(s)\n" >&2
+      __error "missing, as well as where you can install them from:\n"     >&2
+      for i in "${missing_commands[@]}" ; do
          __warn "${i}\n" >&2
       done
-
       exit 1
    fi
 
-   # FIXME
-   # If auCDtect operation was specified, check
-   # if auCDtect is found/installed
-   if [[ "${aucdtect_flac}" == "true" ]] ; then
-      aucdtect_exists="$(type -P auCDtect)"
-
-      if [[ -z "${aucdtect_exists}" ]] ; then
-         # Check alternate spelling
-         aucdtect_exists="$(type -P aucdtect)"
-      fi
-
-      if [[ -z "${aucdtect_exists}" ]] ; then
-         # auCDtect can't be found, exit
+   # Optional binaries
+   #--
+   # Check for auCDtect if operation was called
+   if [[ "${operations[0]}" == 'aucdtect' ]] ; then
+      if type -P auCDtect ; then
+         _aucdtect() { type -P auCDtect ;}  # Normal typeface
+      elif type -P aucdtect ; then
+         _aucdtect() { type -P aucdtect ;}  # Alternate spelling
+      else
+         # auCDtect/aucdtect cannot be found
          __error "It appears ${cyan}auCDtect${reset} is not installed. Please verify you\n" >&2
          __error "have this program installed and can be found in ${cyan}\$PATH${reset}\n" >&2
-
          exit 1
-      else
-         # Check if auCDtect is executable and warn user if it isn't
-         if [[ ! -x "${aucdtect_exists}" ]] ; then
-            __error "It appears ${cyan}auCDtect${reset} is not executable.  In order to make\n" >&2
-            __error "${cyan}auCDtect${reset} executable, run:\n" >&2
-            __error "${cyan}chmod +x \"${aucdtect_exists}\"${reset}\n" >&2
+      fi
 
-            exit 1
-         fi
-
-         # Set up auCDtect command
-         aucdtect_command="${aucdtect_exists}"
+      # Make sure auCDtect is executable
+      if [[ ! -x "$(_aucdtect)" ]] ; then
+         __error "It appears ${cyan}auCDtect${reset} is not executable.  In order to make\n" >&2
+         __error "${cyan}auCDtect${reset} executable, run:\n" >&2
+         __error "${cyan}chmod u+x '$(_aucdtect)'${reset}\n" >&2
+         exit 1
       fi
    fi
 
-   # If "-A, --aucdtect-spectrogram" was called
-   # make sure SoX is installed before starting
-   if [[ "${create_spectrogram}" == "true" ]] ; then
-      # Check if SoX is found/installed
-      sox_exists="$(type -P sox)"
-
-      if [[ -z "${sox_exists}" ]] ; then
-         # SoX can't be found, exit
+   # Check for SoX if auCDtect spectrograms were called
+   if [[ "${create_spectrogram}" == 'true' ]] ; then
+      if type -P sox ; then
+         _sox() { type -P sox ;}
+      else
+         # SoX cannot be found
          __error "It appears ${cyan}SoX${reset} is not installed. Please verify you\n" >&2
          __error "have this program installed and can be found in ${cyan}\$PATH${reset}\n" >&2
-
          exit 1
-      else
-         # Set up SoX command
-         sox_command="${sox_exists}"
       fi
    fi
 }
@@ -2869,7 +2836,7 @@ __aucdtect() {
 
          # The actual auCDtect command with medium accuracy setting (for
          # speed).  STDOUT is sent to file descriptor '4'
-         auCDtect -m20 "${decoded_wav}" 2> >(while read -r -d'%' percent_complete ; do
+         _aucdtect -m20 "${decoded_wav}" 2> >(while read -r -d'%' percent_complete ; do
             # Check FLAC validity by checking decoded WAV via auCDtect (fast)
             #--
             # Current percent complete
@@ -2908,7 +2875,7 @@ __aucdtect() {
 
                # The actual auCDtect command with highest accuracy setting.
                # STDOUT is sent to file descriptor '4'
-               auCDtect -m0 "${decoded_wav}" 2> >(while read -r -d'%' percent_complete ; do
+               _aucdtect -m0 "${decoded_wav}" 2> >(while read -r -d'%' percent_complete ; do
                   # Check FLAC validity by checking decoded WAV via auCDtect (slow)
                   #--
                   # Current percent complete
@@ -2975,7 +2942,7 @@ __aucdtect() {
                         # resolution spectrograms:
                         #   -x 5000
                         #   -y 1025
-                        sox "${decoded_wav}" \
+                        _sox "${decoded_wav}" \
                            -S \
                            -n spectrogram \
                            -c '' \
