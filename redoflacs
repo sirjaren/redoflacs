@@ -1722,9 +1722,14 @@ __num_issues() {
 __process_positional_parameters() {
    # Obtain and process the positional parameters invoked with the script
    #--
-   # If no arguments are made to the script show usage & short help
-   declare -g all  reallyall  create_spectrogram  no_color
+   # Set up global variables
+   declare -g all  reallyall  create_spectrogram  no_color  directory
 
+   # Set up local variables/arrays
+   declare -a args  long_args  short_args  non_args  converted_args
+   declare    regex
+
+   # If no arguments are made to the script show usage & short help
    if (( ${#} == 0 )) ; then
       __short_help
       exit 1
@@ -1801,7 +1806,7 @@ __process_positional_parameters() {
                # Enforce we have only digits after '--jobs=', and if so, set the
                # number of $jobs to its value, otherwise exit with a warning
                #--
-               declare regex="--jobs=[1-9]+$"  # Regular expression
+               regex="--jobs=[1-9]+$"  # Regular expression
                if [[ "$i" =~ $regex ]] ; then
                   jobs="${i##*=}"  # --jobs=11 -> 11
                else
@@ -1850,7 +1855,7 @@ __process_positional_parameters() {
                # Enforce we have only digits after '-j', and if so, set the
                # number of $jobs to its value, otherwise exit with a warning
                #--
-               declare regex="[1-9]+$"  # Regular expression
+               regex="[1-9]+$"  # Regular expression
                if [[ "${OPTARG}" =~ $regex ]] ; then
                   jobs="${OPTARG}"  # OPTARG is the argument after 'j' (j:)
                else
