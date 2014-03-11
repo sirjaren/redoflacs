@@ -53,6 +53,10 @@ __display_missing_commands_header() {
 __long_help() {
    # Display a lot of help
    #--
+   # Set up local variables
+   declare tmp_man_page="/tmp/redoflacs_man_$$.1"  # Temp man page
+   declare long_help                               # Man page data
+
    long_help=".TH \"REDOFLACS\" 1
 .SH NAME
 redoflacs \\- Parallel BASH commandline FLAC compressor, verifier, organizer, analyzer, and retagger
@@ -422,8 +426,9 @@ Thanks to all the people whom have provided feedback and support!
 .SH REVISION
 [ 4 ]"
 
-   # Print out help to temporary file which will read by 'man'
-   printf "%s\n" "${long_help}" > "${tmp_man_page}"
+   printf "%s\n" "${long_help}" > "${tmp_man_page}"  # Generate file for 'man'
+   man "${tmp_man_page}"    # Display man page
+   rm -f "${tmp_man_page}"  # Remove temporary 'man' file after exiting 'man'
 }
 
 #-------------------------------------------------------------------------------
@@ -468,11 +473,10 @@ __message_log_exists() {
    #--
    # $1 determines the log file to use, as well as how many lines are printed
    # out to correctly set the current row.  Possible values:
-   #   aucdtect          aucdtect_spectrogram        md5_check
-   #   compress_verify   compress_no_test            test
-   #   replaygain_test   replaygain_force_apply      replaygain_apply
-   #   retag_analyze     retag_apply                 extract_images
-   #   prune
+   #   aucdtect                  md5_check           compress_verify
+   #   compress_no_test          test                replaygain_test
+   #   replaygain_force_apply    replaygain_apply    retag_analyze
+   #   retag_apply               extract_images      prune
    #--
    case "$1" in
       'aucdtect'*)
@@ -508,11 +512,10 @@ __create_log() {
    # as well as formatting/aligning log lines
    #--
    # $1 determines the log file to create, and is any one of these values:
-   #   aucdtect          aucdtect_spectrogram        md5_check
-   #   compress_verify   compress_no_test            test
-   #   replaygain_test   replaygain_force_apply      replaygain_apply
-   #   retag_analyze     retag_apply                 extract_images
-   #   prune
+   #   aucdtect                  md5_check           compress_verify
+   #   compress_no_test          test                replaygain_test
+   #   replaygain_force_apply    replaygain_apply    retag_analyze
+   #   retag_apply               extract_images      prune
    #--
    # Set up local variables/arrays
    declare    error_msg  filename  line
@@ -639,11 +642,10 @@ __message() {
    # Print out current operation message.
    #--
    # $1 determines which title message to print (if any).  Possible values:
-   #   aucdtect          aucdtect_spectrogram        md5_check
-   #   compress_verify   compress_no_test            test
-   #   replaygain_test   replaygain_force_apply      replaygain_apply
-   #   retag_analyze     retag_apply                 extract_images
-   #   prune
+   #   aucdtect                  md5_check           compress_verify
+   #   compress_no_test          test                replaygain_test
+   #   replaygain_force_apply    replaygain_apply    retag_analyze
+   #   retag_apply               extract_images      prune
    #--
    # Set up local variables
    declare message sub_message
@@ -702,11 +704,10 @@ __update_operation_status () {
    # Update $operation_summary[@] with the current operation status
    #--
    # $1 determines which operational index to update; possible values:
-   #   aucdtect          aucdtect_spectrogram        md5_check
-   #   compress_verify   compress_no_test            test
-   #   replaygain_test   replaygain_force_apply      replaygain_apply
-   #   retag_analyze     retag_apply                 extract_images
-   #   prune
+   #   aucdtect                  md5_check           compress_verify
+   #   compress_no_test          test                replaygain_test
+   #   replaygain_force_apply    replaygain_apply    retag_analyze
+   #   retag_apply               extract_images      prune
    #
    # $2 is the operational status, the values of which, can be:
    #   Operation Completed       Operation Interrupted
@@ -839,12 +840,12 @@ __print_progress() {
    # Display filename and current progress of operation
    #--
    # $1 is either the operation:
-   #   aucdtect          aucdtect_spectrogram        md5_check
-   #   compress_verify   compress_no_test            test
-   #   replaygain_test   replaygain_force_apply      replaygain_apply
-   #   retag_analyze     retag_apply                 extract_images
-   #   prune             decode                      aucdtect_fast
-   #   aucdtect_slow     spectrogram
+   #   aucdtect                  md5_check           compress_verify
+   #   compress_no_test          test                replaygain_test
+   #   replaygain_force_apply    replaygain_apply    retag_analyze
+   #   retag_apply               extract_images      prune
+   #   decode                    aucdtect_fast       aucdtect_slow
+   #   spectrogram
    #
    # $2 is percent
    # $3 is filename to print (may be truncated)
@@ -906,11 +907,10 @@ __trap_sigint() {
    #
    # $2 determines which additional cleanup may need to be performed when
    # starting '__exit_cleanup'.  Possible values:
-   #   aucdtect          aucdtect_spectrogram        md5_check
-   #   compress_verify   compress_no_test            test
-   #   replaygain_test   replaygain_force_apply      replaygain_apply
-   #   retag_analyze     retag_apply                 extract_images
-   #   prune
+   #   aucdtect                  md5_check           compress_verify
+   #   compress_no_test          test                replaygain_test
+   #   replaygain_force_apply    replaygain_apply    retag_analyze
+   #   retag_apply               extract_images      prune
    #--
    __kill_jobs "$(jobs -rp)"
 
@@ -934,11 +934,10 @@ __exit_cleanup() {
    # $1 determines which operation requires additional cleanup.  This value is
    # normally obtained from $2 in the '__trap_sigint' function.  Possible
    # values:
-   #   aucdtect          aucdtect_spectrogram        md5_check
-   #   compress_verify   compress_no_test            test
-   #   replaygain_test   replaygain_force_apply      replaygain_apply
-   #   retag_analyze     retag_apply                 extract_images
-   #   prune
+   #   aucdtect                  md5_check           compress_verify
+   #   compress_no_test          test                replaygain_test
+   #   replaygain_force_apply    replaygain_apply    retag_analyze
+   #   retag_apply               extract_images      prune
    #--
    case "${1}" in
       # Remove temporary script-created files
@@ -958,6 +957,7 @@ __exit_cleanup() {
    stty ${old_stty} < /dev/stderr  # Restore old stty settings
    printf "\033[?25h"              # Restore the cursor
    rm -f "${job_fifo}"             # Remove temporary FIFO
+   rm -f "${tmp_picture_blocks}"   # Remove temporary 'metaflac' block streams
    __summary                       # Display Summary Of Operations
 
    exit 130
@@ -1060,11 +1060,11 @@ __get_percent_complete() {
    # Return an operation's completion percentage, expressed as an integer
    #--
    # $1 is the operation to choose how to obtain the percentage, which can be:
-   #   aucdtect          aucdtect_spectrogram        md5_check
-   #   compress_verify   compress_no_test            test
-   #   replaygain_test   replaygain_force_apply      replaygain_apply
-   #   retag_analyze     retag_apply                 extract_images
-   #   prune             decode
+   #   aucdtect                  md5_check           compress_verify
+   #   compress_no_test          test                replaygain_test
+   #   replaygain_force_apply    replaygain_apply    retag_analyze
+   #   retag_apply               extract_images      prune
+   #   decode
    #
    # $2 is a (possibly multiline) string of text from a command binary's output
    # with a percentage string contained within
@@ -1471,7 +1471,7 @@ __truncate_filename() {
 __find_cores() {
    # Determine number of jobs to run via the number CPUs/cores available
    #--
-   # Set up local variable
+   # Set up global variable
    declare -gi jobs='2'                  # By default, set $jobs to '2'
    declare -g  jobs_display='(Default)'  # Default $jobs determination
 
@@ -1503,55 +1503,58 @@ __find_artwork() {
    #--
    # Set up local variables/array
    declare -a artwork_blocks
-   declare tmp_picture_blocks="/tmp/redoflacs_picture_blocks_$$"
+   declare tmp_picture_blocks="/tmp/redoflacs_block_stream_${BASHPID}"
 
    # Grab all the PICTURE blocks from current FLAC file, storing into an array
    #--
    # It's much faster to read in from a temporary file than via process
    # substitution
-   metaflac --list --block-type=PICTURE "${1}" > "$tmp_picture_blocks"
+   metaflac --list --block-type=PICTURE "${1}" > "${tmp_picture_blocks}"
 
-   # Only read in the lines we care about and store into array
-   mapfile -n0 -t artwork_blocks < \
-   <(
-      while read -r ; do
-         # We only care about the block, picture and MIME type lines
-         [[ "$REPLY" == 'METADATA'* || "$REPLY" == '  '[tM]* ]] && printf "%s\n" "$REPLY"
-      done < "$tmp_picture_blocks"
-   )
+   # Continue if there were any PICTURE blocks found in current FLAC
+   if [[ -s "${tmp_picture_blocks}" ]] ; then
+      # Only read in the lines we care about and store into array
+      mapfile -n0 -t artwork_blocks < \
+      <(
+         while read -r ; do
+            # We only care about the block, picture and MIME type lines
+            [[ "${REPLY}" == 'METADATA'* || "${REPLY}" == '  '[tM]* ]] && printf "%s\n" "${REPLY}"
+         done < "${tmp_picture_blocks}"
+      )
 
-   rm -f "$tmp_picture_blocks"  # Remove temporary 'metaflac' listing
+      # Run through each line obtained and parse out the information wanted
+      #--
+      # $artwork_blocks[@] looks something like this:
+      #   'METADATA block #2'
+      #   '  type: 6 (PICTURE)'
+      #   '  type: 5 (Leaflet page)'
+      #   '  MIME type: image/jpeg'
+      #   'METADATA block #3'
+      #   '  type: 6 (PICTURE)'
+      #   '  type: 6 (Media (e.g. label side of CD))'
+      #   '  MIME type: image/jpeg'
+      #   'METADATA block #4'
+      #   '  type: 6 (PICTURE)'
+      #   '  type: 7 (Lead artist/lead performer/soloist)'
+      #   '  MIME type: image/jpg'
+      #--
+      for i in "${!artwork_blocks[@]}" ; do
+         if [[ "${artwork_blocks[$i]}" == 'METADATA'* ]] ; then
+            block_id="${artwork_blocks[$i]##* #}"  # METADATA block #4 -> 4
 
-   # Run through each line obtained and parse out the information wanted
-   #--
-   # $artwork_blocks[@] looks something like this:
-   #   'METADATA block #2'
-   #   '  type: 6 (PICTURE)'
-   #   '  type: 5 (Leaflet page)'
-   #   '  MIME type: image/jpeg'
-   #   'METADATA block #3'
-   #   '  type: 6 (PICTURE)'
-   #   '  type: 6 (Media (e.g. label side of CD))'
-   #   '  MIME type: image/jpeg'
-   #   'METADATA block #4'
-   #   '  type: 6 (PICTURE)'
-   #   '  type: 7 (Lead artist/lead performer/soloist)'
-   #   '  MIME type: image/jpg'
-   #--
-   for i in "${!artwork_blocks[@]}" ; do
-      if [[ "${artwork_blocks[$i]}" == 'METADATA'* ]] ; then
-         block_id="${artwork_blocks[$i]##* #}"  # METADATA block #4 -> 4
+            # type: 8 (Artist/Performer) -> art_id='8', art_desc='(Artist-Performer)'
+            read -r _ art_id art_desc <<< "${artwork_blocks[$((i + 2))]//\//-}"
 
-         # type: 8 (Artist/Performer) -> art_id='8', art_desc='(Artist-Performer)'
-         read -r _ art_id art_desc <<< "${artwork_blocks[$((i + 2))]//\//-}"
+            # MIME type: image/jpeg -> 'jpg'
+            IFS='/' read -r _ art_ext <<< "${artwork_blocks[$((i + 3))]/jpeg/jpg}"
 
-         # MIME type: image/jpeg -> 'jpg'
-         IFS='/' read -r _ art_ext <<< "${artwork_blocks[$((i + 3))]/jpeg/jpg}"
+            # Store artwork information into array as a single index
+            artwork+=( "${block_id}:${art_id} ${art_desc}.${art_ext}" )
+         fi
+      done
+   fi
 
-         # Store artwork information into array as a single index
-         artwork+=( "${block_id}:${art_id} ${art_desc}.${art_ext}" )
-      fi
-   done
+   rm -f "${tmp_picture_blocks}"  # Remove temporary 'metaflac' block streams
 }
 
 #-------------------------------------------------------------------------------
@@ -1614,9 +1617,7 @@ __countdown_metadata() {
    __error "when re-tagging the selected files:\n" >&2
 
    # Creates the listing of tags to be kept
-   for i in "${tags[@]}" ; do
-      printf "     ${i}\n" >&2
-   done
+   printf "     %s\n" "${tags[@]}" >&2
 
    # Warning message about embedded coverart
    __error "By default, this script will ${cyan}REMOVE${reset} the legacy ${cyan}COVERART${reset} tag.\n" >&2
@@ -1634,7 +1635,7 @@ __countdown_metadata() {
    # 10 second countdown
    for count in {10..1} ; do
       printf "${red}%d ${reset}" "$count"
-      read -t1                   # Sleep 1
+      read -t1  # Sleep 1
    done
 
    printf '\n'  # Advance countdown to next line
@@ -1665,8 +1666,8 @@ __countdown_config() {
 
    # 10 second countdown
    for count in {10..1} ; do
-      printf "${red}%s${reset}%s" "$count" ' '
-      read -t1                   # Sleep 1
+      printf "${red}%s ${reset}" "$count"
+      read -t1  # Sleep 1
    done
 }
 
@@ -1696,20 +1697,18 @@ __clear_jobs_fd() {
    #--
    # $1 is the FIFO to tie the file descriptor to
    #--
-   exec 3<&- 3>&-   # Close file descriptor
-   exec 3<>"$1"     # Open file descriptor read/write
+   exec 3<&- 3>&-  # Close file descriptor
+   exec 3<>"$1"    # Open file descriptor read/write
 }
 
 #-------------------------------------------------------------------------------
 
 __num_issues() {
-   # Display the number of issues an operation may have by reading in the
-   # number of ticks from the temporary issues_count file, returning the proper
-   # message for use with the Summary Of Operations table
+   # Return a string detailing the number of issues an operation may have had
    #--
-   declare fail_count   # Set up local variable
+   declare fail_count  # Set up local variable
 
-   read -r fail_count < "${issue_ticks}"   # Read in number of issue ticks
+   read -r fail_count < "${issue_ticks}"  # Read in number of issue ticks
 
    if (( ${#fail_count} == 1 )) ; then
       printf "%s Issue\n" "${#fail_count}"
@@ -1724,246 +1723,225 @@ __process_positional_parameters() {
    # Obtain and process the positional parameters invoked with the script
    #--
    # If no arguments are made to the script show usage & short help
+   declare -g all  reallyall  create_spectrogram  no_color
+
    if (( ${#} == 0 )) ; then
       __short_help
       exit 1
    fi
 
-   # Add case where only one argument is specified
+   # If only one argument was called
    if (( ${#} == 1 )) ; then
-      case "${1}" in
+      case "$1" in
+         '--help'|'-h')        __long_help     ; exit 0 ;;
          '--version'|'-v')     __print_version ; exit 0 ;;
-         '--help'|'-h')
-            # Create the temporary file in which a man page will be
-            # generated
-            tmp_man_page="/tmp/redoflacs_man_$$.1"
-
-            # Generate the man page to the above temporary location
-            __long_help
-
-            # Read the man page with 'man'
-            man "${tmp_man_page}"
-
-            # After reading, remove temporary file and exit
-            rm -f "${tmp_man_page}"
-
-            exit 0
-         ;;
-         '--new-config'|'-o')  __new_config ; exit 0 ;;
-         *)                __usage      ; exit 1 ;;
+         '--new-config'|'-o')  __new_config    ; exit 0 ;;
+         *)                    __usage         ; exit 1 ;;
       esac
    fi
 
-   # Add case where two arguments are specified and the
-   # arguments called are not to have anything after them
+   # If only two arguments were called
    if (( ${#} == 2 )) ; then
-      case "${1}" in
-         '--jobs='[[:digit:]]*|'-j'[[:digit:]]*)  __usage ; exit 1 ;;
-         '--no-color'|'-n')                       __usage ; exit 1 ;;
-         '--version'|'-v')                        __usage ; exit 1 ;;
-         '--new-config'|'-o')                     __usage ; exit 1 ;;
-         '--help'|'-h')                           __usage ; exit 1 ;;
+      case "$1" in
+         # The number of jobs cannot be specified without an operation
+         '--jobs='[[:digit:]]*' '|'-j'[[:digit:]]*' ')
+            __usage
+            __error "${cyan}${1}${reset} cannot used without an operation specified.\n" >&2
+            exit 1
       esac
    fi
 
-   # Separate the long and short style arguments into their
-   # own arrays as well as capture the last non-arguements, to
-   # prevent multiple directories being called
    for i in "${@}" ; do
-      if [[ "${i}" == --* ]] ; then
-         long_style_arguments_array+=( "${i}" )
-      elif [[ "${i}" == -* ]] ; then
-         short_style_arguments_array+=( "${i}" )
-      else
-         non_arguments_array+=( "${i}" )
-      fi
+      # Separate long, short, and non arguments into separate arrays to be
+      # converted into short arguments for 'getopts' to process correctly
+      #--
+      case "$i" in
+         '--'*) long_args+=( "${i}" )   ;;
+         '-'*)  short_args+=( "${i}" )  ;;
+         *)     non_args+=( "${i}" )    ;;
+      esac
    done
 
-   # If there are 0 (zero) directories or more than 1, exit script
-   if (( ${#non_arguments_array[@]} == 0 || ${#non_arguments_array[@]} > 1 )) ; then
+   # If there isn't a single non-argument (directory), exit
+   if (( ${#non_args[@]} != 1 )) ; then
       __usage
       exit 1
    fi
 
-   # If there were any long style arguments called, convert them
-   # to short style in order for getopts to be able to process
-   # them correctly (ignoring '--help', '--version', '--new-config' since
-   # this is taken care of above).  Add invalid arguments to it's
-   # own array
+   # Long arguments
+   #--
+   # If any were called, convert long arguments to short, allowing 'getopts' to
+   # process them
+   #--
+   if [[ -n "${long_args[@]}" ]] ; then
+      for i in "${long_args[@]}" ; do
+         case "$i" in
+            # These arguments are to be called by themselves, so quit
+            '--version')              __usage ; exit 1        ;;
+            '--help')                 __usage ; exit 1        ;;
+            '--new-config')           __usage ; exit 1        ;;
 
-   if [[ -n "${long_style_arguments_array[@]}" ]] ; then
-      for i in "${long_style_arguments_array[@]}" ; do
-         case "${i}" in
-            '--aucdtect')             converted_arguments_array+=( -a )   ;;
-            '--aucdtect-spectrogram') converted_arguments_array+=( -A )   ;;
-            '--md5check')             converted_arguments_array+=( -m )   ;;
-            '--compress')             converted_arguments_array+=( -c )   ;;
-            '--compress-notest')      converted_arguments_array+=( -C )   ;;
-            '--test')                 converted_arguments_array+=( -t )   ;;
-            '--replaygain')           converted_arguments_array+=( -g )   ;;
-            '--replaygain-noforce')   converted_arguments_array+=( -G )   ;;
-            '--retag')                converted_arguments_array+=( -r )   ;;
-            '--extract-artwork')      converted_arguments_array+=( -e )   ;;
-            '--prune')                converted_arguments_array+=( -p )   ;;
-            '--all')                  converted_arguments_array+=( -l )   ;;
-            '--reallyall')            converted_arguments_array+=( -L )   ;;
-            '--no-color')             converted_arguments_array+=( -n )   ;;
+            # Send long arguments to array to process later
+            '--aucdtect')             converted_args+=( -a )  ;;
+            '--aucdtect-spectrogram') converted_args+=( -A )  ;;
+            '--md5check')             converted_args+=( -m )  ;;
+            '--compress')             converted_args+=( -c )  ;;
+            '--compress-notest')      converted_args+=( -C )  ;;
+            '--test')                 converted_args+=( -t )  ;;
+            '--replaygain')           converted_args+=( -g )  ;;
+            '--replaygain-noforce')   converted_args+=( -G )  ;;
+            '--retag')                converted_args+=( -r )  ;;
+            '--extract-artwork')      converted_args+=( -e )  ;;
+            '--prune')                converted_args+=( -p )  ;;
+            '--all')                  converted_args+=( -l )  ;;
+            '--reallyall')            converted_args+=( -L )  ;;
+            '--no-color')             converted_args+=( -n )  ;;
 
-            # Set number of jobs to run via the required
-            # integer argument after '-j'
-            '--jobs='[[:digit:]]*)    jobs="${i##*=}"                     ;;
-
-            '--version')     __usage ; exit 1 ;;
-            '--help')        __usage ; exit 1 ;;
-            '--new-config')  __usage ; exit 1 ;;
-            *)
-               # Set invalid argument into array
-               invalid_arguments_array+=( "${i}" )
+            '--jobs='[[:digit:]]*)
+               # Enforce we have only digits after '--jobs=', and if so, set the
+               # number of $jobs to its value, otherwise exit with a warning
+               #--
+               declare regex="--jobs=[1-9]+$"  # Regular expression
+               if [[ "$i" =~ $regex ]] ; then
+                  jobs="${i##*=}"  # --jobs=11 -> 11
+               else
+                  __usage
+                  __error "${cyan}--jobs${reset} requires a non-zero integer after it (eg. ${cyan}--jobs=11${reset}).\n" >&2
+                  exit 1
+               fi
             ;;
+
+            # All other arguments are invalid
+            *)  invalid_args+=( "${i}" )  ;;
          esac
       done
    fi
 
-   # If there were any short style arguments called, go through
-   # them, adding the valid arguments to the "converted_arguments"
-   # array and adding invalid arguments to it's own array
-   if [[ -n "${short_style_arguments_array[@]}" ]] ; then
-      while getopts ":LlcCtgGaAmeprnj:hvo" arguments "${short_style_arguments_array[@]}" ; do
-         case "${arguments}" in
-            L) converted_arguments_array+=( -L ) ;;
-            a) converted_arguments_array+=( -a ) ;;
-            A) converted_arguments_array+=( -A ) ;;
-            m) converted_arguments_array+=( -m ) ;;
-            c) converted_arguments_array+=( -c ) ;;
-            C) converted_arguments_array+=( -C ) ;;
-            t) converted_arguments_array+=( -t ) ;;
-            g) converted_arguments_array+=( -g ) ;;
-            G) converted_arguments_array+=( -G ) ;;
-            r) converted_arguments_array+=( -r ) ;;
-            e) converted_arguments_array+=( -e ) ;;
-            p) converted_arguments_array+=( -p ) ;;
-            l) converted_arguments_array+=( -l ) ;;
-            n) converted_arguments_array+=( -n ) ;;
+   # Short arguments
+   #--
+   # If any were called, add valid short arguments (using 'getopts') to the same
+   # array as long arguments
+   #--
+   if [[ -n "${short_args[@]}" ]] ; then
+      while getopts ":j:LlcCtgGaAmeprnhvo" args "${short_args[@]}" ; do
+         case "${args}" in
+            # These arguments are to be called by themselves, so quit
+            'v') __usage ; exit 1        ;;
+            'h') __usage ; exit 1        ;;
+            'o') __usage ; exit 1        ;;
 
-            j)
-               # Set number of jobs to run via the required
-               # integer argument after '-j'
-               jobs="${OPTARG}"
+            # Send short arguments to array to process later
+            'L') converted_args+=( -L )  ;;
+            'a') converted_args+=( -a )  ;;
+            'A') converted_args+=( -A )  ;;
+            'm') converted_args+=( -m )  ;;
+            'c') converted_args+=( -c )  ;;
+            'C') converted_args+=( -C )  ;;
+            't') converted_args+=( -t )  ;;
+            'g') converted_args+=( -g )  ;;
+            'G') converted_args+=( -G )  ;;
+            'r') converted_args+=( -r )  ;;
+            'e') converted_args+=( -e )  ;;
+            'p') converted_args+=( -p )  ;;
+            'l') converted_args+=( -l )  ;;
+            'n') converted_args+=( -n )  ;;
 
-               # Do not allow jobs to be '0'
-               if (( jobs == 0 )) ; then
-                  # Currently, this is just for '-j' so we can explicity
-                  # specify it
-                  parameter_errors_array+=( "${cyan}-j${reset} requires a non-zero integer after it (eg. ${cyan}-j11${reset})." )
+            'j')
+               # Enforce we have only digits after '-j', and if so, set the
+               # number of $jobs to its value, otherwise exit with a warning
+               #--
+               declare regex="[1-9]+$"  # Regular expression
+               if [[ "${OPTARG}" =~ $regex ]] ; then
+                  jobs="${OPTARG}"  # OPTARG is the argument after 'j' (j:)
                else
-                  converted_arguments_array+=( -j )
+                  __usage
+                  __error "${cyan}-j${reset} requires a non-zero integer after it (eg. ${cyan}-j11${reset}).\n" >&2
+                  exit 1
                fi
-            ;;
-
-            h) converted_arguments_array+=( -h ) ;;
-            v) converted_arguments_array+=( -v ) ;;
-            o) converted_arguments_array+=( -o ) ;;
-
-            :)
-               # Currently, this is just for '-j' so we can explicity
-               # specify it
-               parameter_errors_array+=( "${cyan}-${OPTARG}${reset} requires a non-zero integer after it (eg. ${cyan}-${OPTARG}11${reset})." )
             ;;
             ?)
                # Set invalid argument from getopts into array using
                # ${OPTARG}
-               invalid_arguments_array+=( "-${OPTARG}" )
+               invalid_args+=( "-${OPTARG}" )
             ;;
          esac
       done
    fi
 
-   # If there were invalid arguments called, display them and
-   # exit script
-   if [[ -n "${invalid_arguments_array[@]}" || -n "${parameter_errors_array[@]}" ]] ; then
+   # Display invalid arguments, if any
+   if [[ -n "${invalid_args[@]}" ]] ; then
       __usage
-
-      if [[ -n "${invalid_arguments_array[@]}" ]] ; then
-         __error "\nInvalid options:" >&2
-
-         for i in "${invalid_arguments_array[@]}" ; do
-            printf " ${cyan}${i}${reset}" >&2
-         done
-
-         printf '\n' >&2
-      fi
-
-      if [[ -n "${parameter_errors_array[@]}" ]] ; then
-         printf '\n' >&2
-
-         for i in "${parameter_errors_array[@]}" ; do
-            __error "${i}\n" >&2
-         done
-      fi
-
+      __error "Invalid option(s): " >&2
+      printf "${cyan}%s${reset}\n" "${invalid_args[*]}" >&2
       exit 1
    fi
 
-   # Run through all the converted arguments and set up the correct
-   # values based on what the user called, thereby allowing the
-   # script to process said values and execute the corresponding
-   # functions
-   for i in "${converted_arguments_array[@]}" ; do
+   # Process converted arguments
+   #--
+   # Set the operations to run (via $operations[@]) for each argument called
+   for i in "${converted_args[@]}" ; do
       case "${i}" in
-         '-l') all="true"                            ;;
-         '-L') reallyall="true"                      ;;
-         '-a') operations[0]='aucdtect'              ;;
-         '-A')
-            #operations[1]='aucdtect_spectrogram'
-            operations[1]='aucdtect'
-            create_spectrogram='true'
+         # These are the meta-arguments (do multiple operations)
+         '-l')
+            all="true"
+            operations[1]='md5_check'
+            operations[2]='compress_verify'
+            operations[5]='replaygain_test'
+            operations[6]='replaygain_force_apply'
+            operations[7]='retag_analyze'
+            operations[8]='retag_apply'
+            operations[10]='prune'
          ;;
-         '-m') operations[2]='md5_check'             ;;
-         '-c') operations[3]='compress_verify'       ;;
-         '-C') operations[4]='compress_no_test'      ;;
-         '-t') operations[5]='test'                  ;;
-         '-g'|'-G')
-            operations[6]='replaygain_test'
-            if [[ "${i}" == '-g' ]] ; then
-               operations[7]='replaygain_force_apply'
-            else  # '-G'
-               operations[7]='replaygain_apply'
-            fi
+         '-L')
+            reallyall="true"
+            create_spectrogram='true'
+            operations[0]='aucdtect'
+            operations[1]='md5_check'
+            operations[2]='compress_verify'
+            operations[5]='replaygain_test'
+            operations[6]='replaygain_force_apply'
+            operations[7]='retag_analyze'
+            operations[8]='retag_apply'
+            operations[10]='prune'
+         ;;
+
+         # Process individual arguments
+         '-a') operations[0]='aucdtect'          ;;
+         '-A')
+            create_spectrogram='true'
+            operations[0]='aucdtect'
+         ;;
+         '-m') operations[1]='md5_check'         ;;
+         '-c') operations[2]='compress_verify'   ;;
+         '-C') operations[3]='compress_no_test'  ;;
+         '-t') operations[4]='test'              ;;
+         '-g')
+            operations[5]='replaygain_test'
+            operations[6]='replaygain_force_apply'
+         ;;
+         '-G')
+            operations[5]='replaygain_test'
+            operations[6]='replaygain_apply'
          ;;
          '-r')
-            operations[8]='retag_analyze'
-            operations[9]='retag_apply'
+            operations[7]='retag_analyze'
+            operations[8]='retag_apply'
          ;;
          '-e')
-            operations[10]='extract_images'
-            check_artwork_dir="true"
+            operations[9]='extract_images'
          ;;
-         '-p') operations[11]='prune'                ;;
-         '-n') no_color="true"                       ;;
-         '-j')
-            # Do nothing, ${jobs} has already been stored
-            # in previous getopts loop
-            :
-         ;;
-         '-v') __usage ; exit 1 ;;
-         '-h') __usage ; exit 1 ;;
-         '-o') __usage ; exit 1 ;;
+         '-p') operations[10]='prune'            ;;
+         '-n') no_color="true"                   ;;
       esac
    done
 
-   # Put all the called arguments into an array
-   called_arguments_array=( "${@}" )
+   args=( "${@}" )  # Store arguments into an array to process
 
-   # Set the last argument as the directory and remove the
-   # ending slash (if any) to prevent double slashes from
-   # appearing
-   #
-   # This may appear if the directory chosen is the direct
-   # parent directory to the FLAC files to be processed.
-   #
-   # BASH 4.2 allows negative indices (ie):
-   #   directory="${called_arguments_array[-1]%/}"
-   directory="${called_arguments_array[$(( ${#called_arguments_array[@]} - 1 ))]%/}"
+   # Obtain the last element in $args[@], which is the directory to process
+   #--
+   # BASH 4.2 allows negative indices:
+   #   directory="${args[-1]%/}"
+   directory="${args[$(( ${#args[@]} - 1 ))]%/}"  # Remove ending slash (if any)
 }
 
 #-------------------------------------------------------------------------------
@@ -2295,11 +2273,10 @@ __run_parallel() {
    # Run a given operation with a specified number of jobs
    #--
    # $1 is the operational function to run multiple jobs, which can be:
-   #   aucdtect          aucdtect_spectrogram     md5_check
-   #   compress_verify   compress_no_test         test
-   #   replaygain_test   replaygain_force_apply   replaygain_apply
-   #   retag_analyze     retag_apply              extract_artwork
-   #   prune
+   #   aucdtect                  md5_check           compress_verify
+   #   compress_no_test          test                replaygain_test
+   #   replaygain_force_apply    replaygain_apply    retag_analyze
+   #   retag_apply               extract_images      prune
    #--
    # Set up local variables/arrays
    declare      item
@@ -2366,11 +2343,10 @@ __replaygain_test() {
    #--
    # $1 is the filename
    # $2 is the operation that's currently being run, of which, can be:
-   #   aucdtect          aucdtect_spectrogram     md5_check
-   #   compress_verify   compress_no_test         test
-   #   replaygain_test   replaygain_force_apply   replaygain_apply
-   #   retag_analyze     retag_apply              extract_artwork
-   #   prune
+   #   aucdtect                  md5_check           compress_verify
+   #   compress_no_test          test                replaygain_test
+   #   replaygain_force_apply    replaygain_apply    retag_analyze
+   #   retag_apply               extract_images      prune
    # $3 is a string representing number items processed, eg: [43/439]
    # $4 is the current operation's row placement
    #--
@@ -2439,11 +2415,10 @@ __replaygain_apply() {
    #--
    # $1 is the directory (includes a slash, ie 'dir/'
    # $2 is the operation that's currently being run, of which, can be:
-   #   aucdtect          aucdtect_spectrogram     md5_check
-   #   compress_verify   compress_no_test         test
-   #   replaygain_test   replaygain_force_apply   replaygain_apply
-   #   retag_analyze     retag_apply              extract_artwork
-   #   prune
+   #   aucdtect                  md5_check           compress_verify
+   #   compress_no_test          test                replaygain_test
+   #   replaygain_force_apply    replaygain_apply    retag_analyze
+   #   retag_apply               extract_images      prune
    # $3 is a string representing number items processed, eg: [43/439]
    # $4 is the current operation's row placement
    #--
@@ -2522,11 +2497,10 @@ __replaygain_force_apply() {
    #--
    # $1 is the directory (includes a slash, ie 'dir/'
    # $2 is the operation that's currently being run, of which, can be:
-   #   aucdtect          aucdtect_spectrogram     md5_check
-   #   compress_verify   compress_no_test         test
-   #   replaygain_test   replaygain_force_apply   replaygain_apply
-   #   retag_analyze     retag_apply              extract_artwork
-   #   prune
+   #   aucdtect                  md5_check           compress_verify
+   #   compress_no_test          test                replaygain_test
+   #   replaygain_force_apply    replaygain_apply    retag_analyze
+   #   retag_apply               extract_images      prune
    # $3 is a string representing number items processed, eg: [43/439]
    # $4 is the current operation's row placement
    #--
@@ -2570,11 +2544,10 @@ __compress_verify() {
    #--
    # $1 is the directory
    # $2 is the operation that's currently being run, of which, can be:
-   #   aucdtect          aucdtect_spectrogram     md5_check
-   #   compress_verify   compress_no_test         test
-   #   replaygain_test   replaygain_force_apply   replaygain_apply
-   #   retag_analyze     retag_apply              extract_artwork
-   #   prune
+   #   aucdtect                  md5_check           compress_verify
+   #   compress_no_test          test                replaygain_test
+   #   replaygain_force_apply    replaygain_apply    retag_analyze
+   #   retag_apply               extract_images      prune
    # $3 is a string representing number items processed, eg: [43/439]
    # $4 is the current operation's row placement
    #--
@@ -2663,11 +2636,10 @@ __compress_no_test() {
    #--
    # $1 is the directory
    # $2 is the operation that's currently being run, of which, can be:
-   #   aucdtect          aucdtect_spectrogram     md5_check
-   #   compress_verify   compress_no_test         test
-   #   replaygain_test   replaygain_force_apply   replaygain_apply
-   #   retag_analyze     retag_apply              extract_artwork
-   #   prune
+   #   aucdtect                  md5_check           compress_verify
+   #   compress_no_test          test                replaygain_test
+   #   replaygain_force_apply    replaygain_apply    retag_analyze
+   #   retag_apply               extract_images      prune
    # $3 is a string representing number items processed, eg: [43/439]
    # $4 is the current operation's row placement
    #--
@@ -2732,11 +2704,10 @@ __test() {
    #--
    # $1 is the filename
    # $2 is the operation that's currently being run, of which, can be:
-   #   aucdtect          aucdtect_spectrogram     md5_check
-   #   compress_verify   compress_no_test         test
-   #   replaygain_test   replaygain_force_apply   replaygain_apply
-   #   retag_analyze     retag_apply              extract_artwork
-   #   prune
+   #   aucdtect                  md5_check           compress_verify
+   #   compress_no_test          test                replaygain_test
+   #   replaygain_force_apply    replaygain_apply    retag_analyze
+   #   retag_apply               extract_images      prune
    # $3 is a string representing number items processed, eg: [43/439]
    # $4 is the current operation's row placement
    #--
@@ -2786,11 +2757,10 @@ __aucdtect() {
    #--
    # $1 is the filename
    # $2 is the operation that's currently being run, of which, can be:
-   #   aucdtect          aucdtect_spectrogram     md5_check
-   #   compress_verify   compress_no_test         test
-   #   replaygain_test   replaygain_force_apply   replaygain_apply
-   #   retag_analyze     retag_apply              extract_artwork
-   #   prune
+   #   aucdtect                  md5_check           compress_verify
+   #   compress_no_test          test                replaygain_test
+   #   replaygain_force_apply    replaygain_apply    retag_analyze
+   #   retag_apply               extract_images      prune
    # $3 is a string representing number items processed, eg: [43/439]
    # $4 is the current operation's row placement
    #--
@@ -3067,11 +3037,10 @@ __md5_check() {
    #--
    # $1 is the filename
    # $2 is the operation that's currently being run, of which, can be:
-   #   aucdtect          aucdtect_spectrogram     md5_check
-   #   compress_verify   compress_no_test         test
-   #   replaygain_test   replaygain_force_apply   replaygain_apply
-   #   retag_analyze     retag_apply              extract_artwork
-   #   prune
+   #   aucdtect                  md5_check           compress_verify
+   #   compress_no_test          test                replaygain_test
+   #   replaygain_force_apply    replaygain_apply    retag_analyze
+   #   retag_apply               extract_images      prune
    # $3 is a string representing number items processed, eg: [43/439]
    # $4 is the current operation's row placement
    #--
@@ -3128,11 +3097,10 @@ __retag_analyze() {
    #--
    # $1 is the filename
    # $2 is the operation that's currently being run, of which, can be:
-   #   aucdtect          aucdtect_spectrogram     md5_check
-   #   compress_verify   compress_no_test         test
-   #   replaygain_test   replaygain_force_apply   replaygain_apply
-   #   retag_analyze     retag_apply              extract_artwork
-   #   prune
+   #   aucdtect                  md5_check           compress_verify
+   #   compress_no_test          test                replaygain_test
+   #   replaygain_force_apply    replaygain_apply    retag_analyze
+   #   retag_apply               extract_images      prune
    # $3 is a string representing number items processed, eg: [43/439]
    #--
    trap '__kill_jobs "$(jobs -rp)"' EXIT
@@ -3297,11 +3265,10 @@ __retag_apply() {
    #--
    # $1 is the filename
    # $2 is the operation that's currently being run, of which, can be:
-   #   aucdtect          aucdtect_spectrogram     md5_check
-   #   compress_verify   compress_no_test         test
-   #   replaygain_test   replaygain_force_apply   replaygain_apply
-   #   retag_analyze     retag_apply              extract_artwork
-   #   prune
+   #   aucdtect                  md5_check           compress_verify
+   #   compress_no_test          test                replaygain_test
+   #   replaygain_force_apply    replaygain_apply    retag_analyze
+   #   retag_apply               extract_images      prune
    # $3 is a string representing number items processed, eg: [43/439]
    # $4 is the current operation's row placement
    #--
@@ -3429,11 +3396,10 @@ __extract_images() {
    #--
    # $1 is the filename
    # $2 is the operation that's currently being run, of which, can be:
-   #   aucdtect          aucdtect_spectrogram     md5_check
-   #   compress_verify   compress_no_test         test
-   #   replaygain_test   replaygain_force_apply   replaygain_apply
-   #   retag_analyze     retag_apply              extract_artwork
-   #   prune
+   #   aucdtect                  md5_check           compress_verify
+   #   compress_no_test          test                replaygain_test
+   #   replaygain_force_apply    replaygain_apply    retag_analyze
+   #   retag_apply               extract_images      prune
    # $3 is a string representing number items processed, eg: [43/439]
    # $4 is the current operation's row placement
    #--
@@ -3480,7 +3446,7 @@ __extract_images() {
 
          # Prevent directory clobbering by creating an incremental version
          until [[ ! -d "${artwork_directory}" ]] ; do
-            artwork_directory="${artwork_directory}~$((backup++))~"
+            artwork_directory="${artwork_directory%~*~}~$((backup++))~"
          done
 
          mkdir -p "${artwork_directory}"  # Create artwork directory
@@ -3519,11 +3485,10 @@ __prune() {
    #--
    # $1 is the filename
    # $2 is the operation that's currently being run, of which, can be:
-   #   aucdtect          aucdtect_spectrogram     md5_check
-   #   compress_verify   compress_no_test         test
-   #   replaygain_test   replaygain_force_apply   replaygain_apply
-   #   retag_analyze     retag_apply              extract_artwork
-   #   prune
+   #   aucdtect                  md5_check           compress_verify
+   #   compress_no_test          test                replaygain_test
+   #   replaygain_force_apply    replaygain_apply    retag_analyze
+   #   retag_apply               extract_images      prune
    # $3 is a string representing number items processed, eg: [43/439]
    # $4 is the current operation's row placement
    #--
@@ -3700,7 +3665,7 @@ fi
 #-------------------------------------------------------------------------------
 
 # If '-e, --extract-artwork' was called, make sure $artwork_location is a valid
-if [[ "${check_artwork_dir}" == "true" ]] ; then
+if [[ "${operations[9]}" == 'extract_artwork' ]] ; then
    # Check if artwork_location is user-defined
    if [[ -n "${artwork_location}" ]] ; then
       # Put extracted artwork in user-defined location, testing to make sure
@@ -3754,7 +3719,7 @@ exec 4<>"${tmp_aucdtect_fd}"                         # Open read/write on fd '4'
 issue_ticks="/tmp/redoflacs_issue_file_$$"           # Issues/Errors file
 
 # Display a countdown if retagging FLACs
-[[ "${operations[8]}" == 'retag_analyze' ]] && __countdown_metadata
+[[ "${operations[7]}" == 'retag_analyze' ]] && __countdown_metadata
 
 __top_banner                                         # Display top banner
 total_items=( "${directory}"/**/*${flac_extension} ) # Total FLACs to process
@@ -3768,18 +3733,17 @@ for operation in "${operations[@]}" ; do
    # Loop through the various operations to run.  All the operations are to be
    # run, in order, which is detailed below:
    #   operations[0]='aucdtect'
-   #   operations[1]='aucdtect_spectrogram'
-   #   operations[2]='md5_check'
-   #   operations[3]='compress_verify'
-   #   operations[4]='compress_no_test'
-   #   operations[5]='test'
-   #   operations[6]='replaygain_test'
-   #   operations[7]='replaygain_force_apply'   # Conditionally set
-   #   operations[7]='replaygain_apply'         # Conditionally set
-   #   operations[8]='retag_analyze'
-   #   operations[9]='retag_apply'
-   #   operations[10]='extract_artwork'
-   #   operations[11]='prune'
+   #   operations[1]='md5_check'
+   #   operations[2]='compress_verify'
+   #   operations[3]='compress_no_test'
+   #   operations[4]='test'
+   #   operations[5]='replaygain_test'
+   #   operations[6]='replaygain_force_apply'   # Conditionally set
+   #   operations[6]='replaygain_apply'         # Conditionally set
+   #   operations[7]='retag_analyze'
+   #   operations[8]='retag_apply'
+   #   operations[9]='extract_artwork'
+   #   operations[10]='prune'
    #--
    case "${operation}" in
       'replaygain_'*'apply')
