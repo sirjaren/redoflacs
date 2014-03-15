@@ -1552,11 +1552,6 @@ __find_artwork() {
 __top_banner() {
    # Top banner displaying invocation settings
    #--
-   # If Redo Tags is called, create the necessary spacing
-   if [[ "${retag_flac}" == "true" ]] ; then
-      printf '\n\n'
-   fi
-
    read -r _ flac_version < <(flac --version)                # Flac Version
 
    printf " ${blue}%s${reset}\n" \
@@ -1871,9 +1866,9 @@ __process_positional_parameters() {
       exit 1
    fi
 
-   # Process converted arguments
+   # Process converted arguments, setting each operation to run into an array
    #--
-   # Set the operations to run (via $operations[@]) for each argument called
+   # Run through the catchall arugments first
    for i in "${converted_args[@]}" ; do
       case "${i}" in
          # These are the meta-arguments (do multiple operations)
@@ -1899,24 +1894,47 @@ __process_positional_parameters() {
             operations[8]='retag_apply'
             operations[10]='prune'
          ;;
+      esac
+   done
 
+   # Run through the individual operations
+   for i in "${converted_args[@]}" ; do
+      case "${i}" in
          # Process individual arguments
-         '-a') operations[0]='aucdtect'          ;;
+         '-a')
+            if [[ "${create_spectrogram}" == 'true' || "${operations[0]}" == 'conflict' ]] ; then
+               operations[0]='conflict'  # If already set
+            else
+               operations[0]='aucdtect'
+            fi
+         ;;
          '-A')
-            create_spectrogram='true'
-            operations[0]='aucdtect'
+            if [[ -n "${operations[0]}" && -z "${create_spectrogram}" ]] || [[ "${operations[0]}" == 'conflict' ]] ; then
+               operations[0]='conflict'  # If already set
+            else
+               create_spectrogram='true'
+               operations[0]='aucdtect'
+            fi
          ;;
          '-m') operations[1]='md5_check'         ;;
          '-c') operations[2]='compress_verify'   ;;
          '-C') operations[3]='compress_no_test'  ;;
          '-t') operations[4]='test'              ;;
          '-g')
-            operations[5]='replaygain_test'
-            operations[6]='replaygain_force_apply'
+            if [[ "${operations[6]}" == 'replaygain_apply' || "${operations[6]}" == 'conflict' ]] ; then
+               operations[6]='conflict'   # If already set
+            else
+               operations[5]='replaygain_test'
+               operations[6]='replaygain_force_apply'
+            fi
          ;;
          '-G')
-            operations[5]='replaygain_test'
-            operations[6]='replaygain_apply'
+            if [[ "${operations[6]}" == 'replaygain_force_apply' || "${operations[6]}" == 'conflict' ]] ; then
+               operations[6]='conflict'   # If already set
+            else
+               operations[5]='replaygain_test'
+               operations[6]='replaygain_apply'
+            fi
          ;;
          '-r')
             operations[7]='retag_analyze'
@@ -2027,135 +2045,73 @@ __check_missing_programs() {
 __check_conflicting_operations() {
    # Check for any conflicting operations/arguments
    #--
-   # If "-l, --all" and "-L, --reallyall" are both called, warn and exit
-   if [[ "${all}" == "true" && "${reallyall}" == "true" ]] ; then
+   # '-l, --all' and '-L, --reallyall' cannot be called together
+   if [[ "${all}" == 'true' && "${reallyall}" == 'true' ]] ; then
       __error "Running both ${cyan}-l, --all${reset} and ${cyan}-L, --reallyall${reset} conflict!\n" >&2
       __error "Please choose one or the other.\n" >&2
-
       exit 1
    fi
 
-   # If "-l, --all" or "-L, --reallyall" was called, check if arguments
-   # were called that already will be performed by the above argument(s).
-   # If any were called, display a warning and exit the script
-   if [[ "${all}" == "true" || "${reallyall}" == "true" ]] ; then
+   # Store conflicting arguments if '-l, --all' or '-L, --reallyall' was called
+   if [[ "${all}" == 'true' || "${reallyall}" == 'true' ]] ; then
+      # __compress_no_test()
+      [[ -n "${operations[3]}" ]] && conflicting_args+=( '-C, --compress_notest' )
 
-      # Check for "-c, --compress".  If used add it to array
-      if [[ "${compress_flac}" == "true" && "${skip_test}" == "false" ]] ; then
-         argument_conflict_array+=( "-c, --compress" )
-      # Check for "-C, --compress-notest".  If used add it to array
-      elif [[ "${compress_flac}" == "true" && "${skip_test}" == "true" ]] ; then
-         argument_conflict_array+=( "-C, --compress-notest" )
-      fi
+      case "${operations[6]}" in
+         # __replaygain_apply()
+         'replaygain_apply')
+            conflicting_args+=( '-G, --replaygain-noforce' )
+         ;;
+      esac
 
-      # Check for "-t, --test".  If used add it to array
-      if [[ "${test_flac}" == "true" ]] ; then
-         argument_conflict_array+=( "-t, --test" )
-      fi
-
-      # Check for "-m, --md5check".  If used add it to array
-      if [[ "${md5_check_flac}" == "true" ]] ; then
-         argument_conflict_array+=( "-m, --md5check" )
-      fi
-
-      # Check for "-p, --prune".  If used add it to array
-      if [[ "${prune_flac}" == "true" ]] ; then
-         argument_conflict_array+=( "-p, --prune" )
-      fi
-
-      # Check for "-g, --replaygain".  If used add it to array
-      if [[ "${replaygain_flac}" == "true" && "${replaygain_noforce}" != "true" ]] ; then
-         argument_conflict_array+=( "-g, --replaygain" )
-      # Check for "-G, --replaygain-noforce".  If used add it to array
-      elif [[ "${replaygain_flac}" == "true" && "${replaygain_noforce}" == "true" ]] ; then
-         argument_conflict_array+=( "-G, --replaygain-noforce" )
-      fi
-
-      # Check for "-r, --retag".  If used add it to array
-      if [[ "${retag_flac}" == "true" ]] ; then
-         argument_conflict_array+=( "-r, --retag" )
-      fi
-
-      # If "-L, --reallyall" was called, check for the various forms of calling
-      # auCDtect.  If it was called, add it to array
-      if [[ "${reallyall}" == "true" ]] ; then
-         if [[ "${aucdtect_flac}" == "true" && "${create_spectrogram}" == "true" ]] ; then
-            argument_conflict_array+=( "-A, --aucdtect-spectrogram" )
-         elif [[ "${aucdtect_flac}" == "true" && "${create_spectrogram}" != "true" ]] ; then
-            argument_conflict_array+=( "-a, --aucdtect" )
-         fi
-      fi
-
-      # If the array is not empty, the user called some incompatible options with
-      # "-l, --all" or "-L, --reallyall", so print which options were called that
-      # are incompatible and exit script
-      if [[ -n "${argument_conflict_array[@]}" ]] ; then
-         # "-l, --all"
-         if [[ "${all}" == "true" ]] ; then
+      # Display conflicting arguments and exit, if there were any
+      if [[ -n "${conflicting_args[@]}" ]] ; then
+         # '-l, --all'
+         if [[ "${all}" == 'true' ]] ; then
             __error "The below options conflict with ${cyan}-l, --all${reset}:\n" >&2
-         # "-L, --reallyall"
-         elif [[ "${reallyall}" == "true" ]] ; then
+         # '-L, --reallyall'
+         elif [[ "${reallyall}" == 'true' ]] ; then
             __error "The below options conflict with ${cyan}-L, --reallyall${reset}:\n" >&2
          fi
 
-         # Iterate through array and print each value
-         for i in "${argument_conflict_array[@]}" ; do
-            __error "     ${cyan}${i}${reset}\n" >&2
+         # Print each conflicting argument
+         for i in "${conflicting_args[@]}" ; do
+            __error "  ${cyan}${i}${reset}\n" >&2
          done
 
          __error "Please remove incompatible options.\n" >&2
-
          exit 1
       fi
    fi
 
-   # If "-C, --compress-notest" and "-c, --compress" are both called, warn and exit
-   if [[ "${skip_test}" == "true" && "${compress_test}" == "true" ]] ; then
+   # __compress_verify() and __compress_no_test()
+   if [[ -n "${operations[2]}" && -n "${operations[3]}" ]] ; then
       __error "Running both ${cyan}-c, --compress${reset} and ${cyan}-C, --compress-notest${reset} conflict!\n" >&2
       __error "Please choose one or the other.\n" >&2
       exit 1
    fi
 
-   # If "-c, --compress" and "-t, --test" are both called, warn and exit
-   if [[ "${compress_test}" == "true" && "${test_flac}" == "true" ]] ; then
+   # __compress_verify() and __test()
+   if [[ -n "${operations[2]}" && -n "${operations[4]}" ]] ; then
       __error "Running both ${cyan}-c, --compress${reset} and ${cyan}-t, --test${reset} conflict!\n" >&2
       __error "Please choose one or the other.\n" >&2
       exit 1
    fi
 
-   # If "-g, --replaygain" and "-G, --replaygain-noforce" are both called, warn and exit
-   if [[ "${replaygain_force}" == "true" && "${replaygain_noforce}" == "true" ]] ; then
+   # __replaygain_force_apply and __replaygain_apply
+   # 'conflict' is set during parameter handling if conflicts will ocurr
+   if [[ "${operations[6]}" == 'conflict' ]] ; then
       __error "Running both ${cyan}-g, --replaygain${reset} and ${cyan}-G, --replaygain-noforce${reset} conflict!\n" >&2
       __error "Please choose one or the other.\n" >&2
       exit 1
    fi
 
-   # If "-a, --aucdtect" and "-A, --aucdtect-spectrogram" are both called, warn and exit
-   if [[ "${no_spectrogram}" == "true"  && "${create_spectrogram}" == "true" ]] ; then
+   # __aucdtect and __aucdtect w/ spectrogram creation
+   # 'conflict' is set during parameter handling if conflicts will ocurr
+   if [[ "${operations[0]}" == 'conflict' ]] ; then
       __error "Running both ${cyan}-a, --aucdtect${reset} and ${cyan}-A, --aucdtect-spectrogram${reset} conflict!\n" >&2
       __error "Please choose one or the other.\n" >&2
       exit 1
-   fi
-
-   # If "-l, --all" or "-L, --reallyall" was called,
-   # enable the various arguments to allow script to
-   # run them
-   if [[ "${all}" == "true" ]] ; then
-      compress_flac="true"
-      md5_check_flac="true"
-      prune_flac="true"
-      replaygain_flac="true"
-      retag_flac="true"
-   elif [[ "${reallyall}" == "true" ]] ; then
-      compress_flac="true"
-      md5_check_flac="true"
-      prune_flac="true"
-      replaygain_flac="true"
-      retag_flac="true"
-      aucdtect_flac="true"
-      # This is needed to let script know that we want auCDtect
-      # to create a spectrogram (ie "-A, --aucdtect-spectrogram")
-      create_spectrogram="true"
    fi
 }
 
@@ -3690,8 +3646,8 @@ exec 4<>"${tmp_aucdtect_fd}"                         # Open read/write on fd '4'
 
 issue_ticks="/tmp/redoflacs_issue_file_$$"           # Issues/Errors file
 
-# Display a countdown if retagging FLACs
-[[ "${operations[7]}" == 'retag_analyze' ]] && __countdown_metadata
+# __retag_apply: Display a countdown
+[[ -n "${operations[8]}" ]] && __countdown_metadata
 
 __top_banner                                         # Display top banner
 total_items=( "${directory}"/**/*${flac_extension} ) # Total FLACs to process
