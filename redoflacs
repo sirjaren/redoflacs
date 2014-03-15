@@ -2007,10 +2007,10 @@ __check_missing_programs() {
    #--
    # Check for auCDtect if operation was called
    if [[ "${operations[0]}" == 'aucdtect' ]] ; then
-      if type -P auCDtect ; then
-         _aucdtect() { type -P auCDtect ;}  # Normal typeface
-      elif type -P aucdtect ; then
-         _aucdtect() { type -P aucdtect ;}  # Alternate spelling
+      if aucdtect="$(type -P auCDtect)" ; then
+         _aucdtect() { "${aucdtect}" "$@" ;}  # Normal typeface
+      elif aucdtect="$(type -P aucdtect)" ; then
+         _aucdtect() { "${aucdtect}" "$@" ;}  # Alternate spelling
       else
          # auCDtect/aucdtect cannot be found
          __error "It appears ${cyan}auCDtect${reset} is not installed. Please verify you\n" >&2
@@ -2019,18 +2019,18 @@ __check_missing_programs() {
       fi
 
       # Make sure auCDtect is executable
-      if [[ ! -x "$(_aucdtect)" ]] ; then
+      if [[ ! -x "${aucdtect}" ]] ; then
          __error "It appears ${cyan}auCDtect${reset} is not executable.  In order to make\n" >&2
          __error "${cyan}auCDtect${reset} executable, run:\n" >&2
-         __error "${cyan}chmod u+x '$(_aucdtect)'${reset}\n" >&2
+         __error "${cyan}chmod u+x '${aucdtect}'${reset}\n" >&2
          exit 1
       fi
    fi
 
    # Check for SoX if auCDtect spectrograms were called
    if [[ "${create_spectrogram}" == 'true' ]] ; then
-      if type -P sox ; then
-         _sox() { type -P sox ;}
+      if sox="$(type -P sox)" ; then
+         _sox() { "${sox}" "$@" ;}
       else
          # SoX cannot be found
          __error "It appears ${cyan}SoX${reset} is not installed. Please verify you\n" >&2
@@ -3561,21 +3561,19 @@ __check_conflicting_operations
 
 #-------------------------------------------------------------------------------
 
-# For each operation that was selected, set up operation_summary array
+# For each operation that was selected, add to $operation_summary[@]
 for operation in "${operations[@]}" ; do
-   # Update status for the current operation
    __update_operation_status "${operation}" 'Operation Did Not Run'
 done
 #-------------------------------------------------------------------------------
 
-# Check for any missing programs vital for this script, exiting if there are
-__check_missing_programs
+__check_missing_programs  # Check for missing programs vital to this script
 
 #-------------------------------------------------------------------------------
 
 # Check whether directory exists
 if [[ ! -d "${directory}" ]] ; then
-   printf "  Usage: redoflacs [OPTION] [PATH_TO_FLAC(s)]...\n\n" >&2
+   printf " Usage: redoflacs [OPTION] [PATH_TO_FLAC(s)]...\n" >&2
    __error "Please specify a directory!\n" >&2
    exit 1
 fi
@@ -3592,8 +3590,8 @@ fi
 
 #-------------------------------------------------------------------------------
 
-# If '-e, --extract-artwork' was called, make sure $artwork_location is a valid
-if [[ "${operations[9]}" == 'extract_artwork' ]] ; then
+# If '-e, --extract-artwork' was called, make sure $artwork_location is valid
+if [[ "${operations[9]}" == 'extract_images' ]] ; then
    # Check if artwork_location is user-defined
    if [[ -n "${artwork_location}" ]] ; then
       # Put extracted artwork in user-defined location, testing to make sure
@@ -3607,7 +3605,7 @@ if [[ "${operations[9]}" == 'extract_artwork' ]] ; then
 fi
 
 # If '-A, --aucdtect-spectrogram' was called, make sure $spectrogram_location is
-# a valid location, if user-defined
+# valid
 if [[ "${create_spectrogram}" == "true" ]] ; then
    # Check if spectrogram_location is user-defined
    if [[ -n "${spectrogram_location}" ]] ; then
@@ -3670,7 +3668,7 @@ for operation in "${operations[@]}" ; do
    #   operations[6]='replaygain_apply'         # Conditionally set
    #   operations[7]='retag_analyze'
    #   operations[8]='retag_apply'
-   #   operations[9]='extract_artwork'
+   #   operations[9]='extract_images'
    #   operations[10]='prune'
    #--
    case "${operation}" in
