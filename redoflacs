@@ -1661,8 +1661,8 @@ __countdown_config() {
 __get_directory_list() {
    # Return a listing of the total base directories housing all the found FLACs
    #--
-   declare     previous_dir  current_dir  #  Set up local variable(s)
-   declare -ga total_dirs                 #  Set up global array
+   declare     previous_dir  current_dir  # Set up local variable(s)
+   declare -ga total_dirs                 # Set up global array
 
    for flac in "$@" ; do
       # Run through total FLAC files array, printing out each unique directory
@@ -1683,6 +1683,8 @@ __clear_jobs_fd() {
    # $1 is the FIFO to tie the file descriptor to
    #--
    exec 3<&- 3>&-  # Close file descriptor
+   rm -f "$1"      # Remove FIFO if it exists
+   mkfifo "$1"     # Create FIFO
    exec 3<>"$1"    # Open file descriptor read/write
 }
 
@@ -3639,7 +3641,7 @@ job_fifo="/tmp/redoflacs_fifo_$$"  # Job manager FIFO
 
 tmp_aucdtect_fd="/tmp/redoflacs_aucdtect_fifo_$$"    # auCDtect's STDOUT FIFO
 trap 'rm -f "${job_fifo}" "${tmp_aucdtect_fd}"' EXIT # Allow for FIFO removal
-mkfifo "${job_fifo}" "${tmp_aucdtect_fd}"            # Create needed FIFO's
+mkfifo "${tmp_aucdtect_fd}"                          # Create auCDtect FIFO
 exec 4<>"${tmp_aucdtect_fd}"                         # Open read/write on fd '4'
 
 issue_ticks="/tmp/redoflacs_issue_file_$$"           # Issues/Errors file
