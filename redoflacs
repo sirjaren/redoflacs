@@ -1789,12 +1789,12 @@ __process_positional_parameters() {
             '--reallyall')            converted_args+=( -L )  ;;
             '--no-color')             converted_args+=( -n )  ;;
 
-            '--jobs='[[:digit:]]*)
+            '--jobs='*)
                # Enforce we have only digits after '--jobs=', and if so, set the
                # number of $jobs to its value, otherwise exit with a warning
                #--
-               regex="--jobs=[1-9]+$"  # Regular expression
-               if [[ "$i" =~ $regex ]] ; then
+               regex="[[:digit:]]+$"  # Regular expression
+               if [[ "${i##*=}" =~ $regex ]] && (( ${i##*=} != 0 )) ; then
                   jobs="${i##*=}"  # --jobs=11 -> 11
                else
                   __usage
@@ -1842,8 +1842,8 @@ __process_positional_parameters() {
                # Enforce we have only digits after '-j', and if so, set the
                # number of $jobs to its value, otherwise exit with a warning
                #--
-               regex="[1-9]+$"  # Regular expression
-               if [[ "${OPTARG}" =~ $regex ]] ; then
+               regex="[[:digit:]]+$"  # Regular expression
+               if [[ "${OPTARG}" =~ $regex ]] && (( OPTARG != 0 )) ; then
                   jobs="${OPTARG}"  # OPTARG is the argument after 'j' (j:)
                else
                   __usage
