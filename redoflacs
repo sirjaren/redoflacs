@@ -375,6 +375,8 @@ This option is short for:
 .br
         -r, --retag
 .br
+        -e, --extract-artwork
+.br
         -A, --aucdtect-spectrogram
 .SH OPTIONS
 .TP
@@ -639,18 +641,18 @@ __message() {
    #--
    # Set up local variables
    declare message sub_message
+   declare -i issues spacing
 
    # Print title message if $1 is not NULL
    if [[ -n "${1}" ]] ; then
       case "${1}" in
-         'aucdtect')            message="Validating FLAC files with auCDtect..."                                         ;;
-         'md5_check')           message="Verifying FLAC files MD5 Signature..."                                          ;;
-         'compress_verify')     message="Compressing & Verifying FLAC files [Compression Lvl: ${compression_level}]..."  ;;
-         'compress_no_test')    message="Compressing FLAC files [Compression Lvl: ${compression_level}]..."              ;;
-         'test')                message="Testing integrity of FLAC files..."                                             ;;
+         'aucdtect')            message="Validating with auCDtect"                ;;
+         'md5_check')           message="Check MD5 Signature"                     ;;
+         'compress_'*)          message="Level ${compression_level} Compression"  ;;
+         'test')                message="Test FLACs"                              ;;
          'replaygain_'*)
             if [[ "${1}" == 'replaygain_test' ]] ; then
-               message="Generating & Applying ReplayGain to FLAC files..."
+               message="Applying ReplayGain"
                sub_message="Testing"
             else  #  'replaygain'*'apply'
                sub_message="Applying"
@@ -658,32 +660,56 @@ __message() {
          ;;
          'retag_'*)
             if [[ "${1}" == 'retag_analyze' ]] ; then
-               message="Re-Tagging FLAC files..."
+               message="Retagging FLACs"
                sub_message="Analyzing"
             else  #  'retag_apply'
                sub_message="Re-Tagging"
             fi
          ;;
-         'extract_images')      message="Extracting artwork from FLAC files..."   ;;
+         'extract_images')      message="Extracting Artwork"  ;;
          'prune')
             if [[ "${remove_artwork}" != "true" ]] ; then
                # Keep artwork
-               message="Removing METADATA blocks [Except: STREAMINFO,VORBIS_COMMENT,PICTURE]..."
+               message="Prune METADATA Blocks"
             else
                # Remove artwork
-               message="Removing METADATA blocks [Except: STREAMINFO,VORBIS_COMMENT]..."
+               message="Prune METADATA Blocks"
             fi
          ;;
       esac
 
       # Print title message, if applicable
-      if [[ -n "${message}" ]] ; then
+      if [[ -n "${message}" && -z "$2" ]] ; then
          printf "\033[$(__row)H ${green}*${reset} ${message}\n"
       fi
 
       # Print sub title message, if applicable
-      if [[ -n "${sub_message}" ]] ; then
+      if [[ -n "${sub_message}" && -z "$2" ]] ; then
          printf "\033[$(__row);3H${green}>>${reset} ${sub_message}\n"
+      fi
+   fi
+
+   # Update title/sub title message only if $2 is not NULL
+   if [[ -n "${2}" ]] ; then
+      issues=$(__num_issues)  # Number of issues
+
+      # Verbage for singular/plural issues
+      (( issues == 1 )) && issue_string='issue ' || issue_string='issues'
+
+      if [[ -n "${sub_message}" ]] ; then
+         # Space between message and number of items proccessed
+         spacing=$((44 - ${#sub_message} - ${#2} - ${#issues} - 14))
+
+         # Sub title message
+         printf "\033[2A   ${green}>>${reset} %s%${spacing}s${blue}[ ${green}%d ok${blue} | ${red}%d ${issue_string}${blue} ]${reset}\n" \
+            "${sub_message}" '' "$2" "${issues}"
+      else
+         # Space between message and number of items proccessed
+         spacing=$((46 - ${#message} - ${#2} - ${#issues} - 14))
+
+         # Title message
+         printf "\033[2A  ${green}*${reset} %s%${spacing}s${blue}[ ${green}%d ok${blue} | ${red}%d ${issue_string}${blue} ]${reset}\n" \
+            "${message}" '' "$2" "${issues}"
       fi
    fi
 }
@@ -992,9 +1018,9 @@ __row() {
    printf "\033[6n" > /dev/tty      # Send escape into new TTY
 
    # Read in escape sequence output from TTY.  The escape sequence looks like:
-   #   ^[<integer>;<integer>R
+   #   ^[[<integer>;<integer>R
    #--
-   # This is what is read in below:  ^[<integer>
+   # This is what is read in below:  ^[[<integer>
    IFS=';' read -r -d'R' row_pos _ < /dev/tty 
 
    stty "${old_stty}"               # Restore the old TTY settings
@@ -1035,12 +1061,12 @@ __scroll_terminal() {
       #--
       to_scroll=$(( jobs - remaining_lines ))  # Number of lines to scroll
 
-      # Scroll terminal by printing as many newlines as determined above
-      for ((i=1 ; i<=to_scroll ; i++)) ; do
+      # Scroll terminal by printing as many newlines as determined above, plus 1
+      for ((i=0 ; i<=to_scroll ; i++)) ; do
          printf '\n'
       done
 
-      printf "\033[$(( $1 - to_scroll ))H"  # Place cursor up $to_scroll lines
+      printf "\033[$((to_scroll + 1))A" # Place cursor up ($to_scroll + 1) lines
    fi
 }
 
@@ -1691,17 +1717,14 @@ __clear_jobs_fd() {
 #-------------------------------------------------------------------------------
 
 __num_issues() {
-   # Return a string detailing the number of issues an operation may have had
+   # Return an integer detailing the number of issues an operation may have had,
+   # returning '0', if no issues were found
    #--
-   declare fail_count  # Set up local variable
+   declare ticks  # Set up local variable
 
-   read -r fail_count < "${issue_ticks}"  # Read in number of issue ticks
-
-   if (( ${#fail_count} == 1 )) ; then
-      printf "%s Issue\n" "${#fail_count}"
-   else
-      printf "%s Issues\n" "${#fail_count}"
-   fi
+   # Read in number of issue ticks, hiding missing file output
+   { read -r ticks < "${issue_ticks}" ;} 2>/dev/null
+   printf '%d' "${#ticks}"  # Return number of ticks (0, if empty)
 }
 
 #-------------------------------------------------------------------------------
@@ -1894,6 +1917,7 @@ __process_positional_parameters() {
             operations[6]='replaygain_force_apply'
             operations[7]='retag_analyze'
             operations[8]='retag_apply'
+            operations[9]='extract_images'
             operations[10]='prune'
          ;;
       esac
@@ -2210,7 +2234,8 @@ __run_parallel() {
    #--
    # Set up local variables/arrays
    declare      item
-   declare  -i  row_state  placement  previous_placement  iteration=0
+   declare  -i  row_state  placement  previous_placement
+   declare  -gi iteration=0
 
    # Determine the whitespace to make up max length by operation
    case "$1" in
@@ -2670,7 +2695,7 @@ __test() {
       __print_status 'fail' "${file_basename}" "${file_length}"
 
       # Log FLAC failure
-      printf "%s${unit_separator}Failed testing\n" "${i}" >> "${log_file}"
+      printf "%s${unit_separator}Failed testing\n" "${1}" >> "${log_file}"
 
       printf '.' >> "${issue_ticks}"  # Add one tick to total issues
    else
@@ -3703,21 +3728,37 @@ for operation in "${operations[@]}" ; do
       #--
       # If the items to process are less than the number of jobs, add the number
       # of items to the current row position, else add the number of jobs to run
-      post_row=$(( $(__row) + ${#total_items[@]} ))
+      items_processed="${#total_items[@]}"
    else
-      post_row=$(( $(__row) + jobs ))
+      items_processed="${jobs}"
    fi
+
+   post_row=$(( $(__row) + items_processed ))  # After operation row position
 
    trap '__trap_sigint "$post_row" "${operation}"' SIGINT # Clean exit on SIGINT
    __run_parallel "${operation}"   # Run a given operation with parallel jobs
    printf "\033[${post_row}H"      # Place cursor after operation ran
+
+   for (( i=1; i<=items_processed; i++)) ; do
+      # Clear all the operation lines by moving up each line and clearing it,
+      # until we are just below the operation's title message
+      #--
+      printf "\033[$(( post_row - i))H%${columns}s" ''
+   done
+
+   __message "${operation}" "$(( iteration - $(__num_issues) ))"  # Update title message
 
    if [[ -f "${log_file}" ]] ; then
       __message_log_exists "${operation}"  # Print out log exists to STDERR
       __create_log "${operation}"          # Create and format log
 
       # Update status for the current operation
-      __update_operation_status "${operation}" "$(__num_issues)"
+      num_issues=$(__num_issues)
+      if (( ${num_issues} == 1 )) ; then
+         __update_operation_status "${operation}" "${num_issues} Issue"
+      elif (( ${num_issues} > 1 )) ; then
+         __update_operation_status "${operation}" "${num_issues} Issues"
+      fi
 
       __summary                            # Display Summary Of Operations
       exit 1
