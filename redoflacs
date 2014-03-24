@@ -638,6 +638,12 @@ __message() {
    #   compress_no_test          test                replaygain_test
    #   replaygain_force_apply    replaygain_apply    retag_analyze
    #   retag_apply               extract_images      prune
+   #
+   # $2 is the number of processed items (iteration)
+   #
+   # $3 is conditionally called, and appears if the operation was interrupted:
+   #   Interrupted operation: $3 == 'interrupt'
+   #     Operation completed: $3 is NULL
    #--
    # Set up local variables
    declare message sub_message
@@ -693,6 +699,9 @@ __message() {
    if [[ -n "${2}" ]] ; then
       issues=$(__num_issues)  # Number of issues
 
+      # Specify color according to operation status
+      [[ "${3}" == 'interrupt' ]] && color="${cyan}" || color="${green}"
+
       # Verbage for singular/plural issues
       (( issues == 1 )) && issue_string='issue ' || issue_string='issues'
 
@@ -701,14 +710,14 @@ __message() {
          spacing=$((44 - ${#sub_message} - ${#2} - ${#issues} - 14))
 
          # Sub title message
-         printf "\033[2A   ${green}>>${reset} %s%${spacing}s${blue}[ ${green}%d ok${blue} | ${red}%d ${issue_string}${blue} ]${reset}\n" \
+         printf "\033[2A   ${green}>>${reset} %s%${spacing}s${blue}[ ${color}%d ok${blue} | ${red}%d ${issue_string}${blue} ]${reset}\n" \
             "${sub_message}" '' "$2" "${issues}"
       else
          # Space between message and number of items proccessed
          spacing=$((46 - ${#message} - ${#2} - ${#issues} - 14))
 
          # Title message
-         printf "\033[2A  ${green}*${reset} %s%${spacing}s${blue}[ ${green}%d ok${blue} | ${red}%d ${issue_string}${blue} ]${reset}\n" \
+         printf "\033[2A  ${green}*${reset} %s%${spacing}s${blue}[ ${color}%d ok${blue} | ${red}%d ${issue_string}${blue} ]${reset}\n" \
             "${message}" '' "$2" "${issues}"
       fi
    fi
@@ -727,7 +736,7 @@ __update_operation_status () {
    #
    # $2 is the operational status, the values of which, can be:
    #   Operation Completed       Operation Interrupted
-   #   Operation Did Not Run     <integer> Issues
+   #   Operation Did Not Run
    #--
    case "${1}" in
       'aucdtect'*)          operation_summary['Validate with auCDtect']="${2}" ;;
@@ -930,12 +939,22 @@ __trap_sigint() {
    #--
    __kill_jobs "$(jobs -rp)"
 
+   for (( i=1; i<=items_processed; i++)) ; do
+      # Clear all the operation lines by moving up each line and clearing it,
+      # until we are just below the operation's title message
+      #--
+      printf "\033[$(( post_row - i))H%${columns}s" ''
+   done
+
+   # Update title message
+   __message "${operation}" "$(( iteration - $(__num_issues) ))" 'interrupt'
+
    # If $1 is NULL, it means that the user invoked SIGINT before any operation
    # started (eg, retag countdown or config countdown)
    if [[ -n "${1}" ]] ; then
-      printf "\033[${1};2H${green}*${reset} Control-C received, generating summary. Please wait...\n"
+      printf " ${green}*${reset} Control-C received, generating summary...\n"
    else
-      printf "\n ${green}*${reset} Control-C received, generating summary. Please wait...\n"
+      printf "\n ${green}*${reset} Control-C received, generating summary...\n"
    fi
 
    __exit_cleanup "${2}"
@@ -3748,24 +3767,15 @@ for operation in "${operations[@]}" ; do
 
    __message "${operation}" "$(( iteration - $(__num_issues) ))"  # Update title message
 
+   # Update status for the current operation
+   __update_operation_status "${operation}" 'Operation Completed'
+
    if [[ -f "${log_file}" ]] ; then
       __message_log_exists "${operation}"  # Print out log exists to STDERR
       __create_log "${operation}"          # Create and format log
-
-      # Update status for the current operation
-      num_issues=$(__num_issues)
-      if (( ${num_issues} == 1 )) ; then
-         __update_operation_status "${operation}" "${num_issues} Issue"
-      elif (( ${num_issues} > 1 )) ; then
-         __update_operation_status "${operation}" "${num_issues} Issues"
-      fi
-
       __summary                            # Display Summary Of Operations
       exit 1
    fi
-
-   # Update status for the current operation
-   __update_operation_status "${operation}" 'Operation Completed'
 
    # Restore the items to process from directories to FLACs
    [[ "${operation}" == 'replaygain_'*'apply' ]] && total_items=( "${total_items_backup[@]}" )
