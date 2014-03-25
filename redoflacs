@@ -925,17 +925,17 @@ __print_progress() {
 
 __trap_sigint() {
    # Kill any children process and display the correct interrupt message when
-   # a user sends SIGINT during script execution.
+   # a user sends SIGINT during script execution.  Perform any cleanup, and
+   # check for the existence of a log file before exiting script.
    #--
-   # $1 is where to place the cursor (row-wise) in order to not overwrite
-   # files/directories displayed already.
-   #
-   # $2 determines which additional cleanup may need to be performed when
-   # starting '__exit_cleanup'.  Possible values:
+   # $1 determines which additional cleanup may need to be performed based off
+   # of operation interrupted, as well as whether the trap is invoked during a
+   # countdown interruption.  Possible values:
    #   aucdtect                  md5_check           compress_verify
    #   compress_no_test          test                replaygain_test
    #   replaygain_force_apply    replaygain_apply    retag_analyze
    #   retag_apply               extract_images      prune
+   #   countdown
    #--
    __kill_jobs "$(jobs -rp)"
 
@@ -946,34 +946,16 @@ __trap_sigint() {
       printf "\033[$(( post_row - i))H%${columns}s" ''
    done
 
-   # Update title message
-   __message "${operation}" "$(( iteration - $(__num_issues) ))" 'interrupt'
-
-   # If $1 is NULL, it means that the user invoked SIGINT before any operation
-   # started (eg, retag countdown or config countdown)
-   if [[ -n "${1}" ]] ; then
-      printf " ${green}*${reset} Control-C received, generating summary...\n"
-   else
-      printf "\n ${green}*${reset} Control-C received, generating summary...\n"
+   # Update title message, don't update if SIGINT was during a countdown
+   if [[ "$1" != 'countdown' ]] ; then
+      __message "${operation}" "$(( iteration - $(__num_issues) ))" 'interrupt'
    fi
 
-   __exit_cleanup "${2}"
-}
+   # Display extra newline if user invoked SIGINT during a countdown
+   [[ "$1" == 'countdown' ]] && printf '\n'
 
-#-------------------------------------------------------------------------------
+   printf " ${green}*${reset} SIGINT received, generating summary...\n"
 
-__exit_cleanup() {
-   # Do any additional cleanup and check for the existence of a log file before
-   # exiting script.
-   #--
-   # $1 determines which operation requires additional cleanup.  This value is
-   # normally obtained from $2 in the '__trap_sigint' function.  Possible
-   # values:
-   #   aucdtect                  md5_check           compress_verify
-   #   compress_no_test          test                replaygain_test
-   #   replaygain_force_apply    replaygain_apply    retag_analyze
-   #   retag_apply               extract_images      prune
-   #--
    case "${1}" in
       # Remove temporary script-created files
       #--
@@ -981,8 +963,11 @@ __exit_cleanup() {
       'compress_'*)  rm -f "${directory}"/**/*.tmp,fl-ac+en\'c     ;;
    esac
 
-   # Update status for the current operation
-   __update_operation_status "${1}" 'Operation Interrupted'
+   # Update status for the current operation, but not if SIGINT was invoked
+   # during a countdown
+   if [[ "$1" != 'countdown' ]] ; then
+      __update_operation_status "${1}" 'Operation Interrupted'
+   fi
 
    if [[ -f "${log_file}" ]] ; then
       __message_log_exists "${1}"  # Print out log exists to STDERR
@@ -1640,7 +1625,7 @@ __top_banner() {
 __countdown_metadata() {
    # Display countdown before retagging to allow user to quit script safely
    #--
-   trap __trap_sigint SIGINT     # Trap SIGINT to abort cleanly
+   trap '__trap_sigint countdown' SIGINT  # Trap SIGINT to abort cleanly
 
    # Warning message
    __error "${yellow}CAUTION!${reset} These are the tag fields that will be kept\n" >&2
@@ -1676,7 +1661,7 @@ __countdown_metadata() {
 __countdown_config() {
    # Displays countdown if a newer config is found to allow user to quit safely
    #--
-   trap __trap_sigint SIGINT     # Trap SIGINT to abort cleanly
+   trap '__trap_sigint countdown' SIGINT  # Trap SIGINT to abort cleanly
 
    # Warning message
    __info "There is a newer configuration file available!\n\n"
@@ -3754,9 +3739,8 @@ for operation in "${operations[@]}" ; do
 
    post_row=$(( $(__row) + items_processed ))  # After operation row position
 
-   trap '__trap_sigint "$post_row" "${operation}"' SIGINT # Clean exit on SIGINT
+   trap '__trap_sigint "${operation}"' SIGINT # Clean exit on SIGINT
    __run_parallel "${operation}"   # Run a given operation with parallel jobs
-   printf "\033[${post_row}H"      # Place cursor after operation ran
 
    for (( i=1; i<=items_processed; i++)) ; do
       # Clear all the operation lines by moving up each line and clearing it,
