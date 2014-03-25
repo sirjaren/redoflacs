@@ -937,7 +937,11 @@ __trap_sigint() {
    #   retag_apply               extract_images      prune
    #   countdown
    #--
-   __kill_jobs "$(jobs -rp)"
+   # Set up local variables
+   declare    finished_items
+   declare -a jobs_running=( $(jobs -rp) )  # Store running children processes
+
+   __kill_jobs ${jobs_running[@]}           # Kill running children processes
 
    for (( i=1; i<=items_processed; i++)) ; do
       # Clear all the operation lines by moving up each line and clearing it,
@@ -948,7 +952,10 @@ __trap_sigint() {
 
    # Update title message, don't update if SIGINT was during a countdown
    if [[ "$1" != 'countdown' ]] ; then
-      __message "${operation}" "$(( iteration - $(__num_issues) ))" 'interrupt'
+      # The number of completely finished (ok) items, minus any items
+      # interrupted, minus items with issues
+      finished_items="$(( iteration - ${#jobs_running[@]} - $(__num_issues) ))"
+      __message "${operation}" "${finished_items}" 'interrupt'
    fi
 
    # Display extra newline if user invoked SIGINT during a countdown
@@ -3749,6 +3756,7 @@ for operation in "${operations[@]}" ; do
       printf "\033[$(( post_row - i))H%${columns}s" ''
    done
 
+   # Display number of finished items minus items with issues
    __message "${operation}" "$(( iteration - $(__num_issues) ))"  # Update title message
 
    # Update status for the current operation
