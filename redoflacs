@@ -44,12 +44,20 @@ __long_help() {
    # Display a lot of help
    #--
    # Set up local variables
-   declare tmp_man_page="/tmp/redoflacs_man_$$.1"  # Temp man page
-   declare long_help                               # Man page data
+   declare lines columns
 
-   long_help=".TH \"REDOFLACS\" 1
+   # Determine terminal width, so we can force 'man' to use the entire terminal
+   # width, since reading from /dev/stdin, MANWIDTH will be unset
+   #--
+   # Redirecting '/dev/stderr' to 'stty' allows valid arguments
+   read -r _ _ _ _ lines _ columns _ < <(stty -a < /dev/stderr)
+   export MANWIDTH="${columns%;}"  # Terminal width - remove trailing semicolon
+
+   # Read in man page from STDIN (not POSIX; /dev/stdin -> /proc/self/fd/0)
+   man /dev/stdin << MAN_EOF
+.TH "REDOFLACS" 1
 .SH NAME
-redoflacs \\- Parallel BASH commandline FLAC compressor, verifier, organizer, analyzer, and retagger
+redoflacs \- Parallel BASH commandline FLAC compressor, verifier, organizer, analyzer, and retagger
 .SH SYNOPSIS
 .B redoflacs
 .RI [operations]
@@ -66,17 +74,17 @@ make'.
 redoflacs searches for a config file (if run as a user) in:
 
 .br
-        \\fB~/.config/redoflacs/config\\fP
+        \fB~/.config/redoflacs/config\fP
 
 .br
 or (if run as root) in:
 
 .br
-        \\fB/etc/redoflacs.conf\\fP
+        \fB/etc/redoflacs.conf\fP
 
 If a config file is not found (in either place), one is created.
 
-More information can be found at <\\fBhttps://github.com/sirjaren/redoflacs\\fP>.
+More information can be found at <\fBhttps://github.com/sirjaren/redoflacs\fP>.
 .SH OPERATIONS
 .TP
 .BI -c, --compress
@@ -409,18 +417,17 @@ User configuration file.
 System configuration file.
 .SH BUGS
 If you find a bug, please report it at:
-<\\fBhttps://github.com/sirjaren/redoflacs/issues/new\\fP>
+<\fBhttps://github.com/sirjaren/redoflacs/issues/new\fP>
 .SH AUTHOR
 Jaren Stangret <sirjaren@gmail.com>
 .SH THANKS
 Thanks to all the people whom have provided feedback and support!
 .br
 .SH REVISION
-[ 4 ]"
+[ 4 ]
+MAN_EOF
 
-   printf "%s\n" "${long_help}" > "${tmp_man_page}"  # Generate file for 'man'
-   man "${tmp_man_page}"    # Display man page
-   rm -f "${tmp_man_page}"  # Remove temporary 'man' file after exiting 'man'
+   unset -v MANWIDTH  # Clean up after ourselves
 }
 
 #-------------------------------------------------------------------------------
@@ -1124,9 +1131,9 @@ __get_percent_complete() {
 
    # Default to '0' if percentage is not an integer
    if [[ "${percent}" =~ ^[[:digit:]]+$ ]] ; then
-      printf "%d" $percent
+      printf '%d' $percent
    else
-      printf "%d" '0'
+      printf '%d' '0'
    fi
 }
 
@@ -1381,9 +1388,9 @@ __parse_config() {
          config_option="${line//*=*/}"  # Null if line is a config option
 
          if [[ -n "${config_option}" ]] ; then
-            tags+=( "${line^^}" )      # Store uppercase tag in array
+            tags+=( "${line^^}" )       # Store uppercase tag in array
          else
-            eval "${line}"             # Put config option in environment
+            eval "${line}"              # Put config option in environment
          fi
       fi
    done
@@ -2940,7 +2947,7 @@ __aucdtect() {
                            -S \
                            -n spectrogram \
                            -c '' \
-                           -t "${i}" \
+                           -t "${1}" \
                            -p 1 \
                            -z 90 \
                            -Z 0 \
@@ -2953,7 +2960,7 @@ __aucdtect() {
                                  # Create spectrogram PNG image of given FLAC
                                  #--
                                  # Current percent complete
-                                 percent_complete="$( __get_percent_complete "$2" "${percent_complete}" )"
+                                 percent_complete="$( __get_percent_complete 'spectrogram' "${percent_complete}" )"
 
                                  # Print operation progress bar and percent complete
                                  __print_progress 'spectrogram' "${percent_complete}" "${file_basename}" "${file_length}"
