@@ -44,14 +44,15 @@ __long_help() {
    # Display a lot of help
    #--
    # Set up local variables
-   declare lines columns
+   declare columns
+   declare -x MANWIDTH
 
    # Determine terminal width, so we can force 'man' to use the entire terminal
    # width, since reading from /dev/stdin, MANWIDTH will be unset
    #--
    # Redirecting '/dev/stderr' to 'stty' allows valid arguments
-   read -r _ _ _ _ lines _ columns _ < <(stty -a < /dev/stderr)
-   export MANWIDTH="${columns%;}"  # Terminal width - remove trailing semicolon
+   read -r _ _ _ _ _ _ columns _ < <(stty -a < /dev/stderr)
+   MANWIDTH="${columns%;}"  # Terminal width - remove trailing semicolon
 
    # Read in man page from STDIN (not POSIX; /dev/stdin -> /proc/self/fd/0)
    man /dev/stdin << MAN_EOF
@@ -426,8 +427,6 @@ Thanks to all the people whom have provided feedback and support!
 .SH REVISION
 [ 4 ]
 MAN_EOF
-
-   unset -v MANWIDTH  # Clean up after ourselves
 }
 
 #-------------------------------------------------------------------------------
@@ -772,45 +771,46 @@ __print_item() {
    # Set up local variables
    declare -i  print_spacing='1'
 
-   (( max_length >= $2 )) && print_spacing=$(( max_length - $2 ))
-
    case "$4" in
       '')
          #       08 - track.flac                           [12/345]
+         (( max_length >= $2 )) && print_spacing=$(( max_length - $2 ))
          printf "\033[${placement};9H%s%${print_spacing}s${magenta}%s${reset}" \
             "$1" '' "${3}"
       ;;
       'sub')
          #      50% 08 - track.flac                        [12/345]
+         (( max_length >= $2 )) && print_spacing=$(( max_length - $2 ))
          printf "\033[${placement};6H${yellow}%s${reset} %s%${print_spacing}s${magenta}%s${reset}" \
             " 50%" "$1" '' "${3}"
       ;;
       'half')
          #   50% 08 - track.flac                           [12/345]
+         (( max_length >= $2 )) && print_spacing=$(( max_length - $2 ))
          printf "\033[${placement};4H${yellow}%s${reset} %s%${print_spacing}s${magenta}%s${reset}" \
             " 50%" "$1" '' "${3}"
       ;;
       'decode')
          #       [decoding->WAV] 08 - track.flac           [12/345]
-         print_spacing=$(( print_spacing - 16 ))
+         (( max_length >= $2 )) && print_spacing=$(( max_length - $2 - 16 ))
          printf "\033[${placement};9H${cyan}[decoding->WAV]${reset} %s%${print_spacing}s${magenta}%s${reset}" \
             "$1" '' "${3}"
       ;;
       'aucdtect_fast')
          #       [auCDtect:fast] 08 - track.flac           [12/345]
-         print_spacing=$(( print_spacing - 16 ))
+         (( max_length >= $2 )) && print_spacing=$(( max_length - $2 - 16 ))
          printf "\033[${placement};9H${cyan}[auCDtect:fast]${reset} %s%${print_spacing}s${magenta}%s${reset}" \
             "$1" '' "${3}"
       ;;
       'aucdtect_slow')
          #       [auCDtect:slow] 08 - track.flac           [12/345]
-         print_spacing=$(( print_spacing - 16 ))
+         (( max_length >= $2 )) && print_spacing=$(( max_length - $2 - 16 ))
          printf "\033[${placement};9H${cyan}[auCDtect:slow]${reset} %s%${print_spacing}s${magenta}%s${reset}" \
             "$1" '' "${3}"
       ;;
       'spectrogram')
          #       [spectral->PNG] 08 - track.flac           [12/345]
-         print_spacing=$(( print_spacing - 16 ))
+         (( max_length >= $2 )) && print_spacing=$(( max_length - $2 - 16 ))
          printf "\033[${placement};9H${cyan}[spectral->PNG]${reset} %s%${print_spacing}s${magenta}%s${reset}" \
             "$1" '' "${3}"
       ;;
@@ -846,19 +846,19 @@ __print_status() {
       ;;
       'decode')
          action="${cyan}[decoding->WAV]${reset} "
-         (( print_spacing != 0 )) && print_spacing=$(( print_spacing - 16 ))
+         (( max_length >= $3 )) && print_spacing=$(( max_length - $3 - 16 ))
       ;;
       'aucdtect_fast')
          action="${cyan}[auCDtect:fast]${reset} "
-         (( print_spacing != 0 )) && print_spacing=$(( print_spacing - 16 ))
+         (( max_length >= $3 )) && print_spacing=$(( max_length - $3 - 16 ))
       ;;
       'aucdtect_slow')
          action="${cyan}[auCDtect:slow]${reset} "
-         (( print_spacing != 0 )) && print_spacing=$(( print_spacing - 16 ))
+         (( max_length >= $3 )) && print_spacing=$(( max_length - $3 - 16 ))
       ;;
       'spectrogram')
          action="${cyan}[spectral->PNG]${reset} "
-         (( print_spacing != 0 )) && print_spacing=$(( print_spacing - 16 ))
+         (( max_length >= $3 )) && print_spacing=$(( max_length - $3 - 16 ))
       ;;
    esac
 
@@ -1458,13 +1458,14 @@ __truncate_filename() {
    # filename (in characters)
    #--
    # $1 is the filename to truncate/process
+   # $2 determines whether this is a multi-stage operation (eg, auCDtect)
    #--
    # Set up local variables
    declare    filename
    declare -i filename_length  truncated_length
 
    # Basename of file/directory
-   if [[ "${1#"${1%?}"}" == '/' ]] ; then  # Last character is a '/'
+   if [[ "${1: -1}" == '/' ]] ; then       # Last character is a '/'
       # Directory
       filename="${1%?}"                    # Remove last character
       filename="${filename##*/}/"          # Basename of directory, append '/'
@@ -1477,6 +1478,9 @@ __truncate_filename() {
 
    # Column length of filename. 'wc -L' handles multi-byte characters correctly
    filename_length="$(wc -L <<< "${filename}")"
+
+   # Subtract 16 blocks from $max_length if we're doing a multi-stage operation
+   [[ "${2}" == 'multi-stage' ]] && max_length=$((max_length - 16))
 
    # If filename is longer than the width allowed in the terminal, truncate it
    if (( filename_length > max_length )) ; then
@@ -2797,6 +2801,10 @@ __aucdtect() {
 
    # FLAC checks out, continue processing
    else
+      # Re-truncate file, since we're doing a multi-stage operation, the
+      # filename will be shorter than normal
+      IFS=$'\037' read -r file_basename file_length < <(__truncate_filename "$1" 'multi-stage')
+
       # Print current FLAC being processed
       __print_item "${file_basename}" "${file_length}" "$3" 'decode'
 
@@ -2827,6 +2835,10 @@ __aucdtect() {
       else
          # Decoded FLAC is ok, display ok
          __print_status 'ok' "${file_basename}" "${file_length}" 'decode'
+
+         # Re-truncate file, since we're doing a multi-stage operation, the
+         # filename will be shorter than normal
+         IFS=$'\037' read -r file_basename file_length < <(__truncate_filename "$1" 'multi-stage')
 
          # Print current FLAC being processed, auCDtect: fast
          __print_item "${file_basename}" "${file_length}" "$3" 'aucdtect_fast'
@@ -2871,6 +2883,10 @@ __aucdtect() {
             # If there is an issue with the processed FLAC file, run
             # auCDtect once again with highest setting
             if [[ "${aucdtect_check_array[0]}" != 'This track looks like CDDA with probability 100%' ]] ; then
+               # Re-truncate file, since we're doing a multi-stage operation, the
+               # filename will be shorter than normal
+               IFS=$'\037' read -r file_basename file_length < <(__truncate_filename "$1" 'multi-stage')
+
                # Print current FLAC being processed, auCDtect: slow
                __print_item "${file_basename}" "${file_length}" "$3" 'aucdtect_slow'
 
@@ -2933,6 +2949,10 @@ __aucdtect() {
                            # location
                            spectrogram_picture="${spectrogram_location}/[${iteration}] ${flac_file%${flac_extension}}.png"
                         fi
+
+                        # Re-truncate file, since we're doing a multi-stage operation, the
+                        # filename will be shorter than normal
+                        IFS=$'\037' read -r file_basename file_length < <(__truncate_filename "$1" 'multi-stage')
 
                         # Print current FLAC being processed
                         __print_item "${file_basename}" "${file_length}" "$3" 'spectrogram'
