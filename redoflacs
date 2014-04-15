@@ -1455,28 +1455,26 @@ __check_config_version() {
 __truncate_filename() {
    # Truncate the processed item's filename if it's bigger than terminal width,
    # returning the filename (possibly truncated) as well as the length of the
-   # filename (in characters)
+   # filename (in characters, possibly truncated)
    #--
    # $1 is the filename to truncate/process
    # $2 determines whether this is a multi-stage operation (eg, auCDtect)
    #--
    # Set up local variables
-   declare    filename
-   declare -i filename_length  truncated_length
+   declare    filename  length_diff
+   declare -i filename_length  apparent_length  length
 
    # Basename of file/directory
-   if [[ "${1: -1}" == '/' ]] ; then       # Last character is a '/'
-      # Directory
-      filename="${1%?}"                    # Remove last character
-      filename="${filename##*/}/"          # Basename of directory, append '/'
+   if [[ "${1: -1}" == '/' ]] ; then        # Last character is a '/'
+      filename="${1%?}"                     # Remove last character
+      filename="${filename##*/}/"           # Basename of directory, append '/'
    else
-      # File
-      filename="${1##*/}"                  # Basename of file
+      filename="${1##*/}"                   # Basename of file
    fi
 
-   filename="${filename//$'\n'/?}"         # Replace '\n' with '?'
+   filename="${filename//$'\n'/?}"          # Replace '\n' with '?'
 
-   # Column length of filename. 'wc -L' handles multi-byte characters correctly
+   # Apparent (column-wdith) length of filename; 'wc' handles wide characters
    filename_length="$(wc -L <<< "${filename}")"
 
    # Subtract 16 blocks from $max_length if we're doing a multi-stage operation
@@ -1484,24 +1482,43 @@ __truncate_filename() {
 
    # If filename is longer than the width allowed in the terminal, truncate it
    if (( filename_length > max_length )) ; then
-      # Truncate filename by $max_length and grab the _real_ length
-      truncated_length="$(wc -L <<< "${filename:0:${max_length}}")"
+      max_length=$((max_length - 4 ))       # Leave room for space and ellipsis
+      apparent_length="${filename_length}"  # Apparent length of item
+      length="${max_length}"                # Length in ${foo:offset:length}
 
-      until (( truncated_length == max_length )) ; do
-         # Multibyte characters can make $truncated_length smaller than
-         # $max_length, so keep slicing a character off $max_length
-         # until $truncated_length equals $max_length
-         #--
-         ((--max_length))
-         truncated_length="$(wc -L <<< "${filename:0:${max_length}}")"
-      done
+      # Use fast ${foo:offset:length} truncate item if the apparent length
+      # equals the number of characters using ${#foo}.  Otherwise, use 'wc' to
+      # grab apparent length (slower).  The slow method is only used for wide
+      # characters
+      #--
+      if (( ${#filename} == filename_length )); then
+         # eg, 'longfilename' -> 'longfilen...'
+         filename="${filename:0:${max_length}}..."
+         filename_length="${#filename}"
+      else
+         until (( apparent_length <= max_length )); do
+            # Keep slicing off a character from the current item, until it's length
+            # is less than or equal to the maximum length allowed.  Wide characters
+            # may never truncate equal to $max_length, but may be less than it
+            #--
+            ((--length))
+            apparent_length="$(wc -L <<< "${filename:0:${length}}")"
+         done
 
-      # Return truncated filename with ellipsis and filename length
-      printf "%s${unit_separator}%d" "${filename:0:$((max_length - 2))}…" "${filename_length}"
-   else
-      # Return filename and filename length
-      printf "%s${unit_separator}%d" "${filename}" "${filename_length}"
+         # Difference between lengths, represented as spaces
+         printf -v length_diff "%$(( max_length - apparent_length ))s" ''
+
+         # eg, 'longfilename' -> 'longfilen ...'
+         filename="${filename:0:${length}}${length_diff}..."
+
+         # Apparent length of truncated filename
+         filename_length="$(wc -L <<< "${filename}")"
+      fi
    fi
+
+
+   # Return (truncated) filename and (truncated) filename length
+   printf "%s${unit_separator}%d" "${filename}" "${filename_length}"
 }
 
 #-------------------------------------------------------------------------------
@@ -1518,7 +1535,7 @@ __find_cores() {
       if [[ -f /proc/cpuinfo ]] ; then
          # /proc/cpuinfo exists, find total number of cores to use
          #--
-         # Store contents of /proc/cpuinfo inta core_array
+         # Store contents of /proc/cpuinfo into core_array
          mapfile -n0 -t cores_array < /proc/cpuinfo
 
          for i in "${cores_array[@]}" ; do
