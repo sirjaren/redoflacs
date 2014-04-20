@@ -34,13 +34,14 @@
 #    4: auCDtect's STDOUT output
 #-------------------------------------------------------------------------------
 
-_info()  { printf " ${green}*${reset} ${@}"  ;}   # Bold green message
-_warn()  { printf " ${yellow}*${reset} ${@}" ;}   # Yellow message
-_error() { printf " ${red}*${reset} ${@}"    ;}   # Bold red message
+_info()  { printf " ${green}*${reset} ${@}";  }   # Bold green message
+_warn()  { printf " ${yellow}*${reset} ${@}"; }   # Yellow message
+_error() { printf " ${red}*${reset} ${@}";    }   # Bold red message
 
 #-------------------------------------------------------------------------------
 
-_long_help() {
+_long_help()
+{
    # Display a lot of help
    #--
    # Set up local variables
@@ -438,41 +439,43 @@ MAN_EOF
 
 #-------------------------------------------------------------------------------
 
-_short_help() {
+_short_help()
+{
    # Display short help
    #--
-   printf " Usage: redoflacs [operations] [options] [target] ...\n"
-   printf " Operations:\n"
-   printf "   -c, --compress\n"
-   printf "   -C, --compress-notest\n"
-   printf "   -t, --test\n"
-   printf "   -m, --md5check\n"
-   printf "   -a, --aucdtect\n"
-   printf "   -A, --aucdtect-spectrogram\n"
-   printf "   -e, --extract-artwork\n"
-   printf "   -p, --prune\n"
-   printf "   -g, --replaygain\n"
-   printf "   -G, --replaygain-noforce\n"
-   printf "   -r, --retag\n"
-   printf "   -l, --all\n"
-   printf "   -L, --reallyall\n"
-   printf " Options:\n"
-   printf "   -j[N], --jobs[=N]\n"
-   printf "   -n, --no-color\n"
-   printf "   -o, --new-config\n"
-   printf "   -v, --version\n"
-   printf "   -h, --help\n"
+   printf ' Usage: redoflacs [operations] [options] [target] ...\n'
+   printf ' Operations:\n'
+   printf '   -c, --compress\n'
+   printf '   -C, --compress-notest\n'
+   printf '   -t, --test\n'
+   printf '   -m, --md5check\n'
+   printf '   -a, --aucdtect\n'
+   printf '   -A, --aucdtect-spectrogram\n'
+   printf '   -e, --extract-artwork\n'
+   printf '   -p, --prune\n'
+   printf '   -g, --replaygain\n'
+   printf '   -G, --replaygain-noforce\n'
+   printf '   -r, --retag\n'
+   printf '   -l, --all\n'
+   printf '   -L, --reallyall\n'
+   printf ' Options:\n'
+   printf '   -j[N], --jobs[=N]\n'
+   printf '   -n, --no-color\n'
+   printf '   -o, --new-config\n'
+   printf '   -v, --version\n'
+   printf '   -h, --help\n'
    printf " This is the short help; for details use 'redoflacs --help' or 'redoflacs -h'\n"
 }
 
 #-------------------------------------------------------------------------------
 
 # Display usage
-_usage() { printf " Usage: redoflacs [operations] [options] [target] ...\n" ;} >&2
+_usage() { printf ' Usage: redoflacs [operations] [options] [target] ...\n'; } >&2
 
 #-------------------------------------------------------------------------------
 
-_message_log_exists() {
+_message_log_exists()
+{
    # Print out the correct operational message regarding a log file's existence
    # and what infomration that log may contain
    #--
@@ -485,34 +488,35 @@ _message_log_exists() {
    #--
    case "$1" in
       'aucdtect'*)
-         _error "Some FLAC files may be lossy sourced, please check:\n"
+         _error 'Some FLAC files may be lossy sourced, please check:\n'
       ;;
       'md5_check')
-         _error "The MD5 Signature is unset for some FLAC files or there were\n"
-         _error "issues with some of the FLAC files, please check:\n"
+         _error 'The MD5 Signature is unset for some FLAC files or there were\n'
+         _error 'issues with some of the FLAC files, please check:\n'
       ;;
       'compress_'*|'test'|'replaygain_test'|'extract_images'|'prune')
-         _error "There were issues with some of the FLAC files,\n"
-         _error "please check:\n"
+         _error 'There were issues with some of the FLAC files,\n'
+         _error 'please check:\n'
       ;;
       'replaygain'*'apply')
-         _error "There were issues adding ReplayGain values,\n"
-         _error "please check:\n"
+         _error 'There were issues adding ReplayGain values,\n'
+         _error 'please check:\n'
       ;;
       'retag_'*)
-         _error "Some FLAC files have missing tags or there were\n"
-         _error "issues with some of the FLAC files, please check:\n"
+         _error 'Some FLAC files have missing tags or there were\n'
+         _error 'issues with some of the FLAC files, please check:\n'
       ;;
    esac
 
    # Print the bottom half of the message (uniform across all operations)
    _error "${cyan}${log_file}${reset}\n"
-   _error "for details.\n"
+   _error 'for details.\n'
 } >&2
 
 #-------------------------------------------------------------------------------
 
-_create_log() {
+_create_log()
+{
    # Take log file from the current operation, prepending a header to it as
    # as well as formatting/aligning log lines
    #--
@@ -532,98 +536,98 @@ _create_log() {
    case "${1}" in
       'aucdtect'*)
          header=(
-            "--------------------------------------------------------------------------------"
-            "                            [ Aucdtect Report Log ]"
-            ""
-            "      This log details which FLAC files have errors when running auCDtect"
-            "--------------------------------------------------------------------------------"
+            '--------------------------------------------------------------------------------'
+            '                            [ Aucdtect Report Log ]'
+            ''
+            '      This log details which FLAC files have errors when running auCDtect'
+            '--------------------------------------------------------------------------------'
          ) ;;
       'md5_check')
          header=(
-            "--------------------------------------------------------------------------------"
-            "                            [ Md5 Check Error Log ]"
-            ""
-            " This log details which FLAC files have errors when checking the MD5 signature"
-            "--------------------------------------------------------------------------------"
+            '--------------------------------------------------------------------------------'
+            '                            [ Md5 Check Error Log ]'
+            ''
+            ' This log details which FLAC files have errors when checking the MD5 signature'
+            '--------------------------------------------------------------------------------'
          ) ;;
       'compress_'*)
          header=(
-            "--------------------------------------------------------------------------------"
-            "                        [ Compress & Verify Error Log ]"
-            ""
-            " This log details which FLAC files have errors when compressing and/or verifying"
-            "--------------------------------------------------------------------------------"
+            '--------------------------------------------------------------------------------'
+            '                        [ Compress & Verify Error Log ]'
+            ''
+            ' This log details which FLAC files have errors when compressing and/or verifying'
+            '--------------------------------------------------------------------------------'
          ) ;;
       'test')
          header=(
-            "--------------------------------------------------------------------------------"
-            "                               [ Test Error Log ]"
-            ""
-            "          This log details which FLAC files have errors when testing"
-            "--------------------------------------------------------------------------------"
+            '--------------------------------------------------------------------------------'
+            '                               [ Test Error Log ]'
+            ''
+            '          This log details which FLAC files have errors when testing'
+            '--------------------------------------------------------------------------------'
          ) ;;
       'replaygain_test')
          header=(
-            "--------------------------------------------------------------------------------"
-            "                         [ ReplayGain Test Error Log ]"
-            ""
-            " This log details which FLAC files have errors when testing for ReplayGain"
-            " compatability"
-            "--------------------------------------------------------------------------------"
+            '--------------------------------------------------------------------------------'
+            '                         [ ReplayGain Test Error Log ]'
+            ''
+            ' This log details which FLAC files have errors when testing for ReplayGain'
+            ' compatability'
+            '--------------------------------------------------------------------------------'
          ) ;;
       'replaygain'*'apply')
          header=(
-            "--------------------------------------------------------------------------------"
-            "                        [ ReplayGain Apply Error Log ]"
-            ""
-            " This log details which directories have FLAC files that have errors when"
-            " applying ReplayGain values"
-            "--------------------------------------------------------------------------------"
+            '--------------------------------------------------------------------------------'
+            '                        [ ReplayGain Apply Error Log ]'
+            ''
+            ' This log details which directories have FLAC files that have errors when'
+            ' applying ReplayGain values'
+            '--------------------------------------------------------------------------------'
          ) ;;
       'retag_'*)
          header=(
-            "--------------------------------------------------------------------------------"
-            "                              [ Retag Error Log ]"
-            ""
-            "         This log details which FLAC files have errors when retagging"
-            "--------------------------------------------------------------------------------"
+            '--------------------------------------------------------------------------------'
+            '                              [ Retag Error Log ]'
+            ''
+            '         This log details which FLAC files have errors when retagging'
+            '--------------------------------------------------------------------------------'
          ) ;;
       'extract_images')
          header=(
-            "--------------------------------------------------------------------------------"
-            "                         [ Extract Images Error Log ]"
-            ""
-            " This log details which FLAC files have errors when extracting artwork images"
-            "--------------------------------------------------------------------------------"
+            '--------------------------------------------------------------------------------'
+            '                         [ Extract Images Error Log ]'
+            ''
+            ' This log details which FLAC files have errors when extracting artwork images'
+            '--------------------------------------------------------------------------------'
          ) ;;
       'prune')
          header=(
-            "--------------------------------------------------------------------------------"
-            "                              [ Prune Error Log ]"
-            ""
-            " This log details which FLAC files have errors when pruning METADATA blocks"
-            "--------------------------------------------------------------------------------"
+            '--------------------------------------------------------------------------------'
+            '                              [ Prune Error Log ]'
+            ''
+            ' This log details which FLAC files have errors when pruning METADATA blocks'
+            '--------------------------------------------------------------------------------'
          ) ;;
    esac
 
    # Create array of current log file
    mapfile -n0 -t log_array < "${log_file}"
 
-   for line in "${log_array[@]}" ; do
+   for line in "${log_array[@]}"; do
       # Find the longest filename in the log file, and store it's length
       #--
       # 'path/to/file.flac${unit_separator}error message' -> 'path/to/file.flac'
       filename="${line%%${unit_separator}*}"
 
-      if (( $(wc -L <<< ${filename}) > length )) ; then
+      if (( $(wc -L <<< ${filename}) > length )); then
          length=$(wc -L <<< ${filename})  # 'wc -L' is for apparent length
       fi
    done
 
    # Log header, truncating old log
-   printf "%s\n" "${header[@]}" > "${log_file}"
+   printf '%s\n' "${header[@]}" > "${log_file}"
 
-   for line in "${log_array[@]}" ; do
+   for line in "${log_array[@]}"; do
       # Left align filenames and line up error messages before appending to
       # log file
       #--
@@ -637,13 +641,14 @@ _create_log() {
       error_msg="${line##*${unit_separator}}"
 
       # Example line: /media/Music/Artist/Album/file.flac  ->  Error Message
-      printf "%s%$((length - filename_length))s  ->  %s\n" "${filename}" "" "${error_msg}" >> "${log_file}"
+      printf "%s%$((length - filename_length))s  ->  %s\n" "${filename}" '' "${error_msg}" >> "${log_file}"
    done
 }
 
 #-------------------------------------------------------------------------------
 
-_message() {
+_message()
+{
    # Print out current operation message.
    #--
    # $1 determines which title message to print (if any).  Possible values:
@@ -663,53 +668,51 @@ _message() {
    declare -i issues spacing
 
    # Print title message if $1 is not NULL
-   if [[ -n "${1}" ]] ; then
+   if [[ -n "${1}" ]]; then
       case "${1}" in
-         'aucdtect')            message="Validating with auCDtect"                ;;
-         'md5_check')           message="Check MD5 Signature"                     ;;
+         'aucdtect')            message='Validating with auCDtect'                ;;
+         'md5_check')           message='Check MD5 Signature'                     ;;
          'compress_'*)          message="Level ${compression_level} Compression"  ;;
-         'test')                message="Test FLACs"                              ;;
+         'test')                message='Test FLACs'                              ;;
+         'extract_images')      message='Extracting Artwork'                      ;;
          'replaygain_'*)
-            if [[ "${1}" == 'replaygain_test' ]] ; then
-               message="Applying ReplayGain"
-               sub_message="Testing"
+            if [[ "${1}" == 'replaygain_test' ]]; then
+               message='Applying ReplayGain'
+               sub_message='Testing'
             else  #  'replaygain'*'apply'
-               sub_message="Applying"
+               sub_message='Applying'
             fi
          ;;
          'retag_'*)
-            if [[ "${1}" == 'retag_analyze' ]] ; then
-               message="Retagging FLACs"
-               sub_message="Analyzing"
+            if [[ "${1}" == 'retag_analyze' ]]; then
+               message='Retagging FLACs'
+               sub_message='Analyzing'
             else  #  'retag_apply'
-               sub_message="Re-Tagging"
+               sub_message='Re-Tagging'
             fi
          ;;
-         'extract_images')      message="Extracting Artwork"  ;;
          'prune')
-            if [[ "${remove_artwork}" != "true" ]] ; then
-               # Keep artwork
-               message="Prune METADATA Blocks"
+            if [[ "${remove_artwork}" != 'true' ]]; then
+               message='Prune METADATA Blocks'  # Keep artwork
             else
-               # Remove artwork
-               message="Prune METADATA Blocks"
+               message='Prune METADATA Blocks'  # Remove artwork
             fi
          ;;
       esac
 
       # Print title message, if applicable
-      if [[ -n "${message}" && -z "$2" ]] ; then
+      if [[ -n "${message}" && -z "$2" ]]; then
          printf "\033[$(_row)H ${green}*${reset} ${message}\n"
       fi
 
       # Print sub title message, if applicable
-      if [[ -n "${sub_message}" && -z "$2" ]] ; then
+      if [[ -n "${sub_message}" && -z "$2" ]]; then
          printf "\033[$(_row);3H${green}>>${reset} ${sub_message}\n"
       fi
    fi
 
    # Update title/sub title message only if $2 is not NULL
-   if [[ -n "${2}" ]] ; then
+   if [[ -n "${2}" ]]; then
       issues=$(_num_issues)  # Number of issues
 
       # Specify color according to operation status
@@ -718,7 +721,7 @@ _message() {
       # Verbage for singular/plural issues
       (( issues == 1 )) && issue_string='issue ' || issue_string='issues'
 
-      if [[ -n "${sub_message}" ]] ; then
+      if [[ -n "${sub_message}" ]]; then
          # Space between message and number of items proccessed
          spacing=$((44 - ${#sub_message} - ${#2} - ${#issues} - 14))
 
@@ -738,7 +741,8 @@ _message() {
 
 #-------------------------------------------------------------------------------
 
-_update_operation_status () {
+_update_operation_status()
+{
    # Update $operation_summary[@] with the current operation status
    #--
    # $1 determines which operational index to update; possible values:
@@ -767,7 +771,8 @@ _update_operation_status () {
 
 #-------------------------------------------------------------------------------
 
-_print_item() {
+_print_item()
+{
    # Display the current item being that's to be run through an operation
    #--
    # $1 is the filename to print
@@ -826,7 +831,8 @@ _print_item() {
 
 #-------------------------------------------------------------------------------
 
-_print_status() {
+_print_status()
+{
    # Display the result of current item that was operated on
    #--
    # $1 is the file/dir operation result, of which, can be:
@@ -839,10 +845,10 @@ _print_status() {
    declare -i print_spacing='0' column_placement='4'
 
    case "$1" in
-      'ok')     color="${green}"   result="100%"  ;;
-      'fail')   color="${red}"     result="fail"  ;;
-      'issue')  color="${yellow}"  result="chck"  ;;
-      'skip')   color="${yellow}"  result="skip"  ;;
+      'ok')     color="${green}"   result='100%'  ;;
+      'fail')   color="${red}"     result='fail'  ;;
+      'issue')  color="${yellow}"  result='chck'  ;;
+      'skip')   color="${yellow}"  result='skip'  ;;
    esac
 
    (( max_length >= $3 )) && print_spacing=$(( max_length - $3 ))
@@ -870,12 +876,13 @@ _print_status() {
    esac
 
    printf "\033[${placement};${column_placement}H${color}%s${reset} ${action}%s%${print_spacing}s" \
-      "${result}" "$2" ""
+      "${result}" "$2" ''
 }
 
 #-------------------------------------------------------------------------------
 
-_print_progress() {
+_print_progress()
+{
    # Display filename and current progress of operation
    #--
    # $1 is either the operation:
@@ -919,7 +926,7 @@ _print_progress() {
       ;;
    esac
 
-   if (( progress_bar_length < $4 )) ; then
+   if (( progress_bar_length < $4 )); then
       # Print out the current item name as well as the progress bar
       #--
       # If $progress_bar_length is less than the current item's name length,
@@ -931,13 +938,14 @@ _print_progress() {
          "${2}%" "${3:0:${progress_bar_length}}"
    else
       printf "\033[${placement};4H${yellow}%4s${reset} ${action}${invert}%s%$(( progress_bar_length - $4 ))s${reset}" \
-         "${2}%" "${3}" ""
+         "${2}%" "${3}" ''
    fi
 }
 
 #-------------------------------------------------------------------------------
 
-_trap_sigint() {
+_trap_sigint()
+{
    # Kill any children process and display the correct interrupt message when
    # a user sends SIGINT during script execution.  Perform any cleanup, and
    # check for the existence of a log file before exiting script.
@@ -957,7 +965,7 @@ _trap_sigint() {
 
    _kill_jobs ${jobs_running[@]}            # Kill running children processes
 
-   for (( i=1; i<=items_processed; i++)) ; do
+   for (( i=1; i<=items_processed; i++)); do
       # Clear all the operation lines by moving up each line and clearing it,
       # until we are just below the operation's title message
       #--
@@ -965,7 +973,7 @@ _trap_sigint() {
    done
 
    # Update title message, don't update if SIGINT was during a countdown
-   if [[ "$1" != 'countdown' ]] ; then
+   if [[ "$1" != 'countdown' ]]; then
       # The number of completely finished (ok) items, minus any items
       # interrupted, minus items with issues
       finished_items="$(( iteration - ${#jobs_running[@]} - $(_num_issues) ))"
@@ -986,17 +994,17 @@ _trap_sigint() {
 
    # Update status for the current operation, but not if SIGINT was invoked
    # during a countdown
-   if [[ "$1" != 'countdown' ]] ; then
+   if [[ "$1" != 'countdown' ]]; then
       _update_operation_status "${1}" 'Operation Interrupted'
    fi
 
-   if [[ -f "${log_file}" ]] ; then
+   if [[ -f "${log_file}" ]]; then
       _message_log_exists "${1}"   # Print out log exists to STDERR
       _create_log "${1}"           # Create and format log
    fi
 
    stty ${old_stty} < /dev/stderr  # Restore old stty settings
-   printf "\033[?25h"              # Restore the cursor
+   printf '\033[?25h'              # Restore the cursor
    rm -f "${job_fifo}"             # Remove temporary FIFO
    rm -f "${tmp_picture_blocks}"   # Remove temporary 'metaflac' block streams
    _summary                        # Display Summary Of Operations
@@ -1007,21 +1015,23 @@ _trap_sigint() {
 #-------------------------------------------------------------------------------
 
 # Display redoflacs version
-_print_version() { printf "Version %s\n" "${version}" ;}
+_print_version() { printf 'Version %s\n' "${version}"; }
 
 #-------------------------------------------------------------------------------
 
-_metaflac_version() {
+_metaflac_version()
+{
    # Return metaflac version
    #--
    # Metaflacs version (ie: '2' in 1.2.1)
    IFS='.' read -r _ metaflac_version _ < <(metaflac --version)
-   printf "%s" "${metaflac_version}"
+   printf '%s' "${metaflac_version}"
 }
 
 #-------------------------------------------------------------------------------
 
-_kill_jobs() {
+_kill_jobs()
+{
    # Kill any children process (obtained via $@), hiding errors and suppressing
    # the shell's notification of terminated jobs
    #--
@@ -1033,14 +1043,15 @@ _kill_jobs() {
 
 #-------------------------------------------------------------------------------
 
-_row() {
+_row()
+{
    # Print out the current cursor row position
    #--
    declare old_stty  row_pos        # Intialize local variables
    exec < /dev/tty                  # Set a new TTY to read in STDIN
    old_stty="$(stty -g)"            # Store current TTY settings
    stty raw -echo min 0             # Current TTY set at an absolute minimum
-   printf "\033[6n" > /dev/tty      # Send escape into new TTY
+   printf '\033[6n' > /dev/tty      # Send escape into new TTY
 
    # Read in escape sequence output from TTY.  The escape sequence looks like:
    #   ^[[<integer>;<integer>R
@@ -1049,12 +1060,13 @@ _row() {
    IFS=';' read -r -d'R' row_pos _ < /dev/tty 
 
    stty "${old_stty}"               # Restore the old TTY settings
-   printf "%s" "${row_pos#??}"      # Return row position (removes: ^[)
+   printf '%s' "${row_pos#??}"      # Return row position (removes: ^[)
 }
 
 #-------------------------------------------------------------------------------
 
-_scroll_terminal() {
+_scroll_terminal()
+{
    # Scroll the terminal, dependant on the number of jobs to process.  If it's
    # not necessary, scrolling may not occur
    #--
@@ -1070,7 +1082,7 @@ _scroll_terminal() {
    columns="${columns%;}"   # Terminal width - remove trailing semicolon
    lines="${lines%;}"       # Terminal height - remove trailing semicolon
 
-   if (( ${#total_items[@]} < jobs )) ; then
+   if (( ${#total_items[@]} < jobs )); then
       # Determine the remaining lines to the bottom of the terminal screen
       #--
       # If there are less items to process than jobs specified, add the
@@ -1081,13 +1093,13 @@ _scroll_terminal() {
       remaining_lines=$(( lines - $1 ))
    fi
 
-   if (( jobs > remaining_lines )) ; then
+   if (( jobs > remaining_lines )); then
       # Scroll the terminal if there are more jobs than lines available
       #--
       to_scroll=$(( jobs - remaining_lines ))  # Number of lines to scroll
 
       # Scroll terminal by printing as many newlines as determined above, plus 1
-      for ((i=0 ; i<=to_scroll ; i++)) ; do
+      for ((i=0 ; i<=to_scroll ; i++)); do
          printf '\n'
       done
 
@@ -1097,7 +1109,8 @@ _scroll_terminal() {
 
 #-------------------------------------------------------------------------------
 
-_get_percent_complete() {
+_get_percent_complete()
+{
    # Return an operation's completion percentage, expressed as an integer
    #--
    # $1 is the operation to choose how to obtain the percentage, which can be:
@@ -1137,7 +1150,7 @@ _get_percent_complete() {
    esac
 
    # Default to '0' if percentage is not an integer
-   if [[ "${percent}" =~ ^[[:digit:]]+$ ]] ; then
+   if [[ "${percent}" =~ ^[[:digit:]]+$ ]]; then
       printf '%d' $percent
    else
       printf '%d' '0'
@@ -1146,19 +1159,20 @@ _get_percent_complete() {
 
 #-------------------------------------------------------------------------------
 
-_new_config() {
+_new_config()
+{
    # Force the creation of a new configuration file
    #--
    # Check if configuration file exists based of ${EUID}.  If it doesn't
    # exist, create one
-   if (( EUID == 0 )) ; then
+   if (( EUID == 0 )); then
       # User is root
       #--
       # Configuration file location
-      config_file="/etc/redoflacs.conf"
+      config_file='/etc/redoflacs.conf'
 
       # If there already is a configuration file, do not overwrite it
-      if [[ -f "${config_file}" ]] ; then
+      if [[ -f "${config_file}" ]]; then
          config_file="/etc/_$$.redoflacs.conf"
       fi
    else
@@ -1168,7 +1182,7 @@ _new_config() {
       config_file="${HOME}/.config/redoflacs/config"
 
       # If there already is a configuration file, do not overwrite it
-      if [[ -f "${config_file}" ]] ; then
+      if [[ -f "${config_file}" ]]; then
          config_file="${HOME}/.config/redoflacs/_$$.config"
       fi
    fi
@@ -1177,18 +1191,18 @@ _new_config() {
    _create_config
 
    # Explain to user where to find the new configuration file
-   _info "A new configuration file has been created here:\n"
+   _info 'A new configuration file has been created here:\n'
    _info "${cyan}${config_file}${reset}\n\n"
 
    _info "It's recommended to review the new configuration file\n"
-   _info "and transfer over any changes you made in your old\n"
-   _info "configuration file.\n\n"
+   _info 'and transfer over any changes you made in your old\n'
+   _info 'configuration file.\n\n'
 
-   _info "After making the changes (if any), rename the new\n"
-   _info "configuration file to your old configuration file\n"
-   _info "name.  Here is the command you could use:\n"
+   _info 'After making the changes (if any), rename the new\n'
+   _info 'configuration file to your old configuration file\n'
+   _info 'name.  Here is the command you could use:\n'
 
-   if (( EUID == 0 )) ; then
+   if (( EUID == 0 )); then
       _info "${cyan}mv${reset} ${cyan}${config_file}${reset} ${cyan}/etc/redoflacs.conf${reset}\n"
    else
       _info "${cyan}mv${reset} ${cyan}${config_file}${reset} ${cyan}${HOME}/.config/redoflacs/config${reset}\n"
@@ -1197,7 +1211,8 @@ _new_config() {
 
 #-------------------------------------------------------------------------------
 
-_create_config() {
+_create_config()
+{
    # Create a configuration file
    #--
    # Set up local variable
@@ -1369,12 +1384,13 @@ prepend_zero=\"false\"
 
    # Print out the configuration file to the specified location (either system-
    # wide or local)
-   printf "%s\n" "${create_config}" > "${config_file}"
+   printf '%s\n' "${create_config}" > "${config_file}"
 }
 
 #-------------------------------------------------------------------------------
 
-_parse_config() {
+_parse_config()
+{
    # Parse the user/system configuration file
    #--
    # Load the config file into an array and process each line, grabbing the
@@ -1386,15 +1402,15 @@ _parse_config() {
 
    mapfile -n0 -t config_array < "${config_file}"
 
-   for line in "${config_array[@]}" ; do
+   for line in "${config_array[@]}"; do
       # Run through the array, evaluating the configuration option into the
       # current enviroment and storing the tag fields into an array
       #--
       # Test and use only the tag and config options
-      if [[ -n "${line###*}" && -n "${line}" ]] ; then
+      if [[ -n "${line###*}" && -n "${line}" ]]; then
          config_option="${line//*=*/}"  # Null if line is a config option
 
-         if [[ -n "${config_option}" ]] ; then
+         if [[ -n "${config_option}" ]]; then
             tags+=( "${line^^}" )       # Store uppercase tag in array
          else
             eval "${line}"              # Put config option in environment
@@ -1405,7 +1421,8 @@ _parse_config() {
 
 #-------------------------------------------------------------------------------
 
-_check_config_version() {
+_check_config_version()
+{
    # Check current configuration, if the version in the script is newer
    # warn user and display a countdown before starting script
    #--
@@ -1415,11 +1432,11 @@ _check_config_version() {
 
    # Check if configuration file exists based of ${EUID}.  If it doesn't
    # exist, create one
-   if (( EUID == 0 )) ; then
+   if (( EUID == 0 )); then
       # User is root
       #--
       # Configuration file location
-      config_file="/etc/redoflacs.conf"
+      config_file='/etc/redoflacs.conf'
    else
       # User is _NOT_ root
       #--
@@ -1444,22 +1461,23 @@ _check_config_version() {
    # Check if ${user_config_revision} is an integer.  If not, display countdown
    # and warn user of new config file, else test if the user config revision is
    # less than the script config revision
-   if [[ "${user_config_revision}" =~ ^[[:digit:]]+$ ]] ; then
+   if [[ "${user_config_revision}" =~ ^[[:digit:]]+$ ]]; then
       # If ${script_config_revision} is greater than ${user_config_revision}
       # warn user and display countdown
-      if (( script_config_revision > user_config_revision )) ; then
+      if (( script_config_revision > user_config_revision )); then
          # Display warning and countdown
-         _countdown_config ; printf '\n\n'
+         _countdown_config; printf '\n\n'
       fi
    else
       # Display warning and countdown
-      _countdown_config ; printf '\n\n'
+      _countdown_config; printf '\n\n'
    fi
 }
 
 #-------------------------------------------------------------------------------
 
-_truncate_filename() {
+_truncate_filename()
+{
    # Truncate the processed item's filename if it's bigger than terminal width,
    # returning the filename (possibly truncated) as well as the length of the
    # filename (in characters, possibly truncated)
@@ -1472,7 +1490,7 @@ _truncate_filename() {
    declare -i filename_length  apparent_length  length
 
    # Basename of file/directory
-   if [[ "${1: -1}" == '/' ]] ; then        # Last character is a '/'
+   if [[ "${1: -1}" == '/' ]]; then         # Last character is a '/'
       filename="${1%?}"                     # Remove last character
       filename="${filename##*/}/"           # Basename of directory, append '/'
    else
@@ -1488,7 +1506,7 @@ _truncate_filename() {
    [[ "${2}" == 'multi-stage' ]] && max_length=$((max_length - 16))
 
    # If filename is longer than the width allowed in the terminal, truncate it
-   if (( filename_length > max_length )) ; then
+   if (( filename_length > max_length )); then
       max_length=$((max_length - 4 ))       # Leave room for space and ellipsis
       apparent_length="${filename_length}"  # Apparent length of item
       length="${max_length}"                # Length in ${foo:offset:length}
@@ -1530,7 +1548,8 @@ _truncate_filename() {
 
 #-------------------------------------------------------------------------------
 
-_find_cores() {
+_find_cores()
+{
    # Determine number of jobs to run via the number CPUs/cores available
    #--
    # Set up global variable
@@ -1538,28 +1557,29 @@ _find_cores() {
    declare -g  jobs_display='(Default)'  # Default $jobs determination
 
    # Check /proc/cpuinfo if /proc is mounted by comparing device numbers to /
-   if (( $(stat -c %d /proc) != $(stat -c %d /) )) ; then
-      if [[ -f /proc/cpuinfo ]] ; then
+   if (( $(stat -c %d '/proc') != $(stat -c %d '/') )); then
+      if [[ -f '/proc/cpuinfo' ]]; then
          # /proc/cpuinfo exists, find total number of cores to use
          #--
          # Store contents of /proc/cpuinfo into core_array
          mapfile -n0 -t cores_array < /proc/cpuinfo
 
-         for i in "${cores_array[@]}" ; do
+         for i in "${cores_array[@]}"; do
             # For each line, add processor number to jobs if matched
             #--
             [[ "${i}" == 'processor'*:' '* ]] && jobs="${i#processor*: }"
          done
 
          ((jobs++))  # +1 to $jobs since 'processor' starts at '0'
-         jobs_display="(/proc/cpuinfo)"  # $jobs dynamically determined
+         jobs_display='(/proc/cpuinfo)'  # $jobs dynamically determined
       fi
    fi
 }
 
 #-------------------------------------------------------------------------------
 
-_find_artwork() {
+_find_artwork()
+{
    # Find all the artwork blocks in a given FLAC file, storing each instance
    # into an array, to be returned as $artwork[@]
    #--
@@ -1574,13 +1594,13 @@ _find_artwork() {
    metaflac --list --block-type=PICTURE "${1}" > "${tmp_picture_blocks}"
 
    # Continue if there were any PICTURE blocks found in current FLAC
-   if [[ -s "${tmp_picture_blocks}" ]] ; then
+   if [[ -s "${tmp_picture_blocks}" ]]; then
       # Only read in the lines we care about and store into array
       mapfile -n0 -t artwork_blocks < \
       <(
-         while read -r ; do
+         while read -r; do
             # We only care about the block, picture and MIME type lines
-            [[ "${REPLY}" == 'METADATA'* || "${REPLY}" == '  '[tM]* ]] && printf "%s\n" "${REPLY}"
+            [[ "${REPLY}" == 'METADATA'* || "${REPLY}" == '  '[tM]* ]] && printf '%s\n' "${REPLY}"
          done < "${tmp_picture_blocks}"
       )
 
@@ -1600,8 +1620,8 @@ _find_artwork() {
       #   '  type: 7 (Lead artist/lead performer/soloist)'
       #   '  MIME type: image/jpg'
       #--
-      for i in "${!artwork_blocks[@]}" ; do
-         if [[ "${artwork_blocks[$i]}" == 'METADATA'* ]] ; then
+      for i in "${!artwork_blocks[@]}"; do
+         if [[ "${artwork_blocks[$i]}" == 'METADATA'* ]]; then
             block_id="${artwork_blocks[$i]##* #}"  # METADATA block #4 -> 4
 
             # type: 8 (Artist/Performer) -> art_id='8', art_desc='(Artist-Performer)'
@@ -1621,18 +1641,19 @@ _find_artwork() {
 
 #-------------------------------------------------------------------------------
 
-_top_banner() {
+_top_banner()
+{
    # Top banner displaying invocation settings
    #--
    read -r _ flac_version < <(flac --version)                # Flac Version
 
    printf " ${blue}%s${reset}\n" \
-      "---------------------------------------------------"  # Top title line
+      '---------------------------------------------------'  # Top title line
 
-   printf "%16sRuntime Information\n"                        # Title
+   printf '%16sRuntime Information\n'                        # Title
 
    printf " ${blue}%s${reset}\n" \
-      "-------------------------+-------------------------"  # Bottom title line
+      '-------------------------+-------------------------'  # Bottom title line
 
    printf "                redoflacs ${blue}|${reset} ${cyan}%s${reset}\n" \
       "${version}"                                           # Script version
@@ -1648,33 +1669,34 @@ _top_banner() {
 
    # Set configuration directory
    if (( EUID == 0 )) ; then
-      config_directory="/etc/"                               # System config
+      config_directory='/etc/'                               # System config
    else
-      config_directory="~/.config/redoflacs/"                # User config
+      config_directory='~/.config/redoflacs/'                # User config
    fi
 
    printf "         Config Directory ${blue}|${reset} ${cyan}%s${reset}\n" \
       "${config_directory}"                                  # Config directory
 
    printf " ${blue}%s${reset}\n" \
-      "-------------------------+-------------------------"  # End banner line
+      '-------------------------+-------------------------'  # End banner line
 
-   _info "Finding FLAC files to process..."                  # Show FLAC search
+   _info 'Finding FLAC files to process...'                  # Show FLAC search
 }
 
 #-------------------------------------------------------------------------------
 
-_countdown_metadata() {
+_countdown_metadata()
+{
    # Display countdown before retagging to allow user to quit script safely
    #--
    trap '_trap_sigint countdown' SIGINT  # Trap SIGINT to abort cleanly
 
    # Warning message
    _error "${yellow}CAUTION!${reset} These are the tag fields that will be kept\n" >&2
-   _error "when re-tagging the selected files:\n" >&2
+   _error 'when re-tagging the selected files:\n' >&2
 
    # Creates the listing of tags to be kept
-   printf "     %s\n" "${tags[@]}" >&2
+   printf '     %s\n' "${tags[@]}" >&2
 
    # Warning message about embedded coverart
    _error "By default, this script will ${cyan}REMOVE${reset} the legacy ${cyan}COVERART${reset} tag.\n" >&2
@@ -1686,11 +1708,11 @@ _countdown_metadata() {
    _error "the ${cyan}-p, --prune${reset} option as well.\n\n" >&2
 
    _warn "Waiting ${red}10${reset} seconds before starting program...\n" >&2
-   _warn "Ctrl+C (Control-C) to abort...\n" >&2
-   _info "Starting in: "
+   _warn 'Ctrl+C (Control-C) to abort...\n' >&2
+   _info 'Starting in: '
 
    # 10 second countdown
-   for count in {10..1} ; do
+   for count in {10..1}; do
       printf "${red}%d ${reset}" "$count"
       read -t1  # Sleep 1
    done
@@ -1700,29 +1722,30 @@ _countdown_metadata() {
 
 #-------------------------------------------------------------------------------
 
-_countdown_config() {
+_countdown_config()
+{
    # Displays countdown if a newer config is found to allow user to quit safely
    #--
    trap '_trap_sigint countdown' SIGINT  # Trap SIGINT to abort cleanly
 
    # Warning message
-   _info "There is a newer configuration file available!\n\n"
+   _info 'There is a newer configuration file available!\n\n'
 
-   _warn "It is recommended you generate a new configuration\n" >&2
-   _warn "file for use with this program.\n\n" >&2
+   _warn 'It is recommended you generate a new configuration\n' >&2
+   _warn 'file for use with this program.\n\n' >&2
 
-   _warn "To generate a new configuration file, run:\n" >&2
+   _warn 'To generate a new configuration file, run:\n' >&2
    _warn "${cyan}redoflacs --new-config${reset}\n\n" >&2
 
-   _warn "The above command will _NOT_ overwrite your\n" >&2
-   _warn "current configuration file.\n\n" >&2
+   _warn 'The above command will _NOT_ overwrite your\n' >&2
+   _warn 'current configuration file.\n\n' >&2
 
-   _warn "Waiting 10 seconds before starting program...\n" >&2
-   _warn "Ctrl+C (Control-C) to abort...\n" >&2
-   _info "Starting in: "
+   _warn 'Waiting 10 seconds before starting program...\n' >&2
+   _warn 'Ctrl+C (Control-C) to abort...\n' >&2
+   _info 'Starting in: '
 
    # 10 second countdown
-   for count in {10..1} ; do
+   for count in {10..1}; do
       printf "${red}%s ${reset}" "$count"
       read -t1  # Sleep 1
    done
@@ -1730,26 +1753,28 @@ _countdown_config() {
 
 #-------------------------------------------------------------------------------
 
-_get_directory_list() {
+_get_directory_list()
+{
    # Return a listing of the total base directories housing all the found FLACs
    #--
    declare     previous_dir  current_dir  # Set up local variable(s)
    declare -ga total_dirs                 # Set up global array
 
-   for flac in "$@" ; do
+   for flac in "$@"; do
       # Run through total FLAC files array, printing out each unique directory
       #--
       current_dir="${flac%/*}"
-      if [[ "${previous_dir}" != "${current_dir}" ]] ; then
+      if [[ "${previous_dir}" != "${current_dir}" ]]; then
          total_dirs+=( "${current_dir}/" )
       fi
-      previous_dir="${current_dir}"  # Set current directory to previous
+      previous_dir="${current_dir}"       # Set current directory to previous
    done
 }
 
 #-------------------------------------------------------------------------------
 
-_clear_jobs_fd() {
+_clear_jobs_fd()
+{
    # Clear job manager file descriptor (tied to FIFO) by closing and reopening
    #--
    # $1 is the FIFO to tie the file descriptor to
@@ -1762,20 +1787,22 @@ _clear_jobs_fd() {
 
 #-------------------------------------------------------------------------------
 
-_num_issues() {
+_num_issues()
+{
    # Return an integer detailing the number of issues an operation may have had,
    # returning '0', if no issues were found
    #--
    declare ticks  # Set up local variable
 
    # Read in number of issue ticks, hiding missing file output
-   { read -r ticks < "${issue_ticks}" ;} 2>/dev/null
+   { read -r ticks < "${issue_ticks}"; } 2>/dev/null
    printf '%d' "${#ticks}"  # Return number of ticks (0, if empty)
 }
 
 #-------------------------------------------------------------------------------
 
-_process_positional_parameters() {
+_process_positional_parameters()
+{
    # Obtain and process the positional parameters invoked with the script
    #--
    # Set up global variables
@@ -1786,13 +1813,13 @@ _process_positional_parameters() {
    declare    regex
 
    # If no arguments are made to the script show usage & short help
-   if (( ${#} == 0 )) ; then
+   if (( ${#} == 0 )); then
       _short_help
       exit 1
    fi
 
    # If only one argument was called
-   if (( ${#} == 1 )) ; then
+   if (( ${#} == 1 )); then
       case "$1" in
          '--help'|'-h')        _long_help     ; exit 0 ;;
          '--version'|'-v')     _print_version ; exit 0 ;;
@@ -1802,17 +1829,18 @@ _process_positional_parameters() {
    fi
 
    # If only two arguments were called
-   if (( ${#} == 2 )) ; then
+   if (( ${#} == 2 )); then
       case "$1" in
          # The number of jobs cannot be specified without an operation
          '--jobs='[[:digit:]]*' '|'-j'[[:digit:]]*' ')
             _usage
             _error "${cyan}${1}${reset} cannot used without an operation specified.\n" >&2
             exit 1
+         ;;
       esac
    fi
 
-   for i in "${@}" ; do
+   for i in "${@}"; do
       # Separate long, short, and non arguments into separate arrays to be
       # converted into short arguments for 'getopts' to process correctly
       #--
@@ -1824,7 +1852,7 @@ _process_positional_parameters() {
    done
 
    # If there isn't a single non-argument (directory), exit
-   if (( ${#non_args[@]} != 1 )) ; then
+   if (( ${#non_args[@]} != 1 )); then
       _usage
       exit 1
    fi
@@ -1834,13 +1862,13 @@ _process_positional_parameters() {
    # If any were called, convert long arguments to short, allowing 'getopts' to
    # process them
    #--
-   if [[ -n "${long_args[@]}" ]] ; then
-      for i in "${long_args[@]}" ; do
+   if [[ -n "${long_args[@]}" ]]; then
+      for i in "${long_args[@]}"; do
          case "$i" in
             # These arguments are to be called by themselves, so quit
-            '--version')              _usage ; exit 1        ;;
-            '--help')                 _usage ; exit 1        ;;
-            '--new-config')           _usage ; exit 1        ;;
+            '--version')              _usage; exit 1          ;;
+            '--help')                 _usage; exit 1          ;;
+            '--new-config')           _usage; exit 1          ;;
 
             # Send long arguments to array to process later
             '--aucdtect')             converted_args+=( -a )  ;;
@@ -1863,7 +1891,7 @@ _process_positional_parameters() {
                # number of $jobs to its value, otherwise exit with a warning
                #--
                regex="[[:digit:]]+$"  # Regular expression
-               if [[ "${i##*=}" =~ $regex ]] && (( ${i##*=} != 0 )) ; then
+               if [[ "${i##*=}" =~ $regex ]] && (( ${i##*=} != 0 )); then
                   jobs="${i##*=}"  # --jobs=11 -> 11
                else
                   _usage
@@ -1883,13 +1911,13 @@ _process_positional_parameters() {
    # If any were called, add valid short arguments (using 'getopts') to the same
    # array as long arguments
    #--
-   if [[ -n "${short_args[@]}" ]] ; then
-      while getopts ":j:LlcCtgGaAmeprnhvo" args "${short_args[@]}" ; do
+   if [[ -n "${short_args[@]}" ]]; then
+      while getopts ":j:LlcCtgGaAmeprnhvo" args "${short_args[@]}"; do
          case "${args}" in
             # These arguments are to be called by themselves, so quit
-            'v') _usage ; exit 1        ;;
-            'h') _usage ; exit 1        ;;
-            'o') _usage ; exit 1        ;;
+            'v') _usage; exit 1          ;;
+            'h') _usage; exit 1          ;;
+            'o') _usage; exit 1          ;;
 
             # Send short arguments to array to process later
             'L') converted_args+=( -L )  ;;
@@ -1912,7 +1940,7 @@ _process_positional_parameters() {
                # number of $jobs to its value, otherwise exit with a warning
                #--
                regex="[[:digit:]]+$"  # Regular expression
-               if [[ "${OPTARG}" =~ $regex ]] && (( OPTARG != 0 )) ; then
+               if [[ "${OPTARG}" =~ $regex ]] && (( OPTARG != 0 )); then
                   jobs="${OPTARG}"  # OPTARG is the argument after 'j' (j:)
                else
                   _usage
@@ -1930,9 +1958,9 @@ _process_positional_parameters() {
    fi
 
    # Display invalid arguments, if any
-   if [[ -n "${invalid_args[@]}" ]] ; then
+   if [[ -n "${invalid_args[@]}" ]]; then
       _usage
-      _error "Invalid option(s): " >&2
+      _error 'Invalid option(s): ' >&2
       printf "${cyan}%s${reset}\n" "${invalid_args[*]}" >&2
       exit 1
    fi
@@ -1940,11 +1968,11 @@ _process_positional_parameters() {
    # Process converted arguments, setting each operation to run into an array
    #--
    # Run through the catchall arugments first
-   for i in "${converted_args[@]}" ; do
+   for i in "${converted_args[@]}"; do
       case "${i}" in
          # These are the meta-arguments (do multiple operations)
          '-l')
-            all="true"
+            all='true'
             operations[1]='md5_check'
             operations[2]='compress_verify'
             operations[5]='replaygain_test'
@@ -1954,7 +1982,7 @@ _process_positional_parameters() {
             operations[10]='prune'
          ;;
          '-L')
-            reallyall="true"
+            reallyall='true'
             create_spectrogram='true'
             operations[0]='aucdtect'
             operations[1]='md5_check'
@@ -1970,18 +1998,18 @@ _process_positional_parameters() {
    done
 
    # Run through the individual operations
-   for i in "${converted_args[@]}" ; do
+   for i in "${converted_args[@]}"; do
       case "${i}" in
          # Process individual arguments
          '-a')
-            if [[ "${create_spectrogram}" == 'true' || "${operations[0]}" == 'conflict' ]] ; then
+            if [[ "${create_spectrogram}" == 'true' || "${operations[0]}" == 'conflict' ]]; then
                operations[0]='conflict'  # If already set
             else
                operations[0]='aucdtect'
             fi
          ;;
          '-A')
-            if [[ -n "${operations[0]}" && -z "${create_spectrogram}" ]] || [[ "${operations[0]}" == 'conflict' ]] ; then
+            if [[ -n "${operations[0]}" && -z "${create_spectrogram}" ]] || [[ "${operations[0]}" == 'conflict' ]]; then
                operations[0]='conflict'  # If already set
             else
                create_spectrogram='true'
@@ -1993,7 +2021,7 @@ _process_positional_parameters() {
          '-C') operations[3]='compress_no_test'  ;;
          '-t') operations[4]='test'              ;;
          '-g')
-            if [[ "${operations[6]}" == 'replaygain_apply' || "${operations[6]}" == 'conflict' ]] ; then
+            if [[ "${operations[6]}" == 'replaygain_apply' || "${operations[6]}" == 'conflict' ]]; then
                operations[6]='conflict'   # If already set
             else
                operations[5]='replaygain_test'
@@ -2001,7 +2029,7 @@ _process_positional_parameters() {
             fi
          ;;
          '-G')
-            if [[ "${operations[6]}" == 'replaygain_force_apply' || "${operations[6]}" == 'conflict' ]] ; then
+            if [[ "${operations[6]}" == 'replaygain_force_apply' || "${operations[6]}" == 'conflict' ]]; then
                operations[6]='conflict'   # If already set
             else
                operations[5]='replaygain_test'
@@ -2016,7 +2044,7 @@ _process_positional_parameters() {
             operations[9]='extract_images'
          ;;
          '-p') operations[10]='prune'            ;;
-         '-n') no_color="true"                   ;;
+         '-n') no_color='true'                   ;;
       esac
    done
 
@@ -2031,45 +2059,46 @@ _process_positional_parameters() {
 
 #-------------------------------------------------------------------------------
 
-_check_missing_programs() {
+_check_missing_programs()
+{
    # Check for missing programs vital to this script
    #--
    # Set up local variables/arrays
    declare -a missing_commands
 
    # Add each command that's needed to an array to be displayed
-   if ! type -P rm >/dev/null ; then
+   if ! type -P rm >/dev/null; then
       missing_commands+=( "   Missing ${cyan}rm${reset}        ->  Part of ${cyan}coreutils${reset}" )
    fi
-   if ! type -P stty >/dev/null ; then
+   if ! type -P stty >/dev/null; then
       missing_commands+=( "   Missing ${cyan}stty${reset}      ->  Part of ${cyan}coreutils${reset}" )
    fi
-   if ! type -P stat >/dev/null ; then
+   if ! type -P stat >/dev/null; then
       missing_commands+=( "   Missing ${cyan}stat${reset}      ->  Part of ${cyan}coreutils${reset}" )
    fi
-   if ! type -P mkdir >/dev/null ; then
+   if ! type -P mkdir >/dev/null; then
       missing_commands+=( "   Missing ${cyan}mkdir${reset}     ->  Part of ${cyan}coreutils${reset}" )
    fi
-   if ! type -P mkfifo >/dev/null ; then
+   if ! type -P mkfifo >/dev/null; then
       missing_commands+=( "   Missing ${cyan}mkfifo${reset}    ->  Part of ${cyan}coreutils${reset}" )
    fi
-   if ! type -P wc >/dev/null ; then
+   if ! type -P wc >/dev/null; then
       missing_commands+=( "   Missing ${cyan}wc${reset}        ->  Part of ${cyan}coreutils${reset}" )
    fi
-   if ! type -P metaflac >/dev/null ; then
+   if ! type -P metaflac >/dev/null; then
       missing_commands+=( "   Missing ${cyan}metaflac${reset}  ->  Part of ${cyan}flac${reset}" )
    fi
-   if ! type -P flac >/dev/null ; then
+   if ! type -P flac >/dev/null; then
       missing_commands+=( "   Missing ${cyan}flac${reset}      ->  Part of ${cyan}flac${reset}" )
    fi
 
-   if [[ -n "${missing_commands[@]}" ]] ; then
+   if [[ -n "${missing_commands[@]}" ]]; then
       # Display message that system is missing vital programs
       #--
-      _error "You seem to be missing one or more necessary programs\n"    >&2
-      _error "to run this script reliably.  Below shows the program(s)\n" >&2
-      _error "missing, as well as where you can install them from:\n"     >&2
-      for i in "${missing_commands[@]}" ; do
+      _error 'You seem to be missing one or more necessary programs\n'    >&2
+      _error 'to run this script reliably.  Below shows the program(s)\n' >&2
+      _error 'missing, as well as where you can install them from:\n'     >&2
+      for i in "${missing_commands[@]}"; do
          _warn "${i}\n" >&2
       done
       exit 1
@@ -2078,11 +2107,11 @@ _check_missing_programs() {
    # Optional binaries
    #--
    # Check for auCDtect if operation was called
-   if [[ "${operations[0]}" == 'aucdtect' ]] ; then
-      if aucdtect="$(type -P auCDtect)" ; then
-         _aucdtect_cmd() { "${aucdtect}" "$@" ;}  # Normal typeface
-      elif aucdtect="$(type -P aucdtect)" ; then
-         _aucdtect_cmd() { "${aucdtect}" "$@" ;}  # Alternate spelling
+   if [[ "${operations[0]}" == 'aucdtect' ]]; then
+      if aucdtect="$(type -P auCDtect)"; then
+         _aucdtect_cmd() { "${aucdtect}" "$@"; }  # Normal typeface
+      elif aucdtect="$(type -P aucdtect)"; then
+         _aucdtect_cmd() { "${aucdtect}" "$@"; }  # Alternate spelling
       else
          # auCDtect/aucdtect cannot be found
          _error "It appears ${cyan}auCDtect${reset} is not installed. Please verify you\n" >&2
@@ -2091,7 +2120,7 @@ _check_missing_programs() {
       fi
 
       # Make sure auCDtect is executable
-      if [[ ! -x "${aucdtect}" ]] ; then
+      if [[ ! -x "${aucdtect}" ]]; then
          _error "It appears ${cyan}auCDtect${reset} is not executable.  In order to make\n" >&2
          _error "${cyan}auCDtect${reset} executable, run:\n" >&2
          _error "${cyan}chmod u+x '${aucdtect}'${reset}\n" >&2
@@ -2100,9 +2129,9 @@ _check_missing_programs() {
    fi
 
    # Check for SoX if auCDtect spectrograms were called
-   if [[ "${create_spectrogram}" == 'true' ]] ; then
-      if sox="$(type -P sox)" ; then
-         _sox_cmd() { "${sox}" "$@" ;}
+   if [[ "${create_spectrogram}" == 'true' ]]; then
+      if sox="$(type -P sox)"; then
+         _sox_cmd() { "${sox}" "$@"; }
       else
          # SoX cannot be found
          _error "It appears ${cyan}SoX${reset} is not installed. Please verify you\n" >&2
@@ -2114,18 +2143,19 @@ _check_missing_programs() {
 
 #-------------------------------------------------------------------------------
 
-_check_conflicting_operations() {
+_check_conflicting_operations()
+{
    # Check for any conflicting operations/arguments
    #--
    # '-l, --all' and '-L, --reallyall' cannot be called together
-   if [[ "${all}" == 'true' && "${reallyall}" == 'true' ]] ; then
+   if [[ "${all}" == 'true' && "${reallyall}" == 'true' ]]; then
       _error "Running both ${cyan}-l, --all${reset} and ${cyan}-L, --reallyall${reset} conflict!\n" >&2
-      _error "Please choose one or the other.\n" >&2
+      _error 'Please choose one or the other.\n' >&2
       exit 1
    fi
 
    # Store conflicting arguments if '-l, --all' or '-L, --reallyall' was called
-   if [[ "${all}" == 'true' || "${reallyall}" == 'true' ]] ; then
+   if [[ "${all}" == 'true' || "${reallyall}" == 'true' ]]; then
       # _compress_no_test()
       [[ -n "${operations[3]}" ]] && conflicting_args+=( '-C, --compress_notest' )
 
@@ -2137,59 +2167,60 @@ _check_conflicting_operations() {
       esac
 
       # Display conflicting arguments and exit, if there were any
-      if [[ -n "${conflicting_args[@]}" ]] ; then
+      if [[ -n "${conflicting_args[@]}" ]]; then
          # '-l, --all'
-         if [[ "${all}" == 'true' ]] ; then
+         if [[ "${all}" == 'true' ]]; then
             _error "The below options conflict with ${cyan}-l, --all${reset}:\n" >&2
          # '-L, --reallyall'
-         elif [[ "${reallyall}" == 'true' ]] ; then
+         elif [[ "${reallyall}" == 'true' ]]; then
             _error "The below options conflict with ${cyan}-L, --reallyall${reset}:\n" >&2
          fi
 
          # Print each conflicting argument
-         for i in "${conflicting_args[@]}" ; do
+         for i in "${conflicting_args[@]}"; do
             _error "  ${cyan}${i}${reset}\n" >&2
          done
 
-         _error "Please remove incompatible options.\n" >&2
+         _error 'Please remove incompatible options.\n' >&2
          exit 1
       fi
    fi
 
    # _compress_verify() and _compress_no_test()
-   if [[ -n "${operations[2]}" && -n "${operations[3]}" ]] ; then
+   if [[ -n "${operations[2]}" && -n "${operations[3]}" ]]; then
       _error "Running both ${cyan}-c, --compress${reset} and ${cyan}-C, --compress-notest${reset} conflict!\n" >&2
-      _error "Please choose one or the other.\n" >&2
+      _error 'Please choose one or the other.\n' >&2
       exit 1
    fi
 
    # _compress_verify() and _test()
-   if [[ -n "${operations[2]}" && -n "${operations[4]}" ]] ; then
+   if [[ -n "${operations[2]}" && -n "${operations[4]}" ]]; then
       _error "Running both ${cyan}-c, --compress${reset} and ${cyan}-t, --test${reset} conflict!\n" >&2
-      _error "Please choose one or the other.\n" >&2
+      _error 'Please choose one or the other.\n' >&2
       exit 1
    fi
 
    # _replaygain_force_apply and _replaygain_apply
    # 'conflict' is set during parameter handling if conflicts will ocurr
-   if [[ "${operations[6]}" == 'conflict' ]] ; then
+   if [[ "${operations[6]}" == 'conflict' ]]; then
       _error "Running both ${cyan}-g, --replaygain${reset} and ${cyan}-G, --replaygain-noforce${reset} conflict!\n" >&2
-      _error "Please choose one or the other.\n" >&2
+      _error 'Please choose one or the other.\n' >&2
       exit 1
    fi
 
    # _aucdtect and _aucdtect w/ spectrogram creation
    # 'conflict' is set during parameter handling if conflicts will ocurr
-   if [[ "${operations[0]}" == 'conflict' ]] ; then
+   if [[ "${operations[0]}" == 'conflict' ]]; then
       _error "Running both ${cyan}-a, --aucdtect${reset} and ${cyan}-A, --aucdtect-spectrogram${reset} conflict!\n" >&2
-      _error "Please choose one or the other.\n" >&2
+      _error 'Please choose one or the other.\n' >&2
       exit 1
    fi
 }
 
 #-------------------------------------------------------------------------------
 
-_summary() {
+_summary()
+{
    # Display the summary of operations chart
    #--
    # Set up local variables/arrays
@@ -2198,10 +2229,10 @@ _summary() {
 
    # Title
    printf "\033[$(_row);2H${blue}%s${reset}\n" \
-   "---------------------------------------------------"
-   printf "                Summary Of Operations\n"
+   '---------------------------------------------------'
+   printf '                Summary Of Operations\n'
    printf "${reset} ${blue}%s${reset}\n" \
-   "-------------------------+-------------------------"
+   '-------------------------+-------------------------'
 
    # Correct order to display operational status to process
    operation_keys=(
@@ -2217,20 +2248,20 @@ _summary() {
       'Prune METADATA Blocks'
    )
 
-   for operation in "${operation_keys[@]}" ; do
+   for operation in "${operation_keys[@]}"; do
       # Display each operational line with the status of that operation, if it
       # was called
       #--
-      if [[ -n "${operation_summary[$operation]}" ]] ; then
+      if [[ -n "${operation_summary[$operation]}" ]]; then
          # Check for sub messages, and apply additional formatting
-         if [[ "${operation}" == '>> '* ]] ; then
-            if [[ "${operation}" == '>> Testing' ]] ; then
+         if [[ "${operation}" == '>> '* ]]; then
+            if [[ "${operation}" == '>> Testing' ]]; then
                printf "${yellow}%25s ${blue}|${reset}\n" 'Applying ReplayGain'
-            elif [[ "${operation}" == '>> Analyzing' ]] ; then
+            elif [[ "${operation}" == '>> Analyzing' ]]; then
                printf "${yellow}%25s ${blue}|${reset}\n" 'Retagging FLACs'
             fi
 
-            printf -v sub_message "%25s" "${operation}"  # Store right aligned message
+            printf -v sub_message '%25s' "${operation}"  # Store right aligned message
 
             # Color '>>' as yellow and message as magenta
             printf "${yellow}%s${magenta}%s ${blue}|${reset}" \
@@ -2259,17 +2290,18 @@ _summary() {
 
    # Last line of chart
    printf " ${blue}%s${reset}\n" \
-      "-------------------------+-------------------------"
+      '-------------------------+-------------------------'
 
    # Remove temporary FIFOs and files
    rm -f "${job_fifo}" "${tmp_aucdtect_fd}" "${issue_ticks}"
 
-   printf "\033[?25h"   # Restore cursor
+   printf '\033[?25h'   # Restore cursor
 }
 
 #-------------------------------------------------------------------------------
 
-_run_parallel() {
+_run_parallel()
+{
    # Run a given operation with a specified number of jobs
    #--
    # $1 is the operational function to run multiple jobs, which can be:
@@ -2285,13 +2317,13 @@ _run_parallel() {
 
    # Determine the whitespace to make up max length by operation
    case "$1" in
-      replaygain_* | retag_*)  spacing='11'  ;;
-      *)                       spacing='9'   ;;
+      'replaygain_'* | 'retag_'*)  spacing='11'  ;;
+      *)                           spacing='9'   ;;
    esac
 
    row_state=$(_row)                        # Current cursor row position state
 
-   for item in "${total_items[@]:0:${jobs}}" ; do
+   for item in "${total_items[@]:0:${jobs}}"; do
       # Run as many operations (from $total_items[@]) in the background,
       # specified via $jobs
       #--
@@ -2307,8 +2339,8 @@ _run_parallel() {
    done
 
    # Continue only if there are more items than jobs specified
-   if (( ${#total_items[@]} > jobs )) ; then
-      while read -r previous_placement ; do
+   if (( ${#total_items[@]} > jobs )); then
+      while read -r previous_placement; do
          # An operation is completed with an integer and newline sent to a FIFO.
          # The integer is that row position an operation was on.  For each
          # newline read in, process another file/dir from $total_items[@]
@@ -2318,7 +2350,7 @@ _run_parallel() {
 
          # If current number of FLACs to process is less than total FLACs
          # found, add another FLAC to process
-         if (( iteration < ${#total_items[@]} )) ; then
+         if (( iteration < ${#total_items[@]} )); then
             item="${total_items[${iteration}]}"  # Current file/dir to process
             ((iteration++))                      # Increase count
             number_completed="[${iteration}/${#total_items[@]}]"  # eg. [56/213]
@@ -2339,7 +2371,8 @@ _run_parallel() {
 
 #-------------------------------------------------------------------------------
 
-_replaygain_test() {
+_replaygain_test()
+{
    # Test FLAC file's for ReplayGain application
    #--
    # $1 is the filename
@@ -2370,7 +2403,7 @@ _replaygain_test() {
    current_sample_rate="$(metaflac --show-sample-rate "${1}" 2>/dev/null)"
 
    # Exit code 1 implies failure (130 is SIGINT)
-   if (( ${?} == 1 )) ; then
+   if (( ${?} == 1 )); then
       # Error with FLAC file, display failed/error
       _print_status 'fail' "${file_basename}" "${file_length}" 'sub'
 
@@ -2382,11 +2415,11 @@ _replaygain_test() {
    else
       # File is OK, test if sample rate is above 48kHz and the version of
       # `metaflac' installed is greater than 1.2.1
-      if (( current_sample_rate > 48000 )) ; then
+      if (( current_sample_rate > 48000 )); then
 
          # Sample rate is greater than 48kHz, so check to make sure the
          # version of `metaflac' is greater than 1.2.1
-         if (( $(_metaflac_version) < 3 )) ; then
+         if (( $(_metaflac_version) < 3 )); then
             # Old version of `metaflac' installed, display skipped
             _print_status 'skip' "${file_basename}" "${file_length}" 'sub'
 
@@ -2411,7 +2444,8 @@ _replaygain_test() {
 
 #-------------------------------------------------------------------------------
 
-_replaygain_apply() {
+_replaygain_apply()
+{
    # Apply ReplayGain to each directory of FLAC files (if values are missing)
    #--
    # $1 is the directory (includes a slash, ie 'dir/'
@@ -2438,22 +2472,21 @@ _replaygain_apply() {
    _print_item "${file_basename}" "${file_length}" "$3" 'sub'
 
    # ${j} is a FLAC file -> under a directory, ${1}
-   for j in "${1}"*${flac_extension} ; do
+   for j in "${1}"*${flac_extension}; do
       # Grab all of the ReplayGain tags
       mapfile -n0 -t replaygain_tags < \
-      <(
-         metaflac \
-            --show-tag=REPLAYGAIN_REFERENCE_LOUDNESS \
-            --show-tag=REPLAYGAIN_TRACK_GAIN \
-            --show-tag=REPLAYGAIN_TRACK_PEAK \
-            --show-tag=REPLAYGAIN_ALBUM_GAIN \
-            --show-tag=REPLAYGAIN_ALBUM_PEAK \
-            "${j}"
-      )
+         <(metaflac \
+               --show-tag='REPLAYGAIN_REFERENCE_LOUDNESS' \
+               --show-tag='REPLAYGAIN_TRACK_GAIN' \
+               --show-tag='REPLAYGAIN_TRACK_PEAK' \
+               --show-tag='REPLAYGAIN_ALBUM_GAIN' \
+               --show-tag='REPLAYGAIN_ALBUM_PEAK' \
+               "${j}"
+         )
 
       # Test if any ReplayGain values are empty (if there are less
       # than 5 values in the replaygain array)
-      if (( ${#replaygain_tags[@]} < 5 )) ; then
+      if (( ${#replaygain_tags[@]} < 5 )); then
          # At _least_ one tag is missing from current file, so
          # apply new ReplayGain values
          #
@@ -2463,7 +2496,7 @@ _replaygain_apply() {
          metaflac --add-replay-gain "${1}"/*${flac_extension} >/dev/null 2>&1
 
          # Exit code 130 is SIGINT so only check for exit code '1'
-         if (( ${?} == 1 )) ; then
+         if (( ${?} == 1 )); then
             # Failed applying ReplayGain values, display failed/error
             _print_status 'fail' "${file_basename}" "${file_length}" 'sub'
 
@@ -2472,13 +2505,7 @@ _replaygain_apply() {
                >> "${log_file}"
 
             printf '.' >> "${issue_ticks}"  # Add one tick to total issues
-
-            # Placeholder variable tested after this loop if the loop completes
-            # with 'break'
-            broke_out_of_loop="true"
-
-            # Break out of loop and on to next directory
-            break
+            break                           # Move on to next directory
          else
             # Applied ReplayGain successfully
             _print_status 'ok' "${file_basename}" "${file_length}" 'sub'
@@ -2493,7 +2520,8 @@ _replaygain_apply() {
 
 #-------------------------------------------------------------------------------
 
-_replaygain_force_apply() {
+_replaygain_force_apply()
+{
    # Apply ReplayGain to each directory of FLAC files (force new values)
    #--
    # $1 is the directory (includes a slash, ie 'dir/'
@@ -2522,7 +2550,7 @@ _replaygain_force_apply() {
    metaflac --add-replay-gain "${1}"*${flac_extension} >/dev/null 2>&1
 
    # Exit code 130 is SIGINT so only check for exit code '1'
-   if (( ${?} == 1 )) ; then
+   if (( ${?} == 1 )); then
       # Failed applying ReplayGain values, display failed/error
       _print_status 'fail' "${file_basename}" "${file_length}" 'sub'
 
@@ -2540,7 +2568,8 @@ _replaygain_force_apply() {
 
 #-------------------------------------------------------------------------------
 
-_compress_verify() {
+_compress_verify()
+{
    # Compress FLACs with user-defined compression level, verifying its integrity
    #--
    # $1 is the directory
@@ -2567,22 +2596,23 @@ _compress_verify() {
 
    # Test for COMPRESSION level in FLAC file. Hide error output since
    # we'll be verifying the FLAC file later
-   COMPRESSION="$(metaflac --show-tag=COMPRESSION "${1}" 2> /dev/null)"
+   COMPRESSION="$(metaflac --show-tag='COMPRESSION' "${1}" 2> /dev/null)"
    COMPRESSION="${COMPRESSION#*=}"
 
-   if (( COMPRESSION != compression_level )) ; then
-      flac --no-error-on-compression-fail -f -${compression_level} -V "${1}" 2> >(while read -r -d'%' percent_complete ; do
-         # Compress given FLAC file, verifying with a progress bar
-         #--
-         # Current percent complete
-         percent_complete="$( _get_percent_complete "$2" "${percent_complete}" )"
+   if (( COMPRESSION != compression_level )); then
+      flac --no-error-on-compression-fail -f -${compression_level} -V "${1}" 2> \
+         >(while read -r -d'%' percent_complete; do
+            # Compress given FLAC file, verifying with a progress bar
+            #--
+            # Current percent complete
+            percent_complete="$( _get_percent_complete "$2" "${percent_complete}" )"
 
-         # Print operation progress bar and percent complete
-         _print_progress "$2" "${percent_complete}" "${file_basename}" "${file_length}"
-      done) >/dev/null
+            # Print operation progress bar and percent complete
+            _print_progress "$2" "${percent_complete}" "${file_basename}" "${file_length}"
+         done) >/dev/null
 
       # Exit code 1 implies failure (130 is SIGINT)
-      if (( ${?} == 1 )) ; then
+      if (( ${?} == 1 )); then
          # Error with FLAC file, display failed/error
          _print_status 'fail' "${file_basename}" "${file_length}"
 
@@ -2593,26 +2623,27 @@ _compress_verify() {
          printf '.' >> "${issue_ticks}"  # Add one tick to total issues
       else
          metaflac \
-            --remove-tag=COMPRESSION \
-            --set-tag=COMPRESSION=${compression_level} "${1}"
+            --remove-tag='COMPRESSION' \
+            --set-tag='COMPRESSION'="${compression_level}" "${1}"
 
          # FLAC is ok, display ok
          _print_status 'ok' "${file_basename}" "${file_length}"
       fi
    else
       # If already at compression_level, test the FLAC file instead
-      flac -t "${1}" 2> >(while read -r -d'%' percent_complete ; do
-         # Test given FLAC file, with a progress bar
-         #--
-         # Current percent complete
-         percent_complete="$( _get_percent_complete 'test' "${percent_complete}" )"
+      flac -t "${1}" 2> \
+         >(while read -r -d'%' percent_complete; do
+            # Test given FLAC file, with a progress bar
+            #--
+            # Current percent complete
+            percent_complete="$( _get_percent_complete 'test' "${percent_complete}" )"
 
-         # Print operation progress bar and percent complete
-         _print_progress 'test' "${percent_complete}" "${file_basename}" "${file_length}"
-      done) >/dev/null
+            # Print operation progress bar and percent complete
+            _print_progress 'test' "${percent_complete}" "${file_basename}" "${file_length}"
+         done) >/dev/null
 
       # Exit code 1 implies failure (130 is SIGINT)
-      if (( ${?} == 1 )) ; then
+      if (( ${?} == 1 )); then
          # Error with FLAC file, display failed/error
          _print_status 'fail' "${file_basename}" "${file_length}"
 
@@ -2631,7 +2662,8 @@ _compress_verify() {
 
 #-------------------------------------------------------------------------------
 
-_compress_no_test() {
+_compress_no_test()
+{
    # Compress FLACs with user-defined compression level, verifying its integrity
    # and _not_ falling back to _test() if the compression level is already set
    #--
@@ -2659,22 +2691,23 @@ _compress_no_test() {
 
    # Test for COMPRESSION level in FLAC file. Hide error output since
    # we'll be verifying the FLAC file later
-   COMPRESSION="$(metaflac --show-tag=COMPRESSION "${1}" 2> /dev/null)"
+   COMPRESSION="$(metaflac --show-tag='COMPRESSION' "${1}" 2> /dev/null)"
    COMPRESSION="${COMPRESSION#*=}"
 
-   if (( COMPRESSION != compression_level )) ; then
-      flac --no-error-on-compression-fail -f -${compression_level} -V "${1}" 2> >(while read -r -d'%' percent_complete ; do
-         # Compress given FLAC file, verifying with a progress bar
-         #--
-         # Current percent complete
-         percent_complete="$( _get_percent_complete "$2" "${percent_complete}" )"
+   if (( COMPRESSION != compression_level )); then
+      flac --no-error-on-compression-fail -f -${compression_level} -V "${1}" 2> \
+         >(while read -r -d'%' percent_complete; do
+            # Compress given FLAC file, verifying with a progress bar
+            #--
+            # Current percent complete
+            percent_complete="$( _get_percent_complete "$2" "${percent_complete}" )"
 
-         # Print operation progress bar and percent complete
-         _print_progress "$2" "${percent_complete}" "${file_basename}" "${file_length}"
-      done) >/dev/null
+            # Print operation progress bar and percent complete
+            _print_progress "$2" "${percent_complete}" "${file_basename}" "${file_length}"
+         done) >/dev/null
 
       # Exit code 1 implies failure (130 is SIGINT)
-      if (( ${?} == 1 )) ; then
+      if (( ${?} == 1 )); then
          # Error with FLAC file, display failed/error
          _print_status 'fail' "${file_basename}" "${file_length}"
 
@@ -2685,8 +2718,8 @@ _compress_no_test() {
          printf '.' >> "${issue_ticks}"  # Add one tick to total issues
       else
          metaflac \
-            --remove-tag=COMPRESSION \
-            --set-tag=COMPRESSION=${compression_level} "${1}"
+            --remove-tag='COMPRESSION' \
+            --set-tag='COMPRESSION'="${compression_level}" "${1}"
 
          # FLAC is ok, display ok
          _print_status 'ok' "${file_basename}" "${file_length}"
@@ -2700,7 +2733,8 @@ _compress_no_test() {
 
 #-------------------------------------------------------------------------------
 
-_test() {
+_test()
+{
    # Test FLAC file integrity
    #--
    # $1 is the filename
@@ -2725,18 +2759,19 @@ _test() {
    # Print current FLAC being processed
    _print_item "${file_basename}" "${file_length}" "$3"
 
-   flac -t "${1}" 2> >(while read -r -d'%' percent_complete ; do
-      # Test given FLAC file, with a progress bar
-      #--
-      # Current percent complete
-      percent_complete="$( _get_percent_complete "$2" "${percent_complete}" )"
+   flac -t "${1}" 2> \
+      >(while read -r -d'%' percent_complete; do
+         # Test given FLAC file, with a progress bar
+         #--
+         # Current percent complete
+         percent_complete="$( _get_percent_complete "$2" "${percent_complete}" )"
 
-      # Print operation progress bar and percent complete
-      _print_progress "$2" "${percent_complete}" "${file_basename}" "${file_length}"
-   done) >/dev/null
+         # Print operation progress bar and percent complete
+         _print_progress "$2" "${percent_complete}" "${file_basename}" "${file_length}"
+      done) >/dev/null
 
    # Exit code 1 implies failure (130 is SIGINT)
-   if (( ${?} == 1 )) ; then
+   if (( ${?} == 1 )); then
       # Error with FLAC file, display failed/error
       _print_status 'fail' "${file_basename}" "${file_length}"
 
@@ -2753,7 +2788,8 @@ _test() {
 
 #-------------------------------------------------------------------------------
 
-_aucdtect() {
+_aucdtect()
+{
    # Test FLAC validity with auCDtect
    #--
    # $1 is the filename
@@ -2783,10 +2819,10 @@ _aucdtect() {
    # FLAC file is real.  Hide STDERR output.  The array indices are:
    #   bits_mastering[0] = bit depth (eg, 16)
    #   bits_mastering[1] = MASTERING tag & value (eg, MASTERING=Lossy)
-   bits_mastering=( $(metaflac --show-bps --show-tag=MASTERING "$1" 2>/dev/null) )
+   bits_mastering=( $(metaflac --show-bps --show-tag='MASTERING' "$1" 2>/dev/null) )
 
    # Exit code 1 implies failure (130 is SIGINT)
-   if (( ${?} == 1 )) ; then
+   if (( ${?} == 1 )); then
       # Error with FLAC file, display failed/error
       _print_status 'fail' "${file_basename}" "${file_length}"
 
@@ -2799,7 +2835,7 @@ _aucdtect() {
    # Skip the FLAC file if it has a bit depth greater
    # than 16 since auCDtect doesn't support audio
    # files with a higher resolution than a CD.
-   elif (( ${bits_mastering[0]} > 16 )) ; then
+   elif (( ${bits_mastering[0]} > 16 )); then
       # Print skipped FLAC
       _print_status 'skip' "${file_basename}" "${file_length}"
 
@@ -2813,7 +2849,7 @@ _aucdtect() {
    # MASTERING tag.  This is only done if the value of 'skip_lossy' is 'true',
    # set in the configuration file.  We make sure to remove 'MASTERING=' before
    # testing the tag field
-   elif [[ "${bits_mastering[1]#*=}" == 'Lossy' ]] ; then
+   elif [[ "${bits_mastering[1]#*=}" == 'Lossy' ]]; then
       # Print skipped FLAC
       _print_status 'skip' "${file_basename}" "${file_length}"
 
@@ -2835,19 +2871,20 @@ _aucdtect() {
       # The WAV file to be created from current FLAC file
       decoded_wav="${1%${flac_extension}}_redoflacs_$$.wav"
 
-      flac -d "${1}" -o "${decoded_wav}" 2> >(while read -r -d'%' percent_complete ; do
-         # Decode FLAC to WAV so auCDtect can read the audio file
-         #--
-         # Current percent complete
-         percent_complete="$( _get_percent_complete 'decode' "${percent_complete}" )"
+      flac -d "${1}" -o "${decoded_wav}" 2> \
+         >(while read -r -d'%' percent_complete; do
+            # Decode FLAC to WAV so auCDtect can read the audio file
+            #--
+            # Current percent complete
+            percent_complete="$( _get_percent_complete 'decode' "${percent_complete}" )"
 
-         # Print operation progress bar and percent complete
-         _print_progress 'decode' "${percent_complete}" "${file_basename}" "${file_length}"
-      done) >/dev/null
+            # Print operation progress bar and percent complete
+            _print_progress 'decode' "${percent_complete}" "${file_basename}" "${file_length}"
+         done) >/dev/null
 
       # Exit code 130 is SIGINT so only check for exit code '1'.  If FLAC file
       # failed decoding to WAV, log error, otherwise continue processing
-      if (( ${?} == 1 )) ; then
+      if (( ${?} == 1 )); then
          # Error with FLAC file, display failed/error
          _print_status 'fail' "${file_basename}" "${file_length}" 'decode'
 
@@ -2869,22 +2906,23 @@ _aucdtect() {
 
          # 'export MALLOC_CHECK_' allows the dynamic linked version of
          # `auCDTECT' to run without throwing errors
-         export MALLOC_CHECK_="0"
+         export MALLOC_CHECK_='0'
 
          # The actual auCDtect command with medium accuracy setting (for
          # speed).  STDOUT is sent to file descriptor '4'
-         _aucdtect_cmd -m20 "${decoded_wav}" 2> >(while read -r -d'%' percent_complete ; do
-            # Check FLAC validity by checking decoded WAV via auCDtect (fast)
-            #--
-            # Current percent complete
-            percent_complete="$( _get_percent_complete "$2" "${percent_complete}" )"
+         _aucdtect_cmd -m20 "${decoded_wav}" 2> \
+            >(while read -r -d'%' percent_complete; do
+               # Check FLAC validity by checking decoded WAV via auCDtect (fast)
+               #--
+               # Current percent complete
+               percent_complete="$( _get_percent_complete "$2" "${percent_complete}" )"
 
-            # Print operation progress bar and percent complete
-            _print_progress 'aucdtect_fast' "${percent_complete}" "${file_basename}" "${file_length}"
-         done) >&4
+               # Print operation progress bar and percent complete
+               _print_progress 'aucdtect_fast' "${percent_complete}" "${file_basename}" "${file_length}"
+            done) >&4
 
          # Exit code 130 is SIGINT so only check for exit code '1'
-         if (( ${?} == 1 )) ; then
+         if (( ${?} == 1 )); then
             # Error with FLAC file, display failed/error
             _print_status 'fail' "${file_basename}" "${file_length}" 'aucdtect_fast'
 
@@ -2906,7 +2944,7 @@ _aucdtect() {
 
             # If there is an issue with the processed FLAC file, run
             # auCDtect once again with highest setting
-            if [[ "${aucdtect_check_array[0]}" != 'This track looks like CDDA with probability 100%' ]] ; then
+            if [[ "${aucdtect_check_array[0]}" != 'This track looks like CDDA with probability 100%' ]]; then
                # Re-truncate file, since we're doing a multi-stage operation, the
                # filename will be shorter than normal
                IFS=$'\037' read -r file_basename file_length < <(_truncate_filename "$1" 'multi-stage')
@@ -2916,18 +2954,19 @@ _aucdtect() {
 
                # The actual auCDtect command with highest accuracy setting.
                # STDOUT is sent to file descriptor '4'
-               _aucdtect_cmd -m0 "${decoded_wav}" 2> >(while read -r -d'%' percent_complete ; do
-                  # Check FLAC validity by checking decoded WAV via auCDtect (slow)
-                  #--
-                  # Current percent complete
-                  percent_complete="$( _get_percent_complete "$2" "${percent_complete}" )"
+               _aucdtect_cmd -m0 "${decoded_wav}" 2> \
+                  >(while read -r -d'%' percent_complete; do
+                     # Check FLAC validity by checking decoded WAV via auCDtect (slow)
+                     #--
+                     # Current percent complete
+                     percent_complete="$( _get_percent_complete "$2" "${percent_complete}" )"
 
-                  # Print operation progress bar and percent complete
-                  _print_progress 'aucdtect_slow' "${percent_complete}" "${file_basename}" "${file_length}"
-               done) >&4
+                     # Print operation progress bar and percent complete
+                     _print_progress 'aucdtect_slow' "${percent_complete}" "${file_basename}" "${file_length}"
+                  done) >&4
 
                # Exit code 130 is SIGINT so only check for exit code '1'
-               if (( ${?} == 1 )) ; then
+               if (( ${?} == 1 )); then
                   # Error with FLAC file, display failed/error
                   _print_status 'fail' "${file_basename}" "${file_length}" 'aucdtect_slow'
 
@@ -2948,12 +2987,12 @@ _aucdtect() {
                   mapfile -s7 -n2 -t -u4 aucdtect_check_array
 
                   # There is an issue with the processed FLAC file
-                  if [[ "${aucdtect_check_array[0]}" != 'This track looks like CDDA with probability 100%' ]] ; then
+                  if [[ "${aucdtect_check_array[0]}" != 'This track looks like CDDA with probability 100%' ]]; then
                      # If user specified '-A, --aucdtect-spectrogram', then
                      # create a spectrogram with SoX and change logging accordingly
-                     if [[ "${create_spectrogram}" == 'true' ]] ; then
+                     if [[ "${create_spectrogram}" == 'true' ]]; then
                         # Check whether to place spectrogram images in user-defined location
-                        if [[ -z "${spectrogram_location}" ]] ; then
+                        if [[ -z "${spectrogram_location}" ]]; then
                            # Obtain basename of current FLAC file
                            flac_file="${1##*/}"
 
@@ -2987,20 +3026,11 @@ _aucdtect() {
                         # resolution spectrograms:
                         #   -x 5000
                         #   -y 1025
-                        _sox_cmd "${decoded_wav}" \
-                           -S \
-                           -n spectrogram \
-                           -c '' \
-                           -t "${1}" \
-                           -p 1 \
-                           -z 90 \
-                           -Z 0 \
-                           -q 249 \
-                           -w Hann \
-                           -x 1800 \
-                           -y 513 \
-                           -o "${spectrogram_picture}" 2> >(
-                              while read -r -d'%' percent_complete ; do
+                        _sox_cmd \
+                           "${decoded_wav}" -S -n spectrogram -c '' -t "${1}" \
+                           -p 1 -z 90 -Z 0 -q 249 -w Hann -x 1800 -y 513 \
+                           -o "${spectrogram_picture}" 2> \
+                              >(while read -r -d'%' percent_complete; do
                                  # Create spectrogram PNG image of given FLAC
                                  #--
                                  # Current percent complete
@@ -3008,8 +3038,7 @@ _aucdtect() {
 
                                  # Print operation progress bar and percent complete
                                  _print_progress 'spectrogram' "${percent_complete}" "${file_basename}" "${file_length}"
-                              done
-                           ) >/dev/null
+                              done) >/dev/null
 
                         # Error creating spectrogram, display issue
                         _print_status 'issue' "${file_basename}" "${file_length}" 'spectrogram'
@@ -3049,7 +3078,8 @@ _aucdtect() {
 
 #-------------------------------------------------------------------------------
 
-_md5_check() {
+_md5_check()
+{
    # Check for valid MD5 checksum in FLAC file
    #--
    # $1 is the filename
@@ -3079,7 +3109,7 @@ _md5_check() {
    md5_sum="$(metaflac --show-md5sum "$1" 2>/dev/null)"
 
    # Exit code 1 implies failure (130 is SIGINT)
-   if (( ${?} == 1 )) ; then
+   if (( ${?} == 1 )); then
       # Error with FLAC file, display failed/error
       _print_status 'fail' "${file_basename}" "${file_length}"
 
@@ -3091,7 +3121,7 @@ _md5_check() {
    # FLAC file is real, check for unset MD5 checksum.  We cannot use an
    # arithmetic expression as any amount of 0's will equal the expression
    # below
-   elif [[ "${md5_sum}" == "00000000000000000000000000000000" ]] ; then
+   elif [[ "${md5_sum}" == '00000000000000000000000000000000' ]]; then
       # Error with FLAC file, display failed/error
       _print_status 'fail' "${file_basename}" "${file_length}"
 
@@ -3109,7 +3139,8 @@ _md5_check() {
 
 #-------------------------------------------------------------------------------
 
-_retag_analyze() {
+_retag_analyze()
+{
    # Check for missing VORBIS tags from a given FLAC
    #--
    # $1 is the filename
@@ -3137,7 +3168,7 @@ _retag_analyze() {
    check_flac="$(metaflac --show-md5sum "${1}" 2>&1)"
 
    # Exit code 1 implies failure (130 is SIGINT)
-   if (( ${?} == 1 )) ; then
+   if (( ${?} == 1 )); then
       # Error with FLAC file, display failed/error
       _print_status 'fail' "${file_basename}" "${file_length}" 'sub'
 
@@ -3148,37 +3179,32 @@ _retag_analyze() {
       printf '.' >> "${issue_ticks}"  # Add one tick to total issues
    else
       # Iterate through each tag field and check if tag is missing
-      for j in "${tags[@]}" ; do
+      for j in "${tags[@]}"; do
          # Check if ALBUMARTIST is in tag array and apply operations on
          # the tag field if it exists
-         if [[ "${j}" == "ALBUMARTIST" ]] ; then
+         if [[ "${j}" == 'ALBUMARTIST' ]]; then
             # ALBUMARTIST exists in tag array so allow script to check the
             # various naming conventions within the FLAC files (ie,
             # 'ALBUM ARTIST' or 'ALBUM_ARTIST')
 
             # "ALBUMARTIST" or "ALBUM ARTIST" or "ALBUM_ARTIST", case-insensitive
-            if [[ -n "$(metaflac --show-tag=ALBUMARTIST "${1}")" ]] ; then
-               show_tag_list+=( "--show-tag=ALBUMARTIST" )
+            if [[ -n "$(metaflac --show-tag='ALBUMARTIST'"${1}")" ]]; then
+               show_tag_list+=( "--show-tag='ALBUMARTIST'" )
 
-            elif [[ -n "$(metaflac --show-tag="ALBUM ARTIST" "${1}")" ]] ; then
+            elif [[ -n "$(metaflac --show-tag='ALBUM ARTIST' "${1}")" ]]; then
                show_tag_list+=( "--show-tag='ALBUM ARTIST'" )
 
-            elif [[ -n "$(metaflac --show-tag="ALBUM_ARTIST" "${1}")" ]] ; then
-               show_tag_list+=( "--show-tag=ALBUM_ARTIST" )
+            elif [[ -n "$(metaflac --show-tag='ALBUM_ARTIST' "${1}")" ]]; then
+               show_tag_list+=( "--show-tag='ALBUM_ARTIST'" )
             fi
          else
             # Build up metaflac '--show-tag=' list
-            show_tag_list+=( "--show-tag=${j}" )
+            show_tag_list+=( "--show-tag=\"${j}\"" )
          fi
       done
 
       # Load up all the tag values for current file
-      mapfile -n0 -t metaflac_tag_array < \
-      <(
-         metaflac \
-            "${show_tag_list[@]}" \
-            "${1}"
-      )
+      mapfile -n0 -t metaflac_tag_array < <(metaflac "${show_tag_list[@]}" "${1}")
 
       # Take above tag values and create an associative
       # array using TAG_FIELD=TAG_VALUE as the key/value pair
@@ -3188,7 +3214,7 @@ _retag_analyze() {
 
       # Run through the tag array from above and store
       # the values into a temporary tag array
-      for tag_field_value in "${metaflac_tag_array[@]}" ; do
+      for tag_field_value in "${metaflac_tag_array[@]}"; do
          # This is the tag field (eg. TITLE)
          tag_field="${tag_field_value%%=*}"
 
@@ -3203,32 +3229,32 @@ _retag_analyze() {
       # tags. Then remove the tag field (index) from the ${temp_tag_array}, so
       # the next iteration is faster and we can check for missing tags (tag
       # fields)
-      for j in "${tags[@]}" ; do
+      for j in "${tags[@]}"; do
 
          # If the total # of indices in the temporary tag array is above
          # 0, continue testing, else store missing tag (${j}) into the
          # missing tags array
-         if (( ${#temp_tag_array[@]} > 0 )) ; then
+         if (( ${#temp_tag_array[@]} > 0 )); then
 
             # Compare each tag field from the temporary array to ${j},
             # checking if they are equal and if so, check for missing
             # tag values
-            for temp_tag_field in "${!temp_tag_array[@]}" ; do
+            for temp_tag_field in "${!temp_tag_array[@]}"; do
                # Both tag fields are equal
-               if [[ "${j}" == "${temp_tag_field}" ]] ; then
+               if [[ "${j}" == "${temp_tag_field}" ]]; then
                   # Check if tag value is null, logging missing tags if so
-                  if [[ -z "${temp_tag_array[${temp_tag_field}]}" ]] ; then
+                  if [[ -z "${temp_tag_array[${temp_tag_field}]}" ]]; then
                      missing_tags+="${j}, "
                   fi
 
                   # Remove the current tag field from the temporary tag
                   # array since it's been matched already
-                  unset -v temp_tag_array[${temp_tag_field}]
+                  unset -v temp_tag_array["${temp_tag_field}"]
 
                   # This variable let's the script know that the current
                   # tag, ${j} has been matched up with a tag field in
                   # ${temp_tag_array[@]}
-                  tag_match="true"
+                  tag_match='true'
 
                   # Break out of loop since the tag fields have been
                   # matched, continuing on to the next iteration of ${j}
@@ -3240,7 +3266,7 @@ _retag_analyze() {
             # ( eg. ${temp_tag_array[@]} ) that matched ${j}, the FLAC file
             # must have a missing tag, so log it by throwing the missing tag
             # into the missing tags array
-            if [[ "${tag_match}" != "true" ]] ; then
+            if [[ "${tag_match}" != 'true' ]]; then
                missing_tags+="${j}, "
             fi
 
@@ -3258,7 +3284,7 @@ _retag_analyze() {
 
       # If missing_tags_array is not empty, there are missing
       # tags in the current file so log output
-      if [[ -n "${missing_tags}" ]] ; then
+      if [[ -n "${missing_tags}" ]]; then
          # Error with FLAC file, display failed/error
          _print_status 'fail' "${file_basename}" "${file_length}" 'sub'
 
@@ -3277,7 +3303,8 @@ _retag_analyze() {
 
 #-------------------------------------------------------------------------------
 
-_retag_apply() {
+_retag_apply()
+{
    # Re-apply the VORBIS tags specified in the config file, removing all others
    #--
    # $1 is the filename
@@ -3305,37 +3332,32 @@ _retag_apply() {
    # Remove and set new tags
    #
    # Iterate through the tag array and set a variable for each tag
-   for j in "${tags[@]}" ; do
+   for j in "${tags[@]}"; do
       # Check if ALBUMARTIST is in tag array and apply operations on
       # the tag field if it exists
-      if [[ "${j}" == "ALBUMARTIST" ]] ; then
+      if [[ "${j}" == 'ALBUMARTIST' ]]; then
          # ALBUMARTIST exists in tag array so allow script to check the
          # various naming conventions within the FLAC files (ie,
          # 'ALBUM ARTIST' or 'ALBUM_ARTIST')
-
+         #--
          # "ALBUMARTIST"
-         if [[ -n "$(metaflac --show-tag=ALBUMARTIST "${1}")" ]] ; then
-            show_tag_list+=( "--show-tag=ALBUMARTIST" )
+         if [[ -n "$(metaflac --show-tag='ALBUMARTIST' "${1}")" ]]; then
+            show_tag_list+=( "--show-tag='ALBUMARTIST'" )
 
-         elif [[ -n "$(metaflac --show-tag="ALBUM ARTIST" "${1}")" ]] ; then
+         elif [[ -n "$(metaflac --show-tag='ALBUM ARTIST' "${1}")" ]]; then
             show_tag_list+=( "--show-tag='ALBUM ARTIST'" )
 
-         elif [[ -n "$(metaflac --show-tag="ALBUM_ARTIST" "${1}")" ]] ; then
-            show_tag_list+=( "--show-tag=ALBUM_ARTIST" )
+         elif [[ -n "$(metaflac --show-tag='ALBUM_ARTIST' "${1}")" ]]; then
+            show_tag_list+=( "--show-tag='ALBUM_ARTIST'" )
          fi
       else
          # Build up metaflac '--show-tag=' list
-         show_tag_list+=( "--show-tag=${j}" )
+         show_tag_list+=( "--show-tag=\"${j}\"" )
       fi
    done
 
    # Load up all the tag values for current file
-   mapfile -n0 -t metaflac_tag_array < \
-   <(
-      metaflac \
-         "${show_tag_list[@]}" \
-         "${1}"
-   )
+   mapfile -n0 -t metaflac_tag_array < <(metaflac "${show_tag_list[@]}" "${1}")
 
    # Create a copy of ${metaflac_tag_array[@]} with just the tag fields
    # and force the tag fields to be uppercase
@@ -3354,37 +3376,37 @@ _retag_apply() {
    # If the user specified 'true' to the 'prepend_zero' option in the
    # configuration file, enforce the TRACKNUMBER and TRACKTOTAL tags to have a
    # '0' prepended before singular numbers
-   if [[ "${prepend_zero}" == "true" ]] ; then
+   if [[ "${prepend_zero}" == 'true' ]]; then
       # Prepend a '0' for TRACKNUMBER and TRACKTOTAL
-      for j in "${!tag_field_array[@]}" ; do
+      for j in "${!tag_field_array[@]}"; do
          # Add in the tag field and value as an index
-         if [[ "${tag_field_array[${j}]}" == "TRACKNUMBER" ||
-              "${tag_field_array[${j}]}" == "TRACKTOTAL" ]] ; then
+         if [[ "${tag_field_array[${j}]}" == 'TRACKNUMBER' ||
+               "${tag_field_array[${j}]}" == 'TRACKTOTAL' ]]; then
             # Format tag value with '0' prepended for single values.  We
             # force arithmetic expansion and explicitly specify base 10
             # in order to prevent octal errors if the value is either '08'
             # or '09'
-            prepend_tag_value="$( printf %02d $(( 10#${tag_values_array[${j}]} )) )"
+            prepend_tag_value="$( printf '%02d' $(( 10#${tag_values_array["${j}"]} )) )"
 
             metaflac_tag_array+=(
                # Tag field (eg. TRACKNUMBER) = Tag value (eg. 03)
-               "${tag_field_array[${j}]}=${prepend_tag_value}"
+               "${tag_field_array["${j}"]}=\"${prepend_tag_value}\""
             )
          else
             metaflac_tag_array+=(
                # Tag field (eg. ARTIST) = Tag value (eg. Kamelot)
-               "${tag_field_array[${j}]}=${tag_values_array[${j}]}"
+               "${tag_field_array["${j}"]}=\"${tag_values_array["${j}"]}\""
             )
          fi
       done
    else
       # ${prepend_zero} is not set as 'true', add each tag field and tag value
       # into ${metaflac_tag_array[@]}
-      for j in "${!tag_field_array[@]}" ; do
+      for j in "${!tag_field_array[@]}"; do
          # Add in the tag field and value as an index
          metaflac_tag_array+=(
             # Tag field (eg. ARTIST) = Tag value (eg. Kamelot)
-            "${tag_field_array[${j}]}=${tag_values_array[${j}]}"
+            "${tag_field_array["${j}"]}=\"${tag_values_array["${j}"]}\""
          )
       done
    fi
@@ -3394,11 +3416,11 @@ _retag_apply() {
    # Use process substitution to allow this to finish if user
    # invokes SIGINT
    metaflac --remove-all-tags --import-tags-from=- "${1}" < \
-   <(
-      # This prints each tag key and value pair
-      # (eg. ARTIST=Kamelot)
-      printf "%s\n" "${metaflac_tag_array[@]}"
-   )
+      <(
+         # This prints each tag key and value pair
+         # (eg. ARTIST=Kamelot)
+         printf '%s\n' "${metaflac_tag_array[@]}"
+      )
 
    # Display ok
    _print_status 'ok' "${file_basename}" "${file_length}" 'sub'
@@ -3408,7 +3430,8 @@ _retag_apply() {
 
 #-------------------------------------------------------------------------------
 
-_extract_images() {
+_extract_images()
+{
    # Extact embedded artwork from a given FLAC
    #--
    # $1 is the filename
@@ -3436,7 +3459,7 @@ _extract_images() {
    metaflac --show-md5sum "${1}" >/dev/null 2>&1
 
    # Exit code 1 implies failure (130 is SIGINT)
-   if (( ${?} == 1 )) ; then
+   if (( ${?} == 1 )); then
       # Error with FLAC file, display failed/error
       _print_status 'fail' "${file_basename}" "${file_length}"
 
@@ -3451,9 +3474,9 @@ _extract_images() {
       _find_artwork "$1"
  
       # Continue only if there were artwork to be extracted
-      if [[ -n "${artwork[@]}" ]] ; then
+      if [[ -n "${artwork[@]}" ]]; then
          # Determine where to put extracted artwork by checking user config
-         if [[ -n "${artwork_location}" ]] ; then
+         if [[ -n "${artwork_location}" ]]; then
             # $artwork_location/file.flac_art
             artwork_directory="${artwork_location}/${1##*/}_art"
          else
@@ -3462,13 +3485,13 @@ _extract_images() {
          fi
 
          # Prevent directory clobbering by creating an incremental version
-         until [[ ! -d "${artwork_directory}" ]] ; do
+         until [[ ! -d "${artwork_directory}" ]]; do
             artwork_directory="${artwork_directory%~*~}~$((increment++))~"
          done
 
          mkdir -p "${artwork_directory}"  # Create artwork directory
 
-         for image in "${artwork[@]}" ; do
+         for image in "${artwork[@]}"; do
             # Run through all the artwork found in the current FLAC by looking
             # at $artwork[@], of which, each index looks like:
             #   artwork[0]="${block_id}:${art_id}_${art_desc}.${art_ext}"
@@ -3477,7 +3500,7 @@ _extract_images() {
             # Prevent file clobbering by creating an incremental version
             increment='1'
             extracted_image="${artwork_directory}/${image#*:}"
-            until [[ ! -f "${extracted_image}" ]] ; do
+            until [[ ! -f "${extracted_image}" ]]; do
                extracted_image="${artwork_directory}/${image#*:}~$((increment++))~"
             done
 
@@ -3497,7 +3520,8 @@ _extract_images() {
 
 #-------------------------------------------------------------------------------
 
-_prune() {
+_prune()
+{
    # Prune given FLAC by removing various BLOCKs (defined in user configuration)
    #--
    # $1 is the filename
@@ -3526,7 +3550,7 @@ _prune() {
    metaflac --show-md5sum "${1}" >/dev/null 2>&1
 
    # Exit code 1 implies failure (130 is SIGINT)
-   if (( ${?} == 1 )) ; then
+   if (( ${?} == 1 )); then
       # Error with FLAC file, display failed/error
       _print_status 'fail' "${file_basename}" "${file_length}"
 
@@ -3551,8 +3575,8 @@ _prune() {
 #-------------------------------------------------------------------------------
 shopt -s globstar                      # BASH 4 globstar (eg, /**/*.flac)
 
-version="0.30_pre"                     # Redoflacs version
-flac_extension=".[Ff][Ll][Aa][Cc]"     # FLAC extension (case-insensitive)
+version='0.30_pre'                     # Redoflacs version
+flac_extension='.[Ff][Ll][Aa][Cc]'     # FLAC extension (case-insensitive)
 unit_separator=$'\037'                 # ASCII unit separator
 
 declare -i script_config_revision='2'  # Script user configuration revision
@@ -3571,33 +3595,32 @@ cyan='\033[36m'
 
 # Check if user is running under Cygwin and if so, warn user and exit
 os_name="$(uname -o)"
-if [[ "${os_name}" == "Cygwin" ]] ; then
-   _error "This version of redoflacs is meant to be run under\n" >&2
+if [[ "${os_name}" == 'Cygwin' ]]; then
+   _error 'This version of redoflacs is meant to be run under\n' >&2
    _error "${cyan}UNIX/Linux/BSD${reset}.  Please use the ${cyan}Windows (Cygwin)${reset}\n" >&2
-   _error "version located here:\n" >&2
-   _error "${cyan}https://github.com/sirjaren/redoflacsw/tags${reset}\n" >&2
-
+   _error 'version located here:\n' >&2
+   _error "${cyan}https://github.com/sirjaren/redoflacsw${reset}\n" >&2
    exit 1
 fi
 
 #-------------------------------------------------------------------------------
 
 # Create/source either system or user config
-if (( EUID == 0 )) ; then
-   config_file="/etc/redoflacs.conf"               # System (root) config
+if (( EUID == 0 )); then
+   config_file='/etc/redoflacs.conf'               # System (root) config
 else
    config_file="${HOME}/.config/redoflacs/config"  # User config
 fi
 
 # Check if system-wide configuration doesn't exist
-if [[ ! -f "${config_file}" ]] ; then
+if [[ ! -f "${config_file}" ]]; then
    mkdir -p "${config_file%/*}"  # Create directory if it doesn't exist
    _create_config                # Create configuration file
 
-   _info "A configuration file has been created here:\n"
+   _info 'A configuration file has been created here:\n'
    _info "${cyan}${config_file}${reset}\n\n"
 
-   _info "Please review it before running this program.\n"
+   _info 'Please review it before running this program.\n'
 
    exit 0
 else
@@ -3613,7 +3636,7 @@ fi
 pid="$$"
 log_file="${error_log}/redoflacs_${pid}.log"
 
-until [[ ! -f "${log_file}" ]] ; do
+until [[ ! -f "${log_file}" ]]; do
    log_file="${error_log}/redoflacs_log_$((pid++)).log"
 done
 
@@ -3624,21 +3647,14 @@ _process_positional_parameters "${@}"  # Process CLI arguments
 #-------------------------------------------------------------------------------
 
 # Disable color if user called '-n, --no-color'
-if [[ "${no_color}" == "true" ]] ; then
-   blue=""
-   green=""
-   red=""
-   cyan=""
-   magenta=""
-   yellow=""
-fi
+[[ "${no_color}" == 'true' ]] && unset -v blue green red cyan magenta yellow
 
 #-------------------------------------------------------------------------------
 
 # Make sure we are running BASH 4 or greater
-if (( ${BASH_VERSINFO[0]} < 4 )) ; then
+if (( ${BASH_VERSINFO[0]} < 4 )); then
    _error "You must be running ${cyan}BASH 4${reset} or greater to use\n" >&2
-   _error "this program!\n" >&2
+   _error '"this program!\n' >&2
    exit 1
 fi
 
@@ -3650,7 +3666,7 @@ _check_conflicting_operations
 #-------------------------------------------------------------------------------
 
 # For each operation that was selected, add to $operation_summary[@]
-for operation in "${operations[@]}" ; do
+for operation in "${operations[@]}"; do
    _update_operation_status "${operation}" 'Operation Did Not Run'
 done
 #-------------------------------------------------------------------------------
@@ -3660,9 +3676,9 @@ _check_missing_programs  # Check for missing programs vital to this script
 #-------------------------------------------------------------------------------
 
 # Check whether directory exists
-if [[ ! -d "${directory}" ]] ; then
-   printf " Usage: redoflacs [OPTION] [PATH_TO_FLAC(s)]...\n" >&2
-   _error "Please specify a directory!\n" >&2
+if [[ ! -d "${directory}" ]]; then
+   printf ' Usage: redoflacs [OPTION] [PATH_TO_FLAC(s)]...\n' >&2
+   _error 'Please specify a directory!\n' >&2
    exit 1
 fi
 
@@ -3671,22 +3687,22 @@ fi
 # Check for at least 1 FLAC file
 read -r find_flacs < <( printf "%s\n" "${directory}"/**/*${flac_extension} )
 
-if [[ ! -f "${find_flacs}" ]] ; then
-   _error "There are not any FLAC files to process!\n" >&2
+if [[ ! -f "${find_flacs}" ]]; then
+   _error 'There are not any FLAC files to process!\n' >&2
    exit 1
 fi
 
 #-------------------------------------------------------------------------------
 
 # If '-e, --extract-artwork' was called, make sure $artwork_location is valid
-if [[ "${operations[9]}" == 'extract_images' ]] ; then
+if [[ "${operations[9]}" == 'extract_images' ]]; then
    # Check if artwork_location is user-defined
-   if [[ -n "${artwork_location}" ]] ; then
+   if [[ -n "${artwork_location}" ]]; then
       # Put extracted artwork in user-defined location, testing to make sure
       # the directory exists
-      if [[ ! -d "${artwork_location}" ]] ; then
+      if [[ ! -d "${artwork_location}" ]]; then
          _error "${cyan}${artwork_location}${reset} doesn't exist!\n" >&2
-         _error "Please set a valid directory in the configuration file!\n" >&2
+         _error 'Please set a valid directory in the configuration file!\n' >&2
          exit 1
       fi
    fi
@@ -3694,14 +3710,14 @@ fi
 
 # If '-A, --aucdtect-spectrogram' was called, make sure $spectrogram_location is
 # valid
-if [[ "${create_spectrogram}" == "true" ]] ; then
+if [[ "${create_spectrogram}" == 'true' ]]; then
    # Check if spectrogram_location is user-defined
-   if [[ -n "${spectrogram_location}" ]] ; then
+   if [[ -n "${spectrogram_location}" ]]; then
       # Put spectrograms in user-defined location, testing to make sure the
       # directory exists
-      if [[ ! -d "${spectrogram_location}" ]] ; then
+      if [[ ! -d "${spectrogram_location}" ]]; then
          _error "${cyan}${spectrogram_location}${reset} doesn't exist!\n" >&2
-         _error "Please set a valid directory in the configuration file!\n" >&2
+         _error 'Please set a valid directory in the configuration file!\n' >&2
          exit 1
       fi
    fi
@@ -3710,10 +3726,10 @@ fi
 #-------------------------------------------------------------------------------
 
 # If $jobs wasn't set on invocation, check in /proc determine the number of jobs
-if [[ -z "${jobs}" ]] ; then
+if [[ -z "${jobs}" ]]; then
    _find_cores
 else
-   jobs_display="(User Defined)"
+   jobs_display='(User Defined)'
 fi
 
 #-------------------------------------------------------------------------------
@@ -3721,7 +3737,7 @@ fi
 #-------------------------------------------------------------------------------
 old_stty="$(stty -g)"              # Store current stty settings
 stty -ctlecho 2>/dev/null          # Disable ctrl+c '^C'
-printf "\033[?25l"                 # Hide cursor
+printf '\033[?25l'                 # Hide cursor
 _check_config_version              # Check if script config is newer than user's
 job_fifo="/tmp/redoflacs_fifo_$$"  # Job manager FIFO
 
@@ -3743,7 +3759,7 @@ printf "%11s${blue}[ ${green}ok${blue} ]${reset}\n" ''
 
 #-------------------------------------------------------------------------------
 
-for operation in "${operations[@]}" ; do
+for operation in "${operations[@]}"; do
    # Loop through the various operations to run.  All the operations are to be
    # run, in order, which is detailed below:
    #   operations[0]='aucdtect'
@@ -3770,12 +3786,12 @@ for operation in "${operations[@]}" ; do
       ;;
       'prune')
          # Set which FLAC metadata BLOCKS to remove
-         if [[ "${remove_artwork}" == 'true' ]] ; then
+         if [[ "${remove_artwork}" == 'true' ]]; then
             # Remove PICTURE block
-            dont_prune_flac_metadata="STREAMINFO,VORBIS_COMMENT"
+            dont_prune_flac_metadata='STREAMINFO,VORBIS_COMMENT'
          else
             # Do not remove PICTURE block
-            dont_prune_flac_metadata="STREAMINFO,PICTURE,VORBIS_COMMENT"
+            dont_prune_flac_metadata='STREAMINFO,PICTURE,VORBIS_COMMENT'
          fi
       ;;
    esac
@@ -3784,7 +3800,7 @@ for operation in "${operations[@]}" ; do
    _scroll_terminal "$(_row)"     # Scroll terminal up (if needed)
    _clear_jobs_fd "${job_fifo}"   # Clear job manager file descriptor (3)
 
-   if (( ${#total_items[@]} < jobs )) ; then
+   if (( ${#total_items[@]} < jobs )); then
       # Set row position to place cursor after completing an operation or trap
       #--
       # If the items to process are less than the number of jobs, add the number
@@ -3799,7 +3815,7 @@ for operation in "${operations[@]}" ; do
    trap '_trap_sigint "${operation}"' SIGINT  # Clean exit on SIGINT
    _run_parallel "${operation}"   # Run a given operation with parallel jobs
 
-   for (( i=1; i<=items_processed; i++)) ; do
+   for (( i=1; i<=items_processed; i++)); do
       # Clear all the operation lines by moving up each line and clearing it,
       # until we are just below the operation's title message
       #--
@@ -3812,7 +3828,7 @@ for operation in "${operations[@]}" ; do
    # Update status for the current operation
    _update_operation_status "${operation}" 'Operation Completed'
 
-   if [[ -f "${log_file}" ]] ; then
+   if [[ -f "${log_file}" ]]; then
       _message_log_exists "${operation}"  # Print out log exists to STDERR
       _create_log "${operation}"          # Create and format log
       _summary                            # Display Summary Of Operations
