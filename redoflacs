@@ -883,9 +883,9 @@ _print_status()
 
 _print_progress()
 {
-   # Display filename and current progress of operation
+   # Display filename and progress bar of the current operation
    #--
-   # $1 is either the operation:
+   # $1 is one of the following operations:
    #   aucdtect                  md5_check           compress_verify
    #   compress_no_test          test                replaygain_test
    #   replaygain_force_apply    replaygain_apply    retag_analyze
@@ -1486,18 +1486,21 @@ _truncate_filename()
    # $2 determines whether this is a multi-stage operation (eg, auCDtect)
    #--
    # Set up local variables
-   declare    filename  length_diff
+   declare    filename="$1"  length_diff
    declare -i filename_length  apparent_length  length
 
+   # Make absolute pathname
+   [[ "${filename}" == '.' || "${filename}" == './' ]] && filename="${PWD}"
+
    # Basename of file/directory
-   if [[ "${1: -1}" == '/' ]]; then         # Last character is a '/'
-      filename="${1%?}"                     # Remove last character
-      filename="${filename##*/}/"           # Basename of directory, append '/'
+   if [[ "${filename: -1}" == '/' ]]; then         # Last character is a '/'
+      filename="${filename%?}"                     # Remove last character
+      filename="${filename##*/}/"                  # Basename of directory, append '/'
    else
-      filename="${1##*/}"                   # Basename of file
+      filename="${filename##*/}"                   # Basename of file
    fi
 
-   filename="${filename//$'\n'/?}"          # Replace '\n' with '?'
+   filename="${filename//$'\n'/?}"                 # Replace '\n' with '?'
 
    # Apparent (column-wdith) length of filename; 'wc' handles wide characters
    filename_length="$(wc -L <<< "${filename}")"
@@ -3188,23 +3191,29 @@ _retag_analyze()
             # 'ALBUM ARTIST' or 'ALBUM_ARTIST')
 
             # "ALBUMARTIST" or "ALBUM ARTIST" or "ALBUM_ARTIST", case-insensitive
-            if [[ -n "$(metaflac --show-tag='ALBUMARTIST'"${1}")" ]]; then
-               show_tag_list+=( "--show-tag='ALBUMARTIST'" )
+            if [[ -n "$(metaflac --show-tag='ALBUMARTIST' "${1}")" ]]; then
+               show_tag_list+=( 'ALBUMARTIST' )
 
             elif [[ -n "$(metaflac --show-tag='ALBUM ARTIST' "${1}")" ]]; then
-               show_tag_list+=( "--show-tag='ALBUM ARTIST'" )
+               show_tag_list+=( 'ALBUM ARTIST' )
 
             elif [[ -n "$(metaflac --show-tag='ALBUM_ARTIST' "${1}")" ]]; then
-               show_tag_list+=( "--show-tag='ALBUM_ARTIST'" )
+               show_tag_list+=( 'ALBUM_ARTIST' )
             fi
          else
             # Build up metaflac '--show-tag=' list
-            show_tag_list+=( "--show-tag=\"${j}\"" )
+            show_tag_list+=( "${j}" )
          fi
       done
 
-      # Load up all the tag values for current file
-      mapfile -n0 -t metaflac_tag_array < <(metaflac "${show_tag_list[@]}" "${1}")
+      # Load up all the tag values for current file, looping over each item,
+      # since 'metaflac' has issues with quoting and using --show-tag=<value> as
+      # an index
+      mapfile -n0 -t metaflac_tag_array < <(
+         for i in "${show_tag_list[@]}"; do
+            metaflac --show-tag="${i}" "${1}"
+         done
+      )
 
       # Take above tag values and create an associative
       # array using TAG_FIELD=TAG_VALUE as the key/value pair
@@ -3342,22 +3351,27 @@ _retag_apply()
          #--
          # "ALBUMARTIST"
          if [[ -n "$(metaflac --show-tag='ALBUMARTIST' "${1}")" ]]; then
-            show_tag_list+=( "--show-tag='ALBUMARTIST'" )
+            show_tag_list+=( 'ALBUMARTIST' )
 
          elif [[ -n "$(metaflac --show-tag='ALBUM ARTIST' "${1}")" ]]; then
-            show_tag_list+=( "--show-tag='ALBUM ARTIST'" )
+            show_tag_list+=( 'ALBUM ARTIST' )
 
          elif [[ -n "$(metaflac --show-tag='ALBUM_ARTIST' "${1}")" ]]; then
-            show_tag_list+=( "--show-tag='ALBUM_ARTIST'" )
+            show_tag_list+=( 'ALBUM_ARTIST' )
          fi
       else
          # Build up metaflac '--show-tag=' list
-         show_tag_list+=( "--show-tag=\"${j}\"" )
+         show_tag_list+=( "${j}" )
       fi
    done
 
-   # Load up all the tag values for current file
-   mapfile -n0 -t metaflac_tag_array < <(metaflac "${show_tag_list[@]}" "${1}")
+   # Load up all the tag values for current file, looping over each item, since
+   # 'metaflac' has issues with quoting and using --show-tag=<value> as an index
+   mapfile -n0 -t metaflac_tag_array < <(
+      for i in "${show_tag_list[@]}"; do
+         metaflac --show-tag="${i}" "${1}"
+      done
+   )
 
    # Create a copy of ${metaflac_tag_array[@]} with just the tag fields
    # and force the tag fields to be uppercase
@@ -3386,16 +3400,16 @@ _retag_apply()
             # force arithmetic expansion and explicitly specify base 10
             # in order to prevent octal errors if the value is either '08'
             # or '09'
-            prepend_tag_value="$( printf '%02d' $(( 10#${tag_values_array["${j}"]} )) )"
+            prepend_tag_value="$( printf '%02d' $(( 10#${tag_values_array[$j]} )) )"
 
             metaflac_tag_array+=(
                # Tag field (eg. TRACKNUMBER) = Tag value (eg. 03)
-               "${tag_field_array["${j}"]}=\"${prepend_tag_value}\""
+               "${tag_field_array[$j]}=${prepend_tag_value}"
             )
          else
             metaflac_tag_array+=(
                # Tag field (eg. ARTIST) = Tag value (eg. Kamelot)
-               "${tag_field_array["${j}"]}=\"${tag_values_array["${j}"]}\""
+               "${tag_field_array[$j]}=${tag_values_array[$j]}"
             )
          fi
       done
@@ -3406,7 +3420,7 @@ _retag_apply()
          # Add in the tag field and value as an index
          metaflac_tag_array+=(
             # Tag field (eg. ARTIST) = Tag value (eg. Kamelot)
-            "${tag_field_array["${j}"]}=\"${tag_values_array["${j}"]}\""
+            "${tag_field_array[$j]}=${tag_values_array[$j]}"
          )
       done
    fi
@@ -3777,9 +3791,6 @@ for operation in "${operations[@]}"; do
    #--
    case "${operation}" in
       'replaygain_'*'apply')
-         # Make absolute pathname
-         [[ "${directory}" == '.' ]] && directory="${PWD}"
-
          total_items_backup=( "${total_items[@]}" )  # Total FLACs backup array
          _get_directory_list "${total_items[@]}"     # Returns $total_dirs[@]
          total_items=( "${total_dirs[@]}" )          # Now process directories
