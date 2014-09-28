@@ -3191,28 +3191,22 @@ _retag_analyze()
 
 				# "ALBUMARTIST" or "ALBUM ARTIST" or "ALBUM_ARTIST", case-insensitive
 				if [[ -n "$(metaflac --show-tag='ALBUMARTIST' "${1}")" ]]; then
-					show_tag_list+=( 'ALBUMARTIST' )
+					show_tag_list+=( '--show-tag=ALBUMARTIST' )
 
 				elif [[ -n "$(metaflac --show-tag='ALBUM ARTIST' "${1}")" ]]; then
-					show_tag_list+=( 'ALBUM ARTIST' )
+					show_tag_list+=( '--show-tag=ALBUM ARTIST' )
 
 				elif [[ -n "$(metaflac --show-tag='ALBUM_ARTIST' "${1}")" ]]; then
-					show_tag_list+=( 'ALBUM_ARTIST' )
+					show_tag_list+=( '--show-tag=ALBUM_ARTIST' )
 				fi
 			else
 				# Build up metaflac '--show-tag=' list
-				show_tag_list+=( "${j}" )
+				show_tag_list+=( "--show-tag=${j}" )
 			fi
 		done
 
-		# Load up all the tag values for current file, looping over each item,
-		# since 'metaflac' has issues with quoting and using --show-tag=<value> as
-		# an index
-		mapfile -n0 -t metaflac_tag_array < <(
-			for i in "${show_tag_list[@]}"; do
-				metaflac --show-tag="${i}" "${1}"
-			done
-		)
+		# Load up all the tag values for current file
+		mapfile -n0 -t metaflac_tag_array < <(metaflac "${show_tag_list[@]}" "${1}")
 
 		# Take above tag values and create an associative
 		# array using TAG_FIELD=TAG_VALUE as the key/value pair
@@ -3350,27 +3344,22 @@ _retag_apply()
 			#--
 			# "ALBUMARTIST"
 			if [[ -n "$(metaflac --show-tag='ALBUMARTIST' "${1}")" ]]; then
-				show_tag_list+=( 'ALBUMARTIST' )
+				show_tag_list+=( '--show-tag=ALBUMARTIST' )
 
 			elif [[ -n "$(metaflac --show-tag='ALBUM ARTIST' "${1}")" ]]; then
-				show_tag_list+=( 'ALBUM ARTIST' )
+				show_tag_list+=( '--show-tag=ALBUM ARTIST' )
 
 			elif [[ -n "$(metaflac --show-tag='ALBUM_ARTIST' "${1}")" ]]; then
-				show_tag_list+=( 'ALBUM_ARTIST' )
+				show_tag_list+=( '--show-tag=ALBUM_ARTIST' )
 			fi
 		else
 			# Build up metaflac '--show-tag=' list
-			show_tag_list+=( "${j}" )
+			show_tag_list+=( "--show-tag=${j}" )
 		fi
 	done
 
-	# Load up all the tag values for current file, looping over each item, since
-	# 'metaflac' has issues with quoting and using --show-tag=<value> as an index
-	mapfile -n0 -t metaflac_tag_array < <(
-		for i in "${show_tag_list[@]}"; do
-			metaflac --show-tag="${i}" "${1}"
-		done
-	)
+	# Load up all the tag values for current file
+	mapfile -n0 -t metaflac_tag_array < <(metaflac "${show_tag_list[@]}" "${1}")
 
 	# Create a copy of ${metaflac_tag_array[@]} with just the tag fields
 	# and force the tag fields to be uppercase
