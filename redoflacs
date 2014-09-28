@@ -2602,7 +2602,7 @@ _compress_verify()
 	COMPRESSION="${COMPRESSION#*=}"
 
 	if (( COMPRESSION != compression_level )); then
-		flac --no-error-on-compression-fail -f -${compression_level} -V "${1}" 2> \
+		flac -f -${compression_level} -V "${1}" 2> \
 			>(while read -r -d'%' percent_complete; do
 				# Compress given FLAC file, verifying with a progress bar
 				#--
@@ -2697,7 +2697,7 @@ _compress_no_test()
 	COMPRESSION="${COMPRESSION#*=}"
 
 	if (( COMPRESSION != compression_level )); then
-		flac --no-error-on-compression-fail -f -${compression_level} -V "${1}" 2> \
+		flac -f -${compression_level} -V "${1}" 2> \
 			>(while read -r -d'%' percent_complete; do
 				# Compress given FLAC file, verifying with a progress bar
 				#--
