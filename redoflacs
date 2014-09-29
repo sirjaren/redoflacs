@@ -3378,16 +3378,13 @@ _retag_apply()
 	if [[ "${prepend_zero}" == 'true' ]]; then
 		# Prepend a '0' for TRACKNUMBER and TRACKTOTAL
 		for j in "${!tag_field_array[@]}"; do
-			if [[ "${tag_field_array[${j}]}" == 'TRACKNUMBER' ||
-					"${tag_field_array[${j}]}" == 'TRACKTOTAL' ]]; then
-				# Format tag value with '0' prepended for single values.  We
-				# force arithmetic expansion and explicitly specify base 10
-				# in order to prevent octal errors if the value is either '08'
-				# or '09'
-				#--
-				# Also remove leading and trailing whitespace in tag value, eg:
-				#   '   7     '  ->  '07'
-				read -r prepend_tag_value < <(printf '%02d' $((10#${tag_values_array[$j]})))
+			if [[ "${tag_field_array[${j}]}" == 'TRACKNUMBER' || "${tag_field_array[${j}]}" == 'TRACKTOTAL' ]]; then
+				# Remove leading and trailing whitespace in tag value, eg:
+				#   '   7     '  ->  '7'
+				read -r prepend_tag_value <<< "${tag_values_array[$j]}"
+
+				# Prepend a 0 to the tag value, forcing base10 to prevent octal errors
+				printf -v prepend_tag_value '%02d' $((10#${prepend_tag_value}))
 
 				# Store the tag field and tag value into an array, TAG_FIELD=TAG_VALUE
 				metaflac_tag_array+=( "${tag_field_array[$j]}=${prepend_tag_value}" )
