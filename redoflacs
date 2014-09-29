@@ -3369,10 +3369,7 @@ _retag_apply()
 	# Create a copy of ${metaflac_tag_array[@]} with just the tag values
 	tag_values_array=( "${metaflac_tag_array[@]#*=}" )
 
-	# Re-create ${metaflac_tag_array[@]}, this time enforcing the tag
-	# fields are uppercase
-	#
-	# Clear ${metaflac_tag_array[@]}
+	# Clear the original 'tag_field=tag_value array' for use below
 	metaflac_tag_array=()
 
 	# If the user specified 'true' to the 'prepend_zero' option in the
@@ -3381,35 +3378,38 @@ _retag_apply()
 	if [[ "${prepend_zero}" == 'true' ]]; then
 		# Prepend a '0' for TRACKNUMBER and TRACKTOTAL
 		for j in "${!tag_field_array[@]}"; do
-			# Add in the tag field and value as an index
 			if [[ "${tag_field_array[${j}]}" == 'TRACKNUMBER' ||
 					"${tag_field_array[${j}]}" == 'TRACKTOTAL' ]]; then
 				# Format tag value with '0' prepended for single values.  We
 				# force arithmetic expansion and explicitly specify base 10
 				# in order to prevent octal errors if the value is either '08'
 				# or '09'
-				prepend_tag_value="$( printf '%02d' $(( 10#${tag_values_array[$j]} )) )"
+				#--
+				# Also remove leading and trailing whitespace in tag value, eg:
+				#   '   7     '  ->  '07'
+				read -r prepend_tag_value < <(printf '%02d' $((10#${tag_values_array[$j]})))
 
-				metaflac_tag_array+=(
-					# Tag field (eg. TRACKNUMBER) = Tag value (eg. 03)
-					"${tag_field_array[$j]}=${prepend_tag_value}"
-				)
+				# Store the tag field and tag value into an array, TAG_FIELD=TAG_VALUE
+				metaflac_tag_array+=( "${tag_field_array[$j]}=${prepend_tag_value}" )
 			else
-				metaflac_tag_array+=(
-					# Tag field (eg. ARTIST) = Tag value (eg. Kamelot)
-					"${tag_field_array[$j]}=${tag_values_array[$j]}"
-				)
+				# Remove leading and trailing whitespace in tag value, eg:
+				#   '   The Black     Halo     '  ->  'The Black     Halo'
+				read -r tag_value <<< "${tag_values_array[$j]}"
+
+				# Store the tag field and tag value into an array, TAG_FIELD=TAG_VALUE
+				metaflac_tag_array+=( "${tag_field_array[$j]}=${tag_value}" )
 			fi
 		done
 	else
 		# ${prepend_zero} is not set as 'true', add each tag field and tag value
 		# into ${metaflac_tag_array[@]}
 		for j in "${!tag_field_array[@]}"; do
-			# Add in the tag field and value as an index
-			metaflac_tag_array+=(
-				# Tag field (eg. ARTIST) = Tag value (eg. Kamelot)
-				"${tag_field_array[$j]}=${tag_values_array[$j]}"
-			)
+			# Remove leading and trailing whitespace in tag value, eg:
+			#   '   The Black     Halo     '  ->  'The Black     Halo'
+			read -r tag_value <<< "${tag_values_array[$j]}"
+
+			# Store the tag field and tag value into an array, TAG_FIELD=TAG_VALUE
+			metaflac_tag_array+=( "${tag_field_array[$j]}=${tag_value}" )
 		done
 	fi
 
