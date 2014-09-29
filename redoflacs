@@ -1224,176 +1224,174 @@ _create_config()
 {
 	# Create a configuration file
 	#--
-	# Set up local variable
-	declare create_config
+	# Set up local array
+	declare config
 
-	create_config="################################################################################
-#                                                                              #
-#                         REDOFLACS USER CONFIGURATION                         #
-#                         ----------------------------                         #
-#                                                                              #
-#  Any line that is _NOT_ prepended with a '#' will be interpreted as an       #
-#  option (except for blank lines -- these are not interpreted)                #
-#                                                                              #
-#  See \`redoflacs --help\` for a detailed description of each parameter         #
-#                                                                              #
-################################################################################
+	# Don't expand variables when using heredoc
+	mapfile -n0 -t config <<- "END_OF_CONFIG"
+		################################################################################
+		#                                                                              #
+		#                         REDOFLACS USER CONFIGURATION                         #
+		#                         ----------------------------                         #
+		#                                                                              #
+		#  Any line that is _NOT_ prepended with a '#' will be interpreted as an       #
+		#  option (except for blank lines -- these are not interpreted)                #
+		#                                                                              #
+		#  See 'redoflacs --help' for a detailed description of each parameter         #
+		#                                                                              #
+		################################################################################
 
-#-------------------------------------------------------------------------------
-#  :: TAGGING SECTION ::
-#-------------------------------------------------------------------------------
-# List the tags to be kept in each FLAC file.  The default is listed below.
-#
-# Another common tag not added by default is ALBUMARTIST.  Uncomment ALBUMARTIST
-# below to allow script to keep this tag.
+		#-------------------------------------------------------------------------------
+		# TAGGING SECTION
+		#-------------------------------------------------------------------------------
+		# List the tags to be kept in each FLAC file.  The default is listed below.
+		#
+		# Another common tag not added by default is ALBUMARTIST.  Uncomment ALBUMARTIST
+		# below to allow script to keep this tag.
+		#
+		# NOTE: Whitespace _IS_ allowed for the these tag fields, ie:
+		#   ALBUM ARTIST
+		#   CATALOG NUMBER ISBN
+		TITLE
+		ARTIST
+		#ALBUMARTIST
+		ALBUM
+		DISCNUMBER
+		DATE
+		TRACKNUMBER
+		TRACKTOTAL
+		GENRE
 
-TITLE
-ARTIST
-#ALBUMARTIST
-ALBUM
-DISCNUMBER
-DATE
-TRACKNUMBER
-TRACKTOTAL
-GENRE
+		# The COMPRESSION tag is a custom tag to allow the script to determine which
+		# level of compression the FLAC file(s) has/have been compressed at.
+		COMPRESSION
 
-# The COMPRESSION tag is a custom tag to allow the script to determine which
-# level of compression the FLAC file(s) has/have been compressed at.
-COMPRESSION
+		# The RELEASETYPE tag is a custom tag the author of this script uses to
+		# catalogue what kind of release the album is (ie, Full Length, EP, Demo, etc.).
+		RELEASETYPE
 
-# The RELEASETYPE tag is a custom tag the author of this script uses to
-# catalogue what kind of release the album is (ie, Full Length, EP, Demo, etc.).
-RELEASETYPE
+		# The SOURCE tag is a custom tag the author of this script uses to catalogue
+		# which source the album has derived from (ie, CD, Vinyl, Digital, etc.).
+		SOURCE
 
-# The SOURCE tag is a custom tag the author of this script uses to catalogue
-# which source the album has derived from (ie, CD, Vinyl, Digital, etc.).
-SOURCE
+		# The MASTERING tag is a custom tag the author of this script uses to catalogue
+		# how the album has been mastered (ie, Lossless, or Lossy).
+		MASTERING
 
-# The MASTERING tag is a custom tag the author of this script uses to catalogue
-# how the album has been mastered (ie, Lossless, or Lossy).
-MASTERING
+		# The REPLAYGAIN tags below, are added by the '-g, --replaygain' or
+		# '-G, --replaygain-noforce' argument.  If you want to keep the ReplayGain tags,
+		# make sure you leave these here.
+		REPLAYGAIN_REFERENCE_LOUDNESS
+		REPLAYGAIN_TRACK_GAIN
+		REPLAYGAIN_TRACK_PEAK
+		REPLAYGAIN_ALBUM_GAIN
+		REPLAYGAIN_ALBUM_PEAK
 
-# The REPLAYGAIN tags below, are added by the '-g, --replaygain' or
-# '-G, --replaygain-noforce' argument.  If you want to keep the replaygain tags,
-# make sure you leave these here.
-REPLAYGAIN_REFERENCE_LOUDNESS
-REPLAYGAIN_TRACK_GAIN
-REPLAYGAIN_TRACK_PEAK
-REPLAYGAIN_ALBUM_GAIN
-REPLAYGAIN_ALBUM_PEAK
+		#-------------------------------------------------------------------------------
+		# OPTIONS
+		#-------------------------------------------------------------------------------
+		# REMOVE ARTWORK
+		#--
+		# Set whether to remove embedded artwork within FLAC files.  By default, this
+		# script will remove any artwork it can find in the PICTURE block of a FLAC
+		# file.  Set 'remove_artwork' as 'true' to remove embedded artwork.  All other
+		# values are intepreted as 'false'.
+		remove_artwork="true"
 
-#== :: END TAGGING SECTION :: ==================================================
+		# SET COMPRESSION
+		#--
+		# Set the type of COMPRESSION strength when compressing the FLAC files.  Numbers
+		# range from '1-8', with '1' being the lowest compression and '8' being the
+		# highest compression.  The default is '8'.
+		compression_level="8"
 
-#-------------------------------------------------------------------------------
-#  :: OPTIONS ::
-#-------------------------------------------------------------------------------
-#~~~~~~~~~~~~~~~~~~
-#  REMOVE ARTWORK
-#~~~~~~~~~~~~~~~~~~
-# Set whether to remove embedded artwork within FLAC files.  By default, this
-# script will remove any artwork it can find, whether it's in the legacy
-# COVERART tag or METADATA_BLOCK_PICTURE.  Set 'remove_artwork' as 'true' to
-# remove embedded artwork.  All other values are intepreted as 'false'.
-remove_artwork=\"true\"
+		# ERROR LOG DIRECTORY
+		#--
+		# Set where you want error logs to be placed.  By default, they are stored in
+		# the user's HOME directory.
+		error_log="${HOME}"
 
-#~~~~~~~~~~~~~~~~~~~
-#  SET COMPRESSION
-#~~~~~~~~~~~~~~~~~~~
-# Set the type of COMPRESSION to compress the FLAC files.  Numbers range from
-# '1-8', with '1' being the lowest compression and '8' being the highest
-# compression.  The default is '8'.
-compression_level=\"8\"
+		# AUCDTECT SKIP LOSSY
+		#--
+		# Set whether FLAC files should be skipped if the MASTERING tag is already set
+		# as 'Lossy' when analyzed with auCDtect.  Set 'skip_lossy' as 'true' to to skip
+		# FLAC files that have the tag: 'MASTERING=Lossy'.  All other values are
+		# intepreted as 'false'.
+		skip_lossy="true"
 
-#~~~~~~~~~~~~~~~~~~~~~~~
-#  ERROR LOG DIRECTORY
-#~~~~~~~~~~~~~~~~~~~~~~~
-# Set the where you want the error logs to be placed.  By default, they are
-# placed in the user's HOME directory.
-error_log=\"\${HOME}\"
+		# SPECTROGRAM DIRECTORY
+		#--
+		# Set where created spectrogram images should be stored.  By default, they are
+		# stored in the same directory as the analyzed FLAC files.  Each image will have
+		# the same name as the tested FLAC file but with an integer suffix indicating
+		# the FLAC number (which was processed by the script) to allow for uniqueness.
+		# The type of image created is PNG with the extension '.png'.
+		#
+		# All values for 'spectrogram_location' are interpreted as a directory.  If left
+		# blank, the default location will be used.
+		#
+		# An example of a user-defined location:
+		#    spectrogram_location="${HOME}/Spectrogram_Images"
+		#
+		# See '--help' or '-h' for more information.
+		spectrogram_location=""
 
-#~~~~~~~~~~~~~~~~~~~~~~~
-#  AUCDTECT SKIP LOSSY
-#~~~~~~~~~~~~~~~~~~~~~~~
-# Set whether FLAC files should be skipped if the MASTERING tag is already set
-# as 'Lossy' when analyzed with auCDtect.  Set 'skip_lossy' as 'true' to to skip
-# FLAC files that have the tag: 'MASTERING=Lossy'.  All other values are
-# intepreted as 'false'.
-skip_lossy=\"true\"
+		# EXTRACTED ARTWORK DIRECTORY
+		#--
+		# Set where the extracted artwork images should be stored.
+		#
+		# By  default, each extracted image will be placed in a subdirectory where the
+		# FLAC file is located.  The subdirectory housing the extracted artwork will
+		# have a similar name as the currently processed FLAC.  If a directory already
+		# exists, an integer is appended to the directory (to prevent overwriting and
+		# mixing files).  For example:
+		#
+		#    /path/to/01_file.flac          # FLAC file with embedded artwork
+		#    /path/to/01_file.flac_art/     # Directory housing artwork
+		#    /path/to/01_file.flac_art~1~/  # Directory '1' if above directory exists
+		#    /path/to/01_file.flac_art~2~/  # Directory '2' if above directory exists
+		#    /path/to/01_file.flac_art~N~/  # Directory 'N' if above directory exists
+		#
+		# All values for 'artwork_location' are interpreted as a directory.  If left
+		# blank, the default location will be used.
+		#
+		# If there is a user-defined location, the extracted images will be placed in a
+		# subdirectory in that location with a naming scheme similar to above:
+		#
+		#    artwork_location="${HOME}/artwork"    # User-defined configuration option
+		#
+		#    /path/to/01_file.flac                 # FLAC file with embedded artwork
+		#    ${HOME}/artwork/01_file.flac_art/     # Directory housing artwork
+		#    ${HOME}/artwork/01_file.flac_art~1~/  # Directory '1' if above directory exists
+		#
+		# See '--help' or '-h' for more information.
+		artwork_location=""
 
-#~~~~~~~~~~~~~~~~~~~~~~~~~
-#  SPECTROGRAM DIRECTORY
-#~~~~~~~~~~~~~~~~~~~~~~~~~
-# Set where the created spectrogram files should be placed.  By default, the
-# spectrogram images will be placed in the same directory as the tested FLAC
-# files. Each image will have the same name as the tested FLAC file but with
-# the extension '.png'.
-#
-# All values for 'spectrogram_location' are interpreted as a directory.  If left
-# blank, the default location will be used.
-#
-# An example of a user-defined location:
-#    spectrogram_location=\"\${HOME}/Spectrogram_Images\"
-#
-# See '--help' or '-h' for more information.
-spectrogram_location=\"\"
+		# PREPEND TRACK NUMBER
+		#--
+		# Change whether the '-r, --retag' operation will re-tag singular track numbers
+		# and track totals from:
+		#    1, 2, 3, 4, 5, 6, 7, 8, 9
+		# to
+		#    01, 02, 03, 04, 05, 06, 07, 08, 09
+		#
+		# For example, if you had:
+		#    TRACKNUMBER=4
+		#     TRACKTOTAL=9
+		#
+		# You would end up with:
+		#    TRACKNUMBER=04
+		#     TRACKTOTAL=09
+		#
+		# This is enabled by setting 'prepend_zero' option as 'true'.  All other values
+		# are interpreted as 'false'.
+		prepend_zero="false"
 
-#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-#  EXTRACTED ARTWORK DIRECTORY
-#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-# Set where the extracted artwork images should be placed.  By default, the
-# extracted images will be placed in a subdirectory where the FLAC file is
-# located.  The subdirectory has the same name as the FLAC file that's processed
-# with a unique string appended to it:
-#
-#    [ Default directory example ]
-#    /path/to/music/01_file.flac                          # FLAC with artwork
-#    /path/to/music/01_file.flac_[redoflacs_art]_4342/    # Example subdirectory
-#
-# All values for 'artwork_location' are interpreted as a directory.  If left
-# blank, the default location will be used.
-#
-# If there is a user-defined location, the extracted images will be placed in a
-# subdirectory in that location with a naming scheme similar to the above
-# example, but prefaced with the current number of FLAC files being processed:
-#
-#    [ User-defined location ]
-#    artwork_location=\"\${HOME}/artwork\"
-#
-#    [ FLAC file to be processed ]
-#    /path/to/music/01_file.flac
-#
-#    [ Resultant subdirectory with extracted artwork ]
-#    \${HOME}/artwork/[1] 01_file.flac_[redoflacs_art]_4342/
-#
-# See '--help' or '-h' for more information.
-artwork_location=\"\"
+		## CONFIG REVISION 3 :: DO NOT DELETE THIS LINE ##
+	END_OF_CONFIG
 
-#~~~~~~~~~~~~~~~~~~~~~~~~
-#  PREPEND TRACK NUMBER
-#~~~~~~~~~~~~~~~~~~~~~~~~
-# Change whether the '-r, --retag' operation will re-tag singular track numbers
-# and track totals from:
-#    [ 1, 2, 3, 4, 5, 6, 7, 8, 9 ]
-# to
-#    [ 01, 02, 03, 04, 05, 06, 07, 08, 09 ]
-#
-# For example, if you had:
-#    TRACKNUMBER=4
-#     TRACKTOTAL=9
-#
-# You would end up with:
-#    TRACKNUMBER=04
-#     TRACKTOTAL=09
-#
-# This is enabled by setting 'prepend_zero' option as 'true'.  All other values
-# are interpreted as 'false'.
-prepend_zero=\"false\"
-
-#== :: END OPTIONS :: ====== DO NOT DELETE THIS LINE! ====== :: REVISION 2 :: =="
-
-	# Print out the configuration file to the specified location (either system-
-	# wide or local)
-	printf '%s\n' "${create_config}" > "${config_file}"
+	# Write out configuration to either system-wide or local location
+	printf '%s\n' "${config[@]}" > "${config_file}"
 }
 
 #-------------------------------------------------------------------------------
@@ -1405,14 +1403,11 @@ _parse_config()
 	# Load the config file into an array and process each line, grabbing the
 	# user-specified FLAC tags and setting up the configuration variables
 	#--
-	# Set up local variables/arrays
-	declare    config_option
-	declare -a config_array
+	# Set up local variables
+	declare  config_option
 
-	mapfile -n0 -t config_array < "${config_file}"
-
-	for line in "${config_array[@]}"; do
-		# Run through the array, evaluating the configuration option into the
+	while read -r line; do
+		# Run through the config file, evaluating the configuration option into the
 		# current enviroment and storing the tag fields into an array
 		#--
 		# Test and use only the tag and config options
@@ -1425,7 +1420,7 @@ _parse_config()
 				eval "${line}"              # Put config option in environment
 			fi
 		fi
-	done
+	done < "${config_file}"
 }
 
 #-------------------------------------------------------------------------------
@@ -1436,7 +1431,7 @@ _check_config_version()
 	# warn user and display a countdown before starting script
 	#--
 	# Set up local variables/arrays
-	declare    config_file  config_last_line  user_config_revision
+	declare    config_file  config_last_line  revision
 	declare -a config_array
 
 	# Check if configuration file exists based of ${EUID}.  If it doesn't
@@ -1457,28 +1452,18 @@ _check_config_version()
 	mapfile -n0 -t config_array < "${config_file}"
 
 	# Obtain only the last line of the config
-	config_last_line="${config_array[$(( ${#config_array[@]} - 1 ))]}"
+	config_last_line="${config_array[@]: -1}"
 
-	# Remove everything from the last line, except the REVISION number
-	#
-	# Below leaves:
-	#  '<revision number> :: =='
-	user_config_revision="${config_last_line#*REVISION }"
-	# Obtains REVISION number
-	user_config_revision="${user_config_revision% ::*}"
+	# Extract the revision number from the configuration file (new syntax format as
+	# of redoflacs 0.30):
+	read -r _ _ _ revision _ <<< "${config_last_line}"
 
-	# Check if ${user_config_revision} is an integer.  If not, display countdown
-	# and warn user of new config file, else test if the user config revision is
-	# less than the script config revision
-	if [[ "${user_config_revision}" =~ ^[[:digit:]]+$ ]]; then
-		# If ${script_config_revision} is greater than ${user_config_revision}
-		# warn user and display countdown
-		if (( script_config_revision > user_config_revision )); then
-			# Display warning and countdown
-			_countdown_config; printf '\n\n'
-		fi
+	# Check if ${revision} is an integer.  If not, display countdown and warn user
+	# of new configuration file, else test if the user config revision is less than
+	# the script config revision
+	if [[ "${revision}" =~ ^[[:digit:]]+$ ]]; then
+		(( script_revision > revision )) && _countdown_config; printf '\n\n'
 	else
-		# Display warning and countdown
 		_countdown_config; printf '\n\n'
 	fi
 }
@@ -3587,7 +3572,7 @@ version='0.30_pre'                     # Redoflacs version
 flac_extension='.[Ff][Ll][Aa][Cc]'     # FLAC extension (case-insensitive)
 unit_separator=$'\037'                 # ASCII unit separator
 
-declare -i script_config_revision='2'  # Script user configuration revision
+declare -i script_revision='3'         # Script user configuration revision
 declare -i max_length                  # Max filename length within terminal
 declare -A operation_summary           # Stores all the operational states
 
