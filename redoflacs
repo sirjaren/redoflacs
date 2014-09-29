@@ -127,14 +127,14 @@ compression of any other files and produce an error log.
 .RS
 Same as the '\fB\-c, \-\-compress\fP' option, but if any FLAC files already have the
 defined compression_level tag, the script will skip the file and continue on to
-the next without testing the FLAC file's integrity.  This is useful for checking
-if all your FLAC files are compressed at the level specified.
+the next without testing the FLAC file's integrity.  Useful for checking if all your
+FLAC files are compressed at the level specified.
 .RE
 .TP
 .B \-t, \-\-test
 .RS
 Same as '\fB\-c, \-\-compress\fP' but instead of compressing the FLAC files, this script
-just verfies the integrity of them.  This option will NOT add the \fBCOMPRESSION\fP
+just verifies their integrity.  This option will NOT add the \fBCOMPRESSION\fP
 tag to the files.
 .P
 As with the '\fB\-c, \-\-compress\fP' option, this will produce an error log if any FLAC
@@ -144,7 +144,7 @@ files are found to be corrupt.
 .B \-a, \-\-aucdtect
 .RS
 Use the \fBauCDtect\fP program by Oleg Berngardt and Alexander Djourik to analyze
-FLAC files and check with fairly accurate precision whether the FLAC files are
+FLAC files and check, with fairly accurate precision, whether the FLAC files are
 lossy sourced or not.  For example, an MP3 file converted to FLAC is no longer
 lossless therefore lossy sourced.
 .P
@@ -171,7 +171,7 @@ FLAC file name as follows:
 .P
 .nf
 .RS
-\fB[<processed file number>] <filename>.png\fP
+\fB<filename>__<processed number>__.png\fP
 .RE
 .fi
 .P
@@ -179,8 +179,8 @@ An example of this:
 .P
 .nf
 .RS
-\fB03 - Some FLAC File.flac\fP     # 7th file processed
-\fB[7] 03 - Some FLAC File.png\fP  # Spectrogram
+\fB03 - Some FLAC File.flac\fP      # 7th file processed
+\fB03 - Some FLAC File__7__.png\fP  # Spectrogram
 .RE
 .fi
 .P
@@ -194,15 +194,15 @@ The created PNG file is large in resolution to best capture the FLAC file's
 waveform (\fB~1800x513\fP).
 .P
 The spectrogram is created using the program \fBSoX\fP.  If the user tries to use this
-option without having \fBSoX\P installed, the script will warn the user that \fBSoX\fP is
+option without having \fBSoX\fP installed, the script will warn the user that \fBSoX\fP is
 missing and exit.
 .RE
 .TP
 .B \-m, \-\-md5check
 .RS
-Check the FLAC files for unset MD5 Signatures and log the output of any unset
-signatures.  An unset MD5 signature doesn't necessarily mean a FLAC file is
-corrupt, and MAY be repaired with a re-encoding of said FLAC file.
+Check FLAC files for unset MD5 Signatures, logging any files that have this value unset.
+An unset MD5 signature doesn't necessarily mean a FLAC file is corrupt, and MAY be
+repaired with a re-encoding of said FLAC file.
 .RE
 .TP
 .B \-e, \-\-extract-artwork
@@ -253,15 +253,15 @@ integer after the image filename to prevent clobbering:
 .B \-p, \-\-prune
 .RS
 Delete every \fBMETADATA\fP block in each FLAC file except the \fBSTREAMINFO\fP and
-\fBVORBIS_COMMENT\fP block.  If '\fBremove_artwork\fP' is not set as '\fBtrue\fP', defined in the
-configuration file, then the \fBPICTURE\fP block will NOT be removed.
+\fBVORBIS_COMMENT\fP block.  If '\fBremove_artwork\fP' is set to any value but '\fBtrue\fP'
+(via the configuration file) then the \fBPICTURE\fP block will NOT be removed.
 .RE
 .TP
 .B \-g, \-\-replaygain
 .RS
 Add ReplayGain values to FLAC files.  ReplayGain is calculated for \fBALBUM\fP and
-\fBTRACK\fP values and applied via \fBVORBIS_COMMENTS\fP and as such, will require the
-'\fB\-r, \-\-retag\fP' option to have these tags kept (see '\fB\-r, \-\-retag\fP' option) in order
+\fBTRACK\fP values and applied via \fBVORBIS_COMMENTS\fP and as such, will require the '\fB\-r, \-\-retag\fP'
+option to have these tags kept (see '\fB\-r, \-\-retag\fP' option) in order
 to preserve the added ReplayGain values.  The tags added are:
 .P
 .nf
@@ -274,7 +274,7 @@ to preserve the added ReplayGain values.  The tags added are:
 .RE
 .fi
 .P
-This option ignores any ReplayGain tags that may already be set, removing
+NOTE: This option ignores any ReplayGain tags that may already be set, removing
 existing values before applying new ones.
 .P
 In order for ReplayGain values to be applied correctly, the script has to
@@ -300,9 +300,9 @@ values, an error log will be produced.
 .B \-G, \-\-replaygain-noforce
 .RS
 Same as '\fB\-g, \-\-replaygain\fP' but will check for existing ReplayGain tags
-before re-applying new ones.  If any one of the five ReplayGain tags (mentioned
+BEFORE re-applying new ones.  If any one of the five ReplayGain tags (mentioned
 above) are missing from any FLAC file, the script will apply new values to each
-FLAC file in that directory (first removing the old ReplayGain tags -- if any).
+FLAC file in that directory (first removing the old ReplayGain tags, if any).
 .P
 If all five ReplayGain tags are intact in every FLAC file (in a given
 directory), that directory will be skipped and no new ReplayGain tags will be
@@ -337,6 +337,15 @@ retagging the file.  The default tags kept are:
 .RE
 .fi
 .P
+The characters allowed in a tag field are ASCII only (including the SPACE character).
+The EQUAL sign (=), is not allowed as this is the delimiter separating tag field and
+tag value.
+.P
+See this link for more details (under 'Content vector format'):
+.RS
+<\fIhttp://xiph.org/vorbis/doc/v-comment.html\fR>
+.RE
+.P
 If any FLAC files have missing tags (from those configured to be kept), the file
 and the missing tag will be recorded in a log.
 .P
@@ -346,7 +355,7 @@ kept are set in the \fBTAGGING SECTION\fP of the configuration file.
 If this option is specified, a warning will appear upon script execution.  This
 warning will show which of the configured \fBTAG\fP fields to keep when re-tagging the
 FLAC files.  A countdown will appear giving the user \fB10\fP seconds to abort the
-script, after which, the program will begin running it's course.
+script.
 .RE
 .TP
 .B \-l, \-\-all
@@ -3004,7 +3013,7 @@ _aucdtect()
 									# Create the spectrogram with '.png' as the
 									# file extension, placed in the same
 									# directory as the current FLAC file
-									spectrogram_picture="${spectrogram_dirname}/[${iteration}] ${flac_file%${flac_extension}}.png"
+									spectrogram_picture="${spectrogram_dirname}/${flac_file%${flac_extension}}__${iteration}__.png"
 								else
 									# Obtain basename of current FLAC file
 									flac_file="${1##*/}"
@@ -3012,7 +3021,7 @@ _aucdtect()
 									# Create the spectrogram with '.png' as the
 									# file extension, placed in the user-defined
 									# location
-									spectrogram_picture="${spectrogram_location}/[${iteration}] ${flac_file%${flac_extension}}.png"
+									spectrogram_picture="${spectrogram_location}/${flac_file%${flac_extension}}__${iteration}__.png"
 								fi
 
 								# Re-truncate file, since we're doing a multi-stage operation, the
