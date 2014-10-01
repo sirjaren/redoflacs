@@ -1462,7 +1462,9 @@ _check_config_version()
 	# of new configuration file, else test if the user config revision is less than
 	# the script config revision
 	if [[ "${revision}" =~ ^[[:digit:]]+$ ]]; then
-		(( script_revision > revision )) && _countdown_config; printf '\n\n'
+		if (( script_revision > revision )); then
+			_countdown_config; printf '\n\n'
+		fi
 	else
 		_countdown_config; printf '\n\n'
 	fi
