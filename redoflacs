@@ -1225,7 +1225,7 @@ _create_config()
 	# Create a configuration file
 	#--
 	# Set up local array
-	declare config
+	declare -a config
 
 	# Don't expand variables when using heredoc
 	mapfile -n0 -t config <<- "END_OF_CONFIG"
@@ -3570,7 +3570,7 @@ _prune()
 #-------------------------------------------------------------------------------
 shopt -s globstar                      # BASH 4 globstar (eg, /**/*.flac)
 
-version='0.30_pre'                     # Redoflacs version
+version='0.30'                         # Redoflacs version
 flac_extension='.[Ff][Ll][Aa][Cc]'     # FLAC extension (case-insensitive)
 unit_separator=$'\037'                 # ASCII unit separator
 
