@@ -5,9 +5,9 @@
 	UNIX/Linux/BSD Version
 </p>
 
-<p align="center">
-	<img src="https://raw.github.com/sirjaren/repository-images/master/redoflacs/redoflacs_0.21_all.png" alt="redoflacs 0.21: all options"/>
-</p>
+<div>
+	<img src="https://raw.githubusercontent.com/sirjaren/repository-images/master/redoflacs/redoflacs-0.30.png" alt="redoflacs 0.30"/>
+</div>
 
 ##Dependencies
 ##### Required Dependencies
