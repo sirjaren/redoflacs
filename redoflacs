@@ -701,11 +701,7 @@ _message()
 				fi
 			;;
 			'prune')
-				if [[ "${remove_artwork}" != 'true' ]]; then
-					message='Prune METADATA Blocks'  # Keep artwork
-				else
-					message='Prune METADATA Blocks'  # Remove artwork
-				fi
+				message='Prune METADATA Blocks'
 			;;
 		esac
 
