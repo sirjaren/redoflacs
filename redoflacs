@@ -1385,9 +1385,11 @@ _create_config()
 
 		# PRESERVE FILE MODIFICATION TIME
 		#--
+		# This is enabled by setting 'preserve_modtime' option as 'true'.  All other
+		# values are interpreted as 'false'
 		preserve_modtime="false"
 
-		## CONFIG REVISION 3 :: DO NOT DELETE THIS LINE ##
+		## CONFIG REVISION 4 :: DO NOT DELETE THIS LINE ##
 	END_OF_CONFIG
 
 	# Write out configuration to either system-wide or local location
@@ -3578,7 +3580,7 @@ version='0.30'                         # Redoflacs version
 flac_extension='.[Ff][Ll][Aa][Cc]'     # FLAC extension (case-insensitive)
 unit_separator=$'\037'                 # ASCII unit separator
 
-declare -i script_revision='3'         # Script user configuration revision
+declare -i script_revision='4'         # Script user configuration revision
 declare -i max_length                  # Max filename length within terminal
 declare -A operation_summary           # Stores all the operational states
 
