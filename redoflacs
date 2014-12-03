@@ -701,11 +701,7 @@ _message()
 				fi
 			;;
 			'prune')
-				if [[ "${remove_artwork}" != 'true' ]]; then
-					message='Prune METADATA Blocks'  # Keep artwork
-				else
-					message='Prune METADATA Blocks'  # Remove artwork
-				fi
+				message='Prune METADATA Blocks'
 			;;
 		esac
 
@@ -1387,6 +1383,10 @@ _create_config()
 		# are interpreted as 'false'.
 		prepend_zero="false"
 
+		# PRESERVE FILE MODIFICATION TIME
+		#--
+		preserve_modtime="false"
+
 		## CONFIG REVISION 3 :: DO NOT DELETE THIS LINE ##
 	END_OF_CONFIG
 
@@ -1421,6 +1421,10 @@ _parse_config()
 			fi
 		fi
 	done < "${config_file}"
+
+	if [[ "${preserve_modtime}" == 'true' ]]; then
+		metaflac_extra_options="--preserve-modtime"
+	fi
 }
 
 #-------------------------------------------------------------------------------
@@ -2491,7 +2495,7 @@ _replaygain_apply()
 			# Add ReplayGain to FLAC files under directory.  Metaflac
 			# automatically removes old ReplayGain values (if any) before
 			# proceeding
-			metaflac --add-replay-gain "${1}"/*${flac_extension} >/dev/null 2>&1
+			metaflac ${metaflac_extra_options} --add-replay-gain "${1}"/*${flac_extension} >/dev/null 2>&1
 
 			# Exit code 130 is SIGINT so only check for exit code '1'
 			if (( ${?} == 1 )); then
@@ -2545,7 +2549,7 @@ _replaygain_force_apply()
 	_print_item "${file_basename}" "${file_length}" "$3" 'sub'
 
 	# Add ReplayGain to FLAC files under directory
-	metaflac --add-replay-gain "${1}"*${flac_extension} >/dev/null 2>&1
+	metaflac ${metaflac_extra_options} --add-replay-gain "${1}"*${flac_extension} >/dev/null 2>&1
 
 	# Exit code 130 is SIGINT so only check for exit code '1'
 	if (( ${?} == 1 )); then
@@ -2620,7 +2624,7 @@ _compress_verify()
 
 			printf '.' >> "${issue_ticks}"  # Add one tick to total issues
 		else
-			metaflac \
+			metaflac ${metaflac_extra_options} \
 				--remove-tag='COMPRESSION' \
 				--set-tag='COMPRESSION'="${compression_level}" "${1}"
 
@@ -2715,7 +2719,7 @@ _compress_no_test()
 
 			printf '.' >> "${issue_ticks}"  # Add one tick to total issues
 		else
-			metaflac \
+			metaflac ${metaflac_extra_options} \
 				--remove-tag='COMPRESSION' \
 				--set-tag='COMPRESSION'="${compression_level}" "${1}"
 
@@ -3410,7 +3414,7 @@ _retag_apply()
 	# on a separate line to STDOUT.  This will be read in by metaflac.
 	# Use process substitution to allow this to finish if user
 	# invokes SIGINT
-	metaflac --remove-all-tags --import-tags-from=- "${1}" < \
+	metaflac ${metaflac_extra_options} --remove-all-tags --import-tags-from=- "${1}" < \
 		<(
 			# This prints each tag key and value pair
 			# (eg. ARTIST=Kamelot)
@@ -3557,7 +3561,7 @@ _prune()
 	else
 		# Remove all information but STREAMINFO,VORBIS_COMMENTs, and
 		# possibly METADATA_BLOCK_PICTURE
-		metaflac --remove --dont-use-padding --except-block-type="${dont_prune_flac_metadata}" "${1}"
+		metaflac ${metaflac_extra_options} --remove --dont-use-padding --except-block-type="${dont_prune_flac_metadata}" "${1}"
 
 		# FLAC is ok, display ok
 		_print_status 'ok' "${file_basename}" "${file_length}"
