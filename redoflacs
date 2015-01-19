@@ -1605,13 +1605,10 @@ _find_artwork()
 	# Continue if there were any PICTURE blocks found in current FLAC
 	if [[ -s "${tmp_picture_blocks}" ]]; then
 		# Only read in the lines we care about and store into array
-		mapfile -n0 -t artwork_blocks < \
-		<(
-			while read -r; do
-				# We only care about the block, picture and MIME type lines
-				[[ "${REPLY}" == 'METADATA'* || "${REPLY}" == '  '[tM]* ]] && printf '%s\n' "${REPLY}"
-			done < "${tmp_picture_blocks}"
-		)
+		while read -r; do
+			# We only care about the block, picture and MIME type lines
+			[[ "${REPLY}" == 'METADATA'* || "${REPLY}" == '  '[tM]* ]] && artwork_blocks+=( "${REPLY}" )
+		done < "${tmp_picture_blocks}"
 
 		# Run through each line obtained and parse out the information wanted
 		#--
@@ -3589,14 +3586,14 @@ declare -i max_length                  # Max filename length within terminal
 declare -A operation_summary           # Stores all the operational states
 
 # Colors on by default
-reset='\033[0m'
-invert='\033[7m'
-red='\033[31m'
-green='\033[32m'
-yellow='\033[33m'
-blue='\033[34m'
-magenta='\033[35m'
-cyan='\033[36m'
+reset=$'\033[0m'
+invert=$'\033[7m'
+red=$'\033[31m'
+green=$'\033[32m'
+yellow=$'\033[33m'
+blue=$'\033[34m'
+magenta=$'\033[35m'
+cyan=$'\033[36m'
 
 # Check if user is running under Cygwin and if so, warn user and exit
 if [[ "$(uname -o)" == 'Cygwin' ]]; then
