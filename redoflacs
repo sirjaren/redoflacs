@@ -1561,21 +1561,25 @@ _find_cores()
 	declare -gi jobs='2'                  # By default, set $jobs to '2'
 	declare -g  jobs_display='(Default)'  # Default $jobs determination
 
-	# Check /proc/cpuinfo if /proc is mounted by comparing device numbers to /
+	# 'nproc' is part of GNU coreutils
+	if type -P nproc >/dev/null; then
+		jobs="$(nproc)"         # Store useable 'online' CPU's
+		jobs_display='(nproc)'  # $jobs dynamically determined
+		return 0
+	fi
+
+	# Fallback to /proc/cpuinfo.  Check /proc/cpuinfo if /proc is mounted by
+	# comparing device numbers to /
 	if (( $(stat -c %d '/proc') != $(stat -c %d '/') )); then
 		if [[ -f '/proc/cpuinfo' ]]; then
-			# /proc/cpuinfo exists, find total number of cores to use
-			#--
-			# Store contents of /proc/cpuinfo into core_array
-			mapfile -n0 -t cores_array < /proc/cpuinfo
+			jobs='0'  # Initialize to zero
 
-			for i in "${cores_array[@]}"; do
-				# For each line, add processor number to jobs if matched
-				#--
-				[[ "${i}" == 'processor'*:' '* ]] && jobs="${i#processor*: }"
-			done
+			# /proc/cpuinfo exists, find total number of cores to use by countine the
+			# number of processor entries are in /proc/cpuinfo
+			while read -r i; do
+				[[ "${i}" == 'processor'*:' '* ]] && ((jobs++))
+			done < /proc/cpuinfo
 
-			((jobs++))  # +1 to $jobs since 'processor' starts at '0'
 			jobs_display='(/proc/cpuinfo)'  # $jobs dynamically determined
 		fi
 	fi
@@ -3725,7 +3729,8 @@ fi
 
 #-------------------------------------------------------------------------------
 
-# If $jobs wasn't set on invocation, check in /proc determine the number of jobs
+# If $jobs wasn't set on invocation, determine the number of jobs to use based
+# off of the number of CPU's available
 if [[ -z "${jobs}" ]]; then
 	_find_cores
 else
