@@ -5,7 +5,7 @@
 #-------------------------------------------------------------------------------
 # ~ THIS IS THE UNIX/LINUX/BSD VERSION OF REDOFLACS ~
 #-------------------------------------------------------------------------------
-# Copyright (C) 2010-2014  Jaren Stangret
+# Copyright (C) 2010-2015  Jaren Stangret (and contributors)
 #-------------------------------------------------------------------------------
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -3576,7 +3576,7 @@ _prune()
 #-------------------------------------------------------------------------------
 shopt -s globstar                      # BASH 4 globstar (eg, /**/*.flac)
 
-version='0.30'                         # Redoflacs version
+version='0.31_pre'                     # Redoflacs version
 flac_extension='.[Ff][Ll][Aa][Cc]'     # FLAC extension (case-insensitive)
 unit_separator=$'\037'                 # ASCII unit separator
 
@@ -3595,8 +3595,7 @@ magenta='\033[35m'
 cyan='\033[36m'
 
 # Check if user is running under Cygwin and if so, warn user and exit
-os_name="$(uname -o)"
-if [[ "${os_name}" == 'Cygwin' ]]; then
+if [[ "$(uname -o)" == 'Cygwin' ]]; then
 	_error 'This version of redoflacs is meant to be run under\n' >&2
 	_error "${cyan}UNIX/Linux/BSD${reset}.  Please use the ${cyan}Windows (Cygwin)${reset}\n" >&2
 	_error 'version located here:\n' >&2
