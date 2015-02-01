@@ -470,6 +470,7 @@ _short_help()
 	printf ' Options:\n'
 	printf '   -j[N], --jobs[=N]\n'
 	printf '   -n, --no-color\n'
+	printf '   -x, --no-extra-tags\n'
 	printf '   -o, --new-config\n'
 	printf '   -v, --version\n'
 	printf '   -h, --help\n'
@@ -1812,7 +1813,8 @@ _process_positional_parameters()
 	# Obtain and process the positional parameters invoked with the script
 	#--
 	# Set up global variables
-	declare -g all  reallyall  create_spectrogram  no_color  directory
+	declare -g all  reallyall  create_spectrogram  no_extra_tags  no_color \
+		directory
 
 	# Set up local variables/arrays
 	declare -a args  long_args  short_args  non_args  converted_args
@@ -1891,6 +1893,7 @@ _process_positional_parameters()
 				'--all')                  converted_args+=( -l )  ;;
 				'--reallyall')            converted_args+=( -L )  ;;
 				'--no-color')             converted_args+=( -n )  ;;
+				'--no-extra-tags')        converted_args+=( -x )  ;;
 
 				'--jobs='*)
 					# Enforce we have only digits after '--jobs=', and if so, set the
@@ -1918,7 +1921,7 @@ _process_positional_parameters()
 	# array as long arguments
 	#--
 	if [[ -n "${short_args[@]}" ]]; then
-		while getopts ":j:LlcCtgGaAmeprnhvo" args "${short_args[@]}"; do
+		while getopts ":j:LlcCtgGaAmeprnxhvo" args "${short_args[@]}"; do
 			case "${args}" in
 				# These arguments are to be called by themselves, so quit
 				'v') _usage; exit 1          ;;
@@ -1940,6 +1943,7 @@ _process_positional_parameters()
 				'p') converted_args+=( -p )  ;;
 				'l') converted_args+=( -l )  ;;
 				'n') converted_args+=( -n )  ;;
+				'x') converted_args+=( -x )  ;;
 
 				'j')
 					# Enforce we have only digits after '-j', and if so, set the
@@ -2051,6 +2055,7 @@ _process_positional_parameters()
 			;;
 			'-p') operations[10]='prune'            ;;
 			'-n') no_color='true'                   ;;
+			'-x') no_extra_tags='true'              ;;
 		esac
 	done
 
@@ -2155,7 +2160,8 @@ _check_conflicting_operations()
 	#--
 	# '-l, --all' and '-L, --reallyall' cannot be called together
 	if [[ "${all}" == 'true' && "${reallyall}" == 'true' ]]; then
-		_error "Running both ${cyan}-l, --all${reset} and ${cyan}-L, --reallyall${reset} conflict!\n" >&2
+		_error "Running both ${cyan}-l, --all${reset} and ${cyan}-L, --reallyall${reset} conflict!\n\n" >&2
+
 		_error 'Please choose one or the other.\n' >&2
 		exit 1
 	fi
@@ -2187,21 +2193,35 @@ _check_conflicting_operations()
 				_error "  ${cyan}${i}${reset}\n" >&2
 			done
 
-			_error 'Please remove incompatible options.\n' >&2
+			_error '\nPlease remove incompatible options.\n' >&2
 			exit 1
 		fi
 	fi
 
 	# _compress_verify() and _compress_no_test()
 	if [[ -n "${operations[2]}" && -n "${operations[3]}" ]]; then
-		_error "Running both ${cyan}-c, --compress${reset} and ${cyan}-C, --compress-notest${reset} conflict!\n" >&2
+		_error "Running both ${cyan}-c, --compress${reset} and ${cyan}-C, --compress-notest${reset} conflict!\n\n" >&2
+
+		_error 'Please choose one or the other.\n' >&2
+		exit 1
+	fi
+
+	# _compress_no_test() and '-x, --no-extra-tags'
+	if [[ -n "${operations[3]}" && "${no_extra_tags}" == 'true' ]]; then
+		_error "Running both ${cyan}-C, --compress-notest${reset} and ${cyan}-x, --no_extra_tags${reset} conflict!\n\n" >&2
+
+		_error "${cyan}-x, --no_extra_tags${reset} invalidates the compression check, since each file\n" >&2
+		_error "seen to be missing the ${cyan}COMPRESSION${reset} tag is compressed, after which, the\n" >&2
+		_error "${cyan}COMPRESSION${reset} tag is NOT applied, leaving future executions to repeat this process.\n\n" >&2
+
 		_error 'Please choose one or the other.\n' >&2
 		exit 1
 	fi
 
 	# _compress_verify() and _test()
 	if [[ -n "${operations[2]}" && -n "${operations[4]}" ]]; then
-		_error "Running both ${cyan}-c, --compress${reset} and ${cyan}-t, --test${reset} conflict!\n" >&2
+		_error "Running both ${cyan}-c, --compress${reset} and ${cyan}-t, --test${reset} conflict!\n\n" >&2
+
 		_error 'Please choose one or the other.\n' >&2
 		exit 1
 	fi
@@ -2209,7 +2229,8 @@ _check_conflicting_operations()
 	# _replaygain_force_apply and _replaygain_apply
 	# 'conflict' is set during parameter handling if conflicts will ocurr
 	if [[ "${operations[6]}" == 'conflict' ]]; then
-		_error "Running both ${cyan}-g, --replaygain${reset} and ${cyan}-G, --replaygain-noforce${reset} conflict!\n" >&2
+		_error "Running both ${cyan}-g, --replaygain${reset} and ${cyan}-G, --replaygain-noforce${reset} conflict!\n\n" >&2
+
 		_error 'Please choose one or the other.\n' >&2
 		exit 1
 	fi
@@ -2217,7 +2238,8 @@ _check_conflicting_operations()
 	# _aucdtect and _aucdtect w/ spectrogram creation
 	# 'conflict' is set during parameter handling if conflicts will ocurr
 	if [[ "${operations[0]}" == 'conflict' ]]; then
-		_error "Running both ${cyan}-a, --aucdtect${reset} and ${cyan}-A, --aucdtect-spectrogram${reset} conflict!\n" >&2
+		_error "Running both ${cyan}-a, --aucdtect${reset} and ${cyan}-A, --aucdtect-spectrogram${reset} conflict!\n\n" >&2
+
 		_error 'Please choose one or the other.\n' >&2
 		exit 1
 	fi
@@ -2577,7 +2599,7 @@ _compress_verify()
 {
 	# Compress FLACs with user-defined compression level, verifying its integrity
 	#--
-	# $1 is the directory
+	# $1 is the FLAC file operated on
 	# $2 is the operation that's currently being run, of which, can be:
 	#   aucdtect                  md5_check           compress_verify
 	#   compress_no_test          test                replaygain_test
@@ -2599,12 +2621,16 @@ _compress_verify()
 	# Print current FLAC being processed
 	_print_item "${file_basename}" "${file_length}" "$3"
 
-	# Test for COMPRESSION level in FLAC file. Hide error output since
-	# we'll be verifying the FLAC file later
-	COMPRESSION="$(metaflac --show-tag='COMPRESSION' "${1}" 2> /dev/null)"
-	COMPRESSION="${COMPRESSION#*=}"
+	# Only obtain current COMPRESSION value if the user did not specify '-x,
+	# --no-extra-tags'
+	if [[ "${no_extra_tags}" != 'true' ]]; then
+		# Test for COMPRESSION level in FLAC file. Hide error output since
+		# we'll be verifying the FLAC file later
+		COMPRESSION="$(metaflac --show-tag='COMPRESSION' "${1}" 2> /dev/null)"
+		COMPRESSION="${COMPRESSION#*=}"
+	fi
 
-	if (( COMPRESSION != compression_level )); then
+	if (( COMPRESSION != compression_level )) || [[ "${no_extra_tags}" == 'true' ]]; then
 		flac -f -${compression_level} -V "${1}" 2> \
 			>(while read -r -d'%' percent_complete; do
 				# Compress given FLAC file, verifying with a progress bar
@@ -2627,9 +2653,13 @@ _compress_verify()
 
 			printf '.' >> "${issue_ticks}"  # Add one tick to total issues
 		else
-			metaflac ${metaflac_extra_options} \
-				--remove-tag='COMPRESSION' \
-				--set-tag='COMPRESSION'="${compression_level}" "${1}"
+			# Only remove/add the new compression level if the user did not specify
+			# no additional tags ('-x, --no-extra-tags' option)
+			if [[ "${no_extra_tags}" != 'true' ]]; then
+				metaflac ${metaflac_extra_options} \
+					--remove-tag='COMPRESSION' \
+					--set-tag='COMPRESSION'="${compression_level}" "${1}"
+			fi
 
 			# FLAC is ok, display ok
 			_print_status 'ok' "${file_basename}" "${file_length}"
@@ -2672,7 +2702,7 @@ _compress_no_test()
 	# Compress FLACs with user-defined compression level, verifying its integrity
 	# and _not_ falling back to _test() if the compression level is already set
 	#--
-	# $1 is the directory
+	# $1 is the FLAC file operated on
 	# $2 is the operation that's currently being run, of which, can be:
 	#   aucdtect                  md5_check           compress_verify
 	#   compress_no_test          test                replaygain_test
