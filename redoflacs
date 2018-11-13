@@ -491,8 +491,11 @@ MAN_EOF
 #
 _short_help()
 {
-  cat << HELP_EOF
+  declare short_help
+
+  IFS='' read -rd '' short_help << HELP_EOF
 Usage: redoflacs [operations] [options] [target] ...
+
 Operations:
   -c, --compress
   -C, --compress-notest
@@ -507,6 +510,7 @@ Operations:
   -r, --retag
   -l, --all
   -L, --reallyall
+
 Options:
   -j[N], --jobs[=N]
   -n, --no-color
@@ -514,8 +518,11 @@ Options:
   -o, --new-config
   -v, --version
   -h, --help
+
 This is the short help; for details use 'redoflacs --help', 'redoflacs -h'
 HELP_EOF
+
+  printf '%s' "$short_help"
 }
 
 #
@@ -579,87 +586,22 @@ _message_log_exists()
 _create_log()
 {
   # Set up local variables/arrays
-  declare    error_msg  filename  line
+  declare    error_msg filename line header
   declare -i length
-  declare -a header     log_array
+  declare -a log_array
 
   # Set log file and the type of header to prepend based on how this function
   # was called, via $1
   case "${1}" in
-    'aucdtect'*)
-      header=(
-        '--------------------------------------------------------------------------------'
-        '                            [ Aucdtect Report Log ]'
-        ''
-        '      This log details which FLAC files have errors when running auCDtect'
-        '--------------------------------------------------------------------------------'
-      ) ;;
-    'md5_check')
-      header=(
-        '--------------------------------------------------------------------------------'
-        '                            [ Md5 Check Error Log ]'
-        ''
-        ' This log details which FLAC files have errors when checking the MD5 signature'
-        '--------------------------------------------------------------------------------'
-      ) ;;
-    'compress_'*)
-      header=(
-        '--------------------------------------------------------------------------------'
-        '                        [ Compress & Verify Error Log ]'
-        ''
-        ' This log details which FLAC files have errors when compressing and/or verifying'
-        '--------------------------------------------------------------------------------'
-      ) ;;
-    'test')
-      header=(
-        '--------------------------------------------------------------------------------'
-        '                               [ Test Error Log ]'
-        ''
-        '          This log details which FLAC files have errors when testing'
-        '--------------------------------------------------------------------------------'
-      ) ;;
-    'replaygain_test')
-      header=(
-        '--------------------------------------------------------------------------------'
-        '                         [ ReplayGain Test Error Log ]'
-        ''
-        ' This log details which FLAC files have errors when testing for ReplayGain'
-        ' compatability'
-          '--------------------------------------------------------------------------------'
-      ) ;;
-    'replaygain'*'apply')
-      header=(
-        '--------------------------------------------------------------------------------'
-        '                        [ ReplayGain Apply Error Log ]'
-        ''
-        ' This log details which directories have FLAC files that have errors when'
-        ' applying ReplayGain values'
-          '--------------------------------------------------------------------------------'
-      ) ;;
-    'retag_'*)
-      header=(
-        '--------------------------------------------------------------------------------'
-        '                              [ Retag Error Log ]'
-        ''
-        '         This log details which FLAC files have errors when retagging'
-        '--------------------------------------------------------------------------------'
-      ) ;;
-    'extract_images')
-      header=(
-        '--------------------------------------------------------------------------------'
-        '                         [ Extract Images Error Log ]'
-        ''
-        ' This log details which FLAC files have errors when extracting artwork images'
-        '--------------------------------------------------------------------------------'
-      ) ;;
-    'prune')
-      header=(
-        '--------------------------------------------------------------------------------'
-        '                              [ Prune Error Log ]'
-        ''
-        ' This log details which FLAC files have errors when pruning METADATA blocks'
-        '--------------------------------------------------------------------------------'
-      ) ;;
+    'aucdtect'*)       header='redoflacs - auCDtect error log'              ;;
+    'md5_check')       header='redoflacs - FLAC md5 error log'              ;;
+    'compress_'*)      header='redoflacs - FLAC compress/verify error log'  ;;
+    'test')            header='redoflacs - FLAC test error log'             ;;
+    'replaygain_test') header='redoflacs - FLAC ReplayGain test error log'  ;;
+    'replay'*'apply')  header='redoflacs - FLAC ReplayGain apply error log' ;;
+    'retag_'*)         header='redoflacs - FLAC retagging error log'        ;;
+    'extract_images')  header='redoflacs - FLAC image extraction error log' ;;
+    'prune')           header='redoflacs - FLAC block prune error log'      ;;
   esac
 
   # Create array of current log file
@@ -676,8 +618,10 @@ _create_log()
     fi
   done
 
-  # Log header, truncating old log
-  printf '%s\n' "${header[@]}" > "${log_file}"
+  # Log header
+  printf '%s\n' "$header"  > "$log_file"
+  printf '%.s-' {1..79}   >> "$log_file"
+  printf '\n'             >> "$log_file"
 
   for line in "${log_array[@]}"; do
     # Left align filenames and line up error messages before appending to
