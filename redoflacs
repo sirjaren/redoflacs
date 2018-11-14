@@ -41,459 +41,13 @@ _warn() { printf >&2 " ${yellow}*${reset} ${@}"; }  # Yellow message
 _error(){ printf >&2 " ${red}*${reset} ${@}";    }  # Bold red message
 
 #
-# Display a lot of help
+# Display help
 #
-_long_help()
+_help()
 {
-  # Set up local variables
-  declare columns
-  declare -x MANWIDTH
+  declare help
 
-  #
-  # Determine terminal width, so we can force 'man' to use the entire terminal
-  # width, since reading from /dev/stdin, MANWIDTH will be unset
-  #
-  # Redirecting '/dev/stderr' to 'stty' allows valid arguments
-  read -r _ _ _ _ _ _ columns _ < <(stty -a < /dev/stderr)
-  MANWIDTH="${columns%;}"  # Terminal width - remove trailing semicolon
-
-  # Read in man page from STDIN (not POSIX; /dev/stdin -> /proc/self/fd/0)
-  man /dev/stdin << MAN_EOF
-.TH "REDOFLACS" 1
-.SH NAME
-redoflacs \- Parallel BASH commandline FLAC compressor, verifier, organizer,
-analyzer, and retagger
-.SH SYNOPSIS
-.B redoflacs
-[\fIoperations\fR]
-[\fIoptions\fR]
-[\fItarget\fR]
-.RI ...
-.SH DESCRIPTION
-.B redoflacs
-is a BASH commandline program providing a series of operations to help manage
-and verify a user's FLAC music library.  One of the key features of
-\fBredoflacs\fP is it's ability to process a great number of FLAC files in
-parallel, using as many jobs to complete an operation as possible, very similar
-to 'GNU make'.
-.P
-\fBredoflacs\fP searches for a config file (if run as a user) in:
-.P
-.nf
-.RS
-\fB~/.config/redoflacs/config\fP
-.RE
-.fi
-.P
-or (if run as root) in:
-.P
-.nf
-.RS
-\fB/etc/redoflacs.conf\fP
-.RE
-.fi
-.P
-If a config file is not found (in either place), one is created.
-.P
-More information can be found at <\fIhttps://github.com/sirjaren/redoflacs\fR>.
-.SH OPERATIONS
-.TP
-.B \-c, \-\-compress
-.RS
-Compress the FLAC files with the user-specified level of compression defined
-from the configuration file as '\fBcompression_level\fP' and verify the
-resultant files.
-.P
-The default is 8, with the range of values starting from 1 to 8 with the
-smallest compression at 1, and the highest at 8.  This option will add a tag
-(\fBVORBIS_COMMENT\fP) to all successfully verified FLAC files.  Below shows
-the default \fBCOMPRESSION\fP tag added to each successfully compressed (and
-verified) FLAC file:
-.P
-.nf
-.RS
-\fBCOMPRESSION=8\fP
-.RE
-.fi
-.P
-If any FLAC files already have the defined \fBcompression_level\fP tag (a good
-indicator the files are already compressed at that level), the script will
-instead test the FLAC files for any errors.  This is useful to check your
-entire music library to make sure all the FLAC files are compressed at they
-level specified as well as make sure they are intact (ie, not corrupt).
-.P
-If any files are found to be corrupt, this script will quit upon finishing the
-compression of any other files and produce an error log.
-.P
-\fBNOTE\fP: If this operation is called with '\fB\-x, \-\-no-extra-tags\fP',
-the above logic changes.  Instead of checking the \fBCOMPRESSION\fP tag before
-continuing, each FLAC file is ALWAYS compressed with the configured compression
-level. After successful compression, the \fBCOMPRESSION\fP tag is NOT applied
-to the FLAC file.
-.RE
-.TP
-.B \-C, \-\-compress-notest
-.RS
-Same as the '\fB\-c, \-\-compress\fP' option, but if any FLAC files already
-have the defined compression_level tag, the script will skip the file and
-continue on to the next without testing the FLAC file's integrity.  Useful for
-checking if all your FLAC files are compressed at the level specified.
-.P
-\fBNOTE\fP: This operation is NOT compatible with the '\fB\-x,
-\-\-no-extra-tags\fP' option.  This option invalidates the usefulness of this
-operation since each FLAC file that is missing the \fBCOMPRESSION\fP tag would
-be compressed, after which, the \fBCOMPRESSION\fP tag would NOT be applied,
-leaving future executions of this operation to repeat this process.
-.RE
-.TP
-.B \-t, \-\-test
-.RS
-Same as '\fB\-c, \-\-compress\fP' but instead of compressing the FLAC files,
-this script just verifies their integrity.  This option will NOT add the
-\fBCOMPRESSION\fP tag to the files.
-.P
-As with the '\fB\-c, \-\-compress\fP' option, this will produce an error log if
-any FLAC files are found to be corrupt.
-.RE
-.TP
-.B \-a, \-\-aucdtect
-.RS
-Use the \fBauCDtect\fP program by Oleg Berngardt and Alexander Djourik to
-analyze FLAC files and check, with fairly accurate precision, whether the FLAC
-files are lossy sourced or not.  For example, an MP3 file converted to FLAC is
-no longer lossless therefore lossy sourced.
-.P
-While this program isn't foolproof, it gives a good idea which FLAC files will
-need further investigation (ie, a spectrogram).  This program does not work on
-FLAC files which have a bit depth of more than a typical audio CD (16bit), and
-will skip the files that have a higher bit depth.
-.P
-If any files are found to not be perfect (ie, 100% CDDA via auCDtect), a log
-will be created with the questionable FLAC files recorded in it.
-.RE
-.TP
-.B \-A, \-\-aucdtect-spectrogram
-.RS
-Same as '\fB\-a, \-\-aucdtect\fP' with the addition of creating a spectrogram
-for each FLAC file that fails \fBauCDtect\fP, that is, any FLAC file that does
-not return 100% CDDA from \fBauCDtect\fP will be scanned and a spectrogram will
-be created.
-.P
-Any FLAC file skipped (due to having a higher bit depth than 16), will NOT have
-a spectrogram created.
-.P
-By default, each spectrogram will be created in the same folder as the tested
-FLAC file name as follows:
-.P
-.nf
-.RS
-\fB<filename>__<processed number>__.png\fP
-.RE
-.fi
-.P
-An example of this:
-.P
-.nf
-.RS
-\fB03 - Some FLAC File.flac\fP      # 7th file processed
-\fB03 - Some FLAC File__7__.png\fP  # Spectrogram
-.RE
-.fi
-.P
-The user can change the location of where to store the created spectrogram
-images by changing the value of '\fBspectrogram_location\fP' defined in the
-configuration file.  The location defined by the user will be tested to see if
-it exists before starting the script.  If the location does NOT exist, the
-script will warn the user and exit.
-.P
-The created PNG file is large in resolution to best capture the FLAC file's
-waveform (\fB~1800x513\fP).
-.P
-The spectrogram is created using the program \fBSoX\fP.  If the user tries to
-use this option without having \fBSoX\fP installed, the script will warn the
-user that \fBSoX\fP is missing and exit.
-.RE
-.TP
-.B \-m, \-\-md5check
-.RS
-Check FLAC files for unset MD5 Signatures, logging any files that have this
-value unset.  An unset MD5 signature doesn't necessarily mean a FLAC file is
-corrupt, and MAY be repaired with a re-encoding of said FLAC file.
-.RE
-.TP
-.B \-e, \-\-extract-artwork
-.RS
-Run through each FLAC file and extract any and all artwork that's embedded
-within the \fBPICTURE\fP block.  This is useful in the event a user wants to
-save any artwork before using the '\fB\-p, \-\-prune\fP' option to remove the
-artwork.
-.P
-By default, each extracted image will be placed in a subdirectory where the
-FLAC file is located.  The subdirectory housing the extracted artwork will have
-a similar name as the currently processed FLAC.  If a directory already exists,
-an integer is appended to the directory (to prevent overwriting and mixing
-files).  For example:
-.P
-.nf
-.RS
-\fB/path/to/01_file.flac\fP          # FLAC file with embedded artwork
-\fB/path/to/01_file.flac_art/\fP     # Directory housing artwork
-\fB/path/to/01_file.flac_art~1~/\fP  # Directory '1' if above directory
-exists
-\fB/path/to/01_file.flac_art~2~/\fP  # Directory '2' if above directory
-exists
-\fB/path/to/01_file.flac_art~N~/\fP  # Directory 'N' if above directory
-exists
-.RE
-.fi
-.P
-The user can change the location of where to store the extracted images by
-changing the value of '\fBartwork_location\fP' defined in the configuration
-file.  The location defined by the user will be tested to see if it exists
-before starting the script.  If the location does not exist, the script will
-warn the user and exit.
-.P
-This operation supports all the various types of embedded artwork that
-\fBmetaflac\fB supports.
-.P
-If there is more than one image of the same type, this operation will append an
-integer after the image filename to prevent clobbering:
-.P
-.nf
-.RS
-\fB/path/to/01_file.flac_art~2~/\fP                    # Directory housing
-art
-\fB/path/to/01_file.flac_art~2~/11_Composer.jpg\fP     # Extracted image
-\fB/path/to/01_file.flac_art~2~/11_Composer.jpg~1~\fP  # Another image '1'
-\fB/path/to/01_file.flac_art~2~/11_Composer.jpg~2~\fP  # Another image '2'
-\fB/path/to/01_file.flac_art~2~/11_Composer.jpg~N~\fP  # Another image 'N'
-.RE
-.fi
-.RE
-.TP
-.B \-p, \-\-prune
-.RS
-Delete every \fBMETADATA\fP block in each FLAC file except the \fBSTREAMINFO\fP
-and \fBVORBIS_COMMENT\fP block.  If '\fBremove_artwork\fP' is set to any values
-but '\fBtrue\fP' (via the configuration file) then the \fBPICTURE\fP block will
-NOT be removed.
-.RE
-.TP
-.B \-g, \-\-replaygain
-.RS
-Add ReplayGain values to FLAC files.  ReplayGain is calculated for \fBALBUM\fP
-and \fBTRACK\fP values and applied via \fBVORBIS_COMMENTS\fP and as such, will
-require the '\fB\-r, \-\-retag\fP' option to have these tags kept (see
-'\fB\-r, \-\-retag\fP' option) in order to preserve the added ReplayGain
-values.  The tags added are:
-.P
-.nf
-.RS
-\fBREPLAYGAIN_REFERENCE_LOUDNESS\fP
-\fBREPLAYGAIN_TRACK_GAIN\fP
-\fBREPLAYGAIN_TRACK_PEAK\fP
-\fBREPLAYGAIN_ALBUM_GAIN\fP
-\fBREPLAYGAIN_ALBUM_PEAK\fP
-.RE
-.fi
-.P
-NOTE: This option ignores any ReplayGain tags that may already be set, removing
-existing values before applying new ones.
-.P
-In order for ReplayGain values to be applied correctly, the script has to
-determine which FLAC files to add values to by looking at the directory
-housing said files.  That is, the script must add ReplayGain values by working
-off the FLAC files' parent directory.  If there are some FLAC files found, the
-script will move up one directory and begin applying ReplayGain values.  This
-is necessary in order to get the \fBREPLAYGAIN_ALBUM_GAIN\fP and
-\fBREPLAYGAIN_ALBUM_PEAK\fP values set correctly.  Without doing this, the
-\fBALBUM\fP and \fBTRACK\fP values would be identical.
-.P
-If a user has many FLAC files under one directory (of different
-albums/artists), the ReplayGain \fBALBUM\fP values are going to be incorrect as
-the script will perceive all those FLAC files to essentially be from the same
-album.  This is mitigated by having each album in a separate directory.  Keep
-in mind, multi-disc albums must be in separate directories in order to be
-processed with different \fBALBUM GAIN\fP and \fBALBUM PEAK\fP values.
-.P
-If there are any errors found while generating and/or applying ReplayGain
-values, an error log will be produced.
-.RE
-.TP
-.B \-G, \-\-replaygain-noforce
-.RS
-Same as '\fB\-g, \-\-replaygain\fP' but will check for existing ReplayGain tags
-BEFORE re-applying new ones.  If any one of the five ReplayGain tags (mentioned
-above) are missing from any FLAC file, the script will apply new values to each
-FLAC file in that directory (first removing the old ReplayGain tags, if any).
-.P
-If all five ReplayGain tags are intact in every FLAC file (in a given
-directory), that directory will be skipped and no new ReplayGain tags will be
-added.
-.P
-.RE
-.TP
-.B \-r, \-\-retag
-.RS
-Extract the configured tags in each FLAC file and clear the rest before
-retagging the file.  The default tags kept are:
-.P
-.nf
-.RS
-\fBTITLE\fP
-\fBARTIST\fP
-\fBALBUM\fP
-\fBDISCNUMBER\fP
-\fBDATE\fP
-\fBTRACKNUMBER\fP
-\fBTRACKTOTAL\fP
-\fBGENRE\fP
-\fBCOMPRESSION\fP
-\fBRELEASETYPE\fP
-\fBSOURCE\fP
-\fBMASTERING\fP
-\fBREPLAYGAIN_REFERENCE_LOUDNESS\fP
-\fBREPLAYGAIN_TRACK_GAIN\fP
-\fBREPLAYGAIN_TRACK_PEAK\fP
-\fBREPLAYGAIN_ALBUM_GAIN\fP
-\fBREPLAYGAIN_ALBUM_PEAK\fP
-.RE
-.fi
-.P
-The characters allowed in a tag field are ASCII only (including the Space
-character).  The EQUAL sign (=), is not allowed as this is the delimiter
-separating tag field and tag value.
-.P
-See this link for more details (under 'Content vector format'):
-.RS
-<\fIhttp://xiph.org/vorbis/doc/v-comment.html\fR>
-.RE
-.P
-If any FLAC files have missing tags (from those configured to be kept), the
-file and the missing tag will be recorded in a log.
-.P
-The tags that can be kept are essentially infinite, as long as the tags to be
-kept are set in the \fBTAGGING SECTION\fP of the configuration file.
-.P
-If this option is specified, a warning will appear upon script execution.  This
-warning will show which of the configured \fBTAG\fP fields to keep when
-re-tagging the FLAC files.  A countdown will appear giving the user \fB10\fP
-seconds to abort the script.
-.RE
-.TP
-.B \-l, \-\-all
-.RS
-This option is short for:
-.P
-.nf
-.RS
-\fB\-c, \-\-compress\fP
-\fB\-m, \-\-md5check\fP
-\fB\-p, \-\-prune\fP
-\fB\-g, \-\-replaygain\fP
-\fB\-r, \-\-retag\fP
-.RE
-.fi
-.RE
-.TP
-.B \-L, \-\-reallyall
-.RS
-This option is short for:
-.P
-.nf
-.RS
-\fB\-c, \-\-compress\fP
-\fB\-m, \-\-md5check\fP
-\fB\-p, \-\-prune\fP
-\fB\-g, \-\-replaygain\fP
-\fB\-r, \-\-retag\fP
-\fB\-e, \-\-extract-artwork\fP
-\fB\-A, \-\-aucdtect-spectrogram\fP
-.RE
-.fi
-.RE
-.SH OPTIONS
-.TP
-.B \-j[\fIN\fR], \-\-jobs[\fI=N\fR]
-.RS
-Set the number of parallel jobs to run on script invocation.  If this is not
-set, this script will attempt to find the number of CPU cores available, using
-the number found as the number of parallel jobs to run.
-.P
-If the script is unable to find the number of CPU cores available, the number
-of jobs will be set to \fBtwo\fP (\fI2\fR), by default.
-.RE
-.TP
-.B \-n, \-\-no-color
-.RS
-Turn off color output.
-.RE
-.TP
-.B \-x, \-\-no-extra-tags
-.RS
-Disable the application of extra tags.  Presently, the only tag that's applied
-by default is the \fBCOMPRESSION\fP tag during compression via the
-'\fB\-c, \-\-compress\fP' option.
-.P
-This option has the effect of invalidating the '\fB\-C, \-\-compress-notest\fP'
-operation, making the invocation of these two arguments together incompatible.
-See the '\fB\-c, \-\-compress\fP' and '\fB\-C, \-\-compress-notest\fP'
-operations for more information on how this option affects these operations.
-.P
-This option has no bearing on the '\fB\-r, \-\-retag\fP' operation.  All FLAC
-tags defined in the configuration file are for use with the
-'\fB\-r, \-\-retag\fP' operation only and are not subject to, or affected by,
-the '\fB\-x, \-\-no-extra-tags\fP' option.
-.RE
-.TP
-.B \-o, \-\-new-config
-.RS
-Force the creation of a new configuration file.  This option does \fBNOT\fP
-overwrite any existing configuration file.
-.RE
-.TP
-.B \-v, \-\-version
-.RS
-Display script version and exit.
-.RE
-.TP
-.B \-h, \-\-help
-.RS
-Shows this help message.
-.RE
-.SH FILES
-.TP
-.B ~/.config/redoflacs/config
-.RS
-User configuration file.
-.RE
-.TP
-.B /etc/redoflacs.conf
-.RS
-System configuration file.
-.RE
-.SH BUGS
-If you find a bug, please report it at:
-.RS
-<\fIhttps://github.com/sirjaren/redoflacs/issues/new\fR>
-.RE
-.SH AUTHOR
-\fBJaren Stangret\fP <\fIsirjaren@gmail.com\fR>
-.SH THANKS
-Thanks to all the people whom have provided feedback and support!
-.SH REVISION
-\fB6\fP
-MAN_EOF
-}
-
-#
-# Display short help
-#
-_short_help()
-{
-  declare short_help
-
-  IFS='' read -rd '' short_help << HELP_EOF
+  IFS='' read -rd '' help << HELP_EOF
 Usage: redoflacs [operations] [options] [target] ...
 
 Operations:
@@ -519,10 +73,10 @@ Options:
   -v, --version
   -h, --help
 
-This is the short help; for details use 'redoflacs --help', 'redoflacs -h'
+See redoflacs(1) for more information.
 HELP_EOF
 
-  printf '%s' "$short_help"
+  printf '%s' "$help"
 }
 
 #
@@ -1135,7 +689,7 @@ _create_config()
 # Any line that is _NOT_ prepended with a '#' will be interpreted as an option
 # (except for blank lines -- these are not interpreted)
 #
-# See 'redoflacs --help' for a detailed description of each parameter
+# See redoflacs(1) for a detailed description of each parameter
 #
 # NOTE: The options listed below are shell syntax.  Interpolation can occur
 # should weak (double) quotes be used.
@@ -1239,7 +793,7 @@ skip_lossy='true'
 # An example of a user-defined location:
 #    spectrogram_location="${HOME}/Spectrogram_Images"
 #
-# See '--help' or '-h' for more information.
+# See redoflacs(1) for more information.
 spectrogram_location=''
 
 #
@@ -1271,7 +825,7 @@ spectrogram_location=''
 #    ${HOME}/artwork/01_file.flac_art/     # Directory housing artwork
 #    ${HOME}/artwork/01_file.flac_art~1~/  # If above directory exists
 #
-# See '--help' or '-h' for more information.
+# See redoflacs(1) for more information.
 artwork_location=''
 
 #
@@ -1720,16 +1274,16 @@ _process_positional_parameters()
   declare -a args  long_args  short_args  non_args  converted_args
   declare    regex
 
-  # If no arguments are made to the script show usage & short help
+  # If no arguments are made to the script show usage and help
   if (( ${#} == 0 )); then
-    _short_help
+    _help
     exit 1
   fi
 
   # If only one argument was called
   if (( ${#} == 1 )); then
     case "$1" in
-      '--help'|'-h')        _long_help     ; exit 0 ;;
+      '--help'|'-h')        _help          ; exit 0 ;;
       '--version'|'-v')     _print_version ; exit 0 ;;
       '--new-config'|'-o')  _new_config    ; exit 0 ;;
       *)                    _usage         ; exit 1 ;;
