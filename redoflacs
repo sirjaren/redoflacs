@@ -1143,49 +1143,6 @@ _find_artwork()
 }
 
 #
-# Top banner displaying invocation settings
-#
-_top_banner()
-{
-  read -r _ flac_version < <(flac --version)                # Flac Version
-
-  printf " ${blue}%s${reset}\n" \
-    '---------------------------------------------------'  # Top title line
-
-  printf '%16sRuntime Information\n'                        # Title
-
-  printf " ${blue}%s${reset}\n" \
-    '-------------------------+-------------------------'  # Bottom title line
-
-  printf "                redoflacs ${blue}|${reset} ${cyan}%s${reset}\n" \
-    "${version}"                                           # Script version
-
-  printf "                     FLAC ${blue}|${reset} ${cyan}%s${reset}\n" \
-    "${flac_version}"                                      # Flac version
-
-  printf "                     Jobs ${blue}|${reset} ${cyan}%s %s${reset}\n" \
-    "${jobs}" "${jobs_display}"                            # Number of jobs
-
-  printf "            Log Directory ${blue}|${reset} ${cyan}%s${reset}\n" \
-    "${error_log}/"                                        # Log directory
-
-  # Set configuration directory
-  if (( EUID == 0 )) ; then
-    config_directory='/etc/'                               # System config
-  else
-    config_directory='~/.config/redoflacs/'                # User config
-  fi
-
-  printf "         Config Directory ${blue}|${reset} ${cyan}%s${reset}\n" \
-    "${config_directory}"                                  # Config directory
-
-  printf " ${blue}%s${reset}\n" \
-    '-------------------------+-------------------------'  # End banner line
-
-  _info 'Finding FLAC files to process...'                  # Show FLAC search
-}
-
-#
 # Display countdown before retagging to allow user to quit script safely
 #
 _countdown_metadata()
@@ -3339,7 +3296,7 @@ issue_ticks="/tmp/redoflacs_issue_file_$$"           # Issues/Errors file
 # _retag_apply: Display a countdown
 [[ -n "${operations[8]}" ]] && _countdown_metadata
 
-_top_banner                                          # Display top banner
+_info 'Finding FLAC files to process...'
 
 # Total FLACs to process
 pushd "$directory" >/dev/null
