@@ -494,6 +494,7 @@ _trap_sigint()
 
   stty ${old_stty} < /dev/stderr  # Restore old stty settings
   printf '\033[?25h'              # Restore the cursor
+  printf '\033[?7h'               # Restore terminal wrapping
   rm -f "${job_fifo}"             # Remove temporary FIFO
   rm -f "${tmp_picture_blocks}"   # Remove temporary 'metaflac' block streams
   _summary                        # Display Summary Of Operations
@@ -1767,6 +1768,7 @@ _summary()
   rm -f "${job_fifo}" "${tmp_aucdtect_fd}" "${issue_ticks}"
 
   printf '\033[?25h'   # Restore cursor
+  printf '\033[?7h'    # Restore terminal wrapping
 }
 
 #
