@@ -40,10 +40,10 @@ _info() { printf     " ${green}*${reset} ${@}";  }  # Bold green message
 _warn() { printf >&2 " ${yellow}*${reset} ${@}"; }  # Yellow message
 _error(){ printf >&2 " ${red}*${reset} ${@}";    }  # Bold red message
 
-_print_ok()   { printf "\033[${row}H${green}100%%${reset}"; }
-_print_fail() { printf "\033[${row}H${red}fail${reset}";    }
-_print_check(){ printf "\033[${row}H${yellow}chck${reset}"; }
-_print_skip() { printf "\033[${row}H${cyan}chck${reset}";   }
+_print_item_ok()   { printf "\033[${row}H${green}100%%${reset}"; }
+_print_item_fail() { printf "\033[${row}H${red}fail${reset}";    }
+_print_item_check(){ printf "\033[${row}H${yellow}chck${reset}"; }
+_print_item_skip() { printf "\033[${row}H${cyan}chck${reset}";   }
 
 #
 # Display help
@@ -2233,7 +2233,6 @@ _compress_no_test()
 _test()
 {
   trap '_kill_jobs "$(jobs -rp)"' EXIT
-
   local pct
 
   _print_item
@@ -2249,12 +2248,12 @@ _test()
   )
 
   if (( $? == 0 )); then
-    _print_ok
+    _print_item_ok
     printf >&3 "$row\n" # Store row position and end operation
     return
   fi
 
-  _print_fail
+  _print_item_fail
 
   # Log header
   if [[ ! -f "$log_file" ]]; then
