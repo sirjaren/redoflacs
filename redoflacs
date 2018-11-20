@@ -40,14 +40,17 @@ _info() { printf     " ${green}*${reset} ${@}";  }  # Bold green message
 _warn() { printf >&2 " ${yellow}*${reset} ${@}"; }  # Yellow message
 _error(){ printf >&2 " ${red}*${reset} ${@}";    }  # Bold red message
 
+_print_ok()   { printf "\033[${row}H${green}100%%${reset}"; }
+_print_fail() { printf "\033[${row}H${red}fail${reset}";    }
+_print_check(){ printf "\033[${row}H${yellow}chck${reset}"; }
+_print_skip() { printf "\033[${row}H${cyan}chck${reset}";   }
+
 #
 # Display help
 #
 _help()
 {
-  declare help
-
-  IFS='' read -rd '' help << HELP_EOF
+  IFS='' read -rd '' << HELP_EOF
 Usage: redoflacs [operations] [options] [target] ...
 
 Operations:
@@ -76,7 +79,7 @@ Options:
 See redoflacs(1) for more information.
 HELP_EOF
 
-  printf '%s' "$help"
+  printf '%s' "$REPLY"
 }
 
 #
@@ -246,15 +249,27 @@ _update_operation_status()
 }
 
 #
-# Display the current item being that's to be run through an operation
-#
-# $1 is the filename to print
-# $2 is the filename length
-# $3 is the number completed, ie [12/345]
-# $4 determines whether this is a sub operational item to print
+# Displays the currently processed item on a dedicated row within the terminal.
+# The filename is truncated if the length of the filename is greater than 79
+# characters or greater than the width of the the terminal.  This is determined
+# by MAX_LENGTH
 #
 _print_item()
 {
+  local fmt
+  local basename="${item##*/}"
+
+  # This printf format string displays the currently processed item
+  fmt+=$"\033[${row};6H"              # Cursor row; 6 columns to right
+  fmt+=$"\033[0K"                     # Erase line from cursor to right
+  fmt+='%s'                           # Printf modifier; current item basename
+  fmt+=$"\033[${row};${MAX_LENGTH}H"  # Cursor at row; at max filename length
+  fmt+=$"\033[0K"                     # Erase line from cursor to right
+
+  printf "$fmt" "$basename"
+
+  return
+
   # Set up local variables
   declare -i  print_spacing='1'
 
@@ -316,7 +331,7 @@ _print_item()
 _print_status()
 {
   # Set up local variables
-  declare -i print_spacing='0' column_placement='4'
+  declare -i print_spacing='0' column_placement='0'
 
   case "$1" in
     'ok')     color="${green}"   result='100%'  ;;
@@ -325,7 +340,7 @@ _print_status()
     'skip')   color="${yellow}"  result='skip'  ;;
   esac
 
-  (( max_length >= $3 )) && print_spacing=$(( max_length - $3 ))
+  #(( max_length >= $3 )) && print_spacing=$(( max_length - $3 ))
 
   case "$4" in
     'sub')
@@ -349,7 +364,10 @@ _print_status()
     ;;
   esac
 
-  printf "\033[${placement};${column_placement}H${color}%s${reset} ${action}%s%${print_spacing}s" \
+#  printf "\033[${placement};${column_placement}H${color}%s${reset} ${action}%s%${print_spacing}s" \
+#    "${result}" "$2" ''
+
+  printf "\033[${placement};${column_placement}H${color}%s${reset} ${action}%s%${print_spacing}s\033[${placement};79H\033[0K" \
     "${result}" "$2" ''
 }
 
@@ -371,7 +389,7 @@ _print_status()
 _print_progress()
 {
   # Set up local variables
-  declare  action  progress_bar_length
+  declare  action  progress_bar_length length=$4
 
   case "$1" in
     'decode')
@@ -395,11 +413,12 @@ _print_progress()
       progress_bar_length=$(( ( ( max_length - 16 ) * $2 ) / 100 ))
     ;;
     *)
-      progress_bar_length=$(( ( max_length * $2 ) / 100 ))
+      #progress_bar_length=$(( ( max_length * $2 ) / 100 ))
+      progress_bar_length=$(( ( 60 * $2 ) / 100 ))
     ;;
   esac
 
-  if (( progress_bar_length < $4 )); then
+  if (( progress_bar_length < length )); then
     # Print out the current item name as well as the progress bar
     #--
     # If $progress_bar_length is less than the current item's name length,
@@ -410,7 +429,7 @@ _print_progress()
     printf "\033[${placement};4H${yellow}%4s${reset} ${action}${invert}%s${reset}" \
       "${2}%" "${3:0:${progress_bar_length}}"
   else
-    printf "\033[${placement};4H${yellow}%4s${reset} ${action}${invert}%s%$(( progress_bar_length - $4 ))s${reset}" \
+    printf "\033[${placement};4H${yellow}%4s${reset} ${action}${invert}%s%$(( progress_bar_length - length ))s${reset}" \
       "${2}%" "${3}" ''
   fi
 }
@@ -951,9 +970,12 @@ _check_config_version()
 #
 _truncate_filename()
 {
+  unit_separator=$'\037'                 # ASCII unit separator
+
   # Set up local variables
   declare    filename="$1"  length_diff
-  declare -i filename_length  apparent_length  length
+  declare -i apparent_length  length
+  declare filename_length
 
   # Make absolute pathname
   [[ "${filename}" == '.' || "${filename}" == './' ]] && filename="${PWD}"
@@ -968,15 +990,28 @@ _truncate_filename()
 
   filename="${filename//$'\n'/?}"                 # Replace '\n' with '?'
 
-  # Apparent (column-wdith) length of filename; 'wc' handles wide characters
-  filename_length="$(wc -L <<< "${filename}")"
+##   # Apparent (column-wdith) length of filename; 'wc' handles wide characters
+##   filename_length="$(wc -L <<< "${filename}")"
+
+  #printf >&2 "${smcup}\033[${iteration};0H%s" "$filename"
+  #IFS=';' read -rs -dR -u2 -t1 -p "${curpos}${rmcup}" _ filename_length
+
+  #{
+  #  #IFS=';' read -rs -dR -u2 -t1 -p "${smcup}${filename}${curpos}${rmcup}" _ filename_length
+  #} >/dev/null
+  #printf >&2 -- '--\n'
+  #printf >&2 "filename:        $filename\n"
+  #printf >&2 "filename_length: $filename_length\n"
+  #printf >&2 -- '--\n'
+  printf >&2 "%s\n" "$filename_length"
+  ((filename_length--))
 
   # Subtract 16 blocks from $max_length if we're doing a multi-stage operation
   [[ "${2}" == 'multi-stage' ]] && max_length=$((max_length - 16))
 
   # If filename is longer than the width allowed in the terminal, truncate it
   if (( filename_length > max_length )); then
-    max_length=$((max_length - 4 ))       # Leave room for space and ellipsis
+    max_length=$((max_length - 4))        # Leave room for space and ellipsis
     apparent_length="${filename_length}"  # Apparent length of item
     length="${max_length}"                # Length in ${foo:offset:length}
 
@@ -1788,63 +1823,32 @@ _summary()
 #
 _run_parallel()
 {
-  # Set up local variables/arrays
-  declare      item
-  declare  -i  row_state  placement  previous_placement
-  declare  -gi iteration=0
+  local item
+  local -i row starting_row previous_row iteration=0
 
-  # Determine the whitespace to make up max length by operation
-  case "$1" in
-    'replaygain_'* | 'retag_'*)  spacing='11'  ;;
-    *)                           spacing='9'   ;;
-  esac
+  starting_row=$(_row)  # Current cursor row position state
 
-  row_state=$(_row)                        # Current cursor row position state
-
+  # Start as many operations as specified by the number of jobs
   for item in "${total_items[@]:0:${jobs}}"; do
-    # Run as many operations (from $total_items[@]) in the background,
-    # specified via $jobs
-    #--
-    placement=$((row_state + iteration))  # Placement of file/dir processed
-    ((iteration++))                       # After placement to not print 0
-    number_completed="[${iteration}/${#total_items[@]}]"  # eg. [56/213]
-
-    # Max filename allowed (to fit within screen)
-    max_length="$(( columns - ${#number_completed} - spacing ))"
-
-    # Fork process
-    _$1 "${item}" "$1" "${number_completed}" $((iteration - 1)) &
+    row=$((starting_row + iteration++))  # Placement of file/dir processed
+    _$1 "$iteration" &                   # Fork process
   done
 
-  # Continue only if there are more items than jobs specified
-  if (( ${#total_items[@]} > jobs )); then
-    while read -r previous_placement; do
-      # An operation is completed with an integer and newline sent to a FIFO.
-      # The integer is that row position an operation was on.  For each
-      # newline read in, process another file/dir from $total_items[@]
-      #--
-      # Placement of file/dir relative to previous operation's placement
-      placement=$((row_state + previous_placement))
+  # Wait on operations
+  (( ${#total_items[@]} <= jobs )) && wait
 
-      # If current number of FLACs to process is less than total FLACs
-      # found, add another FLAC to process
-      if (( iteration < ${#total_items[@]} )); then
-        item="${total_items[${iteration}]}"  # Current file/dir to process
-        ((iteration++))                      # Increase count
-        number_completed="[${iteration}/${#total_items[@]}]"  # eg. [56/213]
+  # An operation is completed with an integer and newline sent to a FIFO.  The
+  # integer is that row position an operation was on.  For each newline read
+  # in, process another file/dir from $total_items[@]
+  while read -r previous_row; do
+    (( iteration >= ${#total_items[@]} )) && break  # Stop, if no more FLACs
+    item="${total_items[iteration++]}"    # Current file/dir to process
+    row=$((starting_row + previous_row))  # Placement of file/dir processed
+    _$1 "$previous_row" &                 # For process
+  done <&3  # Read from FIFO
 
-        # Max filename allowed (to fit within screen)
-        max_length="$(( columns - ${#number_completed} - spacing ))"
-
-        # Fork process
-        _$1 "${item}" "$1" "${number_completed}" "${previous_placement}" &
-      else
-        break                         # Prevent read hanging FIFO
-      fi
-    done <&3                            # Read from FIFO
-  fi
-
-  wait  # Wait for children processes
+  # Wait on operations
+  wait
 }
 
 #
@@ -2260,61 +2264,45 @@ _compress_no_test()
 #
 # Test FLAC file integrity
 #
-# $1 is the filename
-# $2 is the operation that's currently being run, of which, can be:
-#   aucdtect                  md5_check           compress_verify
-#   compress_no_test          test                replaygain_test
-#   replaygain_force_apply    replaygain_apply    retag_analyze
-#   retag_apply               extract_images      prune
-# $3 is a string representing number items processed, eg: [43/439]
-# $4 is the current operation's row placement
+# $1 is the current operation's row placement
 #
 _test()
 {
   trap '_kill_jobs "$(jobs -rp)"' EXIT
 
-  # Set up local variables
-  declare    file_basename percent_complete
-  declare -i file_length
+  local pct
 
-  # Truncate file, if necessary, and grab file information, splitting on
-  # Unit Separator (\037)
-  IFS=$'\037' read -r file_basename file_length < <(_truncate_filename "$1")
+  _print_item
 
-  # Print current FLAC being processed
-  _print_item "${file_basename}" "${file_length}" "$3"
+  # Test given FLAC file, obtaining percent complete
+  flac -t "$item" 2> >(
+    while read -r -d'%' pct; do
+      pct="${pct##* }"
+      [[ "$pct" == *[^[:digit:]]* ]] && pct='0'
+      # Print percentage complete
+      printf "\033[${row}H${yellow}%3d%%${reset}" "$pct"
+    done
+  )
 
-  flac -t "${1}" 2> \
-    >(while read -r -d'%' percent_complete; do
-      # Test given FLAC file, with a progress bar
-      #--
-      # Current percent complete
-      percent_complete="$( _get_percent_complete "$2" "${percent_complete}" )"
-
-      # Print operation progress bar and percent complete
-      _print_progress "$2" "${percent_complete}" "${file_basename}" "${file_length}"
-    done) >/dev/null
-
-  # Non-zero is failure
-  if (( $? != 0 )); then
-    # Display error
-    _print_status 'fail' "$file_basename" "$file_length"
-
-    # Log header
-    if [[ ! -f "$log_file" ]]; then
-      printf >  "$log_file" '%s\n' 'redoflacs - FLAC test error log'
-      printf >> "$log_file" '%.s-' {1..79}
-      printf >> "$log_file" '\n'
-    fi
-
-    # Log FLAC failure
-    printf >> "$log_file" '%s: Failed testing\n' "${PWD}/${1##*/}"
-    printf >> "$issue_ticks" '.'  # Add one tick to total issues
-  else
-    # Display ok
-    _print_status 'ok' "$file_basename" "$file_length"
+  if (( $? == 0 )); then
+    _print_ok
+    printf >&3 "$1\n" # Store row position and end operation
+    return
   fi
-  printf "$4\n" >&3  # Store row position and end operation
+
+  _print_fail
+
+  # Log header
+  if [[ ! -f "$log_file" ]]; then
+    printf >  "$log_file" 'redoflacs - FLAC test error log\n'
+    printf >> "$log_file" '%.s-' {1..79}
+    printf >> "$log_file" '\n'
+  fi
+
+  # Log FLAC failure
+  printf >> "$log_file" '%s: Failed testing\n' "$item"
+  printf >> "$issue_ticks" '.'  # Add one tick to total issues
+  printf >&3 "$1\n"  # Store row position and end operation
 }
 
 #
@@ -3163,6 +3151,8 @@ _prune()
 
 ###################################  SETUP  ###################################
 
+readonly MAX_LENGTH='79'               # Maximum length of output width
+
 shopt -s globstar                      # BASH 4 globstar (eg, /**/*.flac)
 
 version='0.31_pre'                     # Redoflacs version
@@ -3329,6 +3319,8 @@ fi
 old_stty="$(stty -g)"              # Store current stty settings
 stty -ctlecho 2>/dev/null          # Disable ctrl+c '^C'
 printf '\033[?25l'                 # Hide cursor
+printf '\033[?7l'                  # Disable terminal wrapping
+
 _check_config_version              # Check if script config is newer than user's
 job_fifo="/tmp/redoflacs_fifo_$$"  # Job manager FIFO
 
@@ -3343,7 +3335,11 @@ issue_ticks="/tmp/redoflacs_issue_file_$$"           # Issues/Errors file
 [[ -n "${operations[8]}" ]] && _countdown_metadata
 
 _top_banner                                          # Display top banner
-total_items=( "${directory}"/**/*${flac_extension} ) # Total FLACs to process
+
+# Total FLACs to process
+pushd "$directory" >/dev/null
+total_items=( "${PWD}"/**/*${flac_extension} )  # Absolute pathname
+popd >/dev/null
 
 # This displays '[ ok ]' after 'Finding FLAC files to process...'
 printf "%11s${blue}[ ${green}ok${blue} ]${reset}\n" ''
