@@ -1821,17 +1821,25 @@ _summary()
 #   replaygain_force_apply    replaygain_apply    retag_analyze
 #   retag_apply               extract_images      prune
 #
+# Each name above is a function name, to be called as:
+#   _<function_name>
+#
+# Examples:
+#   _$1   # Eg: _aucdtect
+#   _$1   # Eg: _extract_images
+#
 _run_parallel()
 {
   local item
-  local -i row starting_row previous_row iteration=0
+  local -i row num=0
 
-  starting_row=$(_row)  # Current cursor row position state
+  # Starting cursor row to display first item and operation progress
+  row=$(($(_row) - 1))
 
   # Start as many operations as specified by the number of jobs
   for item in "${total_items[@]:0:${jobs}}"; do
-    row=$((starting_row + iteration++))  # Placement of file/dir processed
-    _$1 "$iteration" &                   # Fork process
+    ((row++, num++))
+    _$1 &
   done
 
   # Wait on operations
@@ -1840,11 +1848,10 @@ _run_parallel()
   # An operation is completed with an integer and newline sent to a FIFO.  The
   # integer is that row position an operation was on.  For each newline read
   # in, process another file/dir from $total_items[@]
-  while read -r previous_row; do
-    (( iteration >= ${#total_items[@]} )) && break  # Stop, if no more FLACs
-    item="${total_items[iteration++]}"    # Current file/dir to process
-    row=$((starting_row + previous_row))  # Placement of file/dir processed
-    _$1 "$previous_row" &                 # For process
+  while read -r row; do
+    (( num >= ${#total_items[@]} )) && break  # Stop, if no more FLACs
+    item="${total_items[num++]}"              # Current item to process
+    _$1 &
   done <&3  # Read from FIFO
 
   # Wait on operations
@@ -2264,8 +2271,6 @@ _compress_no_test()
 #
 # Test FLAC file integrity
 #
-# $1 is the current operation's row placement
-#
 _test()
 {
   trap '_kill_jobs "$(jobs -rp)"' EXIT
@@ -2286,7 +2291,7 @@ _test()
 
   if (( $? == 0 )); then
     _print_ok
-    printf >&3 "$1\n" # Store row position and end operation
+    printf >&3 "$row\n" # Store row position and end operation
     return
   fi
 
@@ -2302,7 +2307,7 @@ _test()
   # Log FLAC failure
   printf >> "$log_file" '%s: Failed testing\n' "$item"
   printf >> "$issue_ticks" '.'  # Add one tick to total issues
-  printf >&3 "$1\n"  # Store row position and end operation
+  printf >&3 "$row\n"  # Store row position and end operation
 }
 
 #
