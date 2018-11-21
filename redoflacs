@@ -2233,21 +2233,45 @@ _compress_no_test()
 _test()
 {
   trap '_kill_jobs "$(jobs -rp)"' EXIT
-  local pct
+  local output error error_msg previous
+
+  # Basename of FLAC, splitting on whitespace as 'read' below, also splits
+  local base="${item##*[ /]}"
 
   _print_item
 
-  # Test given FLAC file, obtaining percent complete
-  flac -t "$item" 2> >(
-    while read -r -d'%' pct; do
-      pct="${pct##* }"
-      [[ "$pct" == *[^[:digit:]]* ]] && pct='0'
-      # Print percentage complete
-      printf "\033[${row}H${yellow}%3d%%${reset}" "$pct"
-    done
-  )
+  # Tests current FLAC file with 'flac', reading all output, displaying the
+  # current percentage complete.  If there is an error, that error message is
+  # stored and logged
+  #
+  # As indicated by '[FIRST]', '[SECOND]', and '[LAST]', this is the order each
+  # of the statements will evaluate to 'true'. '[FIRST]' may never evaluate to
+  # 'true' (if the FLAC file fails to decode)
+  while IFS=$'\n' read -rd ' ' output; do
+    # [LAST] Store error message
+    if [[ "$error" && -n "$output" ]]; then
+      [[ "$output" == 'state' ]] && break  # End of error message
+      error_msg+=" $output"
+      continue
+    fi
 
-  if (( $? == 0 )); then
+    # [SECOND] An error occurred, storing first word
+    if [[ "$output" == 'ERROR' && "$previous" == *"${base}:" ]]; then
+      error='1'
+      error_msg="$output"
+      continue
+    fi
+
+    # [FIRST] FLAC testing percentage complete
+    if [[ "$output" == *[[:digit:]]% ]]; then
+      printf "\033[${row}H${yellow}%4s${reset}" "$output"
+    fi
+
+    # Used to validate check previous output is an error and not a filename
+    previous="$output"
+  done < <(flac 2>&1 -t "$item")
+
+  if [[ -z "$error" ]]; then
     _print_item_ok
     printf >&3 "$row\n" # Store row position and end operation
     return
@@ -2263,8 +2287,9 @@ _test()
   fi
 
   # Log FLAC failure
-  printf >> "$log_file" '%s: Failed testing\n' "$item"
+  printf > "$log_file" '%s: %s\n' "$item" "$error_msg"
   printf >> "$issue_ticks" '.'  # Add one tick to total issues
+
   printf >&3 "$row\n"  # Store row position and end operation
 }
 
