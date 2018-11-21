@@ -1854,13 +1854,6 @@ _replaygain_test()
     # Display error
     _print_status 'fail' "$file_basename" "$file_length" 'sub'
 
-    # Log header
-    if [[ ! -f "$log_file" ]]; then
-      printf >  "$log_file" '%s\n' 'redoflacs - FLAC ReplayGain test error log'
-      printf >> "$log_file" '%.s-' {1..79}
-      printf >> "$log_file" '\n'
-    fi
-
     # Log FLAC failure
     printf >> "$log_file" '%s: Not a real FLAC file\n' "${PWD}/${1##*/}"
     printf >> "$issue_ticks" '.'  # Add one tick to total issues
@@ -1874,14 +1867,6 @@ _replaygain_test()
       if (( $(_metaflac_version) < 3 )); then
         # Old version of `metaflac' installed, display skipped
         _print_status 'skip' "${file_basename}" "${file_length}" 'sub'
-
-        # Log header
-        if [[ ! -f "$log_file" ]]; then
-          printf >  "$log_file" '%s\n' \
-            'redoflacs - FLAC ReplayGain test error log'
-          printf >> "$log_file" '%.s-' {1..79}
-          printf >> "$log_file" '\n'
-        fi
 
         # The `metaflac' version installed is NOT greater than 1.2.1 so
         # skip processing current FLAC file, logging why it was skipped
@@ -1958,14 +1943,6 @@ _replaygain_apply()
         # Display error
         _print_status 'fail' "$file_basename" "$file_length" 'sub'
 
-        # Log header
-        if [[ ! -f "$log_file" ]]; then
-          printf >  "$log_file" '%s\n' \
-            'redoflacs - FLAC ReplayGain apply error log'
-          printf >> "$log_file" '%.s-' {1..79}
-          printf >> "$log_file" '\n'
-        fi
-
         # Log FLAC failure
         printf >> "$log_file" '%s: ' "${PWD}/${1##*/}"
         printf >> "$log_file" 'Corrupt FLAC(s) or differing sample rates '
@@ -2018,14 +1995,6 @@ _replaygain_force_apply()
   if (( $? != 0 )); then
     # Display error
     _print_status 'fail' "$file_basename" "$file_length" 'sub'
-
-    # Log header
-    if [[ ! -f "$log_file" ]]; then
-      printf >  "$log_file" '%s\n' \
-        'redoflacs - FLAC ReplayGain apply error log'
-      printf >> "$log_file" '%.s-' {1..79}
-      printf >> "$log_file" '\n'
-    fi
 
     # Log FLAC failure
     printf >> "$log_file" '%s: ' "${PWD}/${1##*/}"
@@ -2092,14 +2061,6 @@ _compress_verify()
       # Display error
       _print_status 'fail' "$file_basename" "$file_length"
 
-      # Log header
-      if [[ ! -f "$log_file" ]]; then
-        printf >  "$log_file" '%s\n' \
-          'redoflacs - FLAC compress/verify error log'
-        printf >> "$log_file" '%.s-' {1..79}
-        printf >> "$log_file" '\n'
-      fi
-
       # Log FLAC failure
       printf >> "$log_file" '%s: Failed verification\n' "${PWD}/${1##*/}"
       printf >> "$issue_ticks" '.'  # Add one tick to total issues
@@ -2132,14 +2093,6 @@ _compress_verify()
     if (( $? != 0 )); then
       # Display error
       _print_status 'fail' "$file_basename" "$file_length"
-
-      # Log header
-      if [[ ! -f "$log_file" ]]; then
-        printf >  "$log_file" '%s\n' \
-          'redoflacs - FLAC compress/verify error log'
-        printf >> "$log_file" '%.s-' {1..79}
-        printf >> "$log_file" '\n'
-      fi
 
       # Log FLAC failure
       printf >> "$log_file" '%s: Failed verification\n' "${PWD}/${1##*/}"
@@ -2201,13 +2154,6 @@ _compress_no_test()
     if (( $? != 0 )); then
       # Display error
       _print_status 'fail' "$file_basename" "$file_length"
-
-      # Log header
-      if [[ ! -f "$log_file" ]]; then
-        printf >  "$log_file" '%s\n' 'redoflacs - FLAC compress/verify error log'
-        printf >> "$log_file" '%.s-' {1..79}
-        printf >> "$log_file" '\n'
-      fi
 
       # Log FLAC failure
       printf >> "$log_file" '%s: Failed verification\n' "${PWD}/${1##*/}"
@@ -2279,15 +2225,8 @@ _test()
 
   _print_item_fail
 
-  # Log header
-  if [[ ! -f "$log_file" ]]; then
-    printf >  "$log_file" 'redoflacs - FLAC test error log\n'
-    printf >> "$log_file" '%.s-' {1..79}
-    printf >> "$log_file" '\n'
-  fi
-
   # Log FLAC failure
-  printf > "$log_file" '%s: %s\n' "$item" "$error_msg"
+  printf >> "$log_file" '%s: %s\n' "$item" "$error_msg"
   printf >> "$issue_ticks" '.'  # Add one tick to total issues
 
   printf >&3 "$row\n"  # Store row position and end operation
@@ -2332,13 +2271,6 @@ _aucdtect()
     # Display error
     _print_status 'fail' "$file_basename" "$file_length"
 
-    # Log header
-    if [[ ! -f "$log_file" ]]; then
-      printf >  "$log_file" '%s\n' 'redoflacs - auCDtect error log'
-      printf >> "$log_file" '%.s-' {1..79}
-      printf >> "$log_file" '\n'
-    fi
-
     # Log FLAC failure
     printf >> "$log_file" '%s: Not a real FLAC file\n' "${PWD}/${1##*/}"
     printf >> "$issue_ticks" '.'  # Add one tick to total issues
@@ -2349,13 +2281,6 @@ _aucdtect()
   elif (( ${bits_mastering[0]} > 16 )); then
     # Display skipped
     _print_status 'skip' "$file_basename" "$file_length"
-
-    # Log header
-    if [[ ! -f "$log_file" ]]; then
-      printf >  "$log_file" '%s\n' 'redoflacs - auCDtect error log'
-      printf >> "$log_file" '%.s-' {1..79}
-      printf >> "$log_file" '\n'
-    fi
 
     # Log skipped FLAC file
     printf >> "$log_file" \
@@ -2369,13 +2294,6 @@ _aucdtect()
   elif [[ "${bits_mastering[1]#*=}" == 'Lossy' ]]; then
     # Display skipped
     _print_status 'skip' "$file_basename" "$file_length"
-
-    # Log header
-    if [[ ! -f "$log_file" ]]; then
-      printf >  "$log_file" '%s\n' 'redoflacs - auCDtect error log'
-      printf >> "$log_file" '%.s-' {1..79}
-      printf >> "$log_file" '\n'
-    fi
 
     # Log skipped FLAC file
     printf >> "$log_file" '%s: MASTERING=Lossy value found; ' "${PWD}/${1##*/}"
@@ -2409,13 +2327,6 @@ _aucdtect()
     if (( $? != 0 )); then
       # Display error
       _print_status 'fail' "$file_basename" "$file_length" 'decode'
-
-      # Log header
-      if [[ ! -f "$log_file" ]]; then
-        printf >  "$log_file" '%s\n' 'redoflacs - auCDtect error log'
-        printf >> "$log_file" '%.s-' {1..79}
-        printf >> "$log_file" '\n'
-      fi
 
       # Log FLAC failure
       printf >> "$log_file" '%s: Failed decoding to WAV\n' "${PWD}/${1##*/}"
@@ -2453,13 +2364,6 @@ _aucdtect()
       if (( $? != 0 )); then
         # Display error
         _print_status 'fail' "$file_basename" "$file_length" 'aucdtect_fast'
-
-        # Log header
-        if [[ ! -f "$log_file" ]]; then
-          printf >  "$log_file" '%s\n' 'redoflacs - auCDtect error log'
-          printf >> "$log_file" '%.s-' {1..79}
-          printf >> "$log_file" '\n'
-        fi
 
         # Log FLAC failure
         printf >> "$log_file" \
@@ -2504,13 +2408,6 @@ _aucdtect()
           if (( $? != 0 )); then
             # Error with FLAC file, display failed/error
             _print_status 'fail' "$file_basename" "$file_length" 'aucdtect_slow'
-
-            # Log header
-            if [[ ! -f "$log_file" ]]; then
-              printf >  "$log_file" '%s\n' 'redoflacs - auCDtect error log'
-              printf >> "$log_file" '%.s-' {1..79}
-              printf >> "$log_file" '\n'
-            fi
 
             # Log FLAC failure
             printf >> "$log_file" \
@@ -2584,13 +2481,6 @@ _aucdtect()
                 # Error creating spectrogram, display issue
                 _print_status 'issue' "$file_basename" "$file_length" 'spectrogram'
 
-                # Log header
-                if [[ ! -f "$log_file" ]]; then
-                  printf >  "$log_file" '%s\n' 'redoflacs - auCDtect error log'
-                  printf >> "$log_file" '%.s-' {1..79}
-                  printf >> "$log_file" '\n'
-                fi
-
                 # Log auCDtect report
                 printf >> "$log_file" '%s: %s (%s)\n' "${PWD}/${1##*/}" \
                   "${aucdtect_check_array[0]}" "$spectrogram_picture"
@@ -2598,13 +2488,6 @@ _aucdtect()
               else
                 # Issue with FLAC authenticity, display issue
                 _print_status 'issue' "$file_basename" "$file_length" 'aucdtect_slow'
-
-                # Log header
-                if [[ ! -f "$log_file" ]]; then
-                  printf >  "$log_file" '%s\n' 'redoflacs - auCDtect error log'
-                  printf >> "$log_file" '%.s-' {1..79}
-                  printf >> "$log_file" '\n'
-                fi
 
                 # Log auCDtect report
                 printf >> "$log_file" '%s: %s\n' "${PWD}/${1##*/}" \
@@ -2722,13 +2605,6 @@ _retag_analyze()
     # Display error
     _print_status 'fail' "$file_basename" "$file_length" 'sub'
 
-    # Log header
-    if [[ ! -f "$log_file" ]]; then
-      printf >  "$log_file" '%s\n' 'redoflacs - FLAC retagging error log'
-      printf >> "$log_file" '%.s-' {1..79}
-      printf >> "$log_file" '\n'
-    fi
-
     # Log FLAC failure
     printf >> "$log_file" '%s: Not a real FLAC file\n' "${PWD}/${1##*/}"
     printf >> "$issue_ticks" '.'  # Add one tick to total issues
@@ -2843,13 +2719,6 @@ _retag_analyze()
     if [[ -n "${missing_tags}" ]]; then
       # Error with FLAC file, display failed/error
       _print_status 'fail' "$file_basename" "$file_length" 'sub'
-
-      # Log header
-      if [[ ! -f "$log_file" ]]; then
-        printf >  "$log_file" '%s\n' 'redoflacs - FLAC retagging error log'
-        printf >> "$log_file" '%.s-' {1..79}
-        printf >> "$log_file" '\n'
-      fi
 
       # Log the missing tags
       printf >> "$log_file" '%s: Missing tags: %s\n' \
@@ -3020,14 +2889,6 @@ _extract_images()
     # Display error
     _print_status 'fail' "$file_basename" "$file_length"
 
-    # Log header
-    if [[ ! -f "$log_file" ]]; then
-      printf >  "$log_file" '%s\n' \
-        'redoflacs - FLAC image extraction error log'
-      printf >> "$log_file" '%.s-' {1..79}
-      printf >> "$log_file" '\n'
-    fi
-
     # Log FLAC failure
     printf >> "$log_file" '%s: Not a real FLAC file\n' "${PWD}/${1##*/}"
     printf >> "$issue_ticks" '.'  # Add one tick to total issues
@@ -3115,13 +2976,6 @@ _prune()
   if (( $? != 0 )); then
     # Display error
     _print_status 'fail' "$file_basename" "$file_length"
-
-    # Log header
-    if [[ ! -f "$log_file" ]]; then
-      printf >  "$log_file" '%s\n' 'redoflacs - block prune error log'
-      printf >> "$log_file" '%.s-' {1..79}
-      printf >> "$log_file" '\n'
-    fi
 
     # Log FLAC failure
     printf >> "$log_file" '%s: Not a real FLAC file\n' "${PWD}/${1##*/}"
