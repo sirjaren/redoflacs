@@ -250,23 +250,71 @@ _update_operation_status()
 
 #
 # Displays the currently processed item on a dedicated row within the terminal.
-# The filename is truncated if the length of the filename is greater than 79
-# characters or greater than the width of the the terminal.  This is determined
-# by MAX_LENGTH
+#
+# The filename is truncated if the length of the filename is greater than 80
+# characters or if greater than the width of the terminal if that terminal
+# width is less than 80.  This width is set by 'MAX_LENGTH'.
+#
+# Filename truncation also ocurrs to allow the operation label and the total
+# number of completed items to be displayed on the same row as the displayed
+# item.
+#
+# The structure of a displayed item:
+#   '<percent> <basename>                 <operation_label> <number_completed>'
+#
+# Which may look like:
+#   '     06 - Some Amazing Song.flac                            Testing  6/20'
+#
+# This function does NOT create the display the percentage completed. That is
+# handled later.
+#
+# The file basename is left-aligned (leaving room for the percentage), while
+# the operation label and total number of completed items are right-aligned.
+#
+# An example of filename truncation:
+#   '01 - This is a long filename to show what happens during truncation.flac'
+#
+# This filename would be displayed during an operation as:
+#   '     01 - This is a long filename to show what happens duri Testing  6/20'
+#
+# An example of how this would look with a percentage displayed:
+#   ' 56% 06 - Some Amazing Song.flac                            Testing  6/20'
 #
 _print_item()
 {
-  local fmt
+  local label fmt truncated
   local basename="${item##*/}"
 
-  # This printf format string displays the currently processed item
+  # The total number of items out of the total number of items, used to
+  # determine the maximum width these values can use, eg:
+  #   ' 237/237'
+  #
+  # The leading space is intentional, to ensure a space is between the item
+  # basename and this value
+  local total=" ${#total_items[@]}/${#total_items[@]}"
+
+  # Sets the operation label accordingly
+  case "$operation" in
+    'test') label=' Testing' ;;
+  esac
+
+  # This is the column position after the item basename is displayed.  This
+  # allows the operation label and total number of completed items to be
+  # displayed after this column, effectively truncating the current item if
+  # longer than this column position
+  truncated="$((MAX_LENGTH - ${#total} - ${#label}))"
+
+  # Belows builds the 'printf' format string
   fmt+=$"\033[${row};6H"              # Cursor row; 6 columns to right
   fmt+=$"\033[0K"                     # Erase line from cursor to right
-  fmt+='%s'                           # Printf modifier; current item basename
-  fmt+=$"\033[${row};${MAX_LENGTH}H"  # Cursor at row; at max filename length
+  fmt+='%s'                           # Modifier; Current item basename
+  fmt+=$"\033[${row};${truncated}H"   # Cursor row; Move to allow label/items
   fmt+=$"\033[0K"                     # Erase line from cursor to right
+  fmt+="${magenta}%s"                 # Modifier; Operation label
+  fmt+="${cyan}%${#total}s${reset}"   # Modifier; Total items, right-aligned
 
-  printf "$fmt" "$basename"
+  # Displays formatted, currently processed item
+  printf "$fmt" "$basename" "$label" "${num}/${#total_items[@]}"
 
   return
 
@@ -2174,22 +2222,19 @@ _compress_no_test()
 }
 
 #
-# Test FLAC file integrity
+# Tests current FLAC file integrity, reading all output, displaying the
+# current percentage complete.  If there is an error, that error is logged.
 #
 _test()
 {
   trap '_kill_jobs "$(jobs -rp)"' EXIT
   local output error error_msg previous
 
-  # Basename of FLAC, splitting on whitespace as 'read' below, also splits
+  # Basename of FLAC, splitting on whitespace 'read' below splits on whitespace
   local base="${item##*[ /]}"
 
   _print_item
 
-  # Tests current FLAC file with 'flac', reading all output, displaying the
-  # current percentage complete.  If there is an error, that error message is
-  # stored and logged
-  #
   # As indicated by '[FIRST]', '[SECOND]', and '[LAST]', this is the order each
   # of the statements will evaluate to 'true'. '[FIRST]' may never evaluate to
   # 'true' (if the FLAC file fails to decode)
@@ -2219,17 +2264,17 @@ _test()
 
   if [[ -z "$error" ]]; then
     _print_item_ok
-    printf >&3 "$row\n" # Store row position and end operation
+    printf >&3 "$row\n"  # Send complete to _run_parallel()
     return
   fi
 
   _print_item_fail
 
   # Log FLAC failure
-  printf >> "$log_file" '%s: %s\n' "$item" "$error_msg"
+  printf >> "$log_file" '%s [%s] %s\n' "$item" "$operation" "$error_msg"
   printf >> "$issue_ticks" '.'  # Add one tick to total issues
 
-  printf >&3 "$row\n"  # Store row position and end operation
+  printf >&3 "$row\n"  # Send complete to _run_parallel()
 }
 
 #
@@ -2993,8 +3038,6 @@ _prune()
 
 ###################################  SETUP  ###################################
 
-readonly MAX_LENGTH='79'               # Maximum length of output width
-
 shopt -s globstar                      # BASH 4 globstar (eg, /**/*.flac)
 
 version='0.31_pre'                     # Redoflacs version
@@ -3185,6 +3228,30 @@ popd >/dev/null
 
 # This displays '[ ok ]' after 'Finding FLAC files to process...'
 printf "%11s${blue}[ ${green}ok${blue} ]${reset}\n" ''
+
+#------------------------------------------------------------------------------
+
+#
+# Obtain the total number of columns available in the terminal by sending the
+# following control sequence to the controlling terminal:
+#   CSI 999999 C       # Move cursor all the way to end of the current row
+#   CSI 6 n            # Query cursor position
+#   CSI 999999 D       # Move cursor back to the beginning of the current row
+#
+# Which reports/returns the cursor position/terminal size as:
+#   CSI height ; width R  # eg. '\033[80;23R'
+#
+# Send CSI escape to (and read from) STDERR to not pollute STDIN
+IFS='[;' read -rsu2 -d'R' -p $'\033[999999C\033[6n\033[999999D' _ _ columns
+
+# The maximum length is one higher than the display width as output is
+# displayed using escape sequences, making shell arithmetic inclusive off by
+# one
+if ((columns < 80)); then
+  readonly MAX_LENGTH="$((++columns))"
+else
+  readonly MAX_LENGTH='81'
+fi
 
 #------------------------------------------------------------------------------
 
