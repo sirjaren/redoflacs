@@ -540,7 +540,6 @@ _trap_sigint()
   # Print out log exists to STDERR
   [[ -f "${log_file}" ]] && _message_log_exists "${1}"
 
-  stty ${old_stty} < /dev/stderr  # Restore old stty settings
   printf '\033[?25h'              # Restore the cursor
   printf '\033[?7h'               # Restore terminal wrapping
   rm -f "${job_fifo}"             # Remove temporary FIFO
@@ -578,66 +577,43 @@ _kill_jobs()
 }
 
 #
-# Print out the current cursor row position
+# Return the current cursor's row position by sending the following control
+# sequence to the controlling terminal:
+#   CSI 6 n            # Query cursor position
+#
+# Which reports/returns the cursor position/terminal size as:
+#   CSI height ; width R  # eg. '\033[80;23R'
 #
 _row()
 {
-  declare old_stty  row_pos        # Intialize local variables
-  exec < /dev/tty                  # Set a new TTY to read in STDIN
-  old_stty="$(stty -g)"            # Store current TTY settings
-  stty raw -echo min 0             # Current TTY set at an absolute minimum
-  printf '\033[6n' > /dev/tty      # Send escape into new TTY
+  local row
 
-  # Read in escape sequence output from TTY.  The escape sequence looks like:
-  #   ^[[<integer>;<integer>R
-  #--
-  # This is what is read in below:  ^[[<integer>
-  IFS=';' read -r -d'R' row_pos _ < /dev/tty
+  # Send CSI escape to (and read from) STDERR to not pollute STDIN
+  IFS='[;' read -rsu2 -d'R' -p $'\033[6n' _ row _
 
-  stty "${old_stty}"               # Restore the old TTY settings
-  printf '%s' "${row_pos#??}"      # Return row position (removes: ^[)
+  printf '%s' "$row"
 }
 
 #
-# Scroll the terminal, dependant on the number of jobs to process.  If it's not
-# necessary, scrolling may not occur
-#
-# $1 is the current cursor position in number of rows
+# If necessary, scroll the terminal
 #
 _scroll_terminal()
 {
-  # Set up local variables
-  declare    lines   remaining_lines   to_scroll
-  declare -g columns
+  local row to_scroll
 
-  # Redirecting '/dev/stderr' to 'stty' allows valid arguments
-  read -r _ _ _ _ lines _ columns _ < <(stty -a < /dev/stderr)
+  # Obtain current row position
+  row="$(_row)"
 
-  columns="${columns%;}"   # Terminal width - remove trailing semicolon
-  lines="${lines%;}"       # Terminal height - remove trailing semicolon
+  # Default to scrolling the terminal based on the number of specified jobs
+  to_scroll="$jobs"
 
-  if (( ${#total_items[@]} < jobs )); then
-    # Determine the remaining lines to the bottom of the terminal screen
-    #--
-    # If there are less items to process than jobs specified, add the
-    # difference of lines to the remaining lines (obtained by the total number
-    # of lines in the terminal minus the current row position)
-    remaining_lines=$(( lines - $1 + (jobs - ${#total_items[@]}) ))
-  else
-    remaining_lines=$(( lines - $1 ))
-  fi
+  # Scrolling by number of items to process
+  (( jobs > ${#total_items[@]} )) && to_scroll="${#total_items[@]}"
 
-  if (( jobs > remaining_lines )); then
-    # Scroll the terminal if there are more jobs than lines available
-    #--
-    to_scroll=$(( jobs - remaining_lines ))  # Number of lines to scroll
-
-    # Scroll terminal by printing as many newlines as determined above, plus 1
-    for ((i=0 ; i<=to_scroll ; i++)); do
-      printf '\n'
-    done
-
-    printf "\033[$((to_scroll + 1))A" # Place cursor up ($to_scroll + 1) lines
+  # Only scroll if there are more items to display than lines available
+  if (( --to_scroll > (lines - row) )); then
+    printf "\033[$((to_scroll - (lines - row)))S"  # Scroll terminal
+    printf "\033[$((lines - to_scroll))H"          # Cursor to scrolled start
   fi
 }
 
@@ -1574,9 +1550,6 @@ _check_missing_programs()
   # Add each command that's needed to an array to be displayed
   if ! type -P rm >/dev/null; then
     missing_commands+=( "   Missing ${cyan}rm${reset}        ->  Part of ${cyan}coreutils${reset}" )
-  fi
-  if ! type -P stty >/dev/null; then
-    missing_commands+=( "   Missing ${cyan}stty${reset}      ->  Part of ${cyan}coreutils${reset}" )
   fi
   if ! type -P stat >/dev/null; then
     missing_commands+=( "   Missing ${cyan}stat${reset}      ->  Part of ${cyan}coreutils${reset}" )
@@ -3201,8 +3174,6 @@ fi
 
 ###################################  MAIN  ####################################
 
-old_stty="$(stty -g)"              # Store current stty settings
-stty -ctlecho 2>/dev/null          # Disable ctrl+c '^C'
 printf '\033[?25l'                 # Hide cursor
 printf '\033[?7l'                  # Disable terminal wrapping
 
@@ -3232,17 +3203,23 @@ printf "%11s${blue}[ ${green}ok${blue} ]${reset}\n" ''
 #------------------------------------------------------------------------------
 
 #
-# Obtain the total number of columns available in the terminal by sending the
-# following control sequence to the controlling terminal:
+# Obtain the total number of lines and columns available in the terminal by
+# sending the following control sequences to the controlling terminal:
+#   CSI s              # Save cursor position
 #   CSI 999999 C       # Move cursor all the way to end of the current row
 #   CSI 6 n            # Query cursor position
 #   CSI 999999 D       # Move cursor back to the beginning of the current row
+#   CSI u              # Restore cursor position
 #
-# Which reports/returns the cursor position/terminal size as:
-#   CSI height ; width R  # eg. '\033[80;23R'
+# 'CSI 6 n' reports/returns the cursor position/terminal size as:
+#   CSI height ; width R
+#
+# An example:
+#   '\033[80;23R'
 #
 # Send CSI escape to (and read from) STDERR to not pollute STDIN
-IFS='[;' read -rsu2 -d'R' -p $'\033[999999C\033[6n\033[999999D' _ _ columns
+IFS='[;' \
+  read -rsu2 -d'R' -p $'\033[s\033[999999;999999H\033[6n\033[u' _ lines columns
 
 # The maximum length is one higher than the display width as output is
 # displayed using escape sequences, making shell arithmetic inclusive off by
@@ -3290,7 +3267,7 @@ for operation in "${operations[@]}"; do
   esac
 
   _message "${operation}"        # Display title message of current operation
-  _scroll_terminal "$(_row)"     # Scroll terminal up (if needed)
+  _scroll_terminal               # Scroll terminal up (if needed)
   _clear_jobs_fd "${job_fifo}"   # Clear job manager file descriptor (3)
 
   if (( ${#total_items[@]} < jobs )); then
