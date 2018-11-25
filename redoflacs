@@ -40,10 +40,11 @@ _info() { printf     " ${green}*${reset} ${@}";  }  # Bold green message
 _warn() { printf >&2 " ${yellow}*${reset} ${@}"; }  # Yellow message
 _error(){ printf >&2 " ${red}*${reset} ${@}";    }  # Bold red message
 
-_print_item_ok()   { printf "\033[${row}H${green}100%%${reset}"; }
-_print_item_fail() { printf "\033[${row}H${red}fail${reset}";    }
-_print_item_check(){ printf "\033[${row}H${yellow}chck${reset}"; }
-_print_item_skip() { printf "\033[${row}H${cyan}chck${reset}";   }
+_print_item_ok()   { printf "\033[${row}H${green}100%%${reset}";  }
+_print_item_fail() { printf "\033[${row}H${red}fail${reset}";     }
+_print_item_check(){ printf "\033[${row}H${yellow}chck${reset}";  }
+_print_item_half() { printf "\033[${row}H${yellow} 50%%${reset}"; }
+_print_item_skip() { printf "\033[${row}H${cyan}skip${reset}";    }
 
 #
 # Display help
@@ -295,7 +296,8 @@ _print_item()
 
   # Sets the operation label accordingly
   case "$operation" in
-    'test') label=' Testing' ;;
+    'test')           label=' Testing' ;;
+    'extract_images') label=' Extracting Images' ;;
   esac
 
   # This is the column position after the item basename is displayed.  This
@@ -1106,65 +1108,6 @@ _find_cores()
       jobs_display='(/proc/cpuinfo)'  # $jobs dynamically determined
     fi
   fi
-}
-
-#
-# Find all the artwork blocks in a given FLAC file, storing each instance into
-# an array, to be returned as $artwork[@]
-#
-_find_artwork()
-{
-  # Set up local variables/array
-  declare -a artwork_blocks
-  declare tmp_picture_blocks="/tmp/redoflacs_block_stream_${BASHPID}"
-
-  # Grab all the PICTURE blocks from current FLAC file, storing into an array
-  #--
-  # It's much faster to read in from a temporary file than via process
-  # substitution
-  metaflac --list --block-type=PICTURE "${1}" > "${tmp_picture_blocks}"
-
-  # Continue if there were any PICTURE blocks found in current FLAC
-  if [[ -s "${tmp_picture_blocks}" ]]; then
-    # Only read in the lines we care about and store into array
-    while read -r; do
-      # We only care about the block, picture and MIME type lines
-      [[ "${REPLY}" == 'METADATA'* || "${REPLY}" == '  '[tM]* ]] && artwork_blocks+=( "${REPLY}" )
-    done < "${tmp_picture_blocks}"
-
-    # Run through each line obtained and parse out the information wanted
-    #--
-    # $artwork_blocks[@] looks something like this:
-    #   'METADATA block #2'
-    #   '  type: 6 (PICTURE)'
-    #   '  type: 5 (Leaflet page)'
-    #   '  MIME type: image/jpeg'
-    #   'METADATA block #3'
-    #   '  type: 6 (PICTURE)'
-    #   '  type: 6 (Media (e.g. label side of CD))'
-    #   '  MIME type: image/jpeg'
-    #   'METADATA block #4'
-    #   '  type: 6 (PICTURE)'
-    #   '  type: 7 (Lead artist/lead performer/soloist)'
-    #   '  MIME type: image/jpg'
-    #--
-    for i in "${!artwork_blocks[@]}"; do
-      if [[ "${artwork_blocks[$i]}" == 'METADATA'* ]]; then
-        block_id="${artwork_blocks[$i]##* #}"  # METADATA block #4 -> 4
-
-        # type: 8 (Artist/Performer) -> art_id='8', art_desc='(Artist-Performer)'
-        read -r _ art_id art_desc <<< "${artwork_blocks[$((i + 2))]//\//-}"
-
-        # MIME type: image/jpeg -> 'jpg'
-        IFS='/' read -r _ art_ext <<< "${artwork_blocks[$((i + 3))]/jpeg/jpg}"
-
-        # Store artwork information into array as a single index
-        artwork+=( "${block_id}:${art_id} ${art_desc}.${art_ext}" )
-      fi
-    done
-  fi
-
-  rm -f "${tmp_picture_blocks}"  # Remove temporary 'metaflac' block streams
 }
 
 #
@@ -2876,88 +2819,134 @@ _retag_apply()
 #
 # Extact embedded artwork from a given FLAC
 #
-# $1 is the filename
-# $2 is the operation that's currently being run, of which, can be:
-#   aucdtect                  md5_check           compress_verify
-#   compress_no_test          test                replaygain_test
-#   replaygain_force_apply    replaygain_apply    retag_analyze
-#   retag_apply               extract_images      prune
-# $3 is a string representing number items processed, eg: [43/439]
-# $4 is the current operation's row placement
-#
 _extract_images()
 {
   trap '_kill_jobs "$(jobs -rp)"' EXIT
+  local -a artwork
+  local error_msg block_id art_id art_description mime img
+  local blocks="/tmp/redoflacs_picture_blocks.$BASHPID"
 
-  # Set up local variables
-  declare -i file_length increment
+  # Ensure we don't clobber the temporary PICTURE blocks file, eg:
+  #   /tmp/redoflacs_picture_blocks.0 -> /tmp/redoflacs_picture_blocks.1
+  until [[ ! -f "$blocks" ]]; do
+    blocks="${blocks%.*}.$((${blocks##*.} + 1))"
+  done
 
-  # Truncate file, if necessary, and grab file information, splitting on
-  # Unit Separator (\037)
-  IFS=$'\037' read -r file_basename file_length < <(_truncate_filename "$1")
+  _print_item
 
-  # Print current FLAC being processed
-  _print_item "${file_basename}" "${file_length}" "$3" 'half'
+  # Retrieve PICTURE blocks from current item, storing to a temporary file
+  error_msg="$(metaflac 2>&1 >"$blocks" --list --block-type=PICTURE "$item")"
 
-  # Check if file is a FLAC file (hide output)
-  metaflac --show-md5sum "${1}" >/dev/null 2>&1
+  # Log FLAC failure
+  if [[ -n "$error_msg" ]]; then
+    error_msg="${error_msg%, status = *}"       # Strip end of error msg
+    error_msg="ERROR ${error_msg##*: ERROR: }"  # Strip filename to error msg
 
-  # Non-zero is failure
-  if (( $? != 0 )); then
-    # Display error
-    _print_status 'fail' "$file_basename" "$file_length"
-
-    # Log FLAC failure
-    printf >> "$log_file" '%s: Not a real FLAC file\n' "${PWD}/${1##*/}"
+    _print_item_fail
+    printf >> "$log_file" '%s [%s] %s\n' "$item" "$operation" "$error_msg"
     printf >> "$issue_ticks" '.'  # Add one tick to total issues
-  else
-    # Find all the artwork blocks available in the current FLAC file, returned
-    # as an array: $artwork[@]
-    _find_artwork "$1"
+    rm -f "$blocks"
+    printf >&3 "$row\n"           # Send complete to _run_parallel()
+    return
+  fi
 
-    # Continue only if there were artwork to be extracted
-    if [[ -n "${artwork[@]}" ]]; then
-      # Determine where to put extracted artwork by checking user config
-      if [[ -n "${artwork_location}" ]]; then
-        # $artwork_location/file.flac_art
-        artwork_directory="${artwork_location}/${1##*/}_art"
-      else
-        # /path/to/current/flac/file.flac_art
-        artwork_directory="${1}_art"
-      fi
+  # Skip if there were no PICTURE blocks found in current FLAC
+  if [[ ! -s "$blocks" ]]; then
+    _print_item_skip
+    rm -f "$blocks"
+    printf >&3 "$row\n"  # Send complete to _run_parallel()
+    return
+  fi
 
-      # Prevent directory clobbering by creating an incremental version
-      until [[ ! -d "${artwork_directory}" ]]; do
-        artwork_directory="${artwork_directory%~*~}~$((increment++))~"
-      done
+  _print_item_half
 
-      mkdir -p "${artwork_directory}"  # Create artwork directory
+  # Store the values which can identify each image (in each PICTURE block) to
+  # be used during image extraction.  The values needed are:
+  #   'METADATA block #<num>'           -> $block_id
+  #   '  type: <num> (<description>)'   -> $art_id AND $art_description
+  #   '  MIME type: image/jpeg'         -> $mime
+  #
+  # NOTE:
+  #   Reading the PICTURE block from a temporary file is much faster than
+  #   reading from process substitution (there can be many PICTURE blocks in a
+  #   single FLAC file and each image could be very large)
+  while IFS=$'\n' read -r; do
+    # Skip all the unnecessary information
+    [[ "$REPLY" != 'METADATA'* && "$REPLY" != '  '[tM]* ]] && continue
 
-      for image in "${artwork[@]}"; do
-        # Run through all the artwork found in the current FLAC by looking
-        # at $artwork[@], of which, each index looks like:
-        #   artwork[0]="${block_id}:${art_id}_${art_desc}.${art_ext}"
-        # and extract each image by it's METADATA block number
-        #--
-        # Prevent file clobbering by creating an incremental version
-        increment='1'
-        extracted_image="${artwork_directory}/${image#*:}"
-        until [[ ! -f "${extracted_image}" ]]; do
-          extracted_image="${artwork_directory}/${image#*:}~$((increment++))~"
-        done
-
-        # Extract image by the METADATA block number to the art directory
-        metaflac \
-          --block-number="${image%%:*}" \
-          --export-picture-to="${extracted_image}" \
-          "$1"
-      done
+    if [[ "$REPLY" == 'METADATA'* ]]; then
+      block_id="${REPLY##*#}"
+      continue
     fi
 
-    # FLAC is ok, display ok
-    _print_status 'ok' "${file_basename}" "${file_length}"
+    # Ensure we don't use: 'type: 6 (PICTURE)'
+    if [[ "$REPLY" == '  type: '[^6]* ]]; then
+      IFS=' ' read -r _ art_id art_description <<< "${REPLY//\//-}"
+      art_description="${art_description//[()]}"  # Strip all parenthesis
+      art_description="${art_description// /_}"   # Spaces with underscores
+      continue
+
+    # Done with a PICTURE block; the values can be stored and variables reset
+    elif [[ "$REPLY" == '  MIME'* ]]; then
+      mime="${REPLY##*/}"     # Eg: 'MIME type: image/jpeg' -> 'jpeg'
+      mime="${mime/jpeg/jpg}" # Eg: 'jpeg'                  -> 'jpg'
+
+      # Eg: '4:3-Cover_front.jpg'
+      artwork+=( "${block_id}:${art_id}-${art_description}.${mime}" )
+      unset -v block_id art_id art_description mime
+    fi
+  done < "$blocks"
+  rm -f "$blocks"
+
+  # Continue only if there was artwork to be extracted
+  if [[ -z "${artwork[@]}" ]]; then
+    printf >&3 "$row\n"  # Send complete to _run_parallel()
+    return
   fi
-  printf "$4\n" >&3  # Store row position and end operation
+
+  # Determine where to put extracted artwork by checking user config
+  if [[ -n "$artwork_location" ]]; then
+    # /user/configured/path/to/artwork/file.flac.art.0
+    artwork_location="${artwork_location%/}/${item##*/}.art.0"
+  else
+    # /path/to/file.flac.art.0
+    artwork_location="${item}.art.0"
+  fi
+
+  # Ensure we don't clobber the artwork directory, eg:
+  #   /path/to/file.flac.art.0 -> /path/to/file.flac.art.1
+  #
+  # Or if the user configured an artwork directory from the configuration file:
+  #   /user/configured/path/to/artwork/file.flac.art.0 ->
+  #   /user/configured/path/to/artwork/file.flac.art.1
+  until [[ ! -d "$artwork_location" ]]; do
+    artwork_location="${artwork_location%.*}.$((${artwork_location##*.} + 1))"
+  done
+  mkdir -p "$artwork_location"
+
+  # Performs artwork extraction on the current item.  Each array value is:
+  #   '<block_id>:<art_id>-<art_description>.<mime>
+  #
+  # Which looks like:
+  #   '4:3-Cover_front.jpg'
+  for value in "${artwork[@]}"; do
+    # Eg: '/path/to/file.flac.art.0/3-Cover_front.jpg.0'
+    img="${artwork_location}/${value#*:}.0"
+    block_id="${value%%:*}"  # Eg: '4:3-Cover_front.jpg' -> '4'
+
+    # Ensure we don't clobber the extracted image, eg:
+    #   /path/to/file.flac.art.0/3-Cover_front.jpg.0 ->
+    #   /path/to/file.flac.art.0/3-Cover_front.jpg.1
+    until [[ ! -f "$img" ]]; do
+      img="${img%.*}.$((${img##*.} + 1))"
+    done
+
+    # Extracts each image by METADATA block number
+    metaflac --block-number="$block_id" --export-picture-to="$img" "$item"
+  done
+
+  _print_item_ok
+  printf >&3 "$row\n"  # Send complete to _run_parallel()
 }
 
 #
@@ -3140,7 +3129,7 @@ if [[ "${operations[9]}" == 'extract_images' ]]; then
     # Put extracted artwork in user-defined location, testing to make sure
     # the directory exists
     if [[ ! -d "${artwork_location}" ]]; then
-      _error "${cyan}${artwork_location}${reset} doesn't exist!\n"
+      _error "${cyan}${artwork_location%/}${reset} doesn't exist!\n"
       _error 'Please set a valid directory in the configuration file!\n'
       exit 1
     fi
