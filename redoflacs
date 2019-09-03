@@ -927,7 +927,7 @@ _check_config_version()
 
   # Extract the revision number from the configuration file (new syntax format as
   # of redoflacs 0.30):
-  read -r _ _ _ revision _ <<< "${config_last_line}"
+  IFS=':' read -r _ revision <<< "$config_last_line"
 
   # Check if ${revision} is an integer.  If not, display countdown and warn user
   # of new configuration file, else test if the user config revision is less than
