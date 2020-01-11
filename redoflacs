@@ -116,7 +116,7 @@ _message_log_exists()
       _error 'There were issues with some of the FLAC files,\n'
       _error 'please check:\n'
     ;;
-    'replaygain'*'apply')
+    'replaygain')
       _error 'There were issues adding ReplayGain values,\n'
       _error 'please check:\n'
     ;;
@@ -160,14 +160,7 @@ _message()
       'compress_'*)        message="Level ${compression_level} Compression"  ;;
       'test')              message='Test FLACs'                              ;;
       'extract_images')    message='Extracting Artwork'                      ;;
-      'replaygain_'*)
-        if [[ "${1}" == 'replaygain_test' ]]; then
-          message='Applying ReplayGain'
-          sub_message='Testing'
-        else  #  'replaygain'*'apply'
-          sub_message='Applying'
-        fi
-      ;;
+      'replaygain')        message='Applying ReplayGain'                     ;;
       'retag_'*)
         if [[ "${1}" == 'retag_analyze' ]]; then
           message='Retagging FLACs'
@@ -240,8 +233,7 @@ _update_operation_status()
     'md5_check')          operation_summary['Check MD5 Signature']="${2}"    ;;
     'compress_'*)         operation_summary['Compress FLACs']="${2}"         ;;
     'test')               operation_summary['Test FLACs']="${2}"             ;;
-    'replaygain_test')    operation_summary['>> Testing']="${2}"             ;;
-    'replaygain'*'apply') operation_summary['>> Applying']="${2}"            ;;
+    'replaygain')         operation_summary['Applying ReplayGain']="${2}"    ;;
     'retag_analyze')      operation_summary['>> Analyzing']="${2}"           ;;
     'retag_apply')        operation_summary['>> Re-Tagging']="${2}"          ;;
     'extract_images')     operation_summary['Extracting Artwork']="${2}"     ;;
@@ -298,6 +290,7 @@ _print_item()
   case "$operation" in
     'test')           label=' Testing' ;;
     'extract_images') label=' Extracting Images' ;;
+    'replaygain')     label=' Applying ReplayGain' ;;
   esac
 
   # This is the column position after the item basename is displayed.  This
@@ -1177,25 +1170,6 @@ _countdown_config()
 }
 
 #
-# Return a listing of the total base directories housing all the found FLACs
-#
-_get_directory_list()
-{
-  declare     previous_dir  current_dir  # Set up local variable(s)
-  declare -ga total_dirs                 # Set up global array
-
-  for flac in "$@"; do
-    # Run through total FLAC files array, printing out each unique directory
-    #--
-    current_dir="${flac%/*}"
-    if [[ "${previous_dir}" != "${current_dir}" ]]; then
-      total_dirs+=( "${current_dir}/" )
-    fi
-    previous_dir="${current_dir}"       # Set current directory to previous
-  done
-}
-
-#
 # Clear job manager file descriptor (tied to FIFO) by closing and reopening
 #
 # $1 is the FIFO to tie the file descriptor to
@@ -1300,7 +1274,7 @@ _process_positional_parameters()
         '--compress-notest')      converted_args+=( -C )  ;;
         '--test')                 converted_args+=( -t )  ;;
         '--replaygain')           converted_args+=( -g )  ;;
-        '--replaygain-noforce')   converted_args+=( -G )  ;;
+        '--replaygain-force')     converted_args+=( -G )  ;;
         '--retag')                converted_args+=( -r )  ;;
         '--extract-artwork')      converted_args+=( -e )  ;;
         '--prune')                converted_args+=( -p )  ;;
@@ -1399,8 +1373,9 @@ _process_positional_parameters()
         all='true'
         operations[1]='md5_check'
         operations[2]='compress_verify'
-        operations[5]='replaygain_test'
-        operations[6]='replaygain_force_apply'
+        #operations[5]='replaygain_test'
+        #operations[6]='replaygain_force_apply'
+        operations[5]='replaygain'
         operations[7]='retag_analyze'
         operations[8]='retag_apply'
         operations[10]='prune'
@@ -1411,8 +1386,9 @@ _process_positional_parameters()
         operations[0]='aucdtect'
         operations[1]='md5_check'
         operations[2]='compress_verify'
-        operations[5]='replaygain_test'
-        operations[6]='replaygain_force_apply'
+        #operations[5]='replaygain_test'
+        #operations[6]='replaygain_force_apply'
+        operations[5]='replaygain'
         operations[7]='retag_analyze'
         operations[8]='retag_apply'
         operations[9]='extract_images'
@@ -1445,20 +1421,23 @@ _process_positional_parameters()
       '-C') operations[3]='compress_no_test'  ;;
       '-t') operations[4]='test'              ;;
       '-g')
-        if [[ "${operations[6]}" == 'replaygain_apply' || "${operations[6]}" == 'conflict' ]]; then
+        if [[ "${operations[6]}" == 'replaygain' || "${operations[6]}" == 'conflict' ]]; then
           operations[6]='conflict'   # If already set
         else
-          operations[5]='replaygain_test'
-          operations[6]='replaygain_force_apply'
+          #operations[5]='replaygain_test'
+          #operations[6]='replaygain_force_apply'
+          operations[5]='replaygain'
         fi
       ;;
       '-G')
-        if [[ "${operations[6]}" == 'replaygain_force_apply' || "${operations[6]}" == 'conflict' ]]; then
+        if [[ "${operations[6]}" == 'replaygain' || "${operations[6]}" == 'conflict' ]]; then
           operations[6]='conflict'   # If already set
         else
-          operations[5]='replaygain_test'
-          operations[6]='replaygain_apply'
+          #operations[5]='replaygain_test'
+          #operations[6]='replaygain_apply'
+          operations[5]='replaygain'
         fi
+        force_replaygain='true'
       ;;
       '-r')
         operations[7]='retag_analyze'
@@ -1676,8 +1655,7 @@ _summary()
     'Check MD5 Signature'
     'Compress FLACs'
     'Test FLACs'
-    '>> Testing'
-    '>> Applying'
+    'Applying ReplayGain'
     '>> Analyzing'
     '>> Re-Tagging'
     'Extracting Artwork'
@@ -1691,9 +1669,7 @@ _summary()
     if [[ -n "${operation_summary[$operation]}" ]]; then
       # Check for sub messages, and apply additional formatting
       if [[ "${operation}" == '>> '* ]]; then
-        if [[ "${operation}" == '>> Testing' ]]; then
-          printf "${yellow}%25s ${blue}|${reset}\n" 'Applying ReplayGain'
-        elif [[ "${operation}" == '>> Analyzing' ]]; then
+        if [[ "${operation}" == '>> Analyzing' ]]; then
           printf "${yellow}%25s ${blue}|${reset}\n" 'Retagging FLACs'
         fi
 
@@ -1782,194 +1758,99 @@ _run_parallel()
 }
 
 #
-# Test FLAC file's for ReplayGain application
+# Apply ReplayGain tags to each FLAC file in a given directory.
+# Conditionally skip FLAC files if ReplayGain tags are already set. If
+# there are any errors, they are logged
 #
-# $1 is the filename
-# $2 is the operation that's currently being run, of which, can be:
-#   aucdtect                  md5_check           compress_verify
-#   compress_no_test          test                replaygain_test
-#   replaygain_force_apply    replaygain_apply    retag_analyze
-#   retag_apply               extract_images      prune
-# $3 is a string representing number items processed, eg: [43/439]
-# $4 is the current operation's row placement
-#
-_replaygain_test()
+_replaygain()
 {
   trap '_kill_jobs "$(jobs -rp)"' EXIT
+  local output error_file error_msg regex
+  local -a error_log files
 
-  # Set up local variables
-  declare    file_basename
-  declare -i file_length
+  # Used to look for error messages and store wanted values
+  local regex="^(${item}/.*): (ERROR:.*)"
 
-  # Truncate file, if necessary, and grab file information, splitting on
-  # Unit Separator (\037)
-  IFS=$'\037' read -r file_basename file_length < <(_truncate_filename "$1")
+  _print_item
 
-  # Print current FLAC being processed
-  _print_item "${file_basename}" "${file_length}" "$3" 'sub'
+  # If a user chooses not to force apply ReplayGain tags, then each file
+  # is checked to ensure all ReplayGain tags are available, skipping the
+  # directory of files if all ReplayGain tags are already set
+  #
+  # NOTE:
+  #   All errors are ignored here as they will be caught during
+  #   application ReplayGain tags
+  if [[ -z "$force_replaygain" ]]; then
+    files=( "$item"/*$flac_extension )  # Used for number of files
 
-  # Check if file is a FLAC file (capture output) via obtaining the sample
-  # rate of the current file.  The sample rate captured will be tested against
-  # later on.  Hide STDERR as we'll test the exit code instead
-  current_sample_rate="$(metaflac --show-sample-rate "${1}" 2>/dev/null)"
-
-  # Non-zero is failure
-  if (( $? != 0 )); then
-    # Display error
-    _print_status 'fail' "$file_basename" "$file_length" 'sub'
-
-    # Log FLAC failure
-    printf >> "$log_file" '%s: Not a real FLAC file\n' "${PWD}/${1##*/}"
-    printf >> "$issue_ticks" '.'  # Add one tick to total issues
-  else
-    # File is OK, test if sample rate is above 48kHz and the version of
-    # `metaflac' installed is greater than 1.2.1
-    if (( current_sample_rate > 48000 )); then
-
-      # Sample rate is greater than 48kHz, so check to make sure the
-      # version of `metaflac' is greater than 1.2.1
-      if (( $(_metaflac_version) < 3 )); then
-        # Old version of `metaflac' installed, display skipped
-        _print_status 'skip' "${file_basename}" "${file_length}" 'sub'
-
-        # The `metaflac' version installed is NOT greater than 1.2.1 so
-        # skip processing current FLAC file, logging why it was skipped
-        printf >> "$log_file"                                         \
-          '%s: FLAC 1.3.0 or higher needed for sample rates >48kHz\n' \
-          "${PWD}/${1##*/}"
-        printf >> "$issue_ticks" '.'  # Add one tick to total issues
-      else
-        # FLAC is ok, display ok
-        _print_status 'ok' "${file_basename}" "${file_length}" 'sub'
-      fi
-    else
-      # FLAC is ok, display ok
-      _print_status 'ok' "${file_basename}" "${file_length}" 'sub'
-    fi
-  fi
-  printf "$4\n" >&3  # Store row position and end operation
-}
-
-#
-# Apply ReplayGain to each directory of FLAC files (if values are missing)
-#
-# $1 is the directory (includes a slash, ie 'dir/'
-# $2 is the operation that's currently being run, of which, can be:
-#   aucdtect                  md5_check           compress_verify
-#   compress_no_test          test                replaygain_test
-#   replaygain_force_apply    replaygain_apply    retag_analyze
-#   retag_apply               extract_images      prune
-# $3 is a string representing number items processed, eg: [43/439]
-# $4 is the current operation's row placement
-#
-_replaygain_apply()
-{
-  trap '_kill_jobs "$(jobs -rp)"' EXIT
-
-  # Set up local variables
-  declare file_basename percent_complete
-  declare -i file_length
-  declare -a replaygain_tags
-
-  # Truncate file, if necessary, and grab file information, splitting on
-  # Unit Separator (\037)
-  IFS=$'\037' read -r file_basename file_length < <(_truncate_filename "$1")
-
-  # Print current FLAC being processed
-  _print_item "${file_basename}" "${file_length}" "$3" 'sub'
-
-  # ${j} is a FLAC file -> under a directory, ${1}
-  for j in "${1}"*${flac_extension}; do
-    # Grab all of the ReplayGain tags
-    mapfile -n0 -t replaygain_tags < \
-      <(metaflac \
+    # Obtain ReplayGain tags from all files in the current directory
+    mapfile -n0 -t replaygain_tags < <(
+      metaflac 2>&1 \
         --show-tag='REPLAYGAIN_REFERENCE_LOUDNESS' \
         --show-tag='REPLAYGAIN_TRACK_GAIN' \
         --show-tag='REPLAYGAIN_TRACK_PEAK' \
         --show-tag='REPLAYGAIN_ALBUM_GAIN' \
         --show-tag='REPLAYGAIN_ALBUM_PEAK' \
-        "${j}"
-      )
+        "${files[@]}"
+    )
 
-    # Test if any ReplayGain values are empty (if there are less
-    # than 5 values in the replaygain array)
-    if (( ${#replaygain_tags[@]} < 5 )); then
-      # At _least_ one tag is missing from current file, so
-      # apply new ReplayGain values
-      #
-      # Add ReplayGain to FLAC files under directory.  Metaflac
-      # automatically removes old ReplayGain values (if any) before
-      # proceeding
-      metaflac ${metaflac_extra_options} --add-replay-gain "${1}"/*${flac_extension} >/dev/null 2>&1
-
-      # Non-zero is failure
-      if (( $? != 0 )); then
-        # Display error
-        _print_status 'fail' "$file_basename" "$file_length" 'sub'
-
-        # Log FLAC failure
-        printf >> "$log_file" '%s: ' "${PWD}/${1##*/}"
-        printf >> "$log_file" 'Corrupt FLAC(s) or differing sample rates '
-        printf >> "$log_file" '(album ReplayGain)\n'
-        printf >> "$issue_ticks" '.'  # Add one tick to total issues
-        break                         # Move on to next directory
-      else
-        # Applied ReplayGain successfully
-        _print_status 'ok' "${file_basename}" "${file_length}" 'sub'
-      fi
-    else
-      # All FLACs have ReplayGain applied
-      _print_status 'ok' "${file_basename}" "${file_length}" 'sub'
+    # All ReplayGain are set, so this directory can be skipped 
+    #
+    # The total number of ReplayGain tags found on all files in the
+    # current directory must equal the total number of files found
+    # multiplied by 5 (the number of ReplayGain tags added to each file)
+    if (( ${#replaygain_tags[@]} == ${#files[@]} * 5 )); then
+      _print_item_skip
+      printf >&3 "$row\n"  # Send complete to _run_parallel()
+      return
     fi
-  done
-  printf "$4\n" >&3  # Store row position and end operation
-}
-
-#
-# Apply ReplayGain to each directory of FLAC files (force new values)
-#
-# $1 is the directory (includes a slash, ie 'dir/'
-# $2 is the operation that's currently being run, of which, can be:
-#   aucdtect                  md5_check           compress_verify
-#   compress_no_test          test                replaygain_test
-#   replaygain_force_apply    replaygain_apply    retag_analyze
-#   retag_apply               extract_images      prune
-# $3 is a string representing number items processed, eg: [43/439]
-# $4 is the current operation's row placement
-#
-_replaygain_force_apply()
-{
-  trap '_kill_jobs "$(jobs -rp)"' EXIT
-
-  # Set up local variables
-  declare    file_basename  percent_complete
-  declare -i file_length
-
-  # Truncate file, if necessary, and grab file information, splitting on
-  # Unit Separator (\037)
-  IFS=$'\037' read -r file_basename file_length < <(_truncate_filename "$1")
-
-  # Print current FLAC being processed
-  _print_item "${file_basename}" "${file_length}" "$3" 'sub'
-
-  # Add ReplayGain to FLAC files under directory
-  metaflac ${metaflac_extra_options} --add-replay-gain "${1}"*${flac_extension} >/dev/null 2>&1
-
-  # Non-zero is failure
-  if (( $? != 0 )); then
-    # Display error
-    _print_status 'fail' "$file_basename" "$file_length" 'sub'
-
-    # Log FLAC failure
-    printf >> "$log_file" '%s: ' "${PWD}/${1##*/}"
-    printf >> "$log_file" 'Corrupt FLAC(s) or differing sample rates '
-    printf >> "$log_file" '(album ReplayGain)\n'
-    printf >> "$issue_ticks" '.'  # Add one tick to total issues
-  else
-    # Applied ReplayGain successfully
-    _print_status 'ok' "${file_basename}" "${file_length}" 'sub'
   fi
-  printf "$4\n" >&3  # Store row position and end operation
+
+  _print_item_half  # Metaflac doesn't display a percentage complete
+
+  # Since this operation applies to multiple files in a given directory,
+  # all error messages (per file) is stored into an array, then logged
+  # to a file
+  #
+  # Metaflac only displays error messages to STDERR, nothing to STDOUT
+  while IFS=$'\n' read -r output; do
+    # Any output is an error message
+    if [[ "$output" =~ $regex ]]; then
+      error_msg="${BASH_REMATCH[1]} [replaygain] "  # Absolute filename
+
+      # Error reading FLAC file (possibly fake), eg:
+      #   ERROR: reading metadata, status = "FLAC__METADA ..."
+      if [[ "${BASH_REMATCH[2]}" == *", status = "* ]]; then
+        error_msg+="${BASH_REMATCH[2]%, status = *} "      # Error
+        error_msg+="(${BASH_REMATCH[2]##*, status = \"}"   # Status
+        error_msg="${error_msg%\"})"                       # Last quote
+
+      # Files with differing sample rates, or problems decoding, eg:
+      #   ERROR: sample rate of 44100 Hz does not match ...
+      #   ERROR: during analysis (decoding file)
+      else
+        error_msg+="${BASH_REMATCH[2]}"
+      fi
+
+      # All FLAC files are stored here to be logged
+      error_log+=( "$error_msg" )
+    fi
+  done < <(
+    metaflac 2>&1 \
+      $metaflac_extra_options --add-replay-gain "$item"/*$flac_extension
+  )
+
+  # Log failures if there are any errors
+  if [[ "${error_log[0]}" ]]; then
+    _print_item_fail
+    printf >> "$log_file" '%s\n' "${error_log[@]}"
+    printf >> "$issue_ticks" .  # Add one tick to total issues
+  else
+    _print_item_ok
+  fi
+
+  # Send complete to _run_parallel()
+  printf >&3 "$row\n"
 }
 
 #
@@ -3166,6 +3047,9 @@ fi
 printf '\033[?25l'                 # Hide cursor
 printf '\033[?7l'                  # Disable terminal wrapping
 
+export LANG=C
+export LC_ALL=C
+
 _check_config_version              # Check if script config is newer than user's
 job_fifo="/tmp/redoflacs_fifo_$$"  # Job manager FIFO
 
@@ -3238,9 +3122,13 @@ for operation in "${operations[@]}"; do
   #   operations[10]='prune'
   #--
   case "${operation}" in
-    'replaygain_'*'apply')
+    'replaygain')
       total_items_backup=( "${total_items[@]}" )  # Total FLACs backup array
-      _get_directory_list "${total_items[@]}"     # Returns $total_dirs[@]
+      for dir in "${total_items[@]%/*}"; do
+        previous="$current"
+        current="$dir"
+        [[ "$previous" != "$current" ]] && total_dirs+=( "$current" )
+      done
       total_items=( "${total_dirs[@]}" )          # Now process directories
     ;;
     'prune')
