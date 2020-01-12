@@ -1809,7 +1809,7 @@ _replaygain()
   while IFS=$'\n' read -r output; do
     # Any output is an error message
     if [[ "$output" =~ $regex ]]; then
-      error_msg="${BASH_REMATCH[1]} [replaygain] "  # Absolute filename
+      error_msg="${BASH_REMATCH[1]} [$operation] "  # Absolute filename
 
       # Error reading FLAC file (possibly fake), eg:
       #   ERROR: reading metadata, status = "FLAC__METADA ..."
