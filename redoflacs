@@ -1815,8 +1815,6 @@ _replaygain()
       #   ERROR: reading metadata, status = "FLAC__METADA ..."
       if [[ "${BASH_REMATCH[2]}" == *", status = "* ]]; then
         error_msg+="${BASH_REMATCH[2]%, status = *} "      # Error
-        error_msg+="(${BASH_REMATCH[2]##*, status = \"}"   # Status
-        error_msg="${error_msg%\"})"                       # Last quote
 
       # Files with differing sample rates, or problems decoding, eg:
       #   ERROR: sample rate of 44100 Hz does not match ...
@@ -1886,7 +1884,7 @@ _compress()
     # [LAST] Store error message
     if [[ "$error_msg" && -n "$output" ]]; then
       # End of error message
-      [[ "$output" == 'state' || "$output" == 'Type' ]] && break
+      [[ "$output" == 'state' || "$output" == '"flac"' ]] && break
       error_msg+=" $output"
       continue
     fi
@@ -1933,8 +1931,10 @@ _compress()
   # Log failures if there are any warnings and/or errors
   if [[ "$error_msg" ]]; then
     _print_item_fail
+    error_msg="${error_msg%,}"          # Strip possible trailing comma
+    error_msg="${error_msg/$'\n'Type}"  # Strip possible multiline error
     printf >> "$log_file" '%s [%s] %s\n' "$item" "$operation" "$error_msg"
-    printf >> "$issue_ticks" '.'  # Add one tick to total issues
+    printf >> "$issue_ticks" '.'        # Add one tick to total issues
   else
     _print_item_ok
   fi
@@ -1961,11 +1961,6 @@ _test()
   # As indicated by '[FIRST]', '[SECOND]', and '[LAST]', this is the
   # order each of the statements will evaluate to 'true'. '[FIRST]' may
   # never evaluate to 'true' (if the FLAC file fails to decode)
-  #
-  # NOTE:
-  #   Obtaining the FLAC state (for error messages) will be impossible
-  #   as this is the last word of the output. The 'read' will never read
-  #   this value as a delimiter is used (preventing reading this value)
   while IFS=$'\n' read -rd ' ' output; do
     # [LAST] Store error message
     if [[ "$error_msg" && -n "$output" ]]; then
@@ -1992,16 +1987,6 @@ _test()
   # Log failures if there are any errors
   if [[ "$error_msg" ]]; then
     _print_item_fail
-
-    # Since obtaining the FLAC status via the 'while read' loop is not
-    # possible because of the space delimiter to 'read', the state value
-    # is hardcoded based on the error message
-    #
-    # Failure to decode metadata or data
-    if [[ "$error_msg" == *'while decoding'*'data'* ]]; then
-      error_msg+=' (FLAC__STREAM_DECODER_END_OF_STREAM)'
-    fi
-
     printf >> "$log_file" '%s [%s] %s\n' "$item" "$operation" "$error_msg"
     printf >> "$issue_ticks" '.'  # Add one tick to total issues
   else
