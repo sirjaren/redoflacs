@@ -112,7 +112,7 @@ _message_log_exists()
       _error 'The MD5 Signature is unset for some FLAC files or there were\n'
       _error 'issues with some of the FLAC files, please check:\n'
     ;;
-    'compress_'*|'test'|'replaygain_test'|'extract_images'|'prune')
+    'compress'*|'test'|'replaygain_test'|'extract_images'|'prune')
       _error 'There were issues with some of the FLAC files,\n'
       _error 'please check:\n'
     ;;
@@ -155,12 +155,12 @@ _message()
   # Print title message if $1 is not NULL
   if [[ -n "${1}" ]]; then
     case "${1}" in
-      'aucdtect')          message='Validating with auCDtect'                ;;
-      'md5_check')         message='Check MD5 Signature'                     ;;
-      'compress_'*)        message="Level ${compression_level} Compression"  ;;
-      'test')              message='Test FLACs'                              ;;
-      'extract_images')    message='Extracting Artwork'                      ;;
-      'replaygain')        message='Applying ReplayGain'                     ;;
+      'aucdtect')       message='Validating with auCDtect'                ;;
+      'md5_check')      message='Check MD5 Signature'                     ;;
+      'compress')       message="Level ${compression_level} Compression"  ;;
+      'test')           message='Test FLACs'                              ;;
+      'extract_images') message='Extracting Artwork'                      ;;
+      'replaygain')     message='Applying ReplayGain'                     ;;
       'retag_'*)
         if [[ "${1}" == 'retag_analyze' ]]; then
           message='Retagging FLACs'
@@ -231,7 +231,7 @@ _update_operation_status()
   case "${1}" in
     'aucdtect'*)          operation_summary['Validate with auCDtect']="${2}" ;;
     'md5_check')          operation_summary['Check MD5 Signature']="${2}"    ;;
-    'compress_'*)         operation_summary['Compress FLACs']="${2}"         ;;
+    'compress')           operation_summary['Compress FLACs']="${2}"         ;;
     'test')               operation_summary['Test FLACs']="${2}"             ;;
     'replaygain')         operation_summary['Applying ReplayGain']="${2}"    ;;
     'retag_analyze')      operation_summary['>> Analyzing']="${2}"           ;;
@@ -288,9 +288,10 @@ _print_item()
 
   # Sets the operation label accordingly
   case "$operation" in
-    'test')           label=' Testing' ;;
+    'compress')       label=' Compressing' ;;
     'extract_images') label=' Extracting Images' ;;
     'replaygain')     label=' Applying ReplayGain' ;;
+    'test')           label=' Testing' ;;
   esac
 
   # This is the column position after the item basename is displayed.  This
@@ -522,8 +523,8 @@ _trap_sigint()
   case "${1}" in
     # Remove temporary script-created files
     #--
-    'aucdtect'*)   rm -f "${directory}"/**/*_redoflacs_"$$".wav  ;;
-    'compress_'*)  rm -f "${directory}"/**/*.tmp,fl-ac+en\'c     ;;
+    'aucdtect'*) rm -f "${directory}"/**/*_redoflacs_"$$".wav  ;;
+    'compress')  rm -f "${directory}"/**/*.tmp,fl-ac+en\'c     ;;
   esac
 
   # Update status for the current operation, but not if SIGINT was invoked
@@ -1271,7 +1272,7 @@ _process_positional_parameters()
         '--aucdtect-spectrogram') converted_args+=( -A )  ;;
         '--md5check')             converted_args+=( -m )  ;;
         '--compress')             converted_args+=( -c )  ;;
-        '--compress-notest')      converted_args+=( -C )  ;;
+        '--compress-force')       converted_args+=( -C )  ;;
         '--test')                 converted_args+=( -t )  ;;
         '--replaygain')           converted_args+=( -g )  ;;
         '--replaygain-force')     converted_args+=( -G )  ;;
@@ -1372,9 +1373,7 @@ _process_positional_parameters()
       '-l')
         all='true'
         operations[1]='md5_check'
-        operations[2]='compress_verify'
-        #operations[5]='replaygain_test'
-        #operations[6]='replaygain_force_apply'
+        operations[2]='compress'
         operations[5]='replaygain'
         operations[7]='retag_analyze'
         operations[8]='retag_apply'
@@ -1385,9 +1384,7 @@ _process_positional_parameters()
         create_spectrogram='true'
         operations[0]='aucdtect'
         operations[1]='md5_check'
-        operations[2]='compress_verify'
-        #operations[5]='replaygain_test'
-        #operations[6]='replaygain_force_apply'
+        operations[2]='compress'
         operations[5]='replaygain'
         operations[7]='retag_analyze'
         operations[8]='retag_apply'
@@ -1417,15 +1414,13 @@ _process_positional_parameters()
         fi
       ;;
       '-m') operations[1]='md5_check'         ;;
-      '-c') operations[2]='compress_verify'   ;;
-      '-C') operations[3]='compress_no_test'  ;;
+      '-c') operations[2]='compress'          ;;
+      '-C') operations[3]='compress'; force_compression='true' ;;
       '-t') operations[4]='test'              ;;
       '-g')
         if [[ "${operations[6]}" == 'replaygain' || "${operations[6]}" == 'conflict' ]]; then
           operations[6]='conflict'   # If already set
         else
-          #operations[5]='replaygain_test'
-          #operations[6]='replaygain_force_apply'
           operations[5]='replaygain'
         fi
       ;;
@@ -1433,8 +1428,6 @@ _process_positional_parameters()
         if [[ "${operations[6]}" == 'replaygain' || "${operations[6]}" == 'conflict' ]]; then
           operations[6]='conflict'   # If already set
         else
-          #operations[5]='replaygain_test'
-          #operations[6]='replaygain_apply'
           operations[5]='replaygain'
         fi
         force_replaygain='true'
@@ -1854,168 +1847,100 @@ _replaygain()
 }
 
 #
-# Compress FLACs with user-defined compression level, verifying its integrity
+# Compress FLAC files with user-defined compression, verifying
+# integrity. Conditionally skip FLAC files if the 'COMPRESSION' tag
+# exists for a given file and matches the compression level set in the
+# user configuration file
 #
-# $1 is the FLAC file operated on
-# $2 is the operation that's currently being run, of which, can be:
-#   aucdtect                  md5_check           compress_verify
-#   compress_no_test          test                replaygain_test
-#   replaygain_force_apply    replaygain_apply    retag_analyze
-#   retag_apply               extract_images      prune
-# $3 is a string representing number items processed, eg: [43/439]
-# $4 is the current operation's row placement
-#
-_compress_verify()
+_compress()
 {
   trap '_kill_jobs "$(jobs -rp)"' EXIT
+  local output previous error_msg warning_msg
 
-  # Set up local variables
-  declare    file_basename percent_complete
-  declare -i file_length
+  _print_item
 
-  # Truncate file, if necessary, and grab file information, splitting on
-  # Unit Separator (\037)
-  IFS=$'\037' read -r file_basename file_length < <(_truncate_filename "$1")
+  # If a user chooses not to force compression, then each file is
+  # checked for a 'COMPRESSION' tag that matches the compression level
+  # set in the user configuration. If the 'COMPRESSION' tag exists and
+  # matches what is set in the configuration, then this file is skipped
+  #
+  # NOTE:
+  #   All errors are ignored here as they will be caught during
+  #   compression
+  if [[ -z "$force_compression" ]]; then
+    file_compression="$(metaflac 2>/dev/null --show-tag='COMPRESSION' "$item")"
 
-  # Print current FLAC being processed
-  _print_item "${file_basename}" "${file_length}" "$3"
-
-  # Only obtain current COMPRESSION value if the user did not specify '-x,
-  # --no-extra-tags'
-  if [[ "${no_extra_tags}" != 'true' ]]; then
-    # Test for COMPRESSION level in FLAC file. Hide error output since
-    # we'll be verifying the FLAC file later
-    COMPRESSION="$(metaflac --show-tag='COMPRESSION' "${1}" 2> /dev/null)"
-    COMPRESSION="${COMPRESSION#*=}"
+    # 'compression_level' is obtained from the configuration file
+    if (( file_compression == compression_level )); then
+      _print_item_skip
+      printf >&3 "$row\n"  # Send complete to _run_parallel()
+      return
+    fi
   fi
 
-  if (( COMPRESSION != compression_level )) || [[ "${no_extra_tags}" == 'true' ]]; then
-    flac -f -${compression_level} -V "${1}" 2> \
-      >(while read -r -d'%' percent_complete; do
-        # Compress given FLAC file, verifying with a progress bar
-        #--
-        # Current percent complete
-        percent_complete="$( _get_percent_complete "$2" "${percent_complete}" )"
-
-        # Print operation progress bar and percent complete
-        _print_progress "$2" "${percent_complete}" "${file_basename}" "${file_length}"
-      done) >/dev/null
-
-    # Non-zero is failure
-    if (( $? != 0 )); then
-      # Display error
-      _print_status 'fail' "$file_basename" "$file_length"
-
-      # Log FLAC failure
-      printf >> "$log_file" '%s: Failed verification\n' "${PWD}/${1##*/}"
-      printf >> "$issue_ticks" '.'  # Add one tick to total issues
-    else
-      # Only remove/add the new compression level if the user did not specify
-      # no additional tags ('-x, --no-extra-tags' option)
-      if [[ "${no_extra_tags}" != 'true' ]]; then
-        metaflac ${metaflac_extra_options} \
-          --remove-tag='COMPRESSION' \
-          --set-tag='COMPRESSION'="${compression_level}" "${1}"
-      fi
-
-      # FLAC is ok, display ok
-      _print_status 'ok' "${file_basename}" "${file_length}"
+  # As indicated by '[FIRST]', '[SECOND]', '[THIRD]', '[FOURTH]', and
+  # '[LAST]', this is the order each of the statements will evaluate to
+  # 'true'.  '[FIRST]' may never evaluate to 'true' (if the FLAC file
+  # fails to decode
+  while IFS=$'\n' read -rd ' ' output; do
+    # [LAST] Store error message
+    if [[ "$error_msg" && -n "$output" ]]; then
+      # End of error message
+      [[ "$output" == 'state' || "$output" == 'Type' ]] && break
+      error_msg+=" $output"
+      continue
     fi
+
+    # [FOURTH] An error occurred, storing first word
+    if [[ "$output" == 'ERROR:' && "$previous" == *"${base}:" ]]; then
+      error_msg="$output"
+      continue
+    fi
+
+    # [THIRD] Store rest of warning message
+    if [[ "$warning_msg" && -n "$output" ]]; then
+      # Stop if there is an error message and build that separately
+      [[ "$output" == *'ERROR:' ]] && error_msg='ERROR:' && continue
+      warning_msg+=" $output"
+      continue
+    fi
+
+    # [SECOND] A warning occurred, storing first word
+    #
+    # NOTE:
+    #   Due to 'read' using a space a delimiter, the WARNING message may
+    #   have preceding text (word + newline)
+    if [[ "$output" == *'WARNING:' ]]; then
+      warning_msg='WARNING:'
+      continue
+    fi
+
+    # [FIRST] FLAC testing percentage complete
+    if [[ "$output" == *[[:digit:]]% ]]; then
+      output="${output//$'\b'}"  # Remove all backspace characters
+
+      # Remove beginning ratio string (from backspace characters)
+      printf "\033[${row}H${yellow}%4s${reset}" "${output#ratio=?.???}"
+    fi
+
+    # Used to validate previous output is an error and not a filename
+    previous="$output"
+  done < <(flac 2>&1 -f -"$compression_level" -V "$item")
+
+  # Add warning message to error message for logging
+  [[ "$warning_msg" ]] && error_msg="$warning_msg|$error_msg"
+
+  # Log failures if there are any warnings and/or errors
+  if [[ "$error_msg" ]]; then
+    _print_item_fail
+    printf >> "$log_file" '%s [%s] %s\n' "$item" "$operation" "$error_msg"
+    printf >> "$issue_ticks" '.'  # Add one tick to total issues
   else
-    # If already at compression_level, test the FLAC file instead
-    flac -t "${1}" 2> \
-      >(while read -r -d'%' percent_complete; do
-        # Test given FLAC file, with a progress bar
-        #--
-        # Current percent complete
-        percent_complete="$( _get_percent_complete 'test' "${percent_complete}" )"
-
-        # Print operation progress bar and percent complete
-        _print_progress 'test' "${percent_complete}" "${file_basename}" "${file_length}"
-      done) >/dev/null
-
-    # Non-zero is failure
-    if (( $? != 0 )); then
-      # Display error
-      _print_status 'fail' "$file_basename" "$file_length"
-
-      # Log FLAC failure
-      printf >> "$log_file" '%s: Failed verification\n' "${PWD}/${1##*/}"
-      printf >> "$issue_ticks" '.'  # Add one tick to total issues
-    else
-      # FLAC is ok, display ok
-      _print_status 'ok' "${file_basename}" "${file_length}"
-    fi
+    _print_item_ok
   fi
-  printf "$4\n" >&3  # Store row position and end operation
-}
 
-#
-# Compress FLACs with user-defined compression level, verifying its integrity
-# and _not_ falling back to _test() if the compression level is already set
-#
-# $1 is the FLAC file operated on
-# $2 is the operation that's currently being run, of which, can be:
-#   aucdtect                  md5_check           compress_verify
-#   compress_no_test          test                replaygain_test
-#   replaygain_force_apply    replaygain_apply    retag_analyze
-#   retag_apply               extract_images      prune
-# $3 is a string representing number items processed, eg: [43/439]
-# $4 is the current operation's row placement
-#
-_compress_no_test()
-{
-  trap '_kill_jobs "$(jobs -rp)"' EXIT
-
-  # Set up local variables
-  declare    file_basename percent_complete
-  declare -i file_length
-
-  # Truncate file, if necessary, and grab file information, splitting on
-  # Unit Separator (\037)
-  IFS=$'\037' read -r file_basename file_length < <(_truncate_filename "$1")
-
-  # Print current FLAC being processed
-  _print_item "${file_basename}" "${file_length}" "$3"
-
-  # Test for COMPRESSION level in FLAC file. Hide error output since
-  # we'll be verifying the FLAC file later
-  COMPRESSION="$(metaflac --show-tag='COMPRESSION' "${1}" 2> /dev/null)"
-  COMPRESSION="${COMPRESSION#*=}"
-
-  if (( COMPRESSION != compression_level )); then
-    flac -f -${compression_level} -V "${1}" 2> \
-      >(while read -r -d'%' percent_complete; do
-        # Compress given FLAC file, verifying with a progress bar
-        #--
-        # Current percent complete
-        percent_complete="$( _get_percent_complete "$2" "${percent_complete}" )"
-
-        # Print operation progress bar and percent complete
-        _print_progress "$2" "${percent_complete}" "${file_basename}" "${file_length}"
-      done) >/dev/null
-
-    # Non-zero is failure
-    if (( $? != 0 )); then
-      # Display error
-      _print_status 'fail' "$file_basename" "$file_length"
-
-      # Log FLAC failure
-      printf >> "$log_file" '%s: Failed verification\n' "${PWD}/${1##*/}"
-      printf >> "$issue_ticks" '.'  # Add one tick to total issues
-    else
-      metaflac ${metaflac_extra_options} \
-        --remove-tag='COMPRESSION' \
-        --set-tag='COMPRESSION'="${compression_level}" "${1}"
-
-      # FLAC is ok, display ok
-      _print_status 'ok' "${file_basename}" "${file_length}"
-    fi
-  else
-    # Already at compression_level, print skipped FLAC file
-    _print_status 'skip' "${file_basename}" "${file_length}"
-  fi
-  printf "$4\n" >&3  # Store row position and end operation
+  # Send complete to _run_parallel()
+  printf >&3 "$row\n"
 }
 
 #
@@ -2025,7 +1950,7 @@ _compress_no_test()
 _test()
 {
   trap '_kill_jobs "$(jobs -rp)"' EXIT
-  local output error_msg previous
+  local output previous error_msg
 
   # Basename of FLAC, splitting on whitespace since the 'read' below
   # splits on whitespace
