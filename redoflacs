@@ -108,7 +108,7 @@ _message_log_exists()
     'aucdtect'*)
       _error 'Some FLAC files may be lossy sourced, please check:\n'
     ;;
-    'md5_check')
+    'md5check')
       _error 'The MD5 Signature is unset for some FLAC files or there were\n'
       _error 'issues with some of the FLAC files, please check:\n'
     ;;
@@ -156,7 +156,7 @@ _message()
   if [[ -n "${1}" ]]; then
     case "${1}" in
       'aucdtect')       message='Validating with auCDtect'                ;;
-      'md5_check')      message='Check MD5 Signature'                     ;;
+      'md5check')       message='Check MD5 Signature'                     ;;
       'compress')       message="Level ${compression_level} Compression"  ;;
       'test')           message='Test FLACs'                              ;;
       'extract_images') message='Extracting Artwork'                      ;;
@@ -230,7 +230,7 @@ _update_operation_status()
 {
   case "${1}" in
     'aucdtect'*)          operation_summary['Validate with auCDtect']="${2}" ;;
-    'md5_check')          operation_summary['Check MD5 Signature']="${2}"    ;;
+    'md5check')           operation_summary['Check MD5 Signature']="${2}"    ;;
     'compress')           operation_summary['Compress FLACs']="${2}"         ;;
     'test')               operation_summary['Test FLACs']="${2}"             ;;
     'replaygain')         operation_summary['Applying ReplayGain']="${2}"    ;;
@@ -290,6 +290,7 @@ _print_item()
   case "$operation" in
     'compress')       label=' Compressing' ;;
     'extract_images') label=' Extracting Images' ;;
+    'md5check')       label=' Verifying MD5' ;;
     'replaygain')     label=' Applying ReplayGain' ;;
     'test')           label=' Testing' ;;
   esac
@@ -1372,7 +1373,7 @@ _process_positional_parameters()
       # These are the meta-arguments (do multiple operations)
       '-l')
         all='true'
-        operations[1]='md5_check'
+        operations[1]='md5check'
         operations[2]='compress'
         operations[5]='replaygain'
         operations[7]='retag_analyze'
@@ -1383,7 +1384,7 @@ _process_positional_parameters()
         reallyall='true'
         create_spectrogram='true'
         operations[0]='aucdtect'
-        operations[1]='md5_check'
+        operations[1]='md5check'
         operations[2]='compress'
         operations[5]='replaygain'
         operations[7]='retag_analyze'
@@ -1413,7 +1414,7 @@ _process_positional_parameters()
           operations[0]='aucdtect'
         fi
       ;;
-      '-m') operations[1]='md5_check'         ;;
+      '-m') operations[1]='md5check'          ;;
       '-c') operations[2]='compress'          ;;
       '-C') operations[3]='compress'; force_compression='true' ;;
       '-t') operations[4]='test'              ;;
@@ -2290,62 +2291,48 @@ _aucdtect()
 }
 
 #
-# Check for valid MD5 checksum in FLAC file
+# Check for a valid MD5 checksum in FLAC file
 #
-# $1 is the filename
-# $2 is the operation that's currently being run, of which, can be:
-#   aucdtect                  md5_check           compress_verify
-#   compress_no_test          test                replaygain_test
-#   replaygain_force_apply    replaygain_apply    retag_analyze
-#   retag_apply               extract_images      prune
-# $3 is a string representing number items processed, eg: [43/439]
-# $4 is the current operation's row placement
-#
-_md5_check()
+_md5check()
 {
   trap '_kill_jobs "$(jobs -rp)"' EXIT
+  local output error_msg md5sum
 
-  # Set up local variables
-  declare    file_basename percent_complete md5_sum
-  declare -i file_length
+  _print_item
 
-  # Truncate file, if necessary, and grab file information, splitting on
-  # Unit Separator (\037)
-  IFS=$'\037' read -r file_basename file_length < <(_truncate_filename "$1")
+  # Metaflac will display the MD5 checksum or an error (on one line).
+  # These values are captured and logged, appropriately
+  while IFS=$'\n' read -r output; do
+    # Error reading FLAC file (possibly fake), eg:
+    #   fake/fake.flac: ERROR: reading metadata, status = "FLAC ..."
+    if [[ "$output" == *'ERROR'* ]]; then
+      error_msg="${output%, status = *}"      # Strip status
+      error_msg="ERROR${error_msg#*: ERROR}"  # Strip filename
+      break                                   # Stop reading lines
+    fi
 
-  # Print current FLAC being processed
-  _print_item "${file_basename}" "${file_length}" "$3"
+    # This is the the MD5 checksum
+    md5sum="$output"
+  done < <(metaflac 2>&1 --show-md5sum "$item")
 
-  # Get the MD5 checksum (hide stderr output).  Also
-  # used to check if FLAC file is real
-  md5_sum="$(metaflac --show-md5sum "$1" 2>/dev/null)"
-
-  # Non-zero is failure
-  if (( $? != 0 )); then
-    # Display error
-    _print_status 'fail' "$file_basename" "$file_length"
-
-    # Log FLAC failure
-    printf >> "$log_file" '%s: Not a real FLAC file\n' "${PWD}/${1##*/}"
+  # Log failures if there are any errors
+  if [[ "$error_msg" ]]; then
+    _print_item_fail
+    printf >> "$log_file" '%s [%s] %s\n' "$item" "$operation" "$error_msg"
     printf >> "$issue_ticks" '.'  # Add one tick to total issues
 
-  # FLAC file is real, check for unset MD5 checksum.  We cannot use an
-  # arithmetic expression as any amount of 0's will equal the expression
-  # below
-  elif [[ "${md5_sum}" == '00000000000000000000000000000000' ]]; then
-    # Display error
-    _print_status 'fail' "$file_basename" "$file_length"
-
-    # Log FLAC failure
-    printf >> "$log_file"                                            \
-      '%s: Unset MD5 signature (00000000000000000000000000000000)\n' \
-      "${PWD}/${1##*/}"
+  # Possible valid FLAC, but MD5 signature is unset in STREAMINFO block
+  elif [[ "$md5sum" == '00000000000000000000000000000000' ]]; then
+    _print_item_fail
+    printf >> "$log_file" '%s [%s] %s\n' "$item" "$operation" \
+      'ERROR: Unset MD5 signature (00000000000000000000000000000000)'
     printf >> "$issue_ticks" '.'  # Add one tick to total issues
   else
-    # FLAC is ok, display ok
-    _print_status 'ok' "$file_basename" "$file_length"
+    _print_item_ok
   fi
-  printf "$4\n" >&3  # Store row position and end operation
+
+  # Send complete to _run_parallel()
+  printf >&3 "$row\n"
 }
 
 #
@@ -3044,7 +3031,7 @@ for operation in "${operations[@]}"; do
   # Loop through the various operations to run.  All the operations are to be
   # run, in order, which is detailed below:
   #   operations[0]='aucdtect'
-  #   operations[1]='md5_check'
+  #   operations[1]='md5check'
   #   operations[2]='compress_verify'
   #   operations[3]='compress_no_test'
   #   operations[4]='test'
