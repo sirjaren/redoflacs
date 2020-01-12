@@ -291,6 +291,7 @@ _print_item()
     'compress')       label=' Compressing' ;;
     'extract_images') label=' Extracting Images' ;;
     'md5check')       label=' Verifying MD5' ;;
+    'prune')          label=' Prune Metadata' ;;
     'replaygain')     label=' Applying ReplayGain' ;;
     'test')           label=' Testing' ;;
   esac
@@ -1836,7 +1837,7 @@ _replaygain()
   if [[ "${error_log[0]}" ]]; then
     _print_item_fail
     printf >> "$log_file" '%s\n' "${error_log[@]}"
-    printf >> "$issue_ticks" .  # Add one tick to total issues
+    printf >> "$issue_ticks" '.'  # Add one tick to total issues
   else
     _print_item_ok
   fi
@@ -2661,7 +2662,7 @@ _extract_images()
     return
   fi
 
-  _print_item_half
+  _print_item_half  # Metaflac doesn't display a percentage complete
 
   # Store the values which can identify each image (in each PICTURE block) to
   # be used during image extraction.  The values needed are:
@@ -2753,52 +2754,43 @@ _extract_images()
 }
 
 #
-# Prune given FLAC by removing various BLOCKs (defined in user configuration)
-#
-# $1 is the filename
-# $2 is the operation that's currently being run, of which, can be:
-#   aucdtect                  md5_check           compress_verify
-#   compress_no_test          test                replaygain_test
-#   replaygain_force_apply    replaygain_apply    retag_analyze
-#   retag_apply               extract_images      prune
-# $3 is a string representing number items processed, eg: [43/439]
-# $4 is the current operation's row placement
+# Prune user configurable FLAC metadata from FLAC files
 #
 _prune()
 {
   trap '_kill_jobs "$(jobs -rp)"' EXIT
+  local output error_msg
 
-  # Set up local variables
-  declare    file_basename
-  declare -i file_length
+  _print_item
+  _print_item_half  # Metaflac doesn't display a percentage complete
 
-  # Truncate file, if necessary, and grab file information, splitting on
-  # Unit Separator (\037)
-  IFS=$'\037' read -r file_basename file_length < <(_truncate_filename "$1")
+  # Remove all information but STREAMINFO,VORBIS_COMMENTs, and
+  # possibly METADATA_BLOCK_PICTURE
+  while IFS=$'\n' read -r output; do
+    # Error reading FLAC file (possibly fake), eg:
+    #   fake/fake.flac: ERROR: reading metadata, status = "FLAC ..."
+    if [[ "$output" == *'ERROR'* ]]; then
+      error_msg="${output%, status = *}"      # Strip status
+      error_msg="ERROR${error_msg#*: ERROR}"  # Strip filename
+      break                                   # Stop reading lines
+    fi
+  done < <(
+    metaflac 2>&1 \
+      $metaflac_extra_options --remove --dont-use-padding \
+      --except-block-type="$dont_prune_flac_metadata" "$item"
+  )
 
-  # Print current FLAC being processed
-  _print_item "${file_basename}" "${file_length}" "$3" 'half'
-
-  # Check if file is a FLAC file (hide output)
-  metaflac --show-md5sum "${1}" >/dev/null 2>&1
-
-  # Non-zero is failure
-  if (( $? != 0 )); then
-    # Display error
-    _print_status 'fail' "$file_basename" "$file_length"
-
-    # Log FLAC failure
-    printf >> "$log_file" '%s: Not a real FLAC file\n' "${PWD}/${1##*/}"
+  # Log failures if there are any errors
+  if [[ "$error_msg" ]]; then
+    _print_item_fail
+    printf >> "$log_file" '%s [%s] %s\n' "$item" "$operation" "$error_msg"
     printf >> "$issue_ticks" '.'  # Add one tick to total issues
   else
-    # Remove all information but STREAMINFO,VORBIS_COMMENTs, and
-    # possibly METADATA_BLOCK_PICTURE
-    metaflac ${metaflac_extra_options} --remove --dont-use-padding --except-block-type="${dont_prune_flac_metadata}" "${1}"
-
-    # FLAC is ok, display ok
-    _print_status 'ok' "${file_basename}" "${file_length}"
+    _print_item_ok
   fi
-  printf "$4\n" >&3  # Store row position and end operation
+
+  # Send complete to _run_parallel()
+  printf >&3 "$row\n"
 }
 
 ###################################  SETUP  ###################################
