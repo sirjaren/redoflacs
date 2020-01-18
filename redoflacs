@@ -242,127 +242,70 @@ _update_operation_status()
 }
 
 #
-# Displays the currently processed item on a dedicated row within the terminal.
+# Displays the currently processed item on a dedicated row within the
+# terminal
 #
-# The filename is truncated if the length of the filename is greater than 80
-# characters or if greater than the width of the terminal if that terminal
-# width is less than 80.  This width is set by 'MAX_LENGTH'.
+# The filename is truncated if the length of the filename is greater
+# than 80 characters or if greater than the width of the terminal if
+# that terminal width is less than 80. This width is set by 'MAX_LENGTH'
 #
-# Filename truncation also ocurrs to allow the operation label and the total
-# number of completed items to be displayed on the same row as the displayed
-# item.
+# Filename truncation also occurs to allow the operation label and the
+# total number of completed items to be displayed on the same row as the
+# displayed item
 #
 # The structure of a displayed item:
-#   '<percent> <basename>                 <operation_label> <number_completed>'
+#   '<percent> <basename>          <operation_label> <number_completed>'
 #
 # Which may look like:
-#   '     06 - Some Amazing Song.flac                            Testing  6/20'
+#   '     06 - Some Amazing Song.flac                     Testing  6/20'
 #
-# This function does NOT create the display the percentage completed. That is
-# handled later.
+# This function does NOT create the display the percentage completed.
+# That is handled later
 #
-# The file basename is left-aligned (leaving room for the percentage), while
-# the operation label and total number of completed items are right-aligned.
+# The file basename is left-aligned (leaving room for the percentage),
+# while the operation label and total number of completed items are
+# right-aligned
 #
 # An example of filename truncation:
-#   '01 - This is a long filename to show what happens during truncation.flac'
+#   '01 - This is a long name showing truncation.flac'
 #
 # This filename would be displayed during an operation as:
-#   '     01 - This is a long filename to show what happens duri Testing  6/20'
+#   '     01 - This is a long name showing truncation.fla Testing  6/20'
 #
 # An example of how this would look with a percentage displayed:
-#   ' 56% 06 - Some Amazing Song.flac                            Testing  6/20'
+#   ' 56% 06 - Some Amazing Song.flac                     Testing  6/20'
 #
 _print_item()
 {
-  local label fmt truncated
+  local fmt truncated
   local basename="${item##*/}"
+  local label="${1:+ ${1}}"  # Operation label (with leading space)
 
   # The total number of items out of the total number of items, used to
   # determine the maximum width these values can use, eg:
   #   ' 237/237'
   #
-  # The leading space is intentional, to ensure a space is between the item
-  # basename and this value
+  # The leading space is intentional, to ensure a space is between the
+  # item basename and this value
   local total=" ${#total_items[@]}/${#total_items[@]}"
 
-  # Sets the operation label accordingly
-  case "$operation" in
-    'compress')       label=' Compressing' ;;
-    'extract_images') label=' Extracting Images' ;;
-    'md5check')       label=' Verifying MD5' ;;
-    'prune')          label=' Prune Metadata' ;;
-    'replaygain')     label=' Applying ReplayGain' ;;
-    'test')           label=' Testing' ;;
-  esac
-
-  # This is the column position after the item basename is displayed.  This
-  # allows the operation label and total number of completed items to be
-  # displayed after this column, effectively truncating the current item if
-  # longer than this column position
+  # This is the column position after the item basename is displayed.
+  # This allows the operation label and total number of completed items
+  # to be displayed after this column, effectively truncating the
+  # current item if longer than this column position
   truncated="$((MAX_LENGTH - ${#total} - ${#label}))"
 
   # Belows builds the 'printf' format string
   fmt+=$"\033[${row};6H"              # Cursor row; 6 columns to right
   fmt+=$"\033[0K"                     # Erase line from cursor to right
   fmt+='%s'                           # Modifier; Current item basename
-  fmt+=$"\033[${row};${truncated}H"   # Cursor row; Move to allow label/items
+  fmt+=$"\033[${row};${truncated}H"   # Cursor row; Move to allow items
   fmt+=$"\033[0K"                     # Erase line from cursor to right
   fmt+="${magenta}%s"                 # Modifier; Operation label
-  fmt+="${cyan}%${#total}s${reset}"   # Modifier; Total items, right-aligned
+  fmt+="${cyan}%${#total}s${reset}"   # Modifier; Items, right-aligned
 
   # Displays formatted, currently processed item
   printf "$fmt" "$basename" "$label" "${num}/${#total_items[@]}"
-
-  return
-
-  # Set up local variables
-  declare -i  print_spacing='1'
-
-  case "$4" in
-    '')
-      #       08 - track.flac                           [12/345]
-      (( max_length >= $2 )) && print_spacing=$(( max_length - $2 ))
-      printf "\033[${placement};9H%s%${print_spacing}s${magenta}%s${reset}" \
-        "$1" '' "${3}"
-    ;;
-    'sub')
-      #      50% 08 - track.flac                        [12/345]
-      (( max_length >= $2 )) && print_spacing=$(( max_length - $2 ))
-      printf "\033[${placement};6H${yellow}%s${reset} %s%${print_spacing}s${magenta}%s${reset}" \
-        " 50%" "$1" '' "${3}"
-    ;;
-    'half')
-      #   50% 08 - track.flac                           [12/345]
-      (( max_length >= $2 )) && print_spacing=$(( max_length - $2 ))
-      printf "\033[${placement};4H${yellow}%s${reset} %s%${print_spacing}s${magenta}%s${reset}" \
-        " 50%" "$1" '' "${3}"
-    ;;
-    'decode')
-      #       [decoding->WAV] 08 - track.flac           [12/345]
-      (( max_length >= $2 )) && print_spacing=$(( max_length - $2 - 16 ))
-      printf "\033[${placement};9H${cyan}[decoding->WAV]${reset} %s%${print_spacing}s${magenta}%s${reset}" \
-        "$1" '' "${3}"
-    ;;
-    'aucdtect_fast')
-      #       [auCDtect:fast] 08 - track.flac           [12/345]
-      (( max_length >= $2 )) && print_spacing=$(( max_length - $2 - 16 ))
-      printf "\033[${placement};9H${cyan}[auCDtect:fast]${reset} %s%${print_spacing}s${magenta}%s${reset}" \
-        "$1" '' "${3}"
-    ;;
-    'aucdtect_slow')
-      #       [auCDtect:slow] 08 - track.flac           [12/345]
-      (( max_length >= $2 )) && print_spacing=$(( max_length - $2 - 16 ))
-      printf "\033[${placement};9H${cyan}[auCDtect:slow]${reset} %s%${print_spacing}s${magenta}%s${reset}" \
-        "$1" '' "${3}"
-    ;;
-    'spectrogram')
-      #       [spectral->PNG] 08 - track.flac           [12/345]
-      (( max_length >= $2 )) && print_spacing=$(( max_length - $2 - 16 ))
-      printf "\033[${placement};9H${cyan}[spectral->PNG]${reset} %s%${print_spacing}s${magenta}%s${reset}" \
-        "$1" '' "${3}"
-    ;;
-  esac
 }
 
 #
@@ -612,55 +555,6 @@ _scroll_terminal()
   if (( --to_scroll > (lines - row) )); then
     printf "\033[$((to_scroll - (lines - row)))S"  # Scroll terminal
     printf "\033[$((lines - to_scroll))H"          # Cursor to scrolled start
-  fi
-}
-
-#
-# Return an operation's completion percentage, expressed as an integer
-#
-# $1 is the operation to choose how to obtain the percentage, which can be:
-#   aucdtect                  md5_check           compress_verify
-#   compress_no_test          test                replaygain_test
-#   replaygain_force_apply    replaygain_apply    retag_analyze
-#   retag_apply               extract_images      prune
-#   decode
-#
-# $2 is a (possibly multiline) string of text from a command binary's output
-# with a percentage string contained within
-#
-_get_percent_complete()
-{
-  # Set up local variables
-  declare percent
-
-  case "$1" in
-    'compress_'*)
-      percent="${2//$'\b'/}"                        # Remove backspaces
-      percent="${percent##*: }"                     # complete0, ratio=0.307
-      percent="${percent##*complete, ratio=?.???}"  # Percent (integer)
-    ;;
-    'test')
-      percent="${2##* }"                            # Percent (integer)
-    ;;
-    'decode')
-      percent="${2//$'\b'}"                         # Remove backspaces
-      percent="${percent##*: }"                     # complete0
-      percent="${percent##*complete}"               # Percent (integer)
-    ;;
-    'aucdtect')
-      percent="${2##*[}"                            # Percent (integer)
-    ;;
-    'spectrogram')
-      percent="${2##*In:}"                          # Percent (floating)
-      percent="${percent%%.*}"                      # Percent (integer)
-    ;;
-  esac
-
-  # Default to '0' if percentage is not an integer
-  if [[ "${percent}" =~ ^[[:digit:]]+$ ]]; then
-    printf '%d' $percent
-  else
-    printf '%d' '0'
   fi
 }
 
@@ -1503,32 +1397,21 @@ _check_missing_programs()
   #--
   # Check for auCDtect if operation was called
   if [[ "${operations[0]}" == 'aucdtect' ]]; then
-    if aucdtect="$(type -P auCDtect)"; then
-      _aucdtect_cmd() { "${aucdtect}" "$@"; }  # Normal typeface
-    elif aucdtect="$(type -P aucdtect)"; then
-      _aucdtect_cmd() { "${aucdtect}" "$@"; }  # Alternate spelling
-    else
-      # auCDtect/aucdtect cannot be found
+    # auCDtect cannot be found
+    if ! type -P auCDtect >/dev/null; then
       _error "It appears ${cyan}auCDtect${reset} is not installed. Please verify you\n"
       _error "have this program installed and can be found in ${cyan}\$PATH${reset}\n"
-      exit 1
-    fi
-
-    # Make sure auCDtect is executable
-    if [[ ! -x "${aucdtect}" ]]; then
-      _error "It appears ${cyan}auCDtect${reset} is not executable.  In order to make\n"
-      _error "${cyan}auCDtect${reset} executable, run:\n"
-      _error "${cyan}chmod u+x '${aucdtect}'${reset}\n"
+      _error "\n"
+      _error "A statically linked version of auCDtect can be found here\n"
+      _error "  https://github.com/sirjaren/redoflacs/raw/binaries/auCDtect\n"
       exit 1
     fi
   fi
 
   # Check for SoX if auCDtect spectrograms were called
   if [[ "${create_spectrogram}" == 'true' ]]; then
-    if sox="$(type -P sox)"; then
-      _sox_cmd() { "${sox}" "$@"; }
-    else
-      # SoX cannot be found
+    # SoX cannot be found
+    if ! type -P sox >/dev/null; then
       _error "It appears ${cyan}SoX${reset} is not installed. Please verify you\n"
       _error "have this program installed and can be found in ${cyan}\$PATH${reset}\n"
       exit 1
@@ -1766,7 +1649,7 @@ _replaygain()
   # Used to look for error messages and store wanted values
   local regex="^(${item}/.*): (ERROR:.*)"
 
-  _print_item
+  _print_item 'Applying ReplayGain'
 
   # If a user chooses not to force apply ReplayGain tags, then each file
   # is checked to ensure all ReplayGain tags are available, skipping the
@@ -1857,7 +1740,7 @@ _compress()
   trap '_kill_jobs "$(jobs -rp)"' EXIT
   local output previous error_msg warning_msg
 
-  _print_item
+  _print_item 'Compressing'
 
   # If a user chooses not to force compression, then each file is
   # checked for a 'COMPRESSION' tag that matches the compression level
@@ -1916,12 +1799,12 @@ _compress()
       continue
     fi
 
-    # [FIRST] FLAC testing percentage complete
+    # [FIRST] FLAC compression percentage complete
     if [[ "$output" == *[[:digit:]]% ]]; then
       output="${output//$'\b'}"  # Remove all backspace characters
 
       # Remove beginning ratio string (from backspace characters)
-      printf "\033[${row}H${yellow}%4s${reset}" "${output#ratio=?.???}"
+      printf "\033[${row}H${yellow}%4s$reset" "${output#ratio=?.???}"
     fi
 
     # Used to validate previous output is an error and not a filename
@@ -1970,7 +1853,7 @@ _test()
   # splits on whitespace
   local base="${item##*[ /]}"
 
-  _print_item
+  _print_item 'Testing'
 
   # As indicated by '[FIRST]', '[SECOND]', and '[LAST]', this is the
   # order each of the statements will evaluate to 'true'. '[FIRST]' may
@@ -1991,7 +1874,7 @@ _test()
 
     # [FIRST] FLAC testing percentage complete
     if [[ "$output" == *[[:digit:]]% ]]; then
-      printf "\033[${row}H${yellow}%4s${reset}" "$output"
+      printf "\033[${row}H${yellow}%4s$reset" "$output"
     fi
 
     # Used to validate previous output is an error and not a filename
@@ -2014,281 +1897,278 @@ _test()
 #
 # Test FLAC validity with auCDtect
 #
-# $1 is the filename
-# $2 is the operation that's currently being run, of which, can be:
-#   aucdtect                  md5_check           compress_verify
-#   compress_no_test          test                replaygain_test
-#   replaygain_force_apply    replaygain_apply    retag_analyze
-#   retag_apply               extract_images      prune
-# $3 is a string representing number items processed, eg: [43/439]
-# $4 is the current operation's row placement
+# NOTE:
+#   While not officially supported, should a user have a dynamically
+#   linked auCDtect binary, 'MALLOC_CHECK_' will to be set to '0', eg:
+#
+#     MALLOC_CHECK_='0' auCDtect <rest_of_options>
 #
 _aucdtect()
 {
   trap '_kill_jobs "$(jobs -rp)"' EXIT
+  local item_wav output previous error_msg aucdtect_stdout aucdtect_stderr \
+    spectrogram
+  local -a bits_mastering
 
-  # Set up local arrays/variables
-  declare    file_basename percent_complete
-  declare -i file_length
-  declare -a bits_mastering
+  # Used to look for error messages and file status in auCDtect which is
+  # captured via STDOUT
+  #
+  # Example STDOUT from auCDtect (error message):
+  #   auCDtect: CD records authenticity detector, version 0.8
+  #   Copyright (c) 2004 Oleg Berngardt. All rights reserved.
+  #   Copyright (c) 2004 Alexander Djourik. All rights reserved.
+  #   error:  file format     is not supported
+  #
+  # Example STDOUT from auCDtect (file status):
+  #   auCDtect: CD records authenticity detector, version 0.8
+  #   Copyright (c) 2004 Oleg Berngardt. All rights reserved.
+  #   Copyright (c) 2004 Alexander Djourik. All rights reserved.
+  #   ------------------------------------------------------------
+  #   Processing file:        [01 - The Manifesto.wav]
+  #
+  #   ------------------------------------------------------------
+  #   This track looks like CDDA with probability 85%
+  #
+  # Example regex capture groups obtained:
+  #
+  # Error messages:
+  #   error:  can     not     open file <WAV_FILE>
+  #   error:  file format     is not supported
+  #
+  # Successful operations:
+  #   This track looks like CDDA with probability 100%
+  #   This track looks like CDDA with probability 49%
+  #   This track looks like MPEG with probability 100%
+  #   This track looks like MPEG with probability 92%
+  #   Could not qualify the source of this track.
+  local regex=$'(error:.*)|Processing file.*--------.*\n(.*)$'
 
-  # Truncate file, if necessary, and grab file information, splitting on
-  # Unit Separator (\037)
-  IFS=$'\037' read -r file_basename file_length < <(_truncate_filename "$1")
-
-  # Print current FLAC being processed
-  _print_item "${file_basename}" "${file_length}" "$3"
+  _print_item 'auCDtect'
 
   # Get the bit depth and MASTERING tag of a FLAC file.  Also used to check if
   # FLAC file is real.  Hide STDERR output.  The array indices are:
   #   bits_mastering[0] = bit depth (eg, 16)
   #   bits_mastering[1] = MASTERING tag & value (eg, MASTERING=Lossy)
-  bits_mastering=( $(metaflac --show-bps --show-tag='MASTERING' "$1" 2>/dev/null) )
+  mapfile -n2 -t bits_mastering < <(
+    metaflac 2>/dev/null --show-bps --show-tag='MASTERING' "$item"
+  )
 
-  # Non-zero is failure
-  if (( $? != 0 )); then
-    # Display error
-    _print_status 'fail' "$file_basename" "$file_length"
-
-    # Log FLAC failure
-    printf >> "$log_file" '%s: Not a real FLAC file\n' "${PWD}/${1##*/}"
-    printf >> "$issue_ticks" '.'  # Add one tick to total issues
-
-  # Skip the FLAC file if it has a bit depth greater
-  # than 16 since auCDtect doesn't support audio
-  # files with a higher resolution than a CD.
-  elif (( ${bits_mastering[0]} > 16 )); then
-    # Display skipped
-    _print_status 'skip' "$file_basename" "$file_length"
-
-    # Log skipped FLAC file
-    printf >> "$log_file" \
-      '%s: auCDtect does not support a bit depth >16\n' "${PWD}/${1##*/}"
-    printf >> "$issue_ticks" '.'  # Add one tick to total issues
-
-  # Skip the FLAC file if it already has the 'Lossy' value set for the
-  # MASTERING tag.  This is only done if the value of 'skip_lossy' is 'true',
-  # set in the configuration file.  We make sure to remove 'MASTERING=' before
-  # testing the tag field
-  elif [[ "${bits_mastering[1]#*=}" == 'Lossy' ]]; then
-    # Display skipped
-    _print_status 'skip' "$file_basename" "$file_length"
-
-    # Log skipped FLAC file
-    printf >> "$log_file" '%s: MASTERING=Lossy value found; ' "${PWD}/${1##*/}"
-    printf >> "$log_file" "skipping ('skip_lossy' configuration)\n"
-    printf >> "$issue_ticks" '.'  # Add one tick to total issues
-
-  # FLAC checks out, continue processing
-  else
-    # Re-truncate file, since we're doing a multi-stage operation, the
-    # filename will be shorter than normal
-    IFS=$'\037' read -r file_basename file_length < <(_truncate_filename "$1" 'multi-stage')
-
-    # Print current FLAC being processed
-    _print_item "${file_basename}" "${file_length}" "$3" 'decode'
-
-    # The WAV file to be created from current FLAC file
-    decoded_wav="${1%${flac_extension}}_redoflacs_$$.wav"
-
-    flac -d "${1}" -o "${decoded_wav}" 2> \
-      >(while read -r -d'%' percent_complete; do
-        # Decode FLAC to WAV so auCDtect can read the audio file
-        #--
-        # Current percent complete
-        percent_complete="$( _get_percent_complete 'decode' "${percent_complete}" )"
-
-        # Print operation progress bar and percent complete
-        _print_progress 'decode' "${percent_complete}" "${file_basename}" "${file_length}"
-      done) >/dev/null
-
-    # Non-zero is failure
-    if (( $? != 0 )); then
-      # Display error
-      _print_status 'fail' "$file_basename" "$file_length" 'decode'
-
-      # Log FLAC failure
-      printf >> "$log_file" '%s: Failed decoding to WAV\n' "${PWD}/${1##*/}"
-      printf >> "$issue_ticks" '.'  # Add one tick to total issues
-
-    else
-      # Decoded FLAC is ok, display ok
-      _print_status 'ok' "$file_basename" "$file_length" 'decode'
-
-      # Re-truncate file, since we're doing a multi-stage operation, the
-      # filename will be shorter than normal
-      IFS=$'\037' read -r file_basename file_length < <(_truncate_filename "$1" 'multi-stage')
-
-      # Print current FLAC being processed, auCDtect: fast
-      _print_item "$file_basename" "$file_length" "$3" 'aucdtect_fast'
-
-      # 'export MALLOC_CHECK_' allows the dynamic linked version of
-      # `auCDTECT' to run without throwing errors
-      export MALLOC_CHECK_='0'
-
-      # The actual auCDtect command with medium accuracy setting (for
-      # speed).  STDOUT is sent to file descriptor '4'
-      _aucdtect_cmd -m20 "${decoded_wav}" 2> \
-        >(while read -r -d'%' percent_complete; do
-          # Check FLAC validity by checking decoded WAV via auCDtect (fast)
-          #--
-          # Current percent complete
-          percent_complete="$( _get_percent_complete "$2" "${percent_complete}" )"
-
-          # Print operation progress bar and percent complete
-          _print_progress 'aucdtect_fast' "${percent_complete}" "${file_basename}" "${file_length}"
-        done) >&4
-
-      # Non-zero is failure
-      if (( $? != 0 )); then
-        # Display error
-        _print_status 'fail' "$file_basename" "$file_length" 'aucdtect_fast'
-
-        # Log FLAC failure
-        printf >> "$log_file" \
-          '%s: Failed analyzing decoded FLAC\n' "${PWD}/${1##*/}"
-        printf >> "$issue_ticks" '.'  # Add one tick to total issues
-
-      else
-        # Grab the conclusion of auCDtect's command
-        # Below options prevents hanging FIFO by only reading
-        # what is necessary:
-        #    -s7:  Discard first seven lines from auCDtect's output
-        #    -n2:  Only grab 2 lines from auCDtect's output
-        #     -t:  Remove trailing newlines from auCDtect's output
-        #    -u4:  Obtain auCDtect's output from file descriptor '4'
-        #  array:  Store captured output into 'aucdtect_check_array'
-        mapfile -s7 -n2 -t -u4 aucdtect_check_array
-
-        # If there is an issue with the processed FLAC file, run
-        # auCDtect once again with highest setting
-        if [[ "${aucdtect_check_array[0]}" != 'This track looks like CDDA with probability 100%' ]]; then
-          # Re-truncate file, since we're doing a multi-stage operation, the
-          # filename will be shorter than normal
-          IFS=$'\037' read -r file_basename file_length < <(_truncate_filename "$1" 'multi-stage')
-
-          # Print current FLAC being processed, auCDtect: slow
-          _print_item "${file_basename}" "${file_length}" "$3" 'aucdtect_slow'
-
-          # The actual auCDtect command with highest accuracy setting.
-          # STDOUT is sent to file descriptor '4'
-          _aucdtect_cmd -m0 "${decoded_wav}" 2> \
-            >(while read -r -d'%' percent_complete; do
-              # Check FLAC validity by checking decoded WAV via auCDtect (slow)
-              #--
-              # Current percent complete
-              percent_complete="$( _get_percent_complete "$2" "${percent_complete}" )"
-
-              # Print operation progress bar and percent complete
-              _print_progress 'aucdtect_slow' "${percent_complete}" "${file_basename}" "${file_length}"
-            done) >&4
-
-          # Non-zero is failure
-          if (( $? != 0 )); then
-            # Error with FLAC file, display failed/error
-            _print_status 'fail' "$file_basename" "$file_length" 'aucdtect_slow'
-
-            # Log FLAC failure
-            printf >> "$log_file" \
-              '%s: Failed analyzing decoded FLAC\n' "${PWD}/${1##*/}"
-            printf >> "$issue_ticks" '.'  # Add one tick to total issues
-          else
-            # Grab the conclusion of auCDtect's command
-            # Below options prevents hanging FIFO by only reading
-            # what is necessary:
-            #    -s7:  Discard first seven lines from auCDtect's output
-            #    -n2:  Only grab 2 lines from auCDtect's output
-            #     -t:  Remove trailing newlines from auCDtect's output
-            #    -u4:  Obtain auCDtect's output from file descriptor '4'
-            #  array:  Store captured output into 'aucdtect_check_array'
-            mapfile -s7 -n2 -t -u4 aucdtect_check_array
-
-            # There is an issue with the processed FLAC file
-            if [[ "${aucdtect_check_array[0]}" != 'This track looks like CDDA with probability 100%' ]]; then
-              # If user specified '-A, --aucdtect-spectrogram', then
-              # create a spectrogram with SoX and change logging accordingly
-              if [[ "${create_spectrogram}" == 'true' ]]; then
-                # Check whether to place spectrogram images in user-defined location
-                if [[ -z "${spectrogram_location}" ]]; then
-                  # Obtain basename of current FLAC file
-                  flac_file="${1##*/}"
-
-                  # Obtain dirname of current FLAC file
-                  spectrogram_dirname="${1%/*}"
-
-                  # Create the spectrogram with '.png' as the
-                  # file extension, placed in the same
-                  # directory as the current FLAC file
-                  spectrogram_picture="${spectrogram_dirname}/${flac_file%${flac_extension}}__${iteration}__.png"
-                else
-                  # Obtain basename of current FLAC file
-                  flac_file="${1##*/}"
-
-                  # Create the spectrogram with '.png' as the
-                  # file extension, placed in the user-defined
-                  # location
-                  spectrogram_picture="${spectrogram_location}/${flac_file%${flac_extension}}__${iteration}__.png"
-                fi
-
-                # Re-truncate file, since we're doing a multi-stage operation, the
-                # filename will be shorter than normal
-                IFS=$'\037' read -r file_basename file_length < <(_truncate_filename "$1" 'multi-stage')
-
-                # Print current FLAC being processed
-                _print_item "${file_basename}" "${file_length}" "$3" 'spectrogram'
-
-                # SoX command to create the spectrogram and
-                # place it in spectrogram_picture.  Use the
-                # following arguments to create the highest
-                # resolution spectrograms:
-                #   -x 5000
-                #   -y 1025
-                _sox_cmd \
-                  "${decoded_wav}" -S -n spectrogram -c '' -t "${1}" \
-                  -p 1 -z 90 -Z 0 -q 249 -w Hann -x 1800 -y 513 \
-                  -o "${spectrogram_picture}" 2> \
-                    >(while read -r -d'%' percent_complete; do
-                      # Create spectrogram PNG image of given FLAC
-                      #--
-                      # Current percent complete
-                      percent_complete="$( _get_percent_complete 'spectrogram' "${percent_complete}" )"
-
-                      # Print operation progress bar and percent complete
-                      _print_progress 'spectrogram' "${percent_complete}" "${file_basename}" "${file_length}"
-                    done) >/dev/null
-
-                # Error creating spectrogram, display issue
-                _print_status 'issue' "$file_basename" "$file_length" 'spectrogram'
-
-                # Log auCDtect report
-                printf >> "$log_file" '%s: %s (%s)\n' "${PWD}/${1##*/}" \
-                  "${aucdtect_check_array[0]}" "$spectrogram_picture"
-                printf >> "$issue_ticks" '.'  # Add one tick to total issues
-              else
-                # Issue with FLAC authenticity, display issue
-                _print_status 'issue' "$file_basename" "$file_length" 'aucdtect_slow'
-
-                # Log auCDtect report
-                printf >> "$log_file" '%s: %s\n' "${PWD}/${1##*/}" \
-                  "${aucdtect_check_array[0]}"
-                printf '.' >> "${issue_ticks}"  # Add one tick to total issues
-              fi
-            else
-              # FLAC is ok, display ok
-              _print_status 'ok' "${file_basename}" "${file_length}" 'aucdtect_slow'
-            fi
-          fi
-        else
-          # FLAC is ok, display ok
-          _print_status 'ok' "${file_basename}" "${file_length}" 'aucdtect_fast'
-        fi
-
-        # Remove temporary WAV file
-        rm "${decoded_wav}"
-      fi
-    fi
+  # auCDtect does not support a bit depth greater than 16 (CD quality
+  # only), skipping file
+  #
+  # NOTE:
+  #   A default value of 0 is specified in the event the bit depth could
+  #   not be obtained. Errors will be caught during decoding
+  if (( ${bits_mastering[0]:-0} > 16 )); then
+    _print_item_skip
+    printf >&3 "$row\n"  # Send complete to _run_parallel()
+    return
   fi
-  printf "$4\n" >&3  # Store row position and end operation
+
+  # Skip FLAC file if MASTERING=Lossy is set and the 'skip_lossy'
+  # configuration option is 'true'
+  if [[
+    "${bits_mastering[1]#*=}" == 'Lossy'
+    && "$skip_lossy" == 'true'
+  ]]; then
+    _print_item_skip
+    printf >&3 "$row\n"  # Send complete to _run_parallel()
+    return
+  fi
+
+  # The WAV file to be created from current FLAC file
+  item_wav="${item%${flac_extension}}_redoflacs_$$.wav"
+
+  _print_item 'Decoding'
+
+  # As indicated by '[FIRST]', '[SECOND]', and '[LAST]', this is the
+  # order each of the statements will evaluate to 'true'. '[FIRST]' may
+  # never evaluate to 'true' (if the FLAC file fails to decode)
+  while IFS=$'\n' read -rd ' ' output; do
+    # [LAST] Store error message
+    if [[ "$error_msg" && -n "$output" ]]; then
+      [[ "$output" == 'state' ]] && break  # End of error message
+      error_msg+=" $output"
+      continue
+    fi
+
+    # [SECOND] An error occurred, storing first word
+    if [[ "$output" == 'ERROR' && "$previous" == *"${base}:" ]]; then
+      error_msg="$output"
+      continue
+    fi
+
+    # [FIRST] FLAC decoding percentage complete
+    if [[ "$output" == *[[:digit:]]% ]]; then
+      output="${output//$'\b'}"  # Remove all backspace characters
+
+      # Remove beginning 'complete' string (from backspace characters)
+      printf "\033[${row}H${yellow}%4s$reset" "${output#complete}"
+    fi
+
+    # Used to validate previous output is an error and not a filename
+    previous="$output"
+  done < <(flac 2>&1 -d "$item" -o "$item_wav")
+
+  # Log failures if there are any errors
+  if [[ "$error_msg" ]]; then
+    _print_item_fail
+    printf >> "$log_file" '%s [%s] %s\n' "$item" 'auCDtect' "$error_msg"
+    printf >> "$issue_ticks" '.'  # Add one tick to total issues
+    printf >&3 "$row\n"           # Send complete to _run_parallel()
+    return
+  else
+    _print_item_ok
+  fi
+
+  # Runs auCDtect with medium accuracy setting (for speed):
+  #   STDOUT: auCDtect STDOUT captured to be parsed
+  #   STDERR: auCDtect progress percentage completed sent to FD4
+  _print_item 'auCDtect:Fast'
+  exec 4>&1
+  aucdtect_stdout="$(
+    MALLOC_CHECK_='0' auCDtect -m20 "$item_wav" 2> >(
+      while IFS=$'\n' read -rd $'\r' aucdtect_stderr; do
+        aucdtect_stderr="${aucdtect_stderr##*[}"
+        printf >&4 "\033[${row}H${yellow}%4s$reset" "${aucdtect_stderr%]}"
+      done
+    )
+  )"
+  exec 4>&-
+
+  # Looks for error messages and file status from auCDtect
+  #   BASH_REMATCH[1]: auCDtect error messages
+  #   BASH_REMATCH[2]: auCDtect file status
+  [[ "$aucdtect_stdout" =~ $regex ]]
+
+  # Log failures if there are any errors
+  if [[ "${BASH_REMATCH[1]}" ]]; then
+    _print_item_fail
+    printf >> "$log_file" \
+      '%s [%s] %s\n' "$item" 'auCDtect' "${BASH_REMATCH[1]}"
+    printf >> "$issue_ticks" '.'  # Add one tick to total issues
+    rm "$item_wav"                # Remove temporary WAV file
+    printf >&3 "$row\n"           # Send complete to _run_parallel()
+    return
+
+  # auCDtect reports CDDA of 100%, continue with next item
+  elif [[ "${BASH_REMATCH[2]}" == *'CDDA'*'100%'* ]]; then
+    _print_item_ok
+    rm "$item_wav"                # Remove temporary WAV file
+    printf >&3 "$row\n"           # Send complete to _run_parallel()
+    return
+  fi
+
+  # Current item is not CDDA of 100%, auCDtect is run with highest
+  # accuracy setting:
+  #   STDOUT: auCDtect STDOUT captured to be parsed
+  #   STDERR: auCDtect progress percentage completed sent to FD4
+  _print_item 'auCDtect:Slow'
+  exec 4>&1
+  aucdtect_stdout="$(
+    MALLOC_CHECK_='0' auCDtect -m0 "$item_wav" 2> >(
+      while IFS=$'\n' read -rd $'\r' aucdtect_stderr; do
+        aucdtect_stderr="${aucdtect_stderr##*[}"
+        printf >&4 "\033[${row}H${yellow}%4s$reset" "${aucdtect_stderr%]}"
+      done
+    )
+  )"
+  exec 4>&-
+
+  # Looks for error messages and file status from auCDtect
+  #   BASH_REMATCH[1]: auCDtect error messages
+  #   BASH_REMATCH[2]: auCDtect file status
+  [[ "$aucdtect_stdout" =~ $regex ]]
+
+  # Log failures if there are any errors
+  if [[ "${BASH_REMATCH[1]}" ]]; then
+    _print_item_fail
+    printf >> "$log_file" \
+      '%s [%s] %s\n' "$item" 'auCDtect' "${BASH_REMATCH[1]}"
+    printf >> "$issue_ticks" '.'  # Add one tick to total issues
+    rm "$item_wav"                # Remove temporary WAV file
+    printf >&3 "$row\n"           # Send complete to _run_parallel()
+    return
+  fi
+
+  # auCDtect reports CDDA of 100%, continue with next item
+  if [[ "${BASH_REMATCH[2]}" == *'CDDA'*'100%'* ]]; then
+    _print_item_ok
+    rm "$item_wav"                # Remove temporary WAV file
+    printf >&3 "$row\n"           # Send complete to _run_parallel()
+    return
+  fi
+
+  # Log failure if not CDDA with 100% and no spectrogram is requested
+  if [[
+    "${BASH_REMATCH[2]}" != *'CDDA'*'100%'*
+    && "$create_spectrogram" != 'true'
+  ]]; then
+    _print_item_check
+    printf >> "$log_file" \
+      '%s [%s] %s\n' "$item" 'auCDtect' "${BASH_REMATCH[2]}"
+    printf >> "$issue_ticks" '.'  # Add one tick to total issues
+    rm "$item_wav"                # Remove temporary WAV file
+    printf >&3 "$row\n"           # Send complete to _run_parallel()
+    return
+  fi
+
+  # User requested a spectrogram, SoX is run to generate a spectrogram
+  # in the location as the current item or a user-defined location
+  _print_item 'Spectrogram'
+
+  # Default location for spectrogram, eg:
+  #   /path/to/file.flac.spec.png.0
+  #
+  # User defined (eg: /tmp):
+  #   /user/configured/path/to/file.flac.spec.png.0
+  spectrogram="${spectrogram_location:-${item%/*}}/${item##*/}.spec.png.0"
+
+  # Ensure we don't clobber the spectrogram, eg:
+  #   /path/to/file.flac.spec.png.0 ->
+  #   /path/to/file.flac.spec.png.1 ->
+  until [[ ! -f "$spectrogram" ]]; do
+    spectrogram="${spectrogram%.*}.$((${spectrogram##*.} + 1))"
+  done
+
+  # SoX display progress percentage on STDERR as well as any error
+  # messages. Example output:
+  #
+  # Error messages:
+  #   sox FAIL formats: can't open input file `file.wav': WAVE: RIF<...>
+  #   sox FAIL formats: can't open input file `file.flacd': No such<...>
+  #
+  # NOTE:
+  #  The '-n1000' is to force 'read' to grab the SoX error if there are
+  #  any error messages, otherwise the percentage complete is read
+  while IFS=$'\n' read -rd '%' -n1000 output; do
+    # Strip from leading string until percentage complete
+    output="${output##*In:}"
+
+    # Strip floating point from output
+    printf "\033[${row}H${yellow}%4s${reset}" "${output%%.*}%"
+  done < <(
+    sox 2>&1 "$item" -S -n spectrogram -o "$spectrogram" -t "$item" \
+      -c '' -p 1 -z 90 -Z 0 -q 249 -w Hann -x 1800 -y 513
+  )
+
+  # Log failures if there are any errors from SoX
+  if [[ "$output" == 'sox FAIL'* ]]; then
+    _print_item_fail
+    printf >> "$log_file" \
+      '%s [%s] %s\n' "$item" 'auCDtect:Spectrogram' "$output"
+
+  # Log auCDtect status for item as well as generated spectrogram
+  else
+    _print_item_check
+    printf >> "$log_file" \
+      '%s [%s] %s (%s)\n' \
+      "$item" 'auCDtect:Spectrogram' "${BASH_REMATCH[2]}" "$spectrogram"
+  fi
+
+  printf >> "$issue_ticks" '.'  # Add one tick to total issues
+  rm "$item_wav"                # Remove temporary WAV file
+  printf >&3 "$row\n"           # Send complete to _run_parallel()
 }
 
 #
@@ -2299,7 +2179,7 @@ _md5check()
   trap '_kill_jobs "$(jobs -rp)"' EXIT
   local output error_msg md5sum
 
-  _print_item
+  _print_item 'Verifying MD5'
 
   # Metaflac will display the MD5 checksum or an error (on one line).
   # These values are captured and logged, appropriately
@@ -2636,7 +2516,7 @@ _extract_images()
     blocks="${blocks%.*}.$((${blocks##*.} + 1))"
   done
 
-  _print_item
+  _print_item 'Extracting Images'
 
   # Retrieve PICTURE blocks from current item, storing to a temporary file
   error_msg="$(metaflac 2>&1 >"$blocks" --list --block-type=PICTURE "$item")"
@@ -2761,7 +2641,7 @@ _prune()
   trap '_kill_jobs "$(jobs -rp)"' EXIT
   local output error_msg
 
-  _print_item
+  _print_item 'Prune Metadata'
   _print_item_half  # Metaflac doesn't display a percentage complete
 
   # Remove all information but STREAMINFO,VORBIS_COMMENTs, and
@@ -2966,11 +2846,6 @@ export LC_ALL=C
 
 _check_config_version              # Check if script config is newer than user's
 job_fifo="/tmp/redoflacs_fifo_$$"  # Job manager FIFO
-
-tmp_aucdtect_fd="/tmp/redoflacs_aucdtect_fifo_$$"    # auCDtect's STDOUT FIFO
-trap 'rm -f "${job_fifo}" "${tmp_aucdtect_fd}"' EXIT # Allow for FIFO removal
-mkfifo "${tmp_aucdtect_fd}"                          # Create auCDtect FIFO
-exec 4<>"${tmp_aucdtect_fd}"                         # Open read/write on fd '4'
 
 issue_ticks="/tmp/redoflacs_issue_file_$$"           # Issues/Errors file
 
