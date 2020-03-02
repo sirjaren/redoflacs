@@ -105,7 +105,7 @@ _usage()
 _message_log_exists()
 {
   case "$1" in
-    'aucdtect'*)
+    'aucdtect')
       _error 'Some FLAC files may be lossy sourced, please check:\n'
     ;;
     'md5check')
@@ -120,7 +120,7 @@ _message_log_exists()
       _error 'There were issues adding ReplayGain values,\n'
       _error 'please check:\n'
     ;;
-    'retag_'*)
+    'retag')
       _error 'Some FLAC files have missing tags or there were\n'
       _error 'issues with some of the FLAC files, please check:\n'
     ;;
@@ -161,17 +161,8 @@ _message()
       'test')           message='Test FLACs'                              ;;
       'extract_images') message='Extracting Artwork'                      ;;
       'replaygain')     message='Applying ReplayGain'                     ;;
-      'retag_'*)
-        if [[ "${1}" == 'retag_analyze' ]]; then
-          message='Retagging FLACs'
-          sub_message='Analyzing'
-        else  #  'retag_apply'
-          sub_message='Re-Tagging'
-        fi
-      ;;
-      'prune')
-        message='Prune METADATA Blocks'
-      ;;
+      'retag')          message='Retagging FLACs'                         ;;
+      'prune')          message='Prune METADATA Blocks'                   ;;
     esac
 
     # Print title message, if applicable
@@ -229,13 +220,12 @@ _message()
 _update_operation_status()
 {
   case "${1}" in
-    'aucdtect'*)          operation_summary['Validate with auCDtect']="${2}" ;;
+    'aucdtect')           operation_summary['Validate with auCDtect']="${2}" ;;
     'md5check')           operation_summary['Check MD5 Signature']="${2}"    ;;
     'compress')           operation_summary['Compress FLACs']="${2}"         ;;
     'test')               operation_summary['Test FLACs']="${2}"             ;;
     'replaygain')         operation_summary['Applying ReplayGain']="${2}"    ;;
-    'retag_analyze')      operation_summary['>> Analyzing']="${2}"           ;;
-    'retag_apply')        operation_summary['>> Re-Tagging']="${2}"          ;;
+    'retag')              operation_summary['Retagging FLACs']="${2}"        ;;
     'extract_images')     operation_summary['Extracting Artwork']="${2}"     ;;
     'prune')              operation_summary['Prune METADATA Blocks']="${2}"  ;;
   esac
@@ -306,121 +296,6 @@ _print_item()
 
   # Displays formatted, currently processed item
   printf "$fmt" "$basename" "$label" "${num}/${#total_items[@]}"
-}
-
-#
-# Display the result of current item that was operated on
-#
-# $1 is the file/dir operation result, of which, can be:
-#   ok   fail   issue   skip
-# $2 is the basename of the file/dir
-# $3 is the filename length
-# $4 determines whether item is a sub operation or which action is being done
-#
-_print_status()
-{
-  # Set up local variables
-  declare -i print_spacing='0' column_placement='0'
-
-  case "$1" in
-    'ok')     color="${green}"   result='100%'  ;;
-    'fail')   color="${red}"     result='fail'  ;;
-    'issue')  color="${yellow}"  result='chck'  ;;
-    'skip')   color="${yellow}"  result='skip'  ;;
-  esac
-
-  #(( max_length >= $3 )) && print_spacing=$(( max_length - $3 ))
-
-  case "$4" in
-    'sub')
-      column_placement='6'
-    ;;
-    'decode')
-      action="${cyan}[decoding->WAV]${reset} "
-      (( max_length >= $3 )) && print_spacing=$(( max_length - $3 - 16 ))
-    ;;
-    'aucdtect_fast')
-      action="${cyan}[auCDtect:fast]${reset} "
-      (( max_length >= $3 )) && print_spacing=$(( max_length - $3 - 16 ))
-    ;;
-    'aucdtect_slow')
-      action="${cyan}[auCDtect:slow]${reset} "
-      (( max_length >= $3 )) && print_spacing=$(( max_length - $3 - 16 ))
-    ;;
-    'spectrogram')
-      action="${cyan}[spectral->PNG]${reset} "
-      (( max_length >= $3 )) && print_spacing=$(( max_length - $3 - 16 ))
-    ;;
-  esac
-
-#  printf "\033[${placement};${column_placement}H${color}%s${reset} ${action}%s%${print_spacing}s" \
-#    "${result}" "$2" ''
-
-  printf "\033[${placement};${column_placement}H${color}%s${reset} ${action}%s%${print_spacing}s\033[${placement};79H\033[0K" \
-    "${result}" "$2" ''
-}
-
-#
-# Display filename and progress bar of the current operation
-#
-# $1 is one of the following operations:
-#   aucdtect                  md5_check           compress_verify
-#   compress_no_test          test                replaygain_test
-#   replaygain_force_apply    replaygain_apply    retag_analyze
-#   retag_apply               extract_images      prune
-#   decode                    aucdtect_fast       aucdtect_slow
-#   spectrogram
-#
-# $2 is percent
-# $3 is filename to print (may be truncated)
-# $4 is filename length
-#
-_print_progress()
-{
-  # Set up local variables
-  declare  action  progress_bar_length length=$4
-
-  case "$1" in
-    'decode')
-      action="${cyan}[decoding->WAV]${reset} "
-      # max_length - 16: '[decoding -> WAV] ' is 18 characters long
-      progress_bar_length=$(( ( ( max_length - 16 ) * $2 ) / 100 ))
-    ;;
-    'aucdtect_fast')
-      action="${cyan}[auCDtect:fast]${reset} "
-      # max_length - 16: '[auCDtect - fast] ' is 18 characters long
-      progress_bar_length=$(( ( ( max_length - 16 ) * $2 ) / 100 ))
-    ;;
-    'aucdtect_slow')
-      action="${cyan}[auCDtect:slow]${reset} "
-      # max_length - 16: '[auCDtect: slow] ' is 16 characters long
-      progress_bar_length=$(( ( ( max_length - 16 ) * $2 ) / 100 ))
-    ;;
-    'spectrogram')
-      action="${cyan}[spectral->PNG]${reset} "
-      # max_length - 16: '[spectral->PNG] ' is 16 characters long
-      progress_bar_length=$(( ( ( max_length - 16 ) * $2 ) / 100 ))
-    ;;
-    *)
-      #progress_bar_length=$(( ( max_length * $2 ) / 100 ))
-      progress_bar_length=$(( ( 60 * $2 ) / 100 ))
-    ;;
-  esac
-
-  if (( progress_bar_length < length )); then
-    # Print out the current item name as well as the progress bar
-    #--
-    # If $progress_bar_length is less than the current item's name length,
-    # print out the item's name with the progress bar a part of the name.
-    #
-    # Otherwise, print out the item's name, and the progress bar after the
-    # item's name
-    printf "\033[${placement};4H${yellow}%4s${reset} ${action}${invert}%s${reset}" \
-      "${2}%" "${3:0:${progress_bar_length}}"
-  else
-    printf "\033[${placement};4H${yellow}%4s${reset} ${action}${invert}%s%$(( progress_bar_length - length ))s${reset}" \
-      "${2}%" "${3}" ''
-  fi
 }
 
 #
@@ -670,8 +545,8 @@ SOURCE
 MASTERING
 
 # The REPLAYGAIN tags below, are added by the '-g, --replaygain' or
-'-G, --replaygain-noforce' argument.  If you want to keep the ReplayGain tags,
-# make sure you leave these here.
+# '-G, --replaygain-noforce' argument.  If you want to keep the ReplayGain
+# tags, make sure you leave these here.
 REPLAYGAIN_REFERENCE_LOUDNESS
 REPLAYGAIN_TRACK_GAIN
 REPLAYGAIN_TRACK_PEAK
@@ -802,32 +677,32 @@ END_OF_CONFIG
 #
 # Parse the user/system configuration file
 #
-# Load the config file into an array and process each line, grabbing the user-
-# specified FLAC tags and setting up the configuration variables
-#
 _parse_config()
 {
-  # Set up local variables
-  declare  config_option
+  local line
+  local -ga tags_to_keep  # Global array used in _retag() function
 
-  while read -r line; do
-    # Run through the config file, evaluating the configuration option into the
-    # current enviroment and storing the tag fields into an array
-    #--
-    # Test and use only the tag and config options
-    if [[ -n "${line###*}" && -n "${line}" ]]; then
-      config_option="${line//*=*/}"  # Null if line is a config option
+  # Used to skip irrelevant configuration file lines
+  local regex='^([[:space:]]+|#.*|)$'
 
-      if [[ -n "${config_option}" ]]; then
-        tags+=( "${line^^}" )       # Store uppercase tag in array
-      else
-        eval "${line}"              # Put config option in environment
-      fi
+  # Process the configuration file, storing all user-defined tags and
+  # evaluate each configuration option
+  while IFS=$'\n' read -r line; do
+    # Skip empty lines, comment lines and lines with whitespace
+    [[ "$line" =~ ^([[:space:]]+|#.*|)$  ]] && continue
+
+    # Evaluate configuration file option
+    if [[ "$line" == *'='* ]]; then
+      eval "$line"
+      continue
     fi
-  done < "${config_file}"
 
-  if [[ "${preserve_modtime}" == 'true' ]]; then
-    metaflac_extra_options="--preserve-modtime"
+    # These are user-defined FLAC tags stored into a global array
+    tags_to_keep+=( "${line^^}" )
+  done < "$config_file"
+
+  if [[ "$preserve_modtime" == 'true' ]]; then
+    metaflac_extra_options='--preserve-modtime'
   fi
 }
 
@@ -878,96 +753,6 @@ _check_config_version()
 }
 
 #
-# Truncate the processed item's filename if it's bigger than terminal width,
-# returning the filename (possibly truncated) as well as the length of the
-# filename (in characters, possibly truncated)
-#
-# $1 is the filename to truncate/process
-# $2 determines whether this is a multi-stage operation (eg, auCDtect)
-#
-_truncate_filename()
-{
-  unit_separator=$'\037'                 # ASCII unit separator
-
-  # Set up local variables
-  declare    filename="$1"  length_diff
-  declare -i apparent_length  length
-  declare filename_length
-
-  # Make absolute pathname
-  [[ "${filename}" == '.' || "${filename}" == './' ]] && filename="${PWD}"
-
-  # Basename of file/directory
-  if [[ "${filename: -1}" == '/' ]]; then         # Last character is a '/'
-    filename="${filename%?}"                     # Remove last character
-    filename="${filename##*/}/"                  # Basename of directory, append '/'
-  else
-    filename="${filename##*/}"                   # Basename of file
-  fi
-
-  filename="${filename//$'\n'/?}"                 # Replace '\n' with '?'
-
-##   # Apparent (column-wdith) length of filename; 'wc' handles wide characters
-##   filename_length="$(wc -L <<< "${filename}")"
-
-  #printf >&2 "${smcup}\033[${iteration};0H%s" "$filename"
-  #IFS=';' read -rs -dR -u2 -t1 -p "${curpos}${rmcup}" _ filename_length
-
-  #{
-  #  #IFS=';' read -rs -dR -u2 -t1 -p "${smcup}${filename}${curpos}${rmcup}" _ filename_length
-  #} >/dev/null
-  #printf >&2 -- '--\n'
-  #printf >&2 "filename:        $filename\n"
-  #printf >&2 "filename_length: $filename_length\n"
-  #printf >&2 -- '--\n'
-  printf >&2 "%s\n" "$filename_length"
-  ((filename_length--))
-
-  # Subtract 16 blocks from $max_length if we're doing a multi-stage operation
-  [[ "${2}" == 'multi-stage' ]] && max_length=$((max_length - 16))
-
-  # If filename is longer than the width allowed in the terminal, truncate it
-  if (( filename_length > max_length )); then
-    max_length=$((max_length - 4))        # Leave room for space and ellipsis
-    apparent_length="${filename_length}"  # Apparent length of item
-    length="${max_length}"                # Length in ${foo:offset:length}
-
-    # Use fast ${foo:offset:length} truncate item if the apparent length
-    # equals the number of characters using ${#foo}.  Otherwise, use 'wc' to
-    # grab apparent length (slower).  The slow method is only used for wide
-    # characters
-    #--
-    if (( ${#filename} == filename_length )); then
-      # eg, 'longfilename' -> 'longfilen...'
-      filename="${filename:0:${max_length}}..."
-      filename_length="${#filename}"
-    else
-      until (( apparent_length <= max_length )); do
-        # Keep slicing off a character from the current item, until it's length
-        # is less than or equal to the maximum length allowed.  Wide characters
-        # may never truncate equal to $max_length, but may be less than it
-        #--
-        ((--length))
-        apparent_length="$(wc -L <<< "${filename:0:${length}}")"
-      done
-
-      # Difference between lengths, represented as spaces
-      printf -v length_diff "%$(( max_length - apparent_length ))s" ''
-
-      # eg, 'longfilename' -> 'longfilen ...'
-      filename="${filename:0:${length}}${length_diff}..."
-
-      # Apparent length of truncated filename
-      filename_length="$(wc -L <<< "${filename}")"
-    fi
-  fi
-
-
-  # Return (truncated) filename and (truncated) filename length
-  printf "%s${unit_separator}%d" "${filename}" "${filename_length}"
-}
-
-#
 # Determine number of jobs to run via the number CPUs/cores available
 #
 _find_cores()
@@ -1012,7 +797,7 @@ _countdown_metadata()
   _error 'when re-tagging the selected files:\n'
 
   # Creates the listing of tags to be kept
-  printf '     %s\n' "${tags[@]}" >&2
+  printf '     %s\n' "${tags_to_keep[@]}" >&2
 
   # Warning message about embedded coverart
   _error "By default, this script will ${cyan}REMOVE${reset} the legacy ${cyan}COVERART${reset} tag.\n"
@@ -1271,8 +1056,7 @@ _process_positional_parameters()
         operations[1]='md5check'
         operations[2]='compress'
         operations[5]='replaygain'
-        operations[7]='retag_analyze'
-        operations[8]='retag_apply'
+        operations[7]='retag'
         operations[10]='prune'
       ;;
       '-L')
@@ -1282,8 +1066,7 @@ _process_positional_parameters()
         operations[1]='md5check'
         operations[2]='compress'
         operations[5]='replaygain'
-        operations[7]='retag_analyze'
-        operations[8]='retag_apply'
+        operations[7]='retag'
         operations[9]='extract_images'
         operations[10]='prune'
       ;;
@@ -1329,8 +1112,7 @@ _process_positional_parameters()
         force_replaygain='true'
       ;;
       '-r')
-        operations[7]='retag_analyze'
-        operations[8]='retag_apply'
+        operations[7]='retag'
       ;;
       '-e')
         operations[9]='extract_images'
@@ -1663,7 +1445,7 @@ _replaygain()
 
     # Obtain ReplayGain tags from all files in the current directory
     mapfile -n0 -t replaygain_tags < <(
-      metaflac 2>&1 \
+      metaflac 2>/dev/null \
         --show-tag='REPLAYGAIN_REFERENCE_LOUDNESS' \
         --show-tag='REPLAYGAIN_TRACK_GAIN' \
         --show-tag='REPLAYGAIN_TRACK_PEAK' \
@@ -1945,10 +1727,10 @@ _aucdtect()
 
   _print_item 'auCDtect'
 
-  # Get the bit depth and MASTERING tag of a FLAC file.  Also used to check if
-  # FLAC file is real.  Hide STDERR output.  The array indices are:
-  #   bits_mastering[0] = bit depth (eg, 16)
-  #   bits_mastering[1] = MASTERING tag & value (eg, MASTERING=Lossy)
+  # Get the bit depth and MASTERING tag of a FLAC file. Errors will be
+  # caught during decoding. Indices are:
+  #   bits_mastering[0] = bit depth (eg: 16)
+  #   bits_mastering[1] = MASTERING tag and value (eg: MASTERING=Lossy)
   mapfile -n2 -t bits_mastering < <(
     metaflac 2>/dev/null --show-bps --show-tag='MASTERING' "$item"
   )
@@ -2192,7 +1974,7 @@ _md5check()
       break                                   # Stop reading lines
     fi
 
-    # This is the the MD5 checksum
+    # This is the MD5 checksum
     md5sum="$output"
   done < <(metaflac 2>&1 --show-md5sum "$item")
 
@@ -2217,287 +1999,202 @@ _md5check()
 }
 
 #
-# Check for missing VORBIS tags from a given FLAC
+# Looks for the tags specified in the configuration file, stripping all
+# other tags from a given FLAC file, and logging any tags which are
+# missing
 #
-# $1 is the filename
-# $2 is the operation that's currently being run, of which, can be:
-#   aucdtect                  md5_check           compress_verify
-#   compress_no_test          test                replaygain_test
-#   replaygain_force_apply    replaygain_apply    retag_analyze
-#   retag_apply               extract_images      prune
-# $3 is a string representing number items processed, eg: [43/439]
+# Process substitution when extracting tags is used to ensure trailing
+# newlines are not stripped
 #
-_retag_analyze()
+_retag()
 {
   trap '_kill_jobs "$(jobs -rp)"' EXIT
+  local output error_msg line extracted_tag key empty_tag tag missing_tags_str
+  local -i index='-1'
+  local -a missing_tags found_tags tags
 
-  # Set up local variables
-  declare    file_basename
-  declare -i file_length
+  _print_item 'Retagging'
 
-  # Truncate file, if necessary, and grab file information, splitting on
-  # Unit Separator (\037)
-  IFS=$'\037' read -r file_basename file_length < <(_truncate_filename "$1")
+  # Extracts the first tag from the list of tags to keep and does error
+  # handling on this operation. Other extracted tags are processeed in
+  # the following loop after the error handling
+  #
+  # Metaflac will display errors on one line. These are handled first
+  # with the tag value obtained last (if no failures)
+  while IFS=$'\n' read -r output; do
+    # Error reading FLAC file (possibly fake), eg:
+    #   fake/fake.flac: ERROR: reading metadata, status = "FLAC ..."
+    if [[ "$output" == *'ERROR'* ]]; then
+      error_msg="${output%, status = *}"      # Strip status
+      error_msg="ERROR${error_msg#*: ERROR}"  # Strip filename
+      break                                   # Stop reading lines
+    fi
 
-  # Print current FLAC being processed
-  _print_item "${file_basename}" "${file_length}" "$3" 'sub'
+    # This is the extracted tag (could be empty or multiple lines)
+    if [[ "$extracted_tag" ]]; then
+      extracted_tag+=$'\n'"$output"
+    else
+      extracted_tag+="$output"
+    fi
+  done < <(metaflac 2>&1 --show-tag="${tags_to_keep[0]}" "$item")
 
-  # Check if file is a FLAC file (variable hides output)
-  check_flac="$(metaflac --show-md5sum "${1}" 2>&1)"
-
-  # Non-zero is failure
-  if (( $? != 0 )); then
-    # Display error
-    _print_status 'fail' "$file_basename" "$file_length" 'sub'
-
-    # Log FLAC failure
-    printf >> "$log_file" '%s: Not a real FLAC file\n' "${PWD}/${1##*/}"
+  # Log failures if there are any errors
+  if [[ "$error_msg" ]]; then
+    _print_item_fail
+    printf >> "$log_file" '%s [%s] %s\n' "$item" "$operation" "$error_msg"
     printf >> "$issue_ticks" '.'  # Add one tick to total issues
 
-  else
-    # Iterate through each tag field and check if tag is missing
-    for j in "${tags[@]}"; do
-      # Check if ALBUMARTIST is in tag array and apply operations on
-      # the tag field if it exists
-      if [[ "${j}" == 'ALBUMARTIST' ]]; then
-        # ALBUMARTIST exists in tag array so allow script to check the
-        # various naming conventions within the FLAC files (ie,
-        # 'ALBUM ARTIST' or 'ALBUM_ARTIST')
-
-        # "ALBUMARTIST" or "ALBUM ARTIST" or "ALBUM_ARTIST", case-insensitive
-        if [[ -n "$(metaflac --show-tag='ALBUMARTIST' "${1}")" ]]; then
-          show_tag_list+=( '--show-tag=ALBUMARTIST' )
-
-        elif [[ -n "$(metaflac --show-tag='ALBUM ARTIST' "${1}")" ]]; then
-          show_tag_list+=( '--show-tag=ALBUM ARTIST' )
-
-        elif [[ -n "$(metaflac --show-tag='ALBUM_ARTIST' "${1}")" ]]; then
-          show_tag_list+=( '--show-tag=ALBUM_ARTIST' )
-        fi
-      else
-        # Build up metaflac '--show-tag=' list
-        show_tag_list+=( "--show-tag=${j}" )
-      fi
-    done
-
-    # Load up all the tag values for current file
-    mapfile -n0 -t metaflac_tag_array < <(metaflac "${show_tag_list[@]}" "${1}")
-
-    # Take above tag values and create an associative
-    # array using TAG_FIELD=TAG_VALUE as the key/value pair
-    #
-    # Specifically declare an empty associative array
-    declare -A temp_tag_array
-
-    # Run through the tag array from above and store
-    # the values into a temporary tag array
-    for tag_field_value in "${metaflac_tag_array[@]}"; do
-      # This is the tag field (eg. TITLE)
-      tag_field="${tag_field_value%%=*}"
-
-      # Enforce the tag field to be uppercase
-      # ${tag_field_value} below is the tag value
-      temp_tag_array+=( ["${tag_field^^}"]="${tag_field_value#*=}" )
-    done
-
-    # Run through the tags array and test each tag value from
-    # ${temp_tag_array} with the currently processed tag in ${tag[@]}.  For
-    # each match found, test if the tag value is null, reporting any missing
-    # tags. Then remove the tag field (index) from the ${temp_tag_array}, so
-    # the next iteration is faster and we can check for missing tags (tag
-    # fields)
-    for j in "${tags[@]}"; do
-
-      # If the total # of indices in the temporary tag array is above
-      # 0, continue testing, else store missing tag (${j}) into the
-      # missing tags array
-      if (( ${#temp_tag_array[@]} > 0 )); then
-
-        # Compare each tag field from the temporary array to ${j},
-        # checking if they are equal and if so, check for missing
-        # tag values
-        for temp_tag_field in "${!temp_tag_array[@]}"; do
-          # Both tag fields are equal
-          if [[ "${j}" == "${temp_tag_field}" ]]; then
-            # Check if tag value is null, logging missing tags if so
-            if [[ -z "${temp_tag_array[${temp_tag_field}]}" ]]; then
-              missing_tags+="${j}, "
-            fi
-
-            # Remove the current tag field from the temporary tag
-            # array since it's been matched already
-            unset -v temp_tag_array["${temp_tag_field}"]
-
-            # This variable let's the script know that the current
-            # tag, ${j} has been matched up with a tag field in
-            # ${temp_tag_array[@]}
-            tag_match='true'
-
-            # Break out of loop since the tag fields have been
-            # matched, continuing on to the next iteration of ${j}
-            break
-          fi
-        done
-
-        # If there wasn't a tag field in the temporary tag array
-        # ( eg. ${temp_tag_array[@]} ) that matched ${j}, the FLAC file
-        # must have a missing tag, so log it by throwing the missing tag
-        # into the missing tags array
-        if [[ "${tag_match}" != 'true' ]]; then
-          missing_tags+="${j}, "
-        fi
-
-        # Reset the value of tag match (if any) for the next iteration
-        # of ${j}
-        unset -v tag_match
-
-      # The total # of indices in the temporary tag array is 0, so
-      # whatever is left in ${tags[@]} represented by ${j} is logged
-      # as missing
-      else
-        missing_tags+="${j}, "
-      fi
-    done
-
-    # If missing_tags_array is not empty, there are missing
-    # tags in the current file so log output
-    if [[ -n "${missing_tags}" ]]; then
-      # Error with FLAC file, display failed/error
-      _print_status 'fail' "$file_basename" "$file_length" 'sub'
-
-      # Log the missing tags
-      printf >> "$log_file" '%s: Missing tags: %s\n' \
-        "${PWD}/${1##*/}" "${missing_tags%, }"
-      printf >> "$issue_ticks" '.'  # Add one tick to total issues
-    else
-      # There are no missing tags, display ok
-      _print_status 'ok' "$file_basename" "$file_length" 'sub'
-    fi
+    # Send complete to _run_parallel()
+    printf >&3 "$row\n"
+    return
   fi
-  printf "$4\n" >&3  # Store row position and end operation
-}
 
-#
-# Re-apply the VORBIS tags specified in the config file, removing all others
-#
-# $1 is the filename
-# $2 is the operation that's currently being run, of which, can be:
-#   aucdtect                  md5_check           compress_verify
-#   compress_no_test          test                replaygain_test
-#   replaygain_force_apply    replaygain_apply    retag_analyze
-#   retag_apply               extract_images      prune
-# $3 is a string representing number items processed, eg: [43/439]
-# $4 is the current operation's row placement
-#
-_retag_apply()
-{
-  trap '_kill_jobs "$(jobs -rp)"' EXIT
+  # Look for each of the tags to keep in the current FLAC flac,
+  # separating each of the tags as separate indices in an array. If
+  # there are any missing tags, these are stored as well
+  for key in "${!tags_to_keep[@]}"; do
+    # The first tag (index=0) was already obtained during error checking
+    if (( key != 0 )); then
+      IFS='' read -rd '' extracted_tag < <(
+        metaflac 2>&1 --show-tag="${tags_to_keep[key]}" "$item"
+      )
 
-  # Set up local variables
-  declare    file_basename
-  declare -i file_length
-
-  # Truncate file, if necessary, and grab file information, splitting on
-  # Unit Separator (\037)
-  IFS=$'\037' read -r file_basename file_length < <(_truncate_filename "$1")
-
-  # Print current FLAC being processed
-  _print_item "${file_basename}" "${file_length}" "$3" 'sub'
-
-  # Remove and set new tags
-  #
-  # Iterate through the tag array and set a variable for each tag
-  for j in "${tags[@]}"; do
-    # Check if ALBUMARTIST is in tag array and apply operations on
-    # the tag field if it exists
-    if [[ "${j}" == 'ALBUMARTIST' ]]; then
-      # ALBUMARTIST exists in tag array so allow script to check the
-      # various naming conventions within the FLAC files (ie,
-      # 'ALBUM ARTIST' or 'ALBUM_ARTIST')
-      #--
-      # "ALBUMARTIST"
-      if [[ -n "$(metaflac --show-tag='ALBUMARTIST' "${1}")" ]]; then
-        show_tag_list+=( '--show-tag=ALBUMARTIST' )
-
-      elif [[ -n "$(metaflac --show-tag='ALBUM ARTIST' "${1}")" ]]; then
-        show_tag_list+=( '--show-tag=ALBUM ARTIST' )
-
-      elif [[ -n "$(metaflac --show-tag='ALBUM_ARTIST' "${1}")" ]]; then
-        show_tag_list+=( '--show-tag=ALBUM_ARTIST' )
-      fi
-    else
-      # Build up metaflac '--show-tag=' list
-      show_tag_list+=( "--show-tag=${j}" )
+      # Strips trailing newline due to the process substitution
+      # preserving trailing newlines
+      extracted_tag="${extracted_tag%$'\n'}"
     fi
+
+    # The tag doesn't exist in the current item
+    if [[ -z "$extracted_tag" ]]; then
+      missing_tags+=( "${tags_to_keep[key]}" )
+      continue
+    fi
+
+    # Processes the extracted tag, looking for multiple tags of the same
+    # type as well and handling multiple line values for a given tag
+    # value. For any valid tags, each are stored as a separate index in
+    # an array
+    #
+    # For any stored tag, the tag field is converted to uppercase and
+    # the tag values are normalized (whitespace, zero-prefixed, etc)
+    while IFS=$'\n' read -r line; do
+      # Tag exists but the value is empty. This may be a missing tag
+      if [[ "${line^^}" == "${tags_to_keep[key]^^}=" ]]; then
+        # If a previous line was an empty tag field, this means the
+        # previous tag was, in fact, empty
+        [[ "$empty_tag" ]] && missing_tags+=( "$empty_tag" )
+
+        # Sets the tag field as empty and is used to check any
+        # additional lines which may be part of this tag
+        empty_tag="${tags_to_keep[key]^^}"
+        continue
+
+      # Tag exists and has a value (first line value only)
+      elif [[ "${line^^}" == "${tags_to_keep[key]^^}="* ]]; then
+        # Strip leading/trailing whitespace
+        IFS=$' \t\n' read -r line <<< "${line#*=}"
+
+        # Convert TRACKNUMBER and TRACKTOTAL to zero-prefixed numbers if
+        # the 'prepend_zero' configuration option is 'true'
+        if [[
+          (
+            "${tags_to_keep[key]}" == 'TRACKNUMBER'
+            || "${tags_to_keep[key]}" == 'TRACKTOTAL'
+          )
+          && "$prepend_zero" == 'true'
+        ]]; then
+          # Only modify value if the value is an integer
+          if [[ "$line" =~ ^[[:digit:]]+$ ]]; then
+            printf -v line '%02d' $((10#$line))
+          fi
+        fi
+
+        # Ensure tag field is uppercase and array index, incremented.
+        # The index starts at -1, so is pre-incremented to 0 before
+        # setting a value
+        found_tags[++index]="${tags_to_keep[key]^^}=$line"
+        continue
+      fi
+
+      # Strip leading/trailing whitespace
+      IFS=$' \t\n' read -r line <<< "$line"
+
+      # If this variable is set, it means the previous line was an empty
+      # tag field but since this point is reached, the current line is a
+      # part of the tag so the previous line is a valid tag. The tag is
+      # considered NOT empty and is saved with this line as part of the
+      # tag's value. An example tag where this could happen:
+      #
+      #    LYRICS=
+      #
+      #    This is a line for the above 'LYRICS' tag field.
+      #    This is another line which is a part of the same tag.
+      #
+      # The first line (LYRICS=) is originally considered an empty tag,
+      # but the following lines are processed and added to the tag
+      # making this tag valid and non-empty
+      if [[ "$empty_tag" ]]; then
+        found_tags[++index]="${empty_tag}="$'\n'"$line"
+        empty_tag='' # Reset as the tag is considered valid
+      else
+        # Another value (separate line) for the current tag field
+        found_tags[index]+=$'\n'"${line}"
+      fi
+    done <<< "$extracted_tag"
   done
 
-  # Load up all the tag values for current file
-  mapfile -n0 -t metaflac_tag_array < <(metaflac "${show_tag_list[@]}" "${1}")
-
-  # Create a copy of ${metaflac_tag_array[@]} with just the tag fields
-  # and force the tag fields to be uppercase
-  tag_field_array=( "${metaflac_tag_array[@]%%=*}" )
-  tag_field_array=( "${tag_field_array[@]^^}" )
-
-  # Create a copy of ${metaflac_tag_array[@]} with just the tag values
-  tag_values_array=( "${metaflac_tag_array[@]#*=}" )
-
-  # Clear the original 'tag_field=tag_value array' for use below
-  metaflac_tag_array=()
-
-  # If the user specified 'true' to the 'prepend_zero' option in the
-  # configuration file, enforce the TRACKNUMBER and TRACKTOTAL tags to have a
-  # '0' prepended before singular numbers
-  if [[ "${prepend_zero}" == 'true' ]]; then
-    # Prepend a '0' for TRACKNUMBER and TRACKTOTAL
-    for j in "${!tag_field_array[@]}"; do
-      if [[ "${tag_field_array[${j}]}" == 'TRACKNUMBER' || "${tag_field_array[${j}]}" == 'TRACKTOTAL' ]]; then
-        # Remove leading and trailing whitespace in tag value, eg:
-        #   '   7     '  ->  '7'
-        read -r prepend_tag_value <<< "${tag_values_array[$j]}"
-
-        # Prepend a 0 to the tag value, forcing base10 to prevent octal errors
-        printf -v prepend_tag_value '%02d' $((10#${prepend_tag_value}))
-
-        # Store the tag field and tag value into an array, TAG_FIELD=TAG_VALUE
-        metaflac_tag_array+=( "${tag_field_array[$j]}=${prepend_tag_value}" )
-      else
-        # Remove leading and trailing whitespace in tag value, eg:
-        #   '   The Black     Halo     '  ->  'The Black     Halo'
-        read -r tag_value <<< "${tag_values_array[$j]}"
-
-        # Store the tag field and tag value into an array, TAG_FIELD=TAG_VALUE
-        metaflac_tag_array+=( "${tag_field_array[$j]}=${tag_value}" )
+  # Runs through the missing tags and only stores the tag as missing if
+  # there are no other tags found which match the tag field. This could
+  # happen, if there are multiple tags of the same tag field and some
+  # are empty, but at least one is valid, eg:
+  #
+  #   DATE=
+  #   DATE=
+  #   DATE=2001
+  #
+  # The DATE tag is considered missing, but when processed below, would
+  # be considered found and valid (the other empty DATE tags will be
+  # removed)
+  for tag in "${!missing_tags[@]}"; do
+    # Looks through all the valid and normalized tags found
+    for valid_tag in "${found_tags[@]}"; do
+      # Matched a tag and value for a missing tag, no longer missing
+      if [[ "$valid_tag" == "${missing_tags[tag]}="* ]]; then
+        unset -v missing_tags[tag]
+        break
       fi
     done
-  else
-    # ${prepend_zero} is not set as 'true', add each tag field and tag value
-    # into ${metaflac_tag_array[@]}
-    for j in "${!tag_field_array[@]}"; do
-      # Remove leading and trailing whitespace in tag value, eg:
-      #   '   The Black     Halo     '  ->  'The Black     Halo'
-      read -r tag_value <<< "${tag_values_array[$j]}"
+  done
 
-      # Store the tag field and tag value into an array, TAG_FIELD=TAG_VALUE
-      metaflac_tag_array+=( "${tag_field_array[$j]}=${tag_value}" )
+  # Removes all tags from the current FLAC file and sets each found tag
+  # all in one operation. A single operation prevents SIGINT from
+  # leaving the current FLAC file without any tags
+  metaflac >/dev/null 2>&1 $metaflac_extra_options \
+    --remove-all-tags "${found_tags[@]/#/--set-tag=}" "$item"
+
+  # Logs missing tags, if any were found
+  if [[ "${missing_tags[@]}" ]]; then
+    _print_item_check
+
+    # Generates a comma-separated list of missing tags to be logged.
+    # Ensures spaces in tag fields are properly handled
+    for tag in "${missing_tags[@]}"; do
+      if [[ "$missing_tags_str" ]]; then
+        missing_tags_str+=", $tag"
+      else
+        missing_tags_str+="$tag"
+      fi
     done
+
+    printf >> "$log_file" \
+      '%s [retag] Missing tags: %s\n' "$item" "$missing_tags_str"
+    printf >> "$issue_ticks" '.'  # Add one tick to total issues
+  else
+    _print_item_ok
   fi
 
-  # Add the saved tags back, by printing each tag field and value
-  # on a separate line to STDOUT.  This will be read in by metaflac.
-  # Use process substitution to allow this to finish if user
-  # invokes SIGINT
-  metaflac ${metaflac_extra_options} --remove-all-tags --import-tags-from=- "${1}" < \
-    <(
-      # This prints each tag key and value pair
-      # (eg. ARTIST=Kamelot)
-      printf '%s\n' "${metaflac_tag_array[@]}"
-    )
-
-  # Display ok
-  _print_status 'ok' "${file_basename}" "${file_length}" 'sub'
-
-  printf "$4\n" >&3  # Store row position and end operation
+  # Send complete to _run_parallel()
+  printf >&3  "$row\n"
 }
 
 #
@@ -2849,8 +2546,8 @@ job_fifo="/tmp/redoflacs_fifo_$$"  # Job manager FIFO
 
 issue_ticks="/tmp/redoflacs_issue_file_$$"           # Issues/Errors file
 
-# _retag_apply: Display a countdown
-[[ -n "${operations[8]}" ]] && _countdown_metadata
+# _retag(): Display a countdown
+[[ -n "${operations[7]}" ]] && _countdown_metadata
 
 _info 'Finding FLAC files to process...'
 
@@ -2905,8 +2602,7 @@ for operation in "${operations[@]}"; do
   #   operations[5]='replaygain_test'
   #   operations[6]='replaygain_force_apply'   # Conditionally set
   #   operations[6]='replaygain_apply'         # Conditionally set
-  #   operations[7]='retag_analyze'
-  #   operations[8]='retag_apply'
+  #   operations[7]='retag'
   #   operations[9]='extract_images'
   #   operations[10]='prune'
   #--
