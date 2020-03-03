@@ -49,27 +49,25 @@ _help()
 Usage: redoflacs [operations] [options] [target] ...
 
 Operations:
-  -c, --compress
-  -C, --compress-notest
-  -t, --test
-  -m, --md5check
-  -a, --aucdtect
-  -A, --aucdtect-spectrogram
-  -e, --extract-artwork
-  -p, --prune
-  -g, --replaygain
-  -G, --replaygain-noforce
-  -r, --retag
-  -l, --all
-  -L, --reallyall
+  -c       Compress FLAC files
+  -C       Compress FLAC files (even if COMPRESSION tag already exists)
+  -t       Test integrity of FLAC files
+  -m       Check for a valid MD5 signature in FLAC files STREAMINFO block
+  -a       Use auCDtect to authenticate FLAC files
+  -A       Use auCDtect to authenticate FLAC files (create spectrogram)
+  -e       Extract all embedded artwork from FLAC files
+  -p       Remove metadata blocks from FLAC files (PADDING, PICTURE, etc)
+  -g       Apply ReplayGain to FLAC files
+  -G       Apply ReplayGain to FLAC files (even if ReplayGain tags exist)
+  -r       Retag FLAC files preserving user-defined tags
 
 Options:
-  -j[N], --jobs[=N]
-  -n, --no-color
-  -x, --no-extra-tags
-  -o, --new-config
-  -v, --version
-  -h, --help
+  -j[N]    Allow N jobs at once, dynamically determined if unspecified
+  -n       Disable color output
+  -x       Do not apply COMPRESSION tag when compression FLAC files
+  -o       Generate a new configuration file and exit
+  -v       Print the version number of redoflacs and exit
+  -h       Print this message and exit
 
 See redoflacs(1) for more information.
 HELP_EOF
