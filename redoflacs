@@ -51,6 +51,8 @@ _print_item_skip() { printf "\033[${row}H${cyan}skip${reset}";    }
 #
 _help()
 {
+  local REPLY
+
   IFS='' read -rd '' << HELP_EOF
 Usage: redoflacs [operations] [options] [target] ...
 
@@ -753,39 +755,6 @@ _check_config_version()
 }
 
 #
-# Determine number of jobs to run via the number CPUs/cores available
-#
-_find_cores()
-{
-  # Set up global variable
-  declare -gi jobs='2'                  # By default, set $jobs to '2'
-  declare -g  jobs_display='(Default)'  # Default $jobs determination
-
-  # 'nproc' is part of GNU coreutils
-  if type -P nproc >/dev/null; then
-    jobs="$(nproc)"         # Store useable 'online' CPU's
-    jobs_display='(nproc)'  # $jobs dynamically determined
-    return 0
-  fi
-
-  # Fallback to /proc/cpuinfo.  Check /proc/cpuinfo if /proc is mounted by
-  # comparing device numbers to /
-  if (( $(stat -c %d '/proc') != $(stat -c %d '/') )); then
-    if [[ -f '/proc/cpuinfo' ]]; then
-      jobs='0'  # Initialize to zero
-
-      # /proc/cpuinfo exists, find total number of cores to use by countine the
-      # number of processor entries are in /proc/cpuinfo
-      while read -r i; do
-        [[ "${i}" == 'processor'*:' '* ]] && ((jobs++))
-      done < /proc/cpuinfo
-
-      jobs_display='(/proc/cpuinfo)'  # $jobs dynamically determined
-    fi
-  fi
-}
-
-#
 # Display countdown before retagging to allow user to quit script safely
 #
 _countdown_metadata()
@@ -1143,9 +1112,6 @@ _check_missing_programs()
   # Add each command that's needed to an array to be displayed
   if ! type -P rm >/dev/null; then
     missing_commands+=( "   Missing ${cyan}rm${reset}        ->  Part of ${cyan}coreutils${reset}" )
-  fi
-  if ! type -P stat >/dev/null; then
-    missing_commands+=( "   Missing ${cyan}stat${reset}      ->  Part of ${cyan}coreutils${reset}" )
   fi
   if ! type -P mkdir >/dev/null; then
     missing_commands+=( "   Missing ${cyan}mkdir${reset}     ->  Part of ${cyan}coreutils${reset}" )
@@ -2379,7 +2345,6 @@ flac_extension='.[Ff][Ll][Aa][Cc]'     # FLAC extension (case-insensitive)
 unit_separator=$'\037'                 # ASCII unit separator
 
 declare -i script_revision='4'         # Script user configuration revision
-declare -i max_length                  # Max filename length within terminal
 declare -A operation_summary           # Stores all the operational states
 
 # Colors on by default
@@ -2525,13 +2490,15 @@ fi
 
 #------------------------------------------------------------------------------
 
-# If $jobs wasn't set on invocation, determine the number of jobs to use based
-# off of the number of CPU's available
-if [[ -z "${jobs}" ]]; then
-  _find_cores
-else
-  jobs_display='(User Defined)'
-fi
+#
+# Dynamically sets the number of jobs to use if the user did not specify
+# them via a positional paramter, defaulting to two (2) jobs if unable
+# find the number of online CPU's to determine the number of jobs
+#
+jobs="${jobs:-"$(command -p nproc 2>/dev/null)"}"
+jobs="${jobs:-"$(command -p getconf _NPROCESSORS_ONLN 2>/dev/null)"}"
+jobs="${jobs:-"$(command -p sysctl -n hw.ncpu 2>/dev/null)"}"
+jobs="${jobs:-2}"
 
 ###################################  MAIN  ####################################
 
