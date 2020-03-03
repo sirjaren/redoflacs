@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # vim: ts=2:sts=2:sw=2:et:ft=sh:
-#------------------------------------------------------------------------------
+#-----------------------------------------------------------------------
 # NAME
 #   redoflacs - BASH commandline FLAC compressor, verifier, organizer,
 #               analyzer, and retagger
@@ -11,30 +11,22 @@
 #   Dependencies:  BASH >= 4.0
 #
 # DISTRIBUTION
-#   The MIT License
+#   Copyright 2020 Jaren Stangret
 #
-#   Copyright 2018 Jaren Stangret
+#   Licensed under the Apache License, Version 2.0 (the "License");
+#   you may not use this file except in compliance with the License.
+#   You may obtain a copy of the License at
 #
-#   Permission is hereby granted, free of charge, to any person obtaining a
-#   copy of this software and associated documentation files (the "Software"),
-#   to deal in the Software without restriction, including without limitation
-#   the rights to use, copy, modify, merge, publish, distribute, sublicense,
-#   and/or sell copies of the Software, and to permit persons to whom the
-#   Software is furnished to do so, subject to the following conditions:
+#     http://www.apache.org/licenses/LICENSE-2.0
 #
-#   The above copyright notice and this permission notice shall be included in
-#   all copies or substantial portions of the Software.
-#
-#   THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-#   IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-#   FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-#   AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-#   LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
-#   FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
-#   DEALINGS IN THE SOFTWARE.
-#------------------------------------------------------------------------------
+#   Unless required by applicable law or agreed to in writing, software
+#   distributed under the License is distributed on an "AS IS" BASIS,
+#   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or
+#   implied. See the License for the specific language governing
+#   permissions and limitations under the License.
+#-----------------------------------------------------------------------
 
-#################################  FUNCTIONS  #################################
+#############################  FUNCTIONS  ##############################
 
 _info() { printf     " ${green}*${reset} ${@}";  }  # Bold green message
 _warn() { printf >&2 " ${yellow}*${reset} ${@}"; }  # Yellow message
@@ -94,11 +86,11 @@ _usage()
 }
 
 #
-# Print out the correct operational message regarding a log file's existence
-# and what infomration that log may contain.
+# Print out the correct operational message regarding a log file's
+# existence and what infomration that log may contain.
 #
-# $1 determines the log file to use, as well as how many lines are printed out
-# to correctly set the current row.  Possible values:
+# $1 determines the log file to use, as well as how many lines are
+# printed out to correctly set the current row.  Possible values:
 #   aucdtect                  md5_check           compress_verify
 #   compress_no_test          test                replaygain_test
 #   replaygain_force_apply    replaygain_apply    retag_analyze
@@ -144,7 +136,8 @@ _message_log_exists()
 #
 # $2 is the number of processed items (iteration)
 #
-# $3 is conditionally called, and appears if the operation was interrupted:
+# $3 is conditionally called, and appears if the operation was
+# interrupted:
 #   Interrupted operation: $3 == 'interrupt'
 #     Operation completed: $3 is NULL
 #
@@ -301,13 +294,13 @@ _print_item()
 }
 
 #
-# Kill any children process and display the correct interrupt message when a
-# user sends SIGINT during script execution.  Perform any cleanup, and check
-# for the existence of a log file before exiting script.
+# Kill any children process and display the correct interrupt message
+# when a user sends SIGINT during script execution. Perform any cleanup,
+# and check for the existence of a log file before exiting script.
 #
-# $1 determines which additional cleanup may need to be performed based off of
-# operation interrupted, as well as whether the trap is invoked during a
-# countdown interruption.  Possible values:
+# $1 determines which additional cleanup may need to be performed based
+# off of operation interrupted, as well as whether the trap is invoked
+# during a countdown interruption. Possible values:
 #   aucdtect                  md5_check           compress_verify
 #   compress_no_test          test                replaygain_test
 #   replaygain_force_apply    replaygain_apply    retag_analyze
@@ -318,14 +311,13 @@ _trap_sigint()
 {
   # Set up local variables
   declare    finished_items
-  declare -a jobs_running=( $(jobs -rp) )  # Store running children processes
+  declare -a jobs_running=( $(jobs -rp) )  # Store children processes
 
-  _kill_jobs ${jobs_running[@]}            # Kill running children processes
+  _kill_jobs ${jobs_running[@]}            # Kill children processes
 
   for (( i=1; i<=items_processed; i++)); do
-    # Clear all the operation lines by moving up each line and clearing it,
-    # until we are just below the operation's title message
-    #--
+    # Clear all the operation lines by moving up each line and clearing
+    # it, until we are just below the operation's title message
     printf "\033[$(( post_row - i))H%${columns}s" ''
   done
 
@@ -349,8 +341,8 @@ _trap_sigint()
     'compress')  rm -f "${directory}"/**/*.tmp,fl-ac+en\'c     ;;
   esac
 
-  # Update status for the current operation, but not if SIGINT was invoked
-  # during a countdown
+  # Update status for the current operation, but not if SIGINT was
+  # invoked during a countdown
   if [[ "$1" != 'countdown' ]]; then
     _update_operation_status "${1}" 'Operation Interrupted'
   fi
@@ -358,11 +350,11 @@ _trap_sigint()
   # Print out log exists to STDERR
   [[ -f "${log_file}" ]] && _message_log_exists "${1}"
 
-  printf '\033[?25h'              # Restore the cursor
-  printf '\033[?7h'               # Restore terminal wrapping
-  rm -f "${job_fifo}"             # Remove temporary FIFO
-  rm -f "${tmp_picture_blocks}"   # Remove temporary 'metaflac' block streams
-  _summary                        # Display Summary Of Operations
+  printf '\033[?25h'            # Restore the cursor
+  printf '\033[?7h'             # Restore terminal wrapping
+  rm -f "$job_fifo"             # Remove temporary FIFO
+  rm -f "$tmp_picture_blocks"   # Remove temporary 'metaflac' blocks
+  _summary                      # Display Summary Of Operations
 
   exit 130
 }
@@ -383,8 +375,8 @@ _metaflac_version()
 }
 
 #
-# Kill any children process (obtained via $@), hiding errors and suppressing
-# the shell's notification of terminated jobs
+# Kill any children process (obtained via $@), hiding errors and
+# suppressing the shell's notification of terminated jobs
 #
 _kill_jobs()
 {
@@ -395,8 +387,8 @@ _kill_jobs()
 }
 
 #
-# Return the current cursor's row position by sending the following control
-# sequence to the controlling terminal:
+# Return the current cursor's row position by sending the following
+# control sequence to the controlling terminal:
 #   CSI 6 n            # Query cursor position
 #
 # Which reports/returns the cursor position/terminal size as:
@@ -422,7 +414,7 @@ _scroll_terminal()
   # Obtain current row position
   row="$(_row)"
 
-  # Default to scrolling the terminal based on the number of specified jobs
+  # Default to scrolling the terminal based on the number of jobs
   to_scroll="$jobs"
 
   # Scrolling by number of items to process
@@ -431,7 +423,7 @@ _scroll_terminal()
   # Only scroll if there are more items to display than lines available
   if (( --to_scroll > (lines - row) )); then
     printf "\033[$((to_scroll - (lines - row)))S"  # Scroll terminal
-    printf "\033[$((lines - to_scroll))H"          # Cursor to scrolled start
+    printf "\033[$((lines - to_scroll))H"          # Cursor to start
   fi
 }
 
@@ -709,8 +701,8 @@ _parse_config()
 }
 
 #
-# Check current configuration, if the version in the script is newer warn user
-# and display a countdown before starting script
+# Check current configuration, if the version in the script is newer
+# warn user and display a countdown before starting script
 #
 _check_config_version()
 {
@@ -738,13 +730,13 @@ _check_config_version()
   # Obtain only the last line of the config
   config_last_line="${config_array[@]: -1}"
 
-  # Extract the revision number from the configuration file (new syntax format as
-  # of redoflacs 0.30):
+  # Extract the revision number from the configuration file (new syntax
+  # format as of redoflacs 0.30):
   IFS=':' read -r _ revision <<< "$config_last_line"
 
-  # Check if ${revision} is an integer.  If not, display countdown and warn user
-  # of new configuration file, else test if the user config revision is less than
-  # the script config revision
+  # Check if ${revision} is an integer.  If not, display countdown and
+  # warn user of new configuration file, else test if the user config
+  # revision is less than the script config revision
   if [[ "${revision}" =~ ^[[:digit:]]+$ ]]; then
     if (( script_revision > revision )); then
       _countdown_config; printf '\n\n'
@@ -791,7 +783,8 @@ _countdown_metadata()
 }
 
 #
-# Displays countdown if a newer config is found to allow user to quit safely
+# Displays countdown if a newer config is found to allow user to quit
+# safely
 #
 _countdown_config()
 {
@@ -821,21 +814,8 @@ _countdown_config()
 }
 
 #
-# Clear job manager file descriptor (tied to FIFO) by closing and reopening
-#
-# $1 is the FIFO to tie the file descriptor to
-#
-_clear_jobs_fd()
-{
-  exec 3<&- 3>&-  # Close file descriptor
-  rm -f "$1"      # Remove FIFO if it exists
-  mkfifo "$1"     # Create FIFO
-  exec 3<>"$1"    # Open file descriptor read/write
-}
-
-#
-# Return an integer detailing the number of issues an operation may have had,
-# returning '0', if no issues were found
+# Return an integer detailing the number of issues an operation may have
+# had, returning '0', if no issues were found
 #
 _num_issues()
 {
@@ -905,10 +885,9 @@ _process_positional_parameters()
   fi
 
   # Long arguments
-  #--
-  # If any were called, convert long arguments to short, allowing 'getopts' to
-  # process them
-  #--
+  #
+  # If any were called, convert long arguments to short, allowing
+  # 'getopts' to process them
   if [[ -n "${long_args[@]}" ]]; then
     for i in "${long_args[@]}"; do
       case "$i" in
@@ -935,9 +914,9 @@ _process_positional_parameters()
         '--no-extra-tags')        converted_args+=( -x )  ;;
 
         '--jobs='*)
-          # Enforce we have only digits after '--jobs=', and if so, set the
-          # number of $jobs to its value, otherwise exit with a warning
-          #--
+          # Enforce we have only digits after '--jobs=', and if so, set
+          # the number of $jobs to its value, otherwise exit with a
+          # warning
           regex="[[:digit:]]+$"  # Regular expression
           if [[ "${i##*=}" =~ $regex ]] && (( ${i##*=} != 0 )); then
             jobs="${i##*=}"  # --jobs=11 -> 11
@@ -955,10 +934,10 @@ _process_positional_parameters()
   fi
 
   # Short arguments
-  #--
-  # If any were called, add valid short arguments (using 'getopts') to the same
-  # array as long arguments
-  #--
+  #
+  # If any were called, add valid short arguments (using 'getopts') to
+  # the same array as long arguments
+  #
   if [[ -n "${short_args[@]}" ]]; then
     while getopts ":j:LlcCtgGaAmeprnxhvo" args "${short_args[@]}"; do
       case "${args}" in
@@ -1014,8 +993,9 @@ _process_positional_parameters()
     exit 1
   fi
 
-  # Process converted arguments, setting each operation to run into an array
-  #--
+  # Process converted arguments, setting each operation to run into an
+  # array
+  #
   # Run through the catchall arugments first
   for i in "${converted_args[@]}"; do
     case "${i}" in
@@ -1094,11 +1074,12 @@ _process_positional_parameters()
 
   args=( "${@}" )  # Store arguments into an array to process
 
-  # Obtain the last element in $args[@], which is the directory to process
-  #--
+  # Obtain the last element in $args[@], which is the directory to
+  # process
+  #
   # BASH 4.2 allows negative indices:
   #   directory="${args[-1]%/}"
-  directory="${args[$(( ${#args[@]} - 1 ))]%/}"  # Remove ending slash (if any)
+  directory="${args[$(( ${#args[@]} - 1 ))]%/}"  # Remove ending slash
 }
 
 #
@@ -1180,7 +1161,8 @@ _check_conflicting_operations()
     exit 1
   fi
 
-  # Store conflicting arguments if '-l, --all' or '-L, --reallyall' was called
+  # Store conflicting arguments if '-l, --all' or '-L, --reallyall' was
+  # called
   if [[ "${all}" == 'true' || "${reallyall}" == 'true' ]]; then
     # _compress_no_test()
     [[ -n "${operations[3]}" ]] && conflicting_args+=( '-C, --compress_notest' )
@@ -1289,9 +1271,7 @@ _summary()
   )
 
   for operation in "${operation_keys[@]}"; do
-    # Display each operational line with the status of that operation, if it
-    # was called
-    #--
+    # Display each operational line with the status of that operation
     if [[ -n "${operation_summary[$operation]}" ]]; then
       # Check for sub messages, and apply additional formatting
       if [[ "${operation}" == '>> '* ]]; then
@@ -1299,7 +1279,7 @@ _summary()
           printf "${yellow}%25s ${blue}|${reset}\n" 'Retagging FLACs'
         fi
 
-        printf -v sub_message '%25s' "${operation}"  # Store right aligned message
+        printf -v sub_message '%25s' "${operation}"  # Store message
 
         # Color '>>' as yellow and message as magenta
         printf "${yellow}%s${magenta}%s ${blue}|${reset}" \
@@ -1331,7 +1311,7 @@ _summary()
     '-------------------------+-------------------------'
 
   # Remove temporary FIFOs and files
-  rm -f "${job_fifo}" "${tmp_aucdtect_fd}" "${issue_ticks}"
+  rm -f "$job_fifo" "$tmp_aucdtect_fd" "$issue_ticks"
 
   printf '\033[?25h'   # Restore cursor
   printf '\033[?7h'    # Restore terminal wrapping
@@ -1370,9 +1350,9 @@ _run_parallel()
   # Wait on operations
   (( ${#total_items[@]} <= jobs )) && wait
 
-  # An operation is completed with an integer and newline sent to a FIFO.  The
-  # integer is that row position an operation was on.  For each newline read
-  # in, process another file/dir from $total_items[@]
+  # An operation is completed with an integer and newline sent to a
+  # FIFO. The integer is that row position an operation was on.  For
+  # each newline read in, process another file/dir from $total_items[@]
   while read -r row; do
     (( num >= ${#total_items[@]} )) && break  # Stop, if no more FLACs
     item="${total_items[num++]}"              # Current item to process
@@ -2181,13 +2161,13 @@ _extract_images()
 
   _print_item 'Extracting Images'
 
-  # Retrieve PICTURE blocks from current item, storing to a temporary file
+  # Retrieve PICTURE blocks from current item, to a temporary file
   error_msg="$(metaflac 2>&1 >"$blocks" --list --block-type=PICTURE "$item")"
 
   # Log FLAC failure
   if [[ -n "$error_msg" ]]; then
     error_msg="${error_msg%, status = *}"       # Strip end of error msg
-    error_msg="ERROR ${error_msg##*: ERROR: }"  # Strip filename to error msg
+    error_msg="ERROR ${error_msg##*: ERROR: }"  # Strip filename
 
     _print_item_fail
     printf >> "$log_file" '%s [%s] %s\n' "$item" "$operation" "$error_msg"
@@ -2207,16 +2187,16 @@ _extract_images()
 
   _print_item_half  # Metaflac doesn't display a percentage complete
 
-  # Store the values which can identify each image (in each PICTURE block) to
-  # be used during image extraction.  The values needed are:
+  # Store the values which can identify each image (in each PICTURE
+  # block) to be used during image extraction.  The values needed are:
   #   'METADATA block #<num>'           -> $block_id
   #   '  type: <num> (<description>)'   -> $art_id AND $art_description
   #   '  MIME type: image/jpeg'         -> $mime
   #
   # NOTE:
-  #   Reading the PICTURE block from a temporary file is much faster than
-  #   reading from process substitution (there can be many PICTURE blocks in a
-  #   single FLAC file and each image could be very large)
+  #   Reading the PICTURE block from a temporary file is much faster
+  #   than reading from process substitution (there can be many PICTURE
+  #   blocks in a single FLAC file and each image could be very large)
   while IFS=$'\n' read -r; do
     # Skip all the unnecessary information
     [[ "$REPLY" != 'METADATA'* && "$REPLY" != '  '[tM]* ]] && continue
@@ -2229,11 +2209,12 @@ _extract_images()
     # Ensure we don't use: 'type: 6 (PICTURE)'
     if [[ "$REPLY" == '  type: '[^6]* ]]; then
       IFS=' ' read -r _ art_id art_description <<< "${REPLY//\//-}"
-      art_description="${art_description//[()]}"  # Strip all parenthesis
-      art_description="${art_description// /_}"   # Spaces with underscores
+      art_description="${art_description//[()]}"  # Strip parenthesis
+      art_description="${art_description// /_}"   # Spaces underscores
       continue
 
-    # Done with a PICTURE block; the values can be stored and variables reset
+    # Done with a PICTURE block; the values can be stored and the
+    # variables reset
     elif [[ "$REPLY" == '  MIME'* ]]; then
       mime="${REPLY##*/}"     # Eg: 'MIME type: image/jpeg' -> 'jpeg'
       mime="${mime/jpeg/jpg}" # Eg: 'jpeg'                  -> 'jpg'
@@ -2263,7 +2244,8 @@ _extract_images()
   # Ensure we don't clobber the artwork directory, eg:
   #   /path/to/file.flac.art.0 -> /path/to/file.flac.art.1
   #
-  # Or if the user configured an artwork directory from the configuration file:
+  # Or if the user configured an artwork directory from the
+  # configuration file:
   #   /user/configured/path/to/artwork/file.flac.art.0 ->
   #   /user/configured/path/to/artwork/file.flac.art.1
   until [[ ! -d "$artwork_location" ]]; do
@@ -2271,7 +2253,7 @@ _extract_images()
   done
   mkdir -p "$artwork_location"
 
-  # Performs artwork extraction on the current item.  Each array value is:
+  # Performs artwork extraction on the current item. Each array value:
   #   '<block_id>:<art_id>-<art_description>.<mime>
   #
   # Which looks like:
@@ -2336,16 +2318,16 @@ _prune()
   printf >&3 "$row\n"
 }
 
-###################################  SETUP  ###################################
+###############################  SETUP  ################################
 
-shopt -s globstar                      # BASH 4 globstar (eg, /**/*.flac)
+shopt -s globstar                   # BASH 4 globstar (eg, /**/*.flac)
 
-version='0.31_pre'                     # Redoflacs version
-flac_extension='.[Ff][Ll][Aa][Cc]'     # FLAC extension (case-insensitive)
-unit_separator=$'\037'                 # ASCII unit separator
+version='0.31_pre'                  # Redoflacs version
+flac_extension='.[Ff][Ll][Aa][Cc]'  # FLAC extension (case-insensitive)
+unit_separator=$'\037'              # ASCII unit separator
 
-declare -i script_revision='4'         # Script user configuration revision
-declare -A operation_summary           # Stores all the operational states
+declare -i script_revision='4'      # Script user configuration revision
+declare -A operation_summary        # Stores all the operational states
 
 # Colors on by default
 reset=$'\033[0m'
@@ -2357,7 +2339,7 @@ blue=$'\033[34m'
 magenta=$'\033[35m'
 cyan=$'\033[36m'
 
-#############################  PRE-SCRIPT CHECKS  #############################
+#########################  PRE-SCRIPT CHECKS  ##########################
 
 # Check if user is running under Cygwin and if so, warn user and exit
 if [[ "$(uname -o)" == 'Cygwin' ]]; then
@@ -2368,7 +2350,7 @@ if [[ "$(uname -o)" == 'Cygwin' ]]; then
   exit 1
 fi
 
-#------------------------------------------------------------------------------
+#-----------------------------------------------------------------------
 
 # Create/source either system or user config
 if (( EUID == 0 )); then
@@ -2392,12 +2374,13 @@ else
   _parse_config                 # Parse and source configuration file
 fi
 
-#------------------------------------------------------------------------------
+#-----------------------------------------------------------------------
 
+#
 # Generate log file location
-#--
-# Ensure we don't overwrite an existing log file by incrementing the current PID
-# by 1 until the log file that is to be set, doesn't exist
+#
+# Ensure we don't overwrite an existing log file by incrementing the
+# current PID by 1 until the log file that is to be set, doesn't exist
 pid="$$"
 log_file="${error_log}/redoflacs_${pid}.log"
 
@@ -2405,16 +2388,16 @@ until [[ ! -f "${log_file}" ]]; do
   log_file="${error_log}/redoflacs_log_$((pid++)).log"
 done
 
-#------------------------------------------------------------------------------
+#-----------------------------------------------------------------------
 
 _process_positional_parameters "${@}"  # Process CLI arguments
 
-#------------------------------------------------------------------------------
+#-----------------------------------------------------------------------
 
 # Disable color if user called '-n, --no-color'
 [[ "${no_color}" == 'true' ]] && unset -v blue green red cyan magenta yellow
 
-#------------------------------------------------------------------------------
+#-----------------------------------------------------------------------
 
 # Make sure we are running BASH 4 or greater
 if (( ${BASH_VERSINFO[0]} < 4 )); then
@@ -2423,22 +2406,22 @@ if (( ${BASH_VERSINFO[0]} < 4 )); then
   exit 1
 fi
 
-#------------------------------------------------------------------------------
+#-----------------------------------------------------------------------
 
 # Check for any conflicting operations/arguments called and warn user
 _check_conflicting_operations
 
-#------------------------------------------------------------------------------
+#-----------------------------------------------------------------------
 
 # For each operation that was selected, add to $operation_summary[@]
 for operation in "${operations[@]}"; do
   _update_operation_status "${operation}" 'Operation Did Not Run'
 done
-#------------------------------------------------------------------------------
+#-----------------------------------------------------------------------
 
-_check_missing_programs  # Check for missing programs vital to this script
+_check_missing_programs  # Check missing programs vital to this script
 
-#------------------------------------------------------------------------------
+#-----------------------------------------------------------------------
 
 # Check whether directory exists
 if [[ ! -d "${directory}" ]]; then
@@ -2447,7 +2430,7 @@ if [[ ! -d "${directory}" ]]; then
   exit 1
 fi
 
-#------------------------------------------------------------------------------
+#-----------------------------------------------------------------------
 
 # Check for at least 1 FLAC file
 read -r find_flacs < <( printf "%s\n" "${directory}"/**/*${flac_extension} )
@@ -2457,14 +2440,14 @@ if [[ ! -f "${find_flacs}" ]]; then
   exit 1
 fi
 
-#------------------------------------------------------------------------------
+#-----------------------------------------------------------------------
 
-# If '-e, --extract-artwork' was called, make sure $artwork_location is valid
+# Make sure the artwork location is valid, if the operation is called
 if [[ "${operations[9]}" == 'extract_images' ]]; then
   # Check if artwork_location is user-defined
   if [[ -n "${artwork_location}" ]]; then
-    # Put extracted artwork in user-defined location, testing to make sure
-    # the directory exists
+    # Put extracted artwork in user-defined location, testing to make
+    # sure the directory exists
     if [[ ! -d "${artwork_location}" ]]; then
       _error "${cyan}${artwork_location%/}${reset} doesn't exist!\n"
       _error 'Please set a valid directory in the configuration file!\n'
@@ -2473,13 +2456,13 @@ if [[ "${operations[9]}" == 'extract_images' ]]; then
   fi
 fi
 
-# If '-A, --aucdtect-spectrogram' was called, make sure $spectrogram_location is
-# valid
+# If '-A, --aucdtect-spectrogram' was called, make sure
+# $spectrogram_location is valid
 if [[ "${create_spectrogram}" == 'true' ]]; then
   # Check if spectrogram_location is user-defined
   if [[ -n "${spectrogram_location}" ]]; then
-    # Put spectrograms in user-defined location, testing to make sure the
-    # directory exists
+    # Put spectrograms in user-defined location, testing to make sure
+    # the directory exists
     if [[ ! -d "${spectrogram_location}" ]]; then
       _error "${cyan}${spectrogram_location}${reset} doesn't exist!\n"
       _error 'Please set a valid directory in the configuration file!\n'
@@ -2488,7 +2471,7 @@ if [[ "${create_spectrogram}" == 'true' ]]; then
   fi
 fi
 
-#------------------------------------------------------------------------------
+#-----------------------------------------------------------------------
 
 #
 # Dynamically sets the number of jobs to use if the user did not specify
@@ -2500,7 +2483,7 @@ jobs="${jobs:-"$(command -p getconf _NPROCESSORS_ONLN 2>/dev/null)"}"
 jobs="${jobs:-"$(command -p sysctl -n hw.ncpu 2>/dev/null)"}"
 jobs="${jobs:-2}"
 
-###################################  MAIN  ####################################
+###############################  MAIN  #################################
 
 printf '\033[?25l'                 # Hide cursor
 printf '\033[?7l'                  # Disable terminal wrapping
@@ -2508,10 +2491,10 @@ printf '\033[?7l'                  # Disable terminal wrapping
 export LANG=C
 export LC_ALL=C
 
-_check_config_version              # Check if script config is newer than user's
+_check_config_version              # Check if script config's version
 job_fifo="/tmp/redoflacs_fifo_$$"  # Job manager FIFO
 
-issue_ticks="/tmp/redoflacs_issue_file_$$"           # Issues/Errors file
+issue_ticks="/tmp/redoflacs_issue_file_$$"  # Issues/Errors file
 
 # _retag(): Display a countdown
 [[ -n "${operations[7]}" ]] && _countdown_metadata
@@ -2526,15 +2509,15 @@ popd >/dev/null
 # This displays '[ ok ]' after 'Finding FLAC files to process...'
 printf "%11s${blue}[ ${green}ok${blue} ]${reset}\n" ''
 
-#------------------------------------------------------------------------------
+#-----------------------------------------------------------------------
 
 #
-# Obtain the total number of lines and columns available in the terminal by
-# sending the following control sequences to the controlling terminal:
+# Obtain the total number of lines and columns available in the terminal
+# by sending the following control sequences to the terminal driver:
 #   CSI s              # Save cursor position
-#   CSI 999999 C       # Move cursor all the way to end of the current row
+#   CSI 999999 C       # Move cursor to the end of the current row
 #   CSI 6 n            # Query cursor position
-#   CSI 999999 D       # Move cursor back to the beginning of the current row
+#   CSI 999999 D       # Move cursor to the beginning of the current row
 #   CSI u              # Restore cursor position
 #
 # 'CSI 6 n' reports/returns the cursor position/terminal size as:
@@ -2548,19 +2531,19 @@ IFS='[;' \
   read -rsu2 -d'R' -p $'\033[s\033[999999;999999H\033[6n\033[u' _ lines columns
 
 # The maximum length is one higher than the display width as output is
-# displayed using escape sequences, making shell arithmetic inclusive off by
-# one
+# displayed using escape sequences, making shell arithmetic inclusive
+# off by one
 if ((columns < 80)); then
   readonly MAX_LENGTH="$((++columns))"
 else
   readonly MAX_LENGTH='81'
 fi
 
-#------------------------------------------------------------------------------
+#-----------------------------------------------------------------------
 
 for operation in "${operations[@]}"; do
-  # Loop through the various operations to run.  All the operations are to be
-  # run, in order, which is detailed below:
+  # Loop through the various operations to run.  All the operations are
+  # to be run, in order, which is detailed below:
   #   operations[0]='aucdtect'
   #   operations[1]='md5check'
   #   operations[2]='compress_verify'
@@ -2572,16 +2555,15 @@ for operation in "${operations[@]}"; do
   #   operations[7]='retag'
   #   operations[9]='extract_images'
   #   operations[10]='prune'
-  #--
   case "${operation}" in
     'replaygain')
-      total_items_backup=( "${total_items[@]}" )  # Total FLACs backup array
+      total_items_backup=( "${total_items[@]}" )  # Total FLACs backup
       for dir in "${total_items[@]%/*}"; do
         previous="$current"
         current="$dir"
         [[ "$previous" != "$current" ]] && total_dirs+=( "$current" )
       done
-      total_items=( "${total_dirs[@]}" )          # Now process directories
+      total_items=( "${total_dirs[@]}" )          # Process directories
     ;;
     'prune')
       # Set which FLAC metadata BLOCKS to remove
@@ -2595,34 +2577,39 @@ for operation in "${operations[@]}"; do
     ;;
   esac
 
-  _message "${operation}"        # Display title message of current operation
-  _scroll_terminal               # Scroll terminal up (if needed)
-  _clear_jobs_fd "${job_fifo}"   # Clear job manager file descriptor (3)
+  _message "$operation"  # Display title message of operation
+  _scroll_terminal       # Scroll terminal up (if needed)
+
+  # Clear job manager file descriptor (tied to FIFO)
+  exec 3<&- 3>&-       # Close file descriptor
+  rm -f "$job_fifo"    # Remove FIFO if it exists
+  mkfifo "$job_fifo"   # Create FIFO
+  exec 3<>"$job_fifo"  # Open file descriptor read/write
 
   if (( ${#total_items[@]} < jobs )); then
-    # Set row position to place cursor after completing an operation or trap
-    #--
-    # If the items to process are less than the number of jobs, add the number
-    # of items to the current row position, else add the number of jobs to run
+    # Set row to place cursor after completing an operation and/or trap
+    #
+    # If the items to process are less than the number of jobs, add the
+    # number of items to the current row position, else add the number
+    # of jobs to run
     items_processed="${#total_items[@]}"
   else
     items_processed="${jobs}"
   fi
 
-  post_row=$(( $(_row) + items_processed ))  # After operation row position
+  post_row=$(( $(_row) + items_processed ))  # Operation row position
 
   trap '_trap_sigint "${operation}"' SIGINT  # Clean exit on SIGINT
-  _run_parallel "${operation}"   # Run a given operation with parallel jobs
+  _run_parallel "${operation}"               # Run operation with jobs
 
   for (( i=1; i<=items_processed; i++)); do
-    # Clear all the operation lines by moving up each line and clearing it,
-    # until we are just below the operation's title message
-    #--
+    # Clear all the operation lines by moving up each line and clearing
+    # it, until we are just below the operation's title message
     printf "\033[$(( post_row - i))H%${columns}s" ''
   done
 
   # Display number of finished items minus items with issues
-  _message "${operation}" "$(( iteration - $(_num_issues) ))"  # Update title message
+  _message "${operation}" "$(( iteration - $(_num_issues) ))"
 
   # Update status for the current operation
   _update_operation_status "${operation}" 'Operation Completed'
@@ -2637,6 +2624,6 @@ for operation in "${operations[@]}"; do
   [[ "${operation}" == 'replaygain_'*'apply' ]] && total_items=( "${total_items_backup[@]}" )
 done
 
-#------------------------------------------------------------------------------
+#-----------------------------------------------------------------------
 
 _summary  # Display Summary Of Operations
