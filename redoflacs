@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # vim: ts=2:sts=2:sw=2:et:ft=sh:
-#-----------------------------------------------------------------------
+#
 # NAME
 #   redoflacs - BASH commandline FLAC compressor, verifier, organizer,
 #               analyzer, and retagger
@@ -24,7 +24,7 @@
 #   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or
 #   implied. See the License for the specific language governing
 #   permissions and limitations under the License.
-#-----------------------------------------------------------------------
+#
 
 #############################  FUNCTIONS  ##############################
 
@@ -1279,7 +1279,7 @@ _replaygain()
   while IFS=$'\n' read -r output; do
     # Any output is an error message
     if [[ "$output" =~ $regex ]]; then
-      error_msg="${BASH_REMATCH[1]} [$operation] "  # Absolute filename
+      error_msg="${BASH_REMATCH[1]} [ReplayGain] "  # Absolute filename
 
       # Error reading FLAC file (possibly fake), eg:
       #   ERROR: reading metadata, status = "FLAC__METADA ..."
@@ -1404,7 +1404,7 @@ _compress()
     _print_item_fail
     error_msg="${error_msg%,}"          # Strip possible trailing comma
     error_msg="${error_msg/$'\n'Type}"  # Strip possible multiline error
-    printf >> "$log_file" '%s [%s] %s\n' "$item" "$operation" "$error_msg"
+    printf >> "$log_file" '%s [Compress] %s\n' "$item" "$error_msg"
     printf >> "$issue_ticks" '.'        # Add one tick to total issues
 
     # Send complete to _run_parallel()
@@ -1469,7 +1469,7 @@ _test()
   # Log failures if there are any errors
   if [[ "$error_msg" ]]; then
     _print_item_fail
-    printf >> "$log_file" '%s [%s] %s\n' "$item" "$operation" "$error_msg"
+    printf >> "$log_file" '%s [Test] %s\n' "$item" "$error_msg"
     printf >> "$issue_ticks" '.'  # Add one tick to total issues
   else
     _print_item_ok
@@ -1784,13 +1784,13 @@ _md5check()
   # Log failures if there are any errors
   if [[ "$error_msg" ]]; then
     _print_item_fail
-    printf >> "$log_file" '%s [%s] %s\n' "$item" "$operation" "$error_msg"
+    printf >> "$log_file" '%s [MD5check] %s\n' "$item" "$error_msg"
     printf >> "$issue_ticks" '.'  # Add one tick to total issues
 
   # Possible valid FLAC, but MD5 signature is unset in STREAMINFO block
   elif [[ "$md5sum" == '00000000000000000000000000000000' ]]; then
     _print_item_fail
-    printf >> "$log_file" '%s [%s] %s\n' "$item" "$operation" \
+    printf >> "$log_file" '%s [MD5check] %s\n' "$item" \
       'ERROR: Unset MD5 signature (00000000000000000000000000000000)'
     printf >> "$issue_ticks" '.'  # Add one tick to total issues
   else
@@ -1844,7 +1844,7 @@ _retag()
   # Log failures if there are any errors
   if [[ "$error_msg" ]]; then
     _print_item_fail
-    printf >> "$log_file" '%s [%s] %s\n' "$item" "$operation" "$error_msg"
+    printf >> "$log_file" '%s [Retag] %s\n' "$item" "$error_msg"
     printf >> "$issue_ticks" '.'  # Add one tick to total issues
 
     # Send complete to _run_parallel()
@@ -1990,7 +1990,7 @@ _retag()
     done
 
     printf >> "$log_file" \
-      '%s [retag] Missing tags: %s\n' "$item" "$missing_tags_str"
+      '%s [Retag] Missing tags: %s\n' "$item" "$missing_tags_str"
     printf >> "$issue_ticks" '.'  # Add one tick to total issues
   else
     _print_item_ok
@@ -2027,7 +2027,7 @@ _extract_images()
     error_msg="ERROR ${error_msg##*: ERROR: }"  # Strip filename
 
     _print_item_fail
-    printf >> "$log_file" '%s [%s] %s\n' "$item" "$operation" "$error_msg"
+    printf >> "$log_file" '%s [ExtractArtwork] %s\n' "$item" "$error_msg"
     printf >> "$issue_ticks" '.'  # Add one tick to total issues
     rm -f "$blocks"
     printf >&3 "$row\n"           # Send complete to _run_parallel()
@@ -2165,7 +2165,7 @@ _prune()
   # Log failures if there are any errors
   if [[ "$error_msg" ]]; then
     _print_item_fail
-    printf >> "$log_file" '%s [%s] %s\n' "$item" "$operation" "$error_msg"
+    printf >> "$log_file" '%s [Prune] %s\n' "$item" "$error_msg"
     printf >> "$issue_ticks" '.'  # Add one tick to total issues
   else
     _print_item_ok
@@ -2181,7 +2181,6 @@ shopt -s globstar 2>/dev/null       # BASH 4 globstar (eg, /**/*.flac)
 
 script_version='0.31_pre'           # Redoflacs version
 flac_extension='.[Ff][Ll][Aa][Cc]'  # FLAC extension (case-insensitive)
-unit_separator=$'\037'              # ASCII unit separator
 
 declare -i script_revision='4'      # Script user configuration revision
 declare -A operation_summary        # Stores all the operational states
@@ -2197,22 +2196,19 @@ cyan=$'\033[36m'
 
 #########################  PRE-SCRIPT CHECKS  ##########################
 
-# Check if user is running under Cygwin and if so, warn user and exit
+# Ensure Cygwin is not used to run this script
 if [[ "$(uname -o)" == 'Cygwin' ]]; then
-  _error 'This version of redoflacs is meant to be run under\n'
-  _error "${cyan}UNIX/Linux/BSD${reset}.  Please use the ${cyan}Windows (Cygwin)${reset}\n"
-  _error 'version located here:\n'
-  _error "${cyan}https://github.com/sirjaren/redoflacsw${reset}\n"
+  _error "This version of ${cyan}redoflacs$reset is meant to be run under"
+  _error "UNIX/Linux. Please use the ${cyan}Cygwin$reset version located here:"
+  _error "${cyan}https://github.com/sirjaren/redoflacsw$reset"
   exit 1
 fi
 
-#-----------------------------------------------------------------------
-
-# Create/source either system or user config
+# System or user configuration
 if (( EUID == 0 )); then
-  config_file='/etc/redoflacs.conf'               # System (root) config
+  config_file='/etc/redoflacs.conf'
 else
-  config_file="${HOME}/.config/redoflacs/config"  # User config
+  config_file="${HOME}/.config/redoflacs/config"
 fi
 
 # Check if system-wide configuration doesn't exist
@@ -2227,10 +2223,8 @@ if [[ ! -f "${config_file}" ]]; then
 
   exit 0
 else
-  _parse_config                 # Parse and source configuration file
+  _parse_config  # Parse and source configuration file
 fi
-
-#-----------------------------------------------------------------------
 
 #
 # Generate log file location
@@ -2244,12 +2238,8 @@ until [[ ! -f "${log_file}" ]]; do
   log_file="${error_log}/redoflacs_log_$((pid++)).log"
 done
 
-#-----------------------------------------------------------------------
-
 # Process/validate script positional parameters
 _process_arguments "${@}"
-
-#-----------------------------------------------------------------------
 
 # Make sure we are running BASH 4 or greater
 if (( ${BASH_VERSINFO[0]} < 4 )); then
@@ -2258,17 +2248,12 @@ if (( ${BASH_VERSINFO[0]} < 4 )); then
   exit 1
 fi
 
-#-----------------------------------------------------------------------
-
 # For each operation that was selected, add to $operation_summary[@]
 for operation in "${operations[@]}"; do
   _update_operation_status "${operation}" 'Operation Did Not Run'
 done
-#-----------------------------------------------------------------------
 
 _check_missing_programs  # Check missing programs vital to this script
-
-#-----------------------------------------------------------------------
 
 # Check for at least 1 FLAC file
 read -r find_flacs < <( printf "%s\n" "${directory}"/**/*${flac_extension} )
@@ -2277,8 +2262,6 @@ if [[ ! -f "${find_flacs}" ]]; then
   _error 'There are not any FLAC files to process!\n'
   exit 1
 fi
-
-#-----------------------------------------------------------------------
 
 # Make sure the artwork location is valid, if the operation is called
 if [[ "${operations[9]}" == 'extract_images' ]]; then
@@ -2308,8 +2291,6 @@ if [[ "${create_spectrogram}" == 'true' ]]; then
     fi
   fi
 fi
-
-#-----------------------------------------------------------------------
 
 #
 # Dynamically sets the number of jobs to use if the user did not specify
@@ -2347,8 +2328,6 @@ popd >/dev/null
 # This displays '[ ok ]' after 'Finding FLAC files to process...'
 printf "%11s${blue}[ ${green}ok${blue} ]${reset}\n" ''
 
-#-----------------------------------------------------------------------
-
 #
 # Obtain the total number of lines and columns available in the terminal
 # by sending the following control sequences to the terminal driver:
@@ -2376,8 +2355,6 @@ if ((columns < 80)); then
 else
   readonly MAX_LENGTH='81'
 fi
-
-#-----------------------------------------------------------------------
 
 for operation in "${operations[@]}"; do
   # Loop through the various operations to run.  All the operations are
@@ -2461,7 +2438,5 @@ for operation in "${operations[@]}"; do
   # Restore the items to process from directories to FLACs
   [[ "${operation}" == 'replaygain_'*'apply' ]] && total_items=( "${total_items_backup[@]}" )
 done
-
-#-----------------------------------------------------------------------
 
 _summary  # Display Summary Of Operations
