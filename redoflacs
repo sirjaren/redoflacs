@@ -28,9 +28,9 @@
 
 #############################  FUNCTIONS  ##############################
 
-_info() { printf     " ${green}*${reset} ${@}";  }  # Bold green message
-_warn() { printf >&2 " ${yellow}*${reset} ${@}"; }  # Yellow message
-_error(){ printf >&2 " ${red}*${reset} ${@}";    }  # Bold red message
+_info() { printf     " $green*$reset $@\n";  }  # Green message
+_warn() { printf >&2 " $yellow*$reset $@\n"; }  # Yellow message
+_error(){ printf >&2 " $red*$reset $@\n";    }  # Red message
 
 _print_item_ok()   { printf "\033[${row}H${green}100%%${reset}";  }
 _print_item_fail() { printf "\033[${row}H${red}fail${reset}";     }
@@ -64,7 +64,7 @@ Operations:
 Options:
   -j[N]    Allow N jobs at once, dynamically determined if unspecified
   -n       Disable color output
-  -x       Do not apply COMPRESSION tag when compression FLAC files
+  -x       Do not apply COMPRESSION tag when compressing FLAC files
   -o       Generate a new configuration file and exit
   -v       Print the version number of redoflacs and exit
   -h       Print this message and exit
@@ -827,257 +827,209 @@ _num_issues()
 #
 # Obtain and process the positional parameters invoked with the script
 #
-_process_positional_parameters()
+_process_arguments()
 {
-  # Set up global variables
-  declare -g all  reallyall  create_spectrogram  no_extra_tags  no_color \
-    directory
+  # Global variables used in other functions/operations
+  local -g create_spectrogram force_compression force_replaygain \
+    operations no_extra_tags directory
 
-  # Set up local variables/arrays
-  declare -a args  long_args  short_args  non_args  converted_args
-  declare    regex
+  local arg invalid
+  local -a conflicting
 
   # If no arguments are made to the script show usage and help
-  if (( ${#} == 0 )); then
+  if (( $# == 0 )); then
     _help
     exit 1
   fi
 
-  # If only one argument was called
-  if (( ${#} == 1 )); then
-    case "$1" in
-      '--help'|'-h')        _help          ; exit 0 ;;
-      '--version'|'-v')     _print_version ; exit 0 ;;
-      '--new-config'|'-o')  _new_config    ; exit 0 ;;
-      *)                    _usage         ; exit 1 ;;
-    esac
-  fi
+  # Processes all the possible positional parameters, short options
+  # only, handling conflicting parameters
+  while getopts ':j:cCtmaAepgGrnhvox' arg "$@"; do
+    case "$arg" in
+      # Given argument is not valid. 'OPTARG' is 'arg' before 'arg' is
+      # set to '?'
+      '?')
+        [[ "$invalid" == *"-$OPTARG"* ]] && continue
+        invalid+="${invalid:+ }-$OPTARG"
+        ;;
 
-  # If only two arguments were called
-  if (( ${#} == 2 )); then
-    case "$1" in
-      # The number of jobs cannot be specified without an operation
-      '--jobs='[[:digit:]]*' '|'-j'[[:digit:]]*' ')
-        _usage
-        _error "${cyan}${1}${reset} cannot used without an operation specified.\n"
+      # Required parameter for a given argument was not specified
+      ':')
+        _error 'Option -j, requires a non-zero integer, eg: -j4'
+        _help
         exit 1
-      ;;
-    esac
-  fi
+        ;;
 
-  for i in "${@}"; do
-    # Separate long, short, and non arguments into separate arrays to be
-    # converted into short arguments for 'getopts' to process correctly
-    #--
-    case "$i" in
-      '--'*) long_args+=( "${i}" )   ;;
-      '-'*)  short_args+=( "${i}" )  ;;
-      *)     non_args+=( "${i}" )    ;;
+      # Help message and exit
+      'h') _help; exit 0 ;;
+
+      # Dipslay script version and exit
+      'v') printf 'redoflacs %s\n' "$script_version"; exit 0 ;;
+
+      # Create a new configuration file and exit
+      'o') _new_config; exit 0 ;;
+
+      # Disable color output
+      'n') unset -v reset red green yellow blue magenta cyan ;;
+
+      # Prevent COMPRESSION tag from being applied during compression
+      'x') no_extra_tags='true' ;;
+
+      # Test FLAC files
+      't')
+        if [[ "${operations[@]}" != *'_test'* ]]; then
+          operations+=( '_test' )
+        fi
+        ;;
+
+      # Validate MD5 checksum in FLAC files
+      'm')
+        if [[ "${operations[@]}" != *'_md5check'* ]]; then
+          operations+=( '_md5check' )
+        fi
+        ;;
+
+      # Extract embedded artwork from FLAC files
+      'e')
+        if [[ "${operations[@]}" != *'_extract_images'* ]]; then
+          operations+=( '_extract_images' )
+        fi
+        ;;
+
+      # Prune unnecessary metadata blocks from FLAC files
+      'p')
+        if [[ "${operations[@]}" != *'_prune'* ]]; then
+          operations+=( '_prune' )
+        fi
+        ;;
+
+      # Retag FLAC files
+      'r')
+        if [[ "${operations[@]}" != *'_retag'* ]]; then
+          operations+=( '_retag' )
+        fi
+        ;;
+
+      # Specify number of jobs to process FLAC files
+      'j')
+        # OPTARG is the (required) number after 'j'
+        if [[ "$OPTARG" =~ ^[[:digit:]]+$ ]] && (( OPTARG != 0 )); then
+          jobs="$OPTARG"
+        else
+          _error 'Option -j, requires a non-zero integer, eg: -j4'
+          _help
+        fi
+        ;;
+
+      # Compression and force compression arguments
+      'c'|'C')
+        # Skip as both compression arguments were already specified
+        [[ "${conflicting[@]}" == *'-c, -C'* ]] && continue
+
+        # Add compression to operation as it does not yet exist
+        if [[ "${operations[@]}" != *'_compress'* ]]; then
+          [[ "$arg" == 'C' ]] && force_compression='true'
+          operations+=( '_compress' )
+          continue
+        fi
+
+        # '-C' was already specified and '-c' is the current argument
+        if [[ "$arg" == 'c' && "$force_compression" ]]; then
+          conflicting+=( '-c, -C' )
+
+        # '-c' was already specified and '-C' is the current argument
+        elif [[ "$arg" == 'C' && ! "$force_compression" ]]; then
+          conflicting+=( '-c, -C' )
+        fi
+        ;;
+
+      # auCDtect and auCDtect with spectrogram arguments
+      'a'|'A')
+        # Skip as both auCDtect arguments were already specified
+        [[ "${conflicting[@]}" == *'-a, -A'* ]] && continue
+
+        # Add auCDtect to operation as it does not yet exist
+        if [[ "${operations[@]}" != *'_aucdtect'* ]]; then
+          [[ "$arg" == 'A' ]] && create_spectrogram='true'
+          operations+=( '_aucdtect' )
+          continue
+        fi
+
+        # '-A' was already specified and '-a' is the current argument
+        if [[ "$arg" == 'a' && "$create_spectrogram" ]]; then
+          conflicting+=( '-a, -A' )
+
+        # '-a' was already specified and '-A' is the current argument
+        elif [[ "$arg" == 'A' && ! "$create_spectrogram" ]]; then
+          conflicting+=( '-a, -A' )
+        fi
+        ;;
+
+      # ReplayGain and force ReplayGain arguments
+      'g'|'G')
+        # Skip as both ReplayGain arguments were already specified
+        [[ "${conflicting[@]}" == *'-g, -G'* ]] && continue
+
+        # Add ReplayGain to operation as it does not yet exist
+        if [[ "${operations[@]}" != *'_replaygain'* ]]; then
+          operations+=( '_replaygain' )
+          [[ "$arg" == 'G' ]] && force_replaygain='true'
+          continue
+        fi
+
+        # '-G' was already specified and '-g' is the current argument
+        if [[ "$arg" == 'g' && "$force_replaygain" ]]; then
+          conflicting+=( '-g, -G' )
+
+        # '-g' was already specified and '-G' is the current argument
+        elif [[ "$arg" == 'G' && ! "$force_replaygain" ]]; then
+          conflicting+=( '-g, -G' )
+        fi
+        ;;
     esac
   done
 
-  # If there isn't a single non-argument (directory), exit
-  if (( ${#non_args[@]} != 1 )); then
-    _usage
+  # Both invalid and conflicting parameters were specified
+  if [[ "$invalid" && "${conflicting[@]}" ]]; then
+    _error 'Invalid arguments specified:'
+    _error "  ${cyan}${invalid}$reset"
+    _error 'Conflicting operations specified:'
+    for option in "${conflicting[@]}"; do
+      _error "  ${cyan}${option}$reset"
+    done
+    _help
     exit 1
   fi
 
-  # Long arguments
-  #
-  # If any were called, convert long arguments to short, allowing
-  # 'getopts' to process them
-  if [[ -n "${long_args[@]}" ]]; then
-    for i in "${long_args[@]}"; do
-      case "$i" in
-        # These arguments are to be called by themselves, so quit
-        '--version')              _usage; exit 1          ;;
-        '--help')                 _usage; exit 1          ;;
-        '--new-config')           _usage; exit 1          ;;
-
-        # Send long arguments to array to process later
-        '--aucdtect')             converted_args+=( -a )  ;;
-        '--aucdtect-spectrogram') converted_args+=( -A )  ;;
-        '--md5check')             converted_args+=( -m )  ;;
-        '--compress')             converted_args+=( -c )  ;;
-        '--compress-force')       converted_args+=( -C )  ;;
-        '--test')                 converted_args+=( -t )  ;;
-        '--replaygain')           converted_args+=( -g )  ;;
-        '--replaygain-force')     converted_args+=( -G )  ;;
-        '--retag')                converted_args+=( -r )  ;;
-        '--extract-artwork')      converted_args+=( -e )  ;;
-        '--prune')                converted_args+=( -p )  ;;
-        '--all')                  converted_args+=( -l )  ;;
-        '--reallyall')            converted_args+=( -L )  ;;
-        '--no-color')             converted_args+=( -n )  ;;
-        '--no-extra-tags')        converted_args+=( -x )  ;;
-
-        '--jobs='*)
-          # Enforce we have only digits after '--jobs=', and if so, set
-          # the number of $jobs to its value, otherwise exit with a
-          # warning
-          regex="[[:digit:]]+$"  # Regular expression
-          if [[ "${i##*=}" =~ $regex ]] && (( ${i##*=} != 0 )); then
-            jobs="${i##*=}"  # --jobs=11 -> 11
-          else
-            _usage
-            _error "${cyan}--jobs${reset} requires a non-zero integer after it (eg. ${cyan}--jobs=11${reset}).\n"
-            exit 1
-          fi
-        ;;
-
-        # All other arguments are invalid
-        *)  invalid_args+=( "${i}" )  ;;
-      esac
-    done
-  fi
-
-  # Short arguments
-  #
-  # If any were called, add valid short arguments (using 'getopts') to
-  # the same array as long arguments
-  #
-  if [[ -n "${short_args[@]}" ]]; then
-    while getopts ":j:LlcCtgGaAmeprnxhvo" args "${short_args[@]}"; do
-      case "${args}" in
-        # These arguments are to be called by themselves, so quit
-        'v') _usage; exit 1          ;;
-        'h') _usage; exit 1          ;;
-        'o') _usage; exit 1          ;;
-
-        # Send short arguments to array to process later
-        'L') converted_args+=( -L )  ;;
-        'a') converted_args+=( -a )  ;;
-        'A') converted_args+=( -A )  ;;
-        'm') converted_args+=( -m )  ;;
-        'c') converted_args+=( -c )  ;;
-        'C') converted_args+=( -C )  ;;
-        't') converted_args+=( -t )  ;;
-        'g') converted_args+=( -g )  ;;
-        'G') converted_args+=( -G )  ;;
-        'r') converted_args+=( -r )  ;;
-        'e') converted_args+=( -e )  ;;
-        'p') converted_args+=( -p )  ;;
-        'l') converted_args+=( -l )  ;;
-        'n') converted_args+=( -n )  ;;
-        'x') converted_args+=( -x )  ;;
-
-        'j')
-          # Enforce we have only digits after '-j', and if so, set the
-          # number of $jobs to its value, otherwise exit with a warning
-          #--
-          regex="[[:digit:]]+$"  # Regular expression
-          if [[ "${OPTARG}" =~ $regex ]] && (( OPTARG != 0 )); then
-            jobs="${OPTARG}"  # OPTARG is the argument after 'j' (j:)
-          else
-            _usage
-            _error "${cyan}-j${reset} requires a non-zero integer after it (eg. ${cyan}-j11${reset}).\n"
-            exit 1
-          fi
-        ;;
-        ?)
-          # Set invalid argument from getopts into array using
-          # ${OPTARG}
-          invalid_args+=( "-${OPTARG}" )
-        ;;
-      esac
-    done
-  fi
-
-  # Display invalid arguments, if any
-  if [[ -n "${invalid_args[@]}" ]]; then
-    _usage
-    _error 'Invalid option(s): '
-    printf "${cyan}%s${reset}\n" "${invalid_args[*]}" >&2
+  # Invalid parameters were specified
+  if [[ "$invalid" ]]; then
+    _error 'Conflicting operations specified:'
+    _error "  ${cyan}${invalid}$reset"
+    _help
     exit 1
   fi
 
-  # Process converted arguments, setting each operation to run into an
-  # array
-  #
-  # Run through the catchall arugments first
-  for i in "${converted_args[@]}"; do
-    case "${i}" in
-      # These are the meta-arguments (do multiple operations)
-      '-l')
-        all='true'
-        operations[1]='md5check'
-        operations[2]='compress'
-        operations[5]='replaygain'
-        operations[7]='retag'
-        operations[10]='prune'
-      ;;
-      '-L')
-        reallyall='true'
-        create_spectrogram='true'
-        operations[0]='aucdtect'
-        operations[1]='md5check'
-        operations[2]='compress'
-        operations[5]='replaygain'
-        operations[7]='retag'
-        operations[9]='extract_images'
-        operations[10]='prune'
-      ;;
-    esac
-  done
+  # Conflicting parameters were specified
+  if [[ "${conflicting[@]}" ]]; then
+    _error 'Invalid arguments specified:'
+    for option in "${conflicting[@]}"; do
+      _error "  ${cyan}${option}$reset"
+    done
+    _help
+    exit 1
+  fi
 
-  # Run through the individual operations
-  for i in "${converted_args[@]}"; do
-    case "${i}" in
-      # Process individual arguments
-      '-a')
-        if [[ "${create_spectrogram}" == 'true' || "${operations[0]}" == 'conflict' ]]; then
-          operations[0]='conflict'  # If already set
-        else
-          operations[0]='aucdtect'
-        fi
-      ;;
-      '-A')
-        if [[ -n "${operations[0]}" && -z "${create_spectrogram}" ]] || [[ "${operations[0]}" == 'conflict' ]]; then
-          operations[0]='conflict'  # If already set
-        else
-          create_spectrogram='true'
-          operations[0]='aucdtect'
-        fi
-      ;;
-      '-m') operations[1]='md5check'          ;;
-      '-c') operations[2]='compress'          ;;
-      '-C') operations[3]='compress'; force_compression='true' ;;
-      '-t') operations[4]='test'              ;;
-      '-g')
-        if [[ "${operations[6]}" == 'replaygain' || "${operations[6]}" == 'conflict' ]]; then
-          operations[6]='conflict'   # If already set
-        else
-          operations[5]='replaygain'
-        fi
-      ;;
-      '-G')
-        if [[ "${operations[6]}" == 'replaygain' || "${operations[6]}" == 'conflict' ]]; then
-          operations[6]='conflict'   # If already set
-        else
-          operations[5]='replaygain'
-        fi
-        force_replaygain='true'
-      ;;
-      '-r')
-        operations[7]='retag'
-      ;;
-      '-e')
-        operations[9]='extract_images'
-      ;;
-      '-p') operations[10]='prune'            ;;
-      '-n') no_color='true'                   ;;
-      '-x') no_extra_tags='true'              ;;
-    esac
-  done
+  # The last element passed in _should_ be the directory to process FLAC
+  # files
+  directory="${@: -1}"
+  directory="${directory%/}"  # Remove ending slash
 
-  args=( "${@}" )  # Store arguments into an array to process
-
-  # Obtain the last element in $args[@], which is the directory to
-  # process
-  #
-  # BASH 4.2 allows negative indices:
-  #   directory="${args[-1]%/}"
-  directory="${args[$(( ${#args[@]} - 1 ))]%/}"  # Remove ending slash
+  # Ensure the directory exists
+  if [[ ! -d "$directory" ]]; then
+    _error 'Please specify a valid directory!'
+    _help
+    exit 1
+  fi
 }
 
 #
@@ -1143,99 +1095,6 @@ _check_missing_programs()
       _error "have this program installed and can be found in ${cyan}\$PATH${reset}\n"
       exit 1
     fi
-  fi
-}
-
-#
-# Check for any conflicting operations/arguments
-#
-_check_conflicting_operations()
-{
-  # '-l, --all' and '-L, --reallyall' cannot be called together
-  if [[ "${all}" == 'true' && "${reallyall}" == 'true' ]]; then
-    _error "Running both ${cyan}-l, --all${reset} and ${cyan}-L, --reallyall${reset} conflict!\n\n"
-
-    _error 'Please choose one or the other.\n'
-    exit 1
-  fi
-
-  # Store conflicting arguments if '-l, --all' or '-L, --reallyall' was
-  # called
-  if [[ "${all}" == 'true' || "${reallyall}" == 'true' ]]; then
-    # _compress_no_test()
-    [[ -n "${operations[3]}" ]] && conflicting_args+=( '-C, --compress_notest' )
-
-    case "${operations[6]}" in
-      # _replaygain_apply()
-      'replaygain_apply')
-        conflicting_args+=( '-G, --replaygain-noforce' )
-      ;;
-    esac
-
-    # Display conflicting arguments and exit, if there were any
-    if [[ -n "${conflicting_args[@]}" ]]; then
-      # '-l, --all'
-      if [[ "${all}" == 'true' ]]; then
-        _error "The below options conflict with ${cyan}-l, --all${reset}:\n"
-      # '-L, --reallyall'
-      elif [[ "${reallyall}" == 'true' ]]; then
-        _error "The below options conflict with ${cyan}-L, --reallyall${reset}:\n"
-      fi
-
-      # Print each conflicting argument
-      for i in "${conflicting_args[@]}"; do
-        _error "  ${cyan}${i}${reset}\n"
-      done
-
-      _error '\nPlease remove incompatible options.\n'
-      exit 1
-    fi
-  fi
-
-  # _compress_verify() and _compress_no_test()
-  if [[ -n "${operations[2]}" && -n "${operations[3]}" ]]; then
-    _error "Running both ${cyan}-c, --compress${reset} and ${cyan}-C, --compress-notest${reset} conflict!\n\n"
-
-    _error 'Please choose one or the other.\n'
-    exit 1
-  fi
-
-  # _compress_no_test() and '-x, --no-extra-tags'
-  if [[ -n "${operations[3]}" && "${no_extra_tags}" == 'true' ]]; then
-    _error "Running both ${cyan}-C, --compress-notest${reset} and ${cyan}-x, --no_extra_tags${reset} conflict!\n\n"
-
-    _error "${cyan}-x, --no_extra_tags${reset} invalidates the compression check, since each file\n"
-    _error "seen to be missing the ${cyan}COMPRESSION${reset} tag is compressed, after which, the\n"
-    _error "${cyan}COMPRESSION${reset} tag is NOT applied, leaving future executions to repeat this process.\n\n"
-
-    _error 'Please choose one or the other.\n'
-    exit 1
-  fi
-
-  # _compress_verify() and _test()
-  if [[ -n "${operations[2]}" && -n "${operations[4]}" ]]; then
-    _error "Running both ${cyan}-c, --compress${reset} and ${cyan}-t, --test${reset} conflict!\n\n"
-
-    _error 'Please choose one or the other.\n'
-    exit 1
-  fi
-
-  # _replaygain_force_apply and _replaygain_apply
-  # 'conflict' is set during parameter handling if conflicts will ocurr
-  if [[ "${operations[6]}" == 'conflict' ]]; then
-    _error "Running both ${cyan}-g, --replaygain${reset} and ${cyan}-G, --replaygain-noforce${reset} conflict!\n\n"
-
-    _error 'Please choose one or the other.\n'
-    exit 1
-  fi
-
-  # _aucdtect and _aucdtect w/ spectrogram creation
-  # 'conflict' is set during parameter handling if conflicts will ocurr
-  if [[ "${operations[0]}" == 'conflict' ]]; then
-    _error "Running both ${cyan}-a, --aucdtect${reset} and ${cyan}-A, --aucdtect-spectrogram${reset} conflict!\n\n"
-
-    _error 'Please choose one or the other.\n'
-    exit 1
   fi
 }
 
@@ -2318,9 +2177,9 @@ _prune()
 
 ###############################  SETUP  ################################
 
-shopt -s globstar                   # BASH 4 globstar (eg, /**/*.flac)
+shopt -s globstar 2>/dev/null       # BASH 4 globstar (eg, /**/*.flac)
 
-version='0.31_pre'                  # Redoflacs version
+script_version='0.31_pre'           # Redoflacs version
 flac_extension='.[Ff][Ll][Aa][Cc]'  # FLAC extension (case-insensitive)
 unit_separator=$'\037'              # ASCII unit separator
 
@@ -2329,7 +2188,6 @@ declare -A operation_summary        # Stores all the operational states
 
 # Colors on by default
 reset=$'\033[0m'
-invert=$'\033[7m'
 red=$'\033[31m'
 green=$'\033[32m'
 yellow=$'\033[33m'
@@ -2388,12 +2246,8 @@ done
 
 #-----------------------------------------------------------------------
 
-_process_positional_parameters "${@}"  # Process CLI arguments
-
-#-----------------------------------------------------------------------
-
-# Disable color if user called '-n, --no-color'
-[[ "${no_color}" == 'true' ]] && unset -v blue green red cyan magenta yellow
+# Process/validate script positional parameters
+_process_arguments "${@}"
 
 #-----------------------------------------------------------------------
 
@@ -2406,11 +2260,6 @@ fi
 
 #-----------------------------------------------------------------------
 
-# Check for any conflicting operations/arguments called and warn user
-_check_conflicting_operations
-
-#-----------------------------------------------------------------------
-
 # For each operation that was selected, add to $operation_summary[@]
 for operation in "${operations[@]}"; do
   _update_operation_status "${operation}" 'Operation Did Not Run'
@@ -2418,15 +2267,6 @@ done
 #-----------------------------------------------------------------------
 
 _check_missing_programs  # Check missing programs vital to this script
-
-#-----------------------------------------------------------------------
-
-# Check whether directory exists
-if [[ ! -d "${directory}" ]]; then
-  printf ' Usage: redoflacs [OPTION] [PATH_TO_FLAC(s)]...\n' >&2
-  _error 'Please specify a directory!\n'
-  exit 1
-fi
 
 #-----------------------------------------------------------------------
 
@@ -2473,7 +2313,7 @@ fi
 
 #
 # Dynamically sets the number of jobs to use if the user did not specify
-# them via a positional paramter, defaulting to two (2) jobs if unable
+# them via a positional parameter, defaulting to two (2) jobs if unable
 # find the number of online CPU's to determine the number of jobs
 #
 jobs="${jobs:-"$(command -p nproc 2>/dev/null)"}"
