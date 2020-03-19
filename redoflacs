@@ -28,15 +28,19 @@
 
 #############################  FUNCTIONS  ##############################
 
-_info() { printf     " $green*$reset $@\n";  }  # Green message
-_warn() { printf >&2 " $yellow*$reset $@\n"; }  # Yellow message
-_error(){ printf >&2 " $red*$reset $@\n";    }  # Red message
-
-_print_item_ok()   { printf "\033[${row}H${green}100%%${reset}";  }
-_print_item_fail() { printf "\033[${row}H${red}fail${reset}";     }
-_print_item_check(){ printf "\033[${row}H${yellow}chck${reset}";  }
-_print_item_half() { printf "\033[${row}H${yellow} 50%%${reset}"; }
-_print_item_skip() { printf "\033[${row}H${cyan}skip${reset}";    }
+#
+# Convenience functions to provide messages to the user with colored
+# prefixes to indicate message severity, eg:
+#   _warn 'This is obsolete'
+#
+# Creates a messsage like:
+#    * This is obsolete
+#
+# With the asterisk colored yellow
+#
+_info() { printf     " $green*$reset $@\n";  }  # Green
+_warn() { printf >&2 " $yellow*$reset $@\n"; }  # Yellow
+_error(){ printf >&2 " $red*$reset $@\n";    }  # Red
 
 #
 # Display help
@@ -232,9 +236,9 @@ _update_operation_status()
 # than 80 characters or if greater than the width of the terminal if
 # that terminal width is less than 80. This width is set by 'MAX_LENGTH'
 #
-# Filename truncation also occurs to allow the operation label and the
-# total number of completed items to be displayed on the same row as the
-# displayed item
+# Filename truncation also occurs to allow the operation label (via $1)
+# and the total number of completed items to be displayed on the same
+# row as the displayed item
 #
 # The structure of a displayed item:
 #   '<percent> <basename>          <operation_label> <number_completed>'
@@ -290,6 +294,16 @@ _print_item()
   # Displays formatted, currently processed item
   printf "$fmt" "$basename" "$label" "${num}/${#total_items[@]}"
 }
+
+#
+# These functions are used after '_print_item()' to update/indicate the
+# status of a given item in an operation
+#
+_print_item_ok()   { printf "\033[${row}H${green}100%%$reset"; }
+_print_item_fail() { printf "\033[${row}H${red}fail$reset";    }
+_print_item_check(){ printf "\033[${row}H${yellow}chck$reset"; }
+_print_item_half() { printf "\033[${row}H$yellow 50%%$reset";  }
+_print_item_skip() { printf "\033[${row}H${cyan}skip$reset";   }
 
 #
 # Kill any children process and display the correct interrupt message
@@ -827,6 +841,15 @@ _num_issues()
 #
 # Obtain and process the positional parameters invoked with the script
 #
+# The following global variables are defined, should options which
+# define them are specified:
+#   $create_spectrogram
+#   $directory
+#   $force_compression
+#   $force_replaygain
+#   $no_extra_tags
+#   $operations[@]
+#
 _process_arguments()
 {
   # Global variables used in other functions/operations
@@ -1049,9 +1072,6 @@ _check_missing_programs()
   fi
   if ! type -P mkfifo >/dev/null; then
     missing_commands+=( "   Missing ${cyan}mkfifo${reset}    ->  Part of ${cyan}coreutils${reset}" )
-  fi
-  if ! type -P wc >/dev/null; then
-    missing_commands+=( "   Missing ${cyan}wc${reset}        ->  Part of ${cyan}coreutils${reset}" )
   fi
   if ! type -P metaflac >/dev/null; then
     missing_commands+=( "   Missing ${cyan}metaflac${reset}  ->  Part of ${cyan}flac${reset}" )
@@ -2177,7 +2197,10 @@ _prune()
 
 ###############################  SETUP  ################################
 
-shopt -s globstar 2>/dev/null       # BASH 4 globstar (eg, /**/*.flac)
+#
+# BASH 4: Used to recursively find (glob) FLAC files (eg, /**/*.flac)
+#
+shopt -s globstar 2>/dev/null
 
 script_version='0.31_pre'           # Redoflacs version
 flac_extension='.[Ff][Ll][Aa][Cc]'  # FLAC extension (case-insensitive)
@@ -2185,7 +2208,7 @@ flac_extension='.[Ff][Ll][Aa][Cc]'  # FLAC extension (case-insensitive)
 declare -i script_revision='4'      # Script user configuration revision
 declare -A operation_summary        # Stores all the operational states
 
-# Colors on by default
+# For colored output
 reset=$'\033[0m'
 red=$'\033[31m'
 green=$'\033[32m'
@@ -2196,7 +2219,19 @@ cyan=$'\033[36m'
 
 #########################  PRE-SCRIPT CHECKS  ##########################
 
+#
+# Make sure we are running BASH 4 or greater
+#
+if (( ${BASH_VERSINFO[0]} < 4 )); then
+  _error "You must be running ${cyan}BASH 4$reset or greater to use"
+  _error 'this program! Current version:'
+  _error "  ${cyan}${BASH_VERSION}$reset"
+  exit 1
+fi
+
+#
 # Ensure Cygwin is not used to run this script
+#
 if [[ "$(uname -o)" == 'Cygwin' ]]; then
   _error "This version of ${cyan}redoflacs$reset is meant to be run under"
   _error "UNIX/Linux. Please use the ${cyan}Cygwin$reset version located here:"
@@ -2204,15 +2239,24 @@ if [[ "$(uname -o)" == 'Cygwin' ]]; then
   exit 1
 fi
 
+#
+# Check missing programs vital to this script
+#
+_check_missing_programs
+
+#
 # System or user configuration
+#
 if (( EUID == 0 )); then
   config_file='/etc/redoflacs.conf'
 else
   config_file="${HOME}/.config/redoflacs/config"
 fi
 
+#
 # Check if system-wide configuration doesn't exist
-if [[ ! -f "${config_file}" ]]; then
+#
+if [[ ! -f "$config_file" ]]; then
   mkdir -p "${config_file%/*}"  # Create directory if it doesn't exist
   _create_config                # Create configuration file
 
@@ -2223,37 +2267,30 @@ if [[ ! -f "${config_file}" ]]; then
 
   exit 0
 else
-  _parse_config  # Parse and source configuration file
+  _parse_config
 fi
 
 #
 # Generate log file location
 #
-# Ensure we don't overwrite an existing log file by incrementing the
-# current PID by 1 until the log file that is to be set, doesn't exist
+# Ensure we don't overwrite an existing log file
 pid="$$"
-log_file="${error_log}/redoflacs_${pid}.log"
-
-until [[ ! -f "${log_file}" ]]; do
-  log_file="${error_log}/redoflacs_log_$((pid++)).log"
+log_file="${error_log}/redoflacs_$pid.log"
+until [[ ! -f "$log_file" ]]; do
+  log_file="${error_log}/redoflacs_log_$((++pid)).log"
 done
 
-# Process/validate script positional parameters
+#
+# Process/validate script positional parameters. This function provides
+# variables which are used by later functions/operations (based on
+# whether certain operations are specified)
+#
 _process_arguments "${@}"
-
-# Make sure we are running BASH 4 or greater
-if (( ${BASH_VERSINFO[0]} < 4 )); then
-  _error "You must be running ${cyan}BASH 4${reset} or greater to use\n"
-  _error '"this program!\n'
-  exit 1
-fi
 
 # For each operation that was selected, add to $operation_summary[@]
 for operation in "${operations[@]}"; do
   _update_operation_status "${operation}" 'Operation Did Not Run'
 done
-
-_check_missing_programs  # Check missing programs vital to this script
 
 # Check for at least 1 FLAC file
 read -r find_flacs < <( printf "%s\n" "${directory}"/**/*${flac_extension} )
@@ -2294,8 +2331,8 @@ fi
 
 #
 # Dynamically sets the number of jobs to use if the user did not specify
-# them via a positional parameter, defaulting to two (2) jobs if unable
-# find the number of online CPU's to determine the number of jobs
+# them via '-j[N]', defaulting to two (2) jobs if unable find the number
+# of online CPU's to determine the number of jobs
 #
 jobs="${jobs:-"$(command -p nproc 2>/dev/null)"}"
 jobs="${jobs:-"$(command -p getconf _NPROCESSORS_ONLN 2>/dev/null)"}"
