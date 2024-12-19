@@ -734,7 +734,7 @@ SOURCE
 MASTERING
 
 # The REPLAYGAIN tags below, are added by the '-g, --replaygain' or
-'-G, --replaygain-noforce' argument.  If you want to keep the ReplayGain tags,
+#'-G, --replaygain-noforce' argument.  If you want to keep the ReplayGain tags,
 # make sure you leave these here.
 REPLAYGAIN_REFERENCE_LOUDNESS
 REPLAYGAIN_TRACK_GAIN
