@@ -1056,65 +1056,36 @@ _process_arguments()
 }
 
 #
-# Check for missing programs vital to this script
+# Check for missing programs required by this script
 #
 _check_missing_programs()
 {
-  # Set up local variables/arrays
-  declare -a missing_commands
+  local program
+  local -a programs=( 'rm' 'mkdir' 'mkfifo' 'metaflac' 'flac' )
+  local -a missing_programs
 
-  # Add each command that's needed to an array to be displayed
-  if ! type -P rm >/dev/null; then
-    missing_commands+=( "   Missing ${cyan}rm${reset}        ->  Part of ${cyan}coreutils${reset}" )
-  fi
-  if ! type -P mkdir >/dev/null; then
-    missing_commands+=( "   Missing ${cyan}mkdir${reset}     ->  Part of ${cyan}coreutils${reset}" )
-  fi
-  if ! type -P mkfifo >/dev/null; then
-    missing_commands+=( "   Missing ${cyan}mkfifo${reset}    ->  Part of ${cyan}coreutils${reset}" )
-  fi
-  if ! type -P metaflac >/dev/null; then
-    missing_commands+=( "   Missing ${cyan}metaflac${reset}  ->  Part of ${cyan}flac${reset}" )
-  fi
-  if ! type -P flac >/dev/null; then
-    missing_commands+=( "   Missing ${cyan}flac${reset}      ->  Part of ${cyan}flac${reset}" )
+  for program in "${programs[@]}"; do
+    type -P "$program" >/dev/null || missing_programs+=( "$program" )
+  done
+
+  if [[ "${operations[@]}" == *'_aucdtect'* ]]; then
+    type -P auCDtect >/dev/null || missing_programs+=( 'auCDtect' )
   fi
 
-  if [[ -n "${missing_commands[@]}" ]]; then
-    # Display message that system is missing vital programs
-    #--
-    _error 'You seem to be missing one or more necessary programs\n'
-    _error 'to run this script reliably.  Below shows the program(s)\n'
-    _error 'missing, as well as where you can install them from:\n'
-    for i in "${missing_commands[@]}"; do
-      _warn "${i}\n"
+  if [[ "$create_spectrogram" ]]; then
+    type -P sox >/dev/null || missing_programs+=( 'sox' )
+  fi
+
+  if [[ "${missing_programs[@]}" ]]; then
+    _error 'The following required programs were not found:'
+    for program in "${missing_programs[@]}"; do
+      _error "  ${cyan}${program}$reset"
     done
+
+    _error
+    _error 'Ensure these programs are installed and available in $PATH'
+
     exit 1
-  fi
-
-  # Optional binaries
-  #--
-  # Check for auCDtect if operation was called
-  if [[ "${operations[0]}" == 'aucdtect' ]]; then
-    # auCDtect cannot be found
-    if ! type -P auCDtect >/dev/null; then
-      _error "It appears ${cyan}auCDtect${reset} is not installed. Please verify you\n"
-      _error "have this program installed and can be found in ${cyan}\$PATH${reset}\n"
-      _error "\n"
-      _error "A statically linked version of auCDtect can be found here\n"
-      _error "  https://github.com/sirjaren/redoflacs/raw/binaries/auCDtect\n"
-      exit 1
-    fi
-  fi
-
-  # Check for SoX if auCDtect spectrograms were called
-  if [[ "${create_spectrogram}" == 'true' ]]; then
-    # SoX cannot be found
-    if ! type -P sox >/dev/null; then
-      _error "It appears ${cyan}SoX${reset} is not installed. Please verify you\n"
-      _error "have this program installed and can be found in ${cyan}\$PATH${reset}\n"
-      exit 1
-    fi
   fi
 }
 
@@ -2198,6 +2169,26 @@ _prune()
 ###############################  SETUP  ################################
 
 #
+# Make sure we are running BASH 4 or greater
+#
+if (( ${BASH_VERSINFO[0]} < 4 )); then
+  _error "You must be running ${cyan}BASH 4$reset or greater to use"
+  _error 'this program! Current version:'
+  _error "  ${cyan}${BASH_VERSION}$reset"
+  exit 1
+fi
+
+#
+# Ensure Cygwin is not used to run this script
+#
+if [[ "$(uname -o)" == 'Cygwin' ]]; then
+  _error "This version of ${cyan}redoflacs$reset is meant to be run under"
+  _error "UNIX/Linux. Please use the ${cyan}Cygwin$reset version located here:"
+  _error "  ${cyan}https://github.com/sirjaren/redoflacsw$reset"
+  exit 1
+fi
+
+#
 # BASH 4: Used to recursively find (glob) FLAC files (eg, /**/*.flac)
 #
 shopt -s globstar 2>/dev/null
@@ -2218,31 +2209,6 @@ magenta=$'\033[35m'
 cyan=$'\033[36m'
 
 #########################  PRE-SCRIPT CHECKS  ##########################
-
-#
-# Make sure we are running BASH 4 or greater
-#
-if (( ${BASH_VERSINFO[0]} < 4 )); then
-  _error "You must be running ${cyan}BASH 4$reset or greater to use"
-  _error 'this program! Current version:'
-  _error "  ${cyan}${BASH_VERSION}$reset"
-  exit 1
-fi
-
-#
-# Ensure Cygwin is not used to run this script
-#
-if [[ "$(uname -o)" == 'Cygwin' ]]; then
-  _error "This version of ${cyan}redoflacs$reset is meant to be run under"
-  _error "UNIX/Linux. Please use the ${cyan}Cygwin$reset version located here:"
-  _error "${cyan}https://github.com/sirjaren/redoflacsw$reset"
-  exit 1
-fi
-
-#
-# Check missing programs vital to this script
-#
-_check_missing_programs
 
 #
 # System or user configuration
@@ -2286,6 +2252,11 @@ done
 # whether certain operations are specified)
 #
 _process_arguments "${@}"
+
+#
+# Check for missing programs required by this script
+#
+_check_missing_programs
 
 # For each operation that was selected, add to $operation_summary[@]
 for operation in "${operations[@]}"; do
