@@ -280,7 +280,7 @@ _print_item()
   # This allows the operation label and total number of completed items
   # to be displayed after this column, effectively truncating the
   # current item if longer than this column position
-  truncated="$((MAX_LENGTH - ${#total} - ${#label}))"
+  truncated="$(( MAX_LENGTH - ${#total} - ${#label} ))"
 
   # Belows builds the 'printf' format string
   fmt+=$"\033[${row};6H"              # Cursor row; 6 columns to right
@@ -843,6 +843,7 @@ _num_issues()
 #
 # The following global variables are defined, should options which
 # define them are specified:
+#
 #   $create_spectrogram
 #   $directory
 #   $force_compression
@@ -2252,14 +2253,6 @@ for operation in "${operations[@]}"; do
   _update_operation_status "${operation}" 'Operation Did Not Run'
 done
 
-# Check for at least 1 FLAC file
-read -r find_flacs < <( printf "%s\n" "${directory}"/**/*${flac_extension} )
-
-if [[ ! -f "${find_flacs}" ]]; then
-  _error 'There are not any FLAC files to process!\n'
-  exit 1
-fi
-
 # Make sure the artwork location is valid, if the operation is called
 if [[ "${operations[9]}" == 'extract_images' ]]; then
   # Check if artwork_location is user-defined
@@ -2301,29 +2294,16 @@ jobs="${jobs:-2}"
 
 ###############################  MAIN  #################################
 
-printf '\033[?25l'                 # Hide cursor
-printf '\033[?7l'                  # Disable terminal wrapping
-
 export LANG=C
 export LC_ALL=C
 
-_check_config_version              # Check if script config's version
-job_fifo="/tmp/redoflacs_fifo_$$"  # Job manager FIFO
+printf '\033[?25l'                          # Hide cursor
+printf '\033[?7l'                           # Disable terminal wrapping
 
+_check_config_version                       # Script config version
+
+job_fifo="/tmp/redoflacs_fifo_$$"           # Job manager FIFO
 issue_ticks="/tmp/redoflacs_issue_file_$$"  # Issues/Errors file
-
-# _retag(): Display a countdown
-[[ -n "${operations[7]}" ]] && _countdown_metadata
-
-_info 'Finding FLAC files to process...'
-
-# Total FLACs to process
-pushd "$directory" >/dev/null
-total_items=( "${PWD}"/**/*${flac_extension} )  # Absolute pathname
-popd >/dev/null
-
-# This displays '[ ok ]' after 'Finding FLAC files to process...'
-printf "%11s${blue}[ ${green}ok${blue} ]${reset}\n" ''
 
 #
 # Obtain the total number of lines and columns available in the terminal
@@ -2351,6 +2331,34 @@ if ((columns < 80)); then
   readonly MAX_LENGTH="$((++columns))"
 else
   readonly MAX_LENGTH='81'
+fi
+
+#
+# Clear echoed ^C to terminal and restore cursor visibilty on SIGINT
+#
+trap "printf '\033[$(( $(_row) + 1 ));0H\033[0K\033[?25h'; exit 130" SIGINT
+
+# _retag(): Display a countdown
+[[ "${operations[@]}" == *'_retag'* ]] && _countdown_metadata
+
+#
+# Obtain the total FLAC files to process (files and/or directories)
+#
+# NOTE:
+#   The array of FLAC files/directories contain absolute pathnames which
+#   allows logging to determine where each item resides
+#
+_info 'Finding FLAC files to process...'
+pushd "$directory" >/dev/null
+total_items=( "${PWD}"/**/*${flac_extension} )
+popd >/dev/null
+
+# If there were no FLAC files found, the glob will exist as index 0, eg:
+#   /path/to/files/**/*.[Ff][Ll][Aa][Cc]
+if [[ ! -f "${total_items[0]}" ]]; then
+  _error 'There were no FLAC files found!'
+  printf '\033[?25h'   # Restore cursor
+  exit 1
 fi
 
 for operation in "${operations[@]}"; do
