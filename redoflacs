@@ -2328,11 +2328,11 @@ printf "%11s${blue}[ ${green}ok${blue} ]${reset}\n" ''
 #
 # Obtain the total number of lines and columns available in the terminal
 # by sending the following control sequences to the terminal driver:
-#   CSI s              # Save cursor position
-#   CSI 999999 C       # Move cursor to the end of the current row
-#   CSI 6 n            # Query cursor position
-#   CSI 999999 D       # Move cursor to the beginning of the current row
-#   CSI u              # Restore cursor position
+#
+#   CSI s                # Save cursor position
+#   CSI 999999 999999 H  # Move cursor to the end of the last row
+#   CSI 6 n              # Query cursor position
+#   CSI u                # Restore cursor position
 #
 # 'CSI 6 n' reports/returns the cursor position/terminal size as:
 #   CSI height ; width R
