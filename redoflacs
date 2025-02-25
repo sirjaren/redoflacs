@@ -1168,43 +1168,32 @@ _summary()
 #
 # Run a given operation with a specified number of jobs
 #
-# $1 is the operational function to run multiple jobs, which can be:
-#   aucdtect                  md5_check           compress_verify
-#   compress_no_test          test                replaygain_test
-#   replaygain_force_apply    replaygain_apply    retag_analyze
-#   retag_apply               extract_images      prune
-#
-# Each name above is a function name, to be called as:
-#   _<function_name>
-#
-# Examples:
-#   _$1   # Eg: _aucdtect
-#   _$1   # Eg: _extract_images
-#
 _run_parallel()
 {
-  local item
+  local item            # FLAC file (or directory) to process
+  local operation="$1"  # The operation/function to run (eg: _test)
   local -i row num=0
 
   # Starting cursor row to display first item and operation progress
   row=$(($(_row) - 1))
 
   # Start as many operations as specified by the number of jobs
-  for item in "${total_items[@]:0:${jobs}}"; do
+  for item in "${total_items[@]:0:$jobs}"; do
     ((row++, num++))
-    _$1 &
+    "$operation" &
   done
 
-  # Wait on operations
+  # Wait on operations if number of items is less than total jobs
   (( ${#total_items[@]} <= jobs )) && wait
 
-  # An operation is completed with an integer and newline sent to a
-  # FIFO. The integer is that row position an operation was on.  For
-  # each newline read in, process another file/dir from $total_items[@]
+  # Completion of an operation sends an integer (terminal row number)
+  # and newline to a FIFO (job manager).
+  #
+  # After each newline is read from the FIFO, another item is processed
   while read -r row; do
-    (( num >= ${#total_items[@]} )) && break  # Stop, if no more FLACs
+    (( num >= ${#total_items[@]} )) && break  # Stop if no more FLACs
     item="${total_items[num++]}"              # Current item to process
-    _$1 &
+    "$operation" &
   done <&3  # Read from FIFO
 
   # Wait on operations
@@ -2423,7 +2412,7 @@ for operation in "${operations[@]}"; do
   post_row=$(( $(_row) + items_processed ))  # Operation row position
 
   trap '_trap_sigint "${operation}"' SIGINT  # Clean exit on SIGINT
-  _run_parallel "${operation}"               # Run operation with jobs
+  _run_parallel "$operation"                 # Run operation with jobs
 
   for (( i=1; i<=items_processed; i++)); do
     # Clear all the operation lines by moving up each line and clearing
