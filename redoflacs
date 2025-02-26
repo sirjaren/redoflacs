@@ -128,77 +128,61 @@ _message_log_exists()
 }
 
 #
-# Print out current operation message
+# Print out current operation title
 #
-# $1 determines which title message to print (if any).  Possible values:
-#   aucdtect                  md5_check           compress_verify
-#   compress_no_test          test                replaygain_test
-#   replaygain_force_apply    replaygain_apply    retag_analyze
-#   retag_apply               extract_images      prune
-#
-# $2 is the number of processed items (iteration)
-#
-# $3 is conditionally called, and appears if the operation was
-# interrupted:
-#   Interrupted operation: $3 == 'interrupt'
-#     Operation completed: $3 is NULL
-#
-_message()
+_operation_title()
 {
-  # Set up local variables
-  declare message sub_message
-  declare -i issues spacing
+  local fmt title interrupt_banner issues_banner right_align
 
-  # Print title message if $1 is not NULL
-  if [[ -n "${1}" ]]; then
-    case "${1}" in
-      'aucdtect')       message='Validating with auCDtect'                ;;
-      'md5check')       message='Check MD5 Signature'                     ;;
-      'compress')       message="Level ${compression_level} Compression"  ;;
-      'test')           message='Test FLACs'                              ;;
-      'extract_images') message='Extracting Artwork'                      ;;
-      'replaygain')     message='Applying ReplayGain'                     ;;
-      'retag')          message='Retagging FLACs'                         ;;
-      'prune')          message='Prune METADATA Blocks'                   ;;
-    esac
+  local -i issues="$(_num_issues)"  # Total number of issues found
 
-    # Print title message, if applicable
-    if [[ -n "${message}" && -z "$2" ]]; then
-      printf "\033[$(_row)H ${green}*${reset} ${message}\n"
-    fi
+  # Generate operation title messaging
+  case "$operation" in
+    '_md5check')       title='Verifying MD5...'                             ;;
+    '_test')           title='Testing...'                                   ;;
+    '_compress')       title="Compressing To Level ${compression_level}..." ;;
+    '_aucdtect')       title='auCDtect Validation...'                       ;;
+    '_replaygain')     title='Applying ReplayGain...'                       ;;
+    '_retag')          title='Retagging...'                                 ;;
+    '_extract_images') title='Extracting Images...'                         ;;
+    '_prune')          title='Pruning METADATA...'                          ;;
+  esac
 
-    # Print sub title message, if applicable
-    if [[ -n "${sub_message}" && -z "$2" ]]; then
-      printf "\033[$(_row);3H${green}>>${reset} ${sub_message}\n"
-    fi
+  # Generate a banner indicating total issues found so far
+  if (( issues > 0 )); then
+    issues_banner="$issues issue"
+
+    # Add plural for more than one issue found
+    (( issues != 1 )) && issues_banner+='s'
   fi
 
-  # Update title/sub title message only if $2 is not NULL
-  if [[ -n "${2}" ]]; then
-    issues=$(_num_issues)  # Number of issues
+  # Genarate an interrupted banner if the user sent SIGINT
+  #
+  # NOTE:
+  #   The parent function will be the signal handler for SIGINT
+  if [[ "${FUNCNAME[1]}" == '_trap_sigint' ]]; then
+    interrupt_banner='INTERRUPTED'
 
-    # Specify color according to operation status
-    [[ "${3}" == 'interrupt' ]] && color="${cyan}" || color="${green}"
-
-    # Verbage for singular/plural issues
-    (( issues == 1 )) && issue_string='issue ' || issue_string='issues'
-
-    if [[ -n "${sub_message}" ]]; then
-      # Space between message and number of items proccessed
-      spacing=$((44 - ${#sub_message} - ${#2} - ${#issues} - 14))
-
-      # Sub title message
-      printf "\033[2A   ${green}>>${reset} %s%${spacing}s${blue}[ ${color}%d ok${blue} | ${red}%d ${issue_string}${blue} ]${reset}\n" \
-        "${sub_message}" '' "$2" "${issues}"
-    else
-      # Space between message and number of items proccessed
-      spacing=$((46 - ${#message} - ${#2} - ${#issues} - 14))
-
-      # Title message
-      printf "\033[2A  ${green}*${reset} %s%${spacing}s${blue}[ ${color}%d ok${blue} | ${red}%d ${issue_string}${blue} ]${reset}\n" \
-        "${message}" '' "$2" "${issues}"
-    fi
+    # Add an extra space to separate issues banner if it exists
+    (( issues > 0 )) && interrupt_banner+=' '
   fi
+
+  # Determine where to place cursor in terminal column to right align
+  # possible SIGINT interruption and the number of issues to display
+  right_align=$(( MAX_LENGTH - ${#interrupt_banner} - ${#issues_banner} ))
+
+  # Cursor at operation title; right-aligned for issues banner
+  fmt+=$"\033[${title_row}H"           # Cursor row; beginning of line
+  fmt+=" ${green}*$reset "             # Colored title prefix
+  fmt+='%s'                            # Modifier; title of operation
+  fmt+=$"\033[${title_row};${right_align}H"
+
+  # These may not be displayed if no issues or SIGINT received
+  fmt+="${cyan}${interrupt_banner}$reset"  # Interrupt banner
+  fmt+="${red}${issues_banner}$reset\n"    # Issues banner
+
+  # Display generated operation title message
+  printf "$fmt" "$title"
 }
 
 #
@@ -300,10 +284,10 @@ _trap_sigint()
 
   _kill_jobs ${jobs_running[@]}            # Kill children processes
 
-  for (( i=1; i<=items_processed; i++)); do
+  for (( i=1; i<=items_processed+1; i++)); do
     # Clear all the operation lines by moving up each line and clearing
-    # it, until we are just below the operation's title message
-    printf "\033[$(( post_row - i))H%${columns}s" ''
+    # it until we have cleared the operation title message
+    printf "\033[$(( post_row - i))H\033[0K"
   done
 
   # Update title message, don't update if SIGINT was during a countdown
@@ -311,7 +295,7 @@ _trap_sigint()
     # The number of completely finished (ok) items, minus any items
     # interrupted, minus items with issues
     finished_items="$(( iteration - ${#jobs_running[@]} - $(_num_issues) ))"
-    _message "${operation}" "${finished_items}" 'interrupt'
+    _operation_title
   fi
 
   # Display extra newline if user invoked SIGINT during a countdown
@@ -1068,7 +1052,6 @@ _check_missing_programs()
 
     _error
     _error 'Ensure these programs are installed and available in $PATH'
-
     exit 1
   fi
 }
@@ -1122,11 +1105,11 @@ _run_parallel()
   local -i row num=0
 
   # Starting cursor row to display first item and operation progress
-  row=$(($(_row) - 1))
+  row=$(( $(_row) - 1 ))
 
   # Start as many operations as specified by the number of jobs
   for item in "${total_items[@]:0:$jobs}"; do
-    ((row++, num++))
+    (( row++, num++ ))
     "$operation" &
   done
 
@@ -1233,6 +1216,9 @@ _replaygain()
     _print_item_fail
     printf >> "$log_file" '%s\n' "${error_log[@]}"
     printf >> "$issue_ticks" '.'  # Add one tick to total issues
+
+    # Update operation title message with current number of issues
+    _operation_title
   else
     _print_item_ok
   fi
@@ -1336,6 +1322,9 @@ _compress()
 
     # Send complete to _run_parallel()
     printf >&3 "$row\n"
+
+    # Update operation title message with current number of issues
+    _operation_title
     return
   fi
 
@@ -1398,6 +1387,9 @@ _test()
     _print_item_fail
     printf >> "$log_file" '%s [Test] %s\n' "$item" "$error_msg"
     printf >> "$issue_ticks" '.'  # Add one tick to total issues
+
+    # Update operation title message with current number of issues
+    _operation_title
   else
     _print_item_ok
   fi
@@ -1528,6 +1520,9 @@ _aucdtect()
     printf >> "$log_file" '%s [%s] %s\n' "$item" 'auCDtect' "$error_msg"
     printf >> "$issue_ticks" '.'  # Add one tick to total issues
     printf >&3 "$row\n"           # Send complete to _run_parallel()
+
+    # Update operation title message with current number of issues
+    _operation_title
     return
   else
     _print_item_ok
@@ -1561,6 +1556,9 @@ _aucdtect()
     printf >> "$issue_ticks" '.'  # Add one tick to total issues
     rm "$item_wav"                # Remove temporary WAV file
     printf >&3 "$row\n"           # Send complete to _run_parallel()
+
+    # Update operation title message with current number of issues
+    _operation_title
     return
 
   # auCDtect reports CDDA of 100%, continue with next item
@@ -1600,6 +1598,9 @@ _aucdtect()
     printf >> "$issue_ticks" '.'  # Add one tick to total issues
     rm "$item_wav"                # Remove temporary WAV file
     printf >&3 "$row\n"           # Send complete to _run_parallel()
+
+    # Update operation title message with current number of issues
+    _operation_title
     return
   fi
 
@@ -1622,6 +1623,9 @@ _aucdtect()
     printf >> "$issue_ticks" '.'  # Add one tick to total issues
     rm "$item_wav"                # Remove temporary WAV file
     printf >&3 "$row\n"           # Send complete to _run_parallel()
+
+    # Update operation title message with current number of issues
+    _operation_title
     return
   fi
 
@@ -1681,6 +1685,9 @@ _aucdtect()
   printf >> "$issue_ticks" '.'  # Add one tick to total issues
   rm "$item_wav"                # Remove temporary WAV file
   printf >&3 "$row\n"           # Send complete to _run_parallel()
+
+  # Update operation title message with current number of issues
+  _operation_title
 }
 
 #
@@ -1714,12 +1721,18 @@ _md5check()
     printf >> "$log_file" '%s [MD5check] %s\n' "$item" "$error_msg"
     printf >> "$issue_ticks" '.'  # Add one tick to total issues
 
+    # Update operation title message with current number of issues
+    _operation_title
+
   # Possible valid FLAC, but MD5 signature is unset in STREAMINFO block
   elif [[ "$md5sum" == '00000000000000000000000000000000' ]]; then
     _print_item_fail
     printf >> "$log_file" '%s [MD5check] %s\n' "$item" \
       'ERROR: Unset MD5 signature (00000000000000000000000000000000)'
     printf >> "$issue_ticks" '.'  # Add one tick to total issues
+
+    # Update operation title message with current number of issues
+    _operation_title
   else
     _print_item_ok
   fi
@@ -1776,6 +1789,9 @@ _retag()
 
     # Send complete to _run_parallel()
     printf >&3 "$row\n"
+
+    # Update operation title message with current number of issues
+    _operation_title
     return
   fi
 
@@ -1919,6 +1935,9 @@ _retag()
     printf >> "$log_file" \
       '%s [Retag] Missing tags: %s\n' "$item" "$missing_tags_str"
     printf >> "$issue_ticks" '.'  # Add one tick to total issues
+
+    # Update operation title message with current number of issues
+    _operation_title
   else
     _print_item_ok
   fi
@@ -1958,6 +1977,9 @@ _extract_images()
     printf >> "$issue_ticks" '.'  # Add one tick to total issues
     rm -f "$blocks"
     printf >&3 "$row\n"           # Send complete to _run_parallel()
+
+    # Update operation title message with current number of issues
+    _operation_title
     return
   fi
 
@@ -2094,6 +2116,9 @@ _prune()
     _print_item_fail
     printf >> "$log_file" '%s [Prune] %s\n' "$item" "$error_msg"
     printf >> "$issue_ticks" '.'  # Add one tick to total issues
+
+    # Update operation title message with current number of issues
+    _operation_title
   else
     _print_item_ok
   fi
@@ -2325,8 +2350,11 @@ for operation in "${operations_to_run[@]}"; do
     ;;
   esac
 
-  _message "$operation"  # Display title message of operation
+  title_row="$(_row)"
+
+  _operation_title  # Display title message of operation
   _scroll_terminal       # Scroll terminal up (if needed)
+  title_row=$(( $(_row) - 1 ))
 
   # Clear job manager file descriptor (tied to FIFO)
   exec 3<&- 3>&-       # Close file descriptor
@@ -2350,14 +2378,11 @@ for operation in "${operations_to_run[@]}"; do
   trap '_trap_sigint "${operation}"' SIGINT  # Clean exit on SIGINT
   _run_parallel "$operation"                 # Run operation with jobs
 
-  for (( i=1; i<=items_processed; i++)); do
+  for (( i=1; i<=items_processed+1; i++)); do
     # Clear all the operation lines by moving up each line and clearing
-    # it, until we are just below the operation's title message
-    printf "\033[$(( post_row - i))H%${columns}s" ''
+    # it until we have cleared the operation title message
+    printf "\033[$(( post_row - i))H\033[0K"
   done
-
-  # Display number of finished items minus items with issues
-  _message "${operation}" "$(( iteration - $(_num_issues) ))"
 
   # Update operation status to complete
   operations["$operation"]='Completed'
