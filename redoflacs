@@ -202,33 +202,6 @@ _message()
 }
 
 #
-# Update $operation_summary[@] with the current operation status
-#
-# $1 determines which operational index to update; possible values:
-#   aucdtect                  md5_check           compress_verify
-#   compress_no_test          test                replaygain_test
-#   replaygain_force_apply    replaygain_apply    retag_analyze
-#   retag_apply               extract_images      prune
-#
-# $2 is the operational status, the values of which, can be:
-#   Operation Completed       Operation Interrupted
-#   Operation Did Not Run
-#
-_update_operation_status()
-{
-  case "${1}" in
-    'aucdtect')           operation_summary['Validate with auCDtect']="${2}" ;;
-    'md5check')           operation_summary['Check MD5 Signature']="${2}"    ;;
-    'compress')           operation_summary['Compress FLACs']="${2}"         ;;
-    'test')               operation_summary['Test FLACs']="${2}"             ;;
-    'replaygain')         operation_summary['Applying ReplayGain']="${2}"    ;;
-    'retag')              operation_summary['Retagging FLACs']="${2}"        ;;
-    'extract_images')     operation_summary['Extracting Artwork']="${2}"     ;;
-    'prune')              operation_summary['Prune METADATA Blocks']="${2}"  ;;
-  esac
-}
-
-#
 # Displays the currently processed item on a dedicated row within the
 # terminal
 #
@@ -353,11 +326,8 @@ _trap_sigint()
     'compress')  rm -f "${directory}"/**/*.tmp,fl-ac+en\'c     ;;
   esac
 
-  # Update status for the current operation, but not if SIGINT was
-  # invoked during a countdown
-  if [[ "$1" != 'countdown' ]]; then
-    _update_operation_status "${1}" 'Operation Interrupted'
-  fi
+  # Update operation status to interrupted
+  operations["$operation"]='Interrupted'
 
   # Print out log exists to STDERR
   [[ -f "${log_file}" ]] && _message_log_exists "${1}"
@@ -849,16 +819,33 @@ _num_issues()
 #   $force_compression
 #   $force_replaygain
 #   $no_extra_tags
+#   $operations_to_run[@]
 #   $operations[@]
 #
 _process_arguments()
 {
   # Global variables used in other functions/operations
   local -g create_spectrogram force_compression force_replaygain \
-    operations no_extra_tags directory
+    operations_to_run no_extra_tags directory
 
-  local arg invalid
-  local -a conflicting
+  local arg invalid op
+  local -a conflicting ordered_operations
+
+  # Associative array containing operations to run and status of
+  # operation
+  local -Ag operations
+
+  # Defined order to run all specified operations
+  local -a ordered_operations=(
+    '_md5check'
+    '_test'
+    '_compress'
+    '_aucdtect'
+    '_replaygain'
+    '_retag'
+    '_extract_images'
+    '_prune'
+  )
 
   # If no arguments are made to the script show usage and help
   if (( $# == 0 )); then
@@ -901,36 +888,36 @@ _process_arguments()
 
       # Test FLAC files
       't')
-        if [[ "${operations[@]}" != *'_test'* ]]; then
-          operations+=( '_test' )
+        if [[ -z "${operations['_test']}" ]]; then
+          operations['_test']='Did Not Run'
         fi
         ;;
 
       # Validate MD5 checksum in FLAC files
       'm')
-        if [[ "${operations[@]}" != *'_md5check'* ]]; then
-          operations+=( '_md5check' )
+        if [[ -z "${operations['_md5check']}" ]]; then
+          operations['_md5check']='Did Not Run'
         fi
         ;;
 
       # Extract embedded artwork from FLAC files
       'e')
-        if [[ "${operations[@]}" != *'_extract_images'* ]]; then
-          operations+=( '_extract_images' )
+        if [[ -z "${operations['_extract_images']}" ]]; then
+          operations['_extract_images']='Did Not Run'
         fi
         ;;
 
       # Prune unnecessary metadata blocks from FLAC files
       'p')
-        if [[ "${operations[@]}" != *'_prune'* ]]; then
-          operations+=( '_prune' )
+        if [[ -z "${operations['_prune']}" ]]; then
+          operations['_prune']='Did Not Run'
         fi
         ;;
 
       # Retag FLAC files
       'r')
-        if [[ "${operations[@]}" != *'_retag'* ]]; then
-          operations+=( '_retag' )
+        if [[ -z "${operations['_retag']}" ]]; then
+          operations['_retag']='Did Not Run'
         fi
         ;;
 
@@ -951,9 +938,9 @@ _process_arguments()
         [[ "${conflicting[@]}" == *'-c, -C'* ]] && continue
 
         # Add compression to operation as it does not yet exist
-        if [[ "${operations[@]}" != *'_compress'* ]]; then
+        if [[ -z "${operations['_compress']}" ]]; then
           [[ "$arg" == 'C' ]] && force_compression='true'
-          operations+=( '_compress' )
+          operations['_compress']='Did Not Run'
           continue
         fi
 
@@ -973,9 +960,9 @@ _process_arguments()
         [[ "${conflicting[@]}" == *'-a, -A'* ]] && continue
 
         # Add auCDtect to operation as it does not yet exist
-        if [[ "${operations[@]}" != *'_aucdtect'* ]]; then
+        if [[ -z "${operations['_aucdtect']}" ]]; then
           [[ "$arg" == 'A' ]] && create_spectrogram='true'
-          operations+=( '_aucdtect' )
+          operations['_aucdtect']='Did Not Run'
           continue
         fi
 
@@ -995,8 +982,8 @@ _process_arguments()
         [[ "${conflicting[@]}" == *'-g, -G'* ]] && continue
 
         # Add ReplayGain to operation as it does not yet exist
-        if [[ "${operations[@]}" != *'_replaygain'* ]]; then
-          operations+=( '_replaygain' )
+        if [[ -z "${operations['_replaygain']}" ]]; then
+          operations['_replaygain']='Did Not Run'
           [[ "$arg" == 'G' ]] && force_replaygain='true'
           continue
         fi
@@ -1013,32 +1000,22 @@ _process_arguments()
     esac
   done
 
-  # Both invalid and conflicting parameters were specified
-  if [[ "$invalid" && "${conflicting[@]}" ]]; then
-    _error 'Invalid arguments specified:'
-    _error "  ${cyan}${invalid}$reset"
-    _error 'Conflicting operations specified:'
-    for option in "${conflicting[@]}"; do
-      _error "  ${cyan}${option}$reset"
-    done
-    _help
-    exit 1
-  fi
-
   # Invalid parameters were specified
   if [[ "$invalid" ]]; then
-    _error 'Conflicting operations specified:'
+    _error 'Invalid arguments specified:'
     _error "  ${cyan}${invalid}$reset"
-    _help
-    exit 1
   fi
 
   # Conflicting parameters were specified
-  if [[ "${conflicting[@]}" ]]; then
-    _error 'Invalid arguments specified:'
+  if (( ${#conflicting[@]} > 0 )); then
+    _error 'Conflicting operations specified:'
     for option in "${conflicting[@]}"; do
       _error "  ${cyan}${option}$reset"
     done
+  fi
+
+  # Display help and exit if invalid or conflicting parameters exist
+  if [[ "$invalid" ]] || (( ${#conflicting[@]} )); then
     _help
     exit 1
   fi
@@ -1054,6 +1031,12 @@ _process_arguments()
     _help
     exit 1
   fi
+
+  # Build $operations_to_run[@] which is an ordered array of operations
+  # to run on the FLAC files/directories
+  for op in "${ordered_operations[@]}"; do
+    [[ "${operations[$op]}" ]] && operations_to_run+=( "$op" )
+  done
 }
 
 #
@@ -1069,7 +1052,7 @@ _check_missing_programs()
     type -P "$program" >/dev/null || missing_programs+=( "$program" )
   done
 
-  if [[ "${operations[@]}" == *'_aucdtect'* ]]; then
+  if [[ -n "${operations['_aucdtect']}" ]]; then
     type -P auCDtect >/dev/null || missing_programs+=( 'auCDtect' )
   fi
 
@@ -1095,75 +1078,39 @@ _check_missing_programs()
 #
 _summary()
 {
-  # Set up local variables/arrays
-  declare     operation  sub_message
-  declare -a  operation_keys
+  local op
 
-  # Title
-  printf "\033[$(_row);2H${blue}%s${reset}\n" \
-  '---------------------------------------------------'
-  printf '                Summary Of Operations\n'
-  printf "${reset} ${blue}%s${reset}\n" \
-  '-------------------------+-------------------------'
+  for op in "${operations_to_run[@]}"; do
+    # Color summary message
+    printf "$cyan"
 
-  # Correct order to display operational status to process
-  operation_keys=(
-    'Validate with auCDtect'
-    'Check MD5 Signature'
-    'Compress FLACs'
-    'Test FLACs'
-    'Applying ReplayGain'
-    '>> Analyzing'
-    '>> Re-Tagging'
-    'Extracting Artwork'
-    'Prune METADATA Blocks'
-  )
-
-  for operation in "${operation_keys[@]}"; do
-    # Display each operational line with the status of that operation
-    if [[ -n "${operation_summary[$operation]}" ]]; then
-      # Check for sub messages, and apply additional formatting
-      if [[ "${operation}" == '>> '* ]]; then
-        if [[ "${operation}" == '>> Analyzing' ]]; then
-          printf "${yellow}%25s ${blue}|${reset}\n" 'Retagging FLACs'
-        fi
-
-        printf -v sub_message '%25s' "${operation}"  # Store message
-
-        # Color '>>' as yellow and message as magenta
-        printf "${yellow}%s${magenta}%s ${blue}|${reset}" \
-          "${sub_message%%>> *}>>" "${sub_message##*>>}"
-      else
-          printf "${yellow}%25s ${blue}|${reset}" "${operation}"
-      fi
-
-      # Colorize the operational status
-      case "${operation_summary[$operation]}" in
-        'Operation Completed')
-          printf " ${green}%s${reset}\n" "${operation_summary[$operation]}"
+    # Display summary message based on operation performed
+    case "$op" in
+      '_compress')
+        printf '%-24s' "Compressing To Level $compression_level:"
         ;;
-        'Operation Interrupted')
-          printf " ${cyan}%s${reset}\n" "${operation_summary[$operation]}"
-        ;;
-        'Operation Did Not Run')
-          printf " ${magenta}%s${reset}\n" "${operation_summary[$operation]}"
-        ;;
-        *'Issue'*)
-          printf " ${red}%s${reset}\n" "${operation_summary[$operation]}"
-        ;;
-      esac
-    fi
+      '_md5check')       printf '%-24s' 'Verifying MD5:'       ;;
+      '_test')           printf '%-24s' 'Testing:'             ;;
+      '_aucdtect')       printf '%-24s' 'auCDtect Validation:' ;;
+      '_replaygain')     printf '%-24s' 'Applying ReplayGain:' ;;
+      '_retag')          printf '%-24s' 'Retagging:'           ;;
+      '_extract_images') printf '%-24s' 'Extracting Images:'   ;;
+      '_prune')          printf '%-24s' 'Pruning METADATA:'    ;;
+    esac
+
+    # Display status of operation
+    case "${operations[$op]}" in
+      'Completed')   printf "${green}%s${reset}\n" "${operations[$op]}"   ;;
+      'Interrupted') printf "${yellow}%s${reset}\n" "${operations[$op]}"    ;;
+      'Did Not Run') printf "${magenta}%s${reset}\n" "${operations[$op]}" ;;
+    esac
   done
 
-  # Last line of chart
-  printf " ${blue}%s${reset}\n" \
-    '-------------------------+-------------------------'
-
-  # Remove temporary FIFOs and files
-  rm -f "$job_fifo" "$tmp_aucdtect_fd" "$issue_ticks"
-
-  printf '\033[?25h'   # Restore cursor
-  printf '\033[?7h'    # Restore terminal wrapping
+  printf '\033[?25h'            # Restore the cursor
+  printf '\033[?7h'             # Restore terminal wrapping
+  rm -f "$job_fifo"             # Remove temporary FIFO
+  rm -f "$tmp_picture_blocks"   # Remove temporary 'metaflac' blocks
+  rm -f "$issue_ticks"          # Remove temporary errors/issues file
 }
 
 #
@@ -1172,7 +1119,6 @@ _summary()
 _run_parallel()
 {
   local item            # FLAC file (or directory) to process
-  local operation="$1"  # The operation/function to run (eg: _test)
   local -i row num=0
 
   # Starting cursor row to display first item and operation progress
@@ -2124,7 +2070,7 @@ _prune()
   trap '_kill_jobs "$(jobs -rp)"' EXIT
   local output error_msg
 
-  _print_item 'Prune Metadata'
+  _print_item 'Pruning'
   _print_item_half  # Metaflac doesn't display a percentage complete
 
   # Remove all information but STREAMINFO,VORBIS_COMMENTs, and
@@ -2187,7 +2133,6 @@ script_version='0.31_pre'           # Redoflacs version
 flac_extension='.[Ff][Ll][Aa][Cc]'  # FLAC extension (case-insensitive)
 
 declare -i script_revision='4'      # Script user configuration revision
-declare -A operation_summary        # Stores all the operational states
 
 # For colored output
 reset=$'\033[0m'
@@ -2247,11 +2192,6 @@ _process_arguments "${@}"
 # Check for missing programs required by this script
 #
 _check_missing_programs
-
-# For each operation that was selected, add to $operation_summary[@]
-for operation in "${operations[@]}"; do
-  _update_operation_status "${operation}" 'Operation Did Not Run'
-done
 
 # Make sure the artwork location is valid, if the operation is called
 if [[ "${operations[9]}" == 'extract_images' ]]; then
@@ -2348,7 +2288,7 @@ trap "printf '\033[$(( $(_row) + 1 ));0H\033[0K\033[?25h'; exit 130" SIGINT
 #   The array of FLAC files/directories contain absolute pathnames which
 #   allows logging to determine where each item resides
 #
-_info 'Finding FLAC files to process...'
+_info 'Looking for FLAC files to process...'
 pushd "$directory" >/dev/null
 total_items=( "${PWD}"/**/*${flac_extension} )
 popd >/dev/null
@@ -2361,22 +2301,10 @@ if [[ ! -f "${total_items[0]}" ]]; then
   exit 1
 fi
 
-for operation in "${operations[@]}"; do
-  # Loop through the various operations to run.  All the operations are
-  # to be run, in order, which is detailed below:
-  #   operations[0]='aucdtect'
-  #   operations[1]='md5check'
-  #   operations[2]='compress_verify'
-  #   operations[3]='compress_no_test'
-  #   operations[4]='test'
-  #   operations[5]='replaygain_test'
-  #   operations[6]='replaygain_force_apply'   # Conditionally set
-  #   operations[6]='replaygain_apply'         # Conditionally set
-  #   operations[7]='retag'
-  #   operations[9]='extract_images'
-  #   operations[10]='prune'
-  case "${operation}" in
-    'replaygain')
+# Loop through the various operations to run
+for operation in "${operations_to_run[@]}"; do
+  case "$operation" in
+    '_replaygain')
       total_items_backup=( "${total_items[@]}" )  # Total FLACs backup
       for dir in "${total_items[@]%/*}"; do
         previous="$current"
@@ -2385,7 +2313,7 @@ for operation in "${operations[@]}"; do
       done
       total_items=( "${total_dirs[@]}" )          # Process directories
     ;;
-    'prune')
+    '_prune')
       # Set which FLAC metadata BLOCKS to remove
       if [[ "${remove_artwork}" == 'true' ]]; then
         # Remove PICTURE block
@@ -2431,8 +2359,8 @@ for operation in "${operations[@]}"; do
   # Display number of finished items minus items with issues
   _message "${operation}" "$(( iteration - $(_num_issues) ))"
 
-  # Update status for the current operation
-  _update_operation_status "${operation}" 'Operation Completed'
+  # Update operation status to complete
+  operations["$operation"]='Completed'
 
   if [[ -f "${log_file}" ]]; then
     _message_log_exists "${operation}"  # Print out log exists to STDERR
