@@ -338,26 +338,12 @@ _print_item_half() { printf "\033[${row}H$yellow 50%%$reset";  }
 _print_item_skip() { printf "\033[${row}H${cyan}skip$reset";   }
 
 #
-# Kill any children process and display the correct interrupt message
-# when a user sends SIGINT during script execution. Perform any cleanup,
-# and check for the existence of a log file before exiting script.
-#
-# $1 determines which additional cleanup may need to be performed based
-# off of operation interrupted, as well as whether the trap is invoked
-# during a countdown interruption. Possible values:
-#   aucdtect                  md5_check           compress_verify
-#   compress_no_test          test                replaygain_test
-#   replaygain_force_apply    replaygain_apply    retag_analyze
-#   retag_apply               extract_images      prune
-#   countdown
+# Kill any children process and perform cleanup, checking for the
+# existence of a log file before exiting script
 #
 _trap_sigint()
 {
-  # Set up local variables
-  declare    finished_items
-  declare -a jobs_running=( $(jobs -rp) )  # Store children processes
-
-  _kill_jobs ${jobs_running[@]}            # Kill children processes
+  _kill_jobs "$(jobs -rp)"
 
   # Clear all the operation lines by moving up each line and clearing it
   # until we are just below the operation's title message
@@ -365,31 +351,17 @@ _trap_sigint()
     printf "\033[$(( post_row - i))H\033[0K"
   done
 
-  # Update title message, don't update if SIGINT was during a countdown
-  if [[ "$1" != 'countdown' ]]; then
-    # The number of completely finished (ok) items, minus any items
-    # interrupted, minus items with issues
-    finished_items="$(( iteration - ${#jobs_running[@]} - $(_num_issues) ))"
-    _operation_title
-  fi
-
   # Display extra newline if user invoked SIGINT during a countdown
-  [[ "$1" == 'countdown' ]] && printf '\n'
+  [[ "${FUNCNAME[1]}" == '_countdown'* ]] && printf '\n'
 
-  printf " ${green}*${reset} SIGINT received, generating summary...\n"
-
-  case "${1}" in
-    # Remove temporary script-created files
-    #--
-    'aucdtect'*) rm -f "${directory}"/**/*_redoflacs_"$$".wav  ;;
-    'compress')  rm -f "${directory}"/**/*.tmp,fl-ac+en\'c     ;;
-  esac
+  # Remove WAV files (auCDtect) and any temporary FLAC files compression
+  rm -f "${directory}"/**/*_redoflacs_"$$".wav
+  rm -f "${directory}"/**/*.tmp,fl-ac+en\'c
 
   # Print out log exists to STDERR
   [[ -f "${log_file}" ]] && _message_log_exists "${1}"
 
   _summary                      # Display Summary Of Operations
-
   exit 130
 }
 
@@ -399,22 +371,14 @@ _trap_sigint()
 _print_version() { printf 'Version %s\n' "${version}"; }
 
 #
-# Return metaflac version
-#
-_metaflac_version()
-{
-  # Metaflacs version (ie: '2' in 1.2.1)
-  IFS='.' read -r _ metaflac_version _ < <(metaflac --version)
-  printf '%s' "${metaflac_version}"
-}
-
-#
 # Kill any children process (obtained via $@), hiding errors and
 # suppressing the shell's notification of terminated jobs
 #
 _kill_jobs()
 {
-  for pid in $@ ; do
+  local -i pid
+
+  for pid in $@; do
     kill ${pid} 2>/dev/null
     wait ${pid} 2>/dev/null
   done
@@ -785,35 +749,39 @@ _check_config_version()
 #
 _countdown_metadata()
 {
-  trap '_trap_sigint countdown' SIGINT  # Trap SIGINT to abort cleanly
+  trap '_trap_sigint' SIGINT EXIT
 
   # Warning message
-  _error "${yellow}CAUTION!${reset} These are the tag fields that will be kept\n"
+  _error "${yellow}CAUTION!${reset} These are the tag fields that will be kept"
   _error 'when re-tagging the selected files:\n'
 
   # Creates the listing of tags to be kept
-  printf '     %s\n' "${tags_to_keep[@]}" >&2
+  printf '     %s\n' "${tags_to_keep[@]}"
+  printf '\n'
 
   # Warning message about embedded coverart
-  _error "By default, this script will ${cyan}REMOVE${reset} the legacy ${cyan}COVERART${reset} tag.\n"
-  _error "Add the ${cyan}COVERART${reset} tag to the list of tags to be kept in the\n"
-  _error "${cyan}TAGGING SECTION${reset} of the configuration file.\n\n"
+  _error "By default, this script will ${red}REMOVE${reset} the legacy"
+  _error "${cyan}COVERART${reset} tag.\n"
 
-  _error "Keep in mind, if the ${cyan}remove_artwork${reset} option is set to ${cyan}false${reset},\n"
-  _error "embedded artwork in the ${cyan}PICTURE${reset} block will be kept when using\n"
-  _error "the ${cyan}-p, --prune${reset} option as well.\n\n"
+  _error "Add the ${cyan}COVERART${reset} tag to the list of tags to be kept"
+  _error "in the ${cyan}TAGGING SECTION${reset} of the configuration file.\n"
 
-  _warn "Waiting ${red}10${reset} seconds before starting program...\n"
+  _error "Keep in mind, if the ${cyan}remove_artwork${reset} option is set to"
+  _error "${cyan}false${reset}, embedded artwork in the ${cyan}PICTURE${reset}"
+  _error "block will be kept when using the ${cyan}-p, --prune${reset} option"
+  _error "as well.\n"
+
+  _warn "Waiting ${red}20${reset} seconds before starting program..."
   _warn 'Ctrl+C (Control-C) to abort...\n'
-  _info 'Starting in: '
+
+  printf " ${green}*${reset} Starting in: "
 
   # 10 second countdown
-  for count in {10..1}; do
+  for count in {20..1}; do
     printf "${red}%d ${reset}" "$count"
     read -t1  # Sleep 1
   done
-
-  printf '\n'  # Advance countdown to next line
+  printf '\n'
 }
 
 #
@@ -822,7 +790,7 @@ _countdown_metadata()
 #
 _countdown_config()
 {
-  trap '_trap_sigint countdown' SIGINT  # Trap SIGINT to abort cleanly
+  trap '_trap_sigint' SIGINT EXIT
 
   # Warning message
   _info 'There is a newer configuration file available!\n\n'
@@ -2366,7 +2334,8 @@ for operation in "${operations[@]}"; do
 
   post_row=$(( $(_row) + items_processed ))  # Operation row position
 
-  trap '_trap_sigint "${operation}"' SIGINT  # Clean exit on SIGINT
+  trap '_trap_sigint' SIGINT EXIT
+
   _run_parallel "$operation"                 # Run operation with jobs
 
   # Clear all the operation lines by moving up each line and clearing it
