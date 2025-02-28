@@ -132,21 +132,19 @@ _message_log_exists()
 #
 _operation_title()
 {
-  local fmt title interrupt_banner issues_banner right_align
-
+  local fmt match op status_banner issues_banner right_align
   local -i issues="$(_num_issues)"  # Total number of issues found
+  local -A operation_title
 
   # Generate operation title messaging
-  case "$operation" in
-    '_md5check')       title='Verifying MD5...'                             ;;
-    '_test')           title='Testing...'                                   ;;
-    '_compress')       title="Compressing To Level ${compression_level}..." ;;
-    '_aucdtect')       title='auCDtect Validation...'                       ;;
-    '_replaygain')     title='Applying ReplayGain...'                       ;;
-    '_retag')          title='Retagging...'                                 ;;
-    '_extract_images') title='Extracting Images...'                         ;;
-    '_prune')          title='Pruning METADATA...'                          ;;
-  esac
+  operation_title['_md5check']='Verifying MD5...'
+  operation_title['_test']='Testing...'
+  operation_title['_compress']="Compressing To Level ${compression_level}..."
+  operation_title['_aucdtect']='auCDtect Validation...'
+  operation_title['_replaygain']='Applying ReplayGain...'
+  operation_title['_retag']='Retagging...'
+  operation_title['_extract_images']='Extracting Images...'
+  operation_title['_prune']='Pruning METADATA...'
 
   # Generate a banner indicating total issues found so far
   if (( issues > 0 )); then
@@ -156,33 +154,86 @@ _operation_title()
     (( issues != 1 )) && issues_banner+='s'
   fi
 
-  # Genarate an interrupted banner if the user sent SIGINT
+  # Generate an interrupted banner if the user sent SIGINT otherwise
+  # default to a completed status
   #
   # NOTE:
   #   The parent function will be the signal handler for SIGINT
   if [[ "${FUNCNAME[1]}" == '_trap_sigint' ]]; then
-    interrupt_banner='INTERRUPTED'
+    status_banner='INTERRUPTED'
 
     # Add an extra space to separate issues banner if it exists
-    (( issues > 0 )) && interrupt_banner+=' '
+    (( issues > 0 )) && status_banner+=' '
+
+  # Generate a completed banner if the current operation finished
+  # processing all items
+  elif (( num == ${#total_items[@]} )); then
+    status_banner='COMPLETED'
+
+    # Add an extra space to separate issues banner if it exists
+    (( issues > 0 )) && status_banner+=' '
   fi
 
   # Determine where to place cursor in terminal column to right align
   # possible SIGINT interruption and the number of issues to display
-  right_align=$(( MAX_LENGTH - ${#interrupt_banner} - ${#issues_banner} ))
+  right_align=$(( MAX_LENGTH - ${#status_banner} - ${#issues_banner} ))
+
+  fmt+=$"\033[${title_row}H"  # Cursor row; beginning of line
+  fmt+=" ${green}*$reset "    # Colored title prefix
+  fmt+='%s'                   # Modifier; title of operation
 
   # Cursor at operation title; right-aligned for issues banner
-  fmt+=$"\033[${title_row}H"           # Cursor row; beginning of line
-  fmt+=" ${green}*$reset "             # Colored title prefix
-  fmt+='%s'                            # Modifier; title of operation
   fmt+=$"\033[${title_row};${right_align}H"
 
-  # These may not be displayed if no issues or SIGINT received
-  fmt+="${cyan}${interrupt_banner}$reset"  # Interrupt banner
-  fmt+="${red}${issues_banner}$reset\n"    # Issues banner
+  # These may not be displayed if no issues, no SIGINT, or not completed
+  if [[ "$status_banner" == 'INTERRUPTED'* ]]; then
+    fmt+="${cyan}${status_banner}$reset"    # Interrupted banner
+  else
+    fmt+="${green}${status_banner}$reset"   # Completed banner
+  fi
+  fmt+="${red}${issues_banner}$reset\n"     # Issues banner
 
   # Display generated operation title message
-  printf "$fmt" "$title"
+  printf "$fmt" "${operation_title[$operation]}"
+
+  # If a user sent SIGINT or if an operation completed but had some
+  # issues, then the subsequent operations which would have run are
+  # displayed, if any
+  #
+  # NOTE:
+  #   The parent function will be the signal handler for SIGINT
+  if
+    [[ "${FUNCNAME[1]}" == '_trap_sigint' ]] \
+    || (( issues > 0 && num == ${#total_items[@]} ))
+  then
+    # Loop through all operations and display only the operations which
+    # have not run
+    for op in "${operations[@]}"; do
+      # Matched operation is either interrupted or completed with issues
+      [[ "$op" == "$operation" ]] && match='true' && continue
+
+      # Skip completed operations (without issues)
+      [[ -z "$match" ]] && continue
+
+      status_banner='DID NOT RUN'
+
+      # Determine where to place cursor in terminal column to right
+      # align the operation status
+      right_align=$(( MAX_LENGTH - ${#status_banner} ))
+
+      fmt=" ${green}*$reset "  # Colored title prefix
+      fmt+='%s'                # Modifier; title of operation
+
+      # Cursor at operation title; right-aligned for issues banner
+      fmt+=$"\033[$(_row);${right_align}H"
+
+      # Operation status banner
+      fmt+="${magenta}${status_banner}$reset\n"
+
+      # Display generated operation title message
+      printf "$fmt" "${operation_title[$op]}"
+    done
+  fi
 }
 
 #
@@ -284,9 +335,9 @@ _trap_sigint()
 
   _kill_jobs ${jobs_running[@]}            # Kill children processes
 
-  for (( i=1; i<=items_processed+1; i++)); do
-    # Clear all the operation lines by moving up each line and clearing
-    # it until we have cleared the operation title message
+  # Clear all the operation lines by moving up each line and clearing it
+  # until we are just below the operation's title message
+  for (( i=1; i<=items_processed; i++)); do
     printf "\033[$(( post_row - i))H\033[0K"
   done
 
@@ -310,16 +361,9 @@ _trap_sigint()
     'compress')  rm -f "${directory}"/**/*.tmp,fl-ac+en\'c     ;;
   esac
 
-  # Update operation status to interrupted
-  operations["$operation"]='Interrupted'
-
   # Print out log exists to STDERR
   [[ -f "${log_file}" ]] && _message_log_exists "${1}"
 
-  printf '\033[?25h'            # Restore the cursor
-  printf '\033[?7h'             # Restore terminal wrapping
-  rm -f "$job_fifo"             # Remove temporary FIFO
-  rm -f "$tmp_picture_blocks"   # Remove temporary 'metaflac' blocks
   _summary                      # Display Summary Of Operations
 
   exit 130
@@ -362,12 +406,12 @@ _kill_jobs()
 #
 _row()
 {
-  local row
+  local -i row
 
   # Send CSI escape to (and read from) STDERR to not pollute STDIN
   IFS='[;' read -rsu2 -d'R' -p $'\033[6n' _ row _
 
-  printf '%s' "$row"
+  printf '%d' "$row"
 }
 
 #
@@ -375,7 +419,7 @@ _row()
 #
 _scroll_terminal()
 {
-  local row to_scroll
+  local -i row to_scroll
 
   # Obtain current row position
   row="$(_row)"
@@ -810,26 +854,10 @@ _process_arguments()
 {
   # Global variables used in other functions/operations
   local -g create_spectrogram force_compression force_replaygain \
-    operations_to_run no_extra_tags directory
+    no_extra_tags directory operations
 
   local arg invalid op
-  local -a conflicting ordered_operations
-
-  # Associative array containing operations to run and status of
-  # operation
-  local -Ag operations
-
-  # Defined order to run all specified operations
-  local -a ordered_operations=(
-    '_md5check'
-    '_test'
-    '_compress'
-    '_aucdtect'
-    '_replaygain'
-    '_retag'
-    '_extract_images'
-    '_prune'
-  )
+  local -a conflicting
 
   # If no arguments are made to the script show usage and help
   if (( $# == 0 )); then
@@ -839,7 +867,7 @@ _process_arguments()
 
   # Processes all the possible positional parameters, short options
   # only, handling conflicting parameters
-  while getopts ':j:cCtmaAepgGrnhvox' arg "$@"; do
+  while getopts ':j:mtcCaAgGrepnhvox' arg "$@"; do
     case "$arg" in
       # Given argument is not valid. 'OPTARG' is 'arg' before 'arg' is
       # set to '?'
@@ -870,63 +898,19 @@ _process_arguments()
       # Prevent COMPRESSION tag from being applied during compression
       'x') no_extra_tags='true' ;;
 
-      # Test FLAC files
-      't')
-        if [[ -z "${operations['_test']}" ]]; then
-          operations['_test']='Did Not Run'
-        fi
-        ;;
-
       # Validate MD5 checksum in FLAC files
-      'm')
-        if [[ -z "${operations['_md5check']}" ]]; then
-          operations['_md5check']='Did Not Run'
-        fi
-        ;;
+      'm') operations[0]='_md5check' ;;
 
-      # Extract embedded artwork from FLAC files
-      'e')
-        if [[ -z "${operations['_extract_images']}" ]]; then
-          operations['_extract_images']='Did Not Run'
-        fi
-        ;;
-
-      # Prune unnecessary metadata blocks from FLAC files
-      'p')
-        if [[ -z "${operations['_prune']}" ]]; then
-          operations['_prune']='Did Not Run'
-        fi
-        ;;
-
-      # Retag FLAC files
-      'r')
-        if [[ -z "${operations['_retag']}" ]]; then
-          operations['_retag']='Did Not Run'
-        fi
-        ;;
-
-      # Specify number of jobs to process FLAC files
-      'j')
-        # OPTARG is the (required) number after 'j'
-        if [[ "$OPTARG" =~ ^[[:digit:]]+$ ]] && (( OPTARG != 0 )); then
-          jobs="$OPTARG"
-        else
-          _error 'Option -j, requires a non-zero integer, eg: -j4'
-          _help
-        fi
-        ;;
+      # Test FLAC files
+      't') operations[1]='_test' ;;
 
       # Compression and force compression arguments
       'c'|'C')
         # Skip as both compression arguments were already specified
         [[ "${conflicting[@]}" == *'-c, -C'* ]] && continue
 
-        # Add compression to operation as it does not yet exist
-        if [[ -z "${operations['_compress']}" ]]; then
-          [[ "$arg" == 'C' ]] && force_compression='true'
-          operations['_compress']='Did Not Run'
-          continue
-        fi
+        operations[2]='_compress'
+        [[ "$arg" == 'C' ]] && force_compression='true'
 
         # '-C' was already specified and '-c' is the current argument
         if [[ "$arg" == 'c' && "$force_compression" ]]; then
@@ -943,12 +927,8 @@ _process_arguments()
         # Skip as both auCDtect arguments were already specified
         [[ "${conflicting[@]}" == *'-a, -A'* ]] && continue
 
-        # Add auCDtect to operation as it does not yet exist
-        if [[ -z "${operations['_aucdtect']}" ]]; then
-          [[ "$arg" == 'A' ]] && create_spectrogram='true'
-          operations['_aucdtect']='Did Not Run'
-          continue
-        fi
+        operations[3]='_aucdtect'
+        [[ "$arg" == 'A' ]] && create_spectrogram='true'
 
         # '-A' was already specified and '-a' is the current argument
         if [[ "$arg" == 'a' && "$create_spectrogram" ]]; then
@@ -965,12 +945,8 @@ _process_arguments()
         # Skip as both ReplayGain arguments were already specified
         [[ "${conflicting[@]}" == *'-g, -G'* ]] && continue
 
-        # Add ReplayGain to operation as it does not yet exist
-        if [[ -z "${operations['_replaygain']}" ]]; then
-          operations['_replaygain']='Did Not Run'
-          [[ "$arg" == 'G' ]] && force_replaygain='true'
-          continue
-        fi
+        operations[4]='_replaygain'
+        [[ "$arg" == 'G' ]] && force_replaygain='true'
 
         # '-G' was already specified and '-g' is the current argument
         if [[ "$arg" == 'g' && "$force_replaygain" ]]; then
@@ -979,6 +955,26 @@ _process_arguments()
         # '-g' was already specified and '-G' is the current argument
         elif [[ "$arg" == 'G' && ! "$force_replaygain" ]]; then
           conflicting+=( '-g, -G' )
+        fi
+        ;;
+
+      # Retag FLAC files
+      'r') operations[5]='_retag' ;;
+
+      # Extract embedded artwork from FLAC files
+      'e') operations[6]='_extract_images' ;;
+
+      # Prune unnecessary metadata blocks from FLAC files
+      'p') operations[7]='_prune' ;;
+
+      # Specify number of jobs to process FLAC files
+      'j')
+        # OPTARG is the (required) number after 'j'
+        if [[ "$OPTARG" =~ ^[[:digit:]]+$ ]] && (( OPTARG != 0 )); then
+          jobs="$OPTARG"
+        else
+          _error 'Option -j, requires a non-zero integer, eg: -j4'
+          _help
         fi
         ;;
     esac
@@ -1015,12 +1011,6 @@ _process_arguments()
     _help
     exit 1
   fi
-
-  # Build $operations_to_run[@] which is an ordered array of operations
-  # to run on the FLAC files/directories
-  for op in "${ordered_operations[@]}"; do
-    [[ "${operations[$op]}" ]] && operations_to_run+=( "$op" )
-  done
 }
 
 #
@@ -1036,7 +1026,8 @@ _check_missing_programs()
     type -P "$program" >/dev/null || missing_programs+=( "$program" )
   done
 
-  if [[ -n "${operations['_aucdtect']}" ]]; then
+  # auCDtect is the 4th index in $operations[@]
+  if [[ -n "${operations[3]}" ]]; then
     type -P auCDtect >/dev/null || missing_programs+=( 'auCDtect' )
   fi
 
@@ -1061,39 +1052,11 @@ _check_missing_programs()
 #
 _summary()
 {
-  local op
-
-  for op in "${operations_to_run[@]}"; do
-    # Color summary message
-    printf "$cyan"
-
-    # Display summary message based on operation performed
-    case "$op" in
-      '_compress')
-        printf '%-24s' "Compressing To Level $compression_level:"
-        ;;
-      '_md5check')       printf '%-24s' 'Verifying MD5:'       ;;
-      '_test')           printf '%-24s' 'Testing:'             ;;
-      '_aucdtect')       printf '%-24s' 'auCDtect Validation:' ;;
-      '_replaygain')     printf '%-24s' 'Applying ReplayGain:' ;;
-      '_retag')          printf '%-24s' 'Retagging:'           ;;
-      '_extract_images') printf '%-24s' 'Extracting Images:'   ;;
-      '_prune')          printf '%-24s' 'Pruning METADATA:'    ;;
-    esac
-
-    # Display status of operation
-    case "${operations[$op]}" in
-      'Completed')   printf "${green}%s${reset}\n" "${operations[$op]}"   ;;
-      'Interrupted') printf "${yellow}%s${reset}\n" "${operations[$op]}"    ;;
-      'Did Not Run') printf "${magenta}%s${reset}\n" "${operations[$op]}" ;;
-    esac
-  done
-
-  printf '\033[?25h'            # Restore the cursor
-  printf '\033[?7h'             # Restore terminal wrapping
-  rm -f "$job_fifo"             # Remove temporary FIFO
-  rm -f "$tmp_picture_blocks"   # Remove temporary 'metaflac' blocks
-  rm -f "$issue_ticks"          # Remove temporary errors/issues file
+  printf '\033[?25h'           # Restore the cursor
+  printf '\033[?7h'            # Restore terminal wrapping
+  rm -f "$job_fifo"            # Remove temporary FIFO
+  rm -f "$tmp_picture_blocks"  # Remove temporary 'metaflac' blocks
+  rm -f "$issue_ticks"         # Remove temporary errors/issues file
 }
 
 #
@@ -1102,7 +1065,7 @@ _summary()
 _run_parallel()
 {
   local item            # FLAC file (or directory) to process
-  local -i row num=0
+  local -i row
 
   # Starting cursor row to display first item and operation progress
   row=$(( $(_row) - 1 ))
@@ -2327,7 +2290,11 @@ if [[ ! -f "${total_items[0]}" ]]; then
 fi
 
 # Loop through the various operations to run
-for operation in "${operations_to_run[@]}"; do
+for operation in "${operations[@]}"; do
+  # Used to determine current item being processed and used by the
+  # operation title function
+  num=0
+
   case "$operation" in
     '_replaygain')
       total_items_backup=( "${total_items[@]}" )  # Total FLACs backup
@@ -2351,8 +2318,8 @@ for operation in "${operations_to_run[@]}"; do
   esac
 
   title_row="$(_row)"
-
   _operation_title  # Display title message of operation
+
   _scroll_terminal       # Scroll terminal up (if needed)
   title_row=$(( $(_row) - 1 ))
 
@@ -2378,14 +2345,14 @@ for operation in "${operations_to_run[@]}"; do
   trap '_trap_sigint "${operation}"' SIGINT  # Clean exit on SIGINT
   _run_parallel "$operation"                 # Run operation with jobs
 
-  for (( i=1; i<=items_processed+1; i++)); do
-    # Clear all the operation lines by moving up each line and clearing
-    # it until we have cleared the operation title message
+  # Clear all the operation lines by moving up each line and clearing it
+  # until we are just below the operation's title message
+  for (( i=1; i<=items_processed; i++)); do
     printf "\033[$(( post_row - i))H\033[0K"
   done
 
-  # Update operation status to complete
-  operations["$operation"]='Completed'
+  # Display completed operation
+  _operation_title
 
   if [[ -f "${log_file}" ]]; then
     _message_log_exists "${operation}"  # Print out log exists to STDERR
