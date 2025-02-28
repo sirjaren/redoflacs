@@ -92,7 +92,7 @@ _usage()
 # existence and what infomration that log may contain.
 #
 # $1 determines the log file to use, as well as how many lines are
-# printed out to correctly set the current row.  Possible values:
+# printed out to correctly set the current row. Possible values:
 #   aucdtect                  md5_check           compress_verify
 #   compress_no_test          test                replaygain_test
 #   replaygain_force_apply    replaygain_apply    retag_analyze
@@ -430,7 +430,7 @@ _scroll_terminal()
 #
 _new_config()
 {
-  # Check if configuration file exists based of ${EUID}.  If it doesn't
+  # Check if configuration file exists based of ${EUID}. If it doesn't
   # exist, create one
   if (( EUID == 0 )); then
     # User is root
@@ -467,7 +467,7 @@ _new_config()
 
   _info 'After making the changes (if any), rename the new\n'
   _info 'configuration file to your old configuration file\n'
-  _info 'name.  Here is the command you could use:\n'
+  _info 'name. Here is the command you could use:\n'
 
   if (( EUID == 0 )); then
     _info "${cyan}mv${reset} ${cyan}${config_file}${reset} ${cyan}/etc/redoflacs.conf${reset}\n"
@@ -481,11 +481,8 @@ _new_config()
 #
 _create_config()
 {
-  # Set up local array
-  declare -a config
-
   # Don't expand variables when using heredoc
-  mapfile -n0 -t config << "END_OF_CONFIG"
+  cat > "$config_file" << "END_OF_CONFIG"
 #
 # redoflacs configuration
 #
@@ -494,17 +491,18 @@ _create_config()
 #
 # See redoflacs(1) for a detailed description of each parameter
 #
-# NOTE: The options listed below are shell syntax.  Interpolation can occur
-# should weak (double) quotes be used.
+# NOTE:
+#   The options listed below are shell syntax. Interpolation can occur
+#   should weak (double) quotes be used.
 #
 #------------------------------------------------------------------------------
 # TAGGING SECTION
 #------------------------------------------------------------------------------
 #
-# List the tags to be kept in each FLAC file.  The default is listed below.
+# List the tags to be kept in each FLAC file. The default is listed below.
 #
-# Another common tag not added by default is ALBUMARTIST.  Uncomment
-# ALBUMARTIST below to allow script to keep this tag.
+# Another common tag not added by default is ALBUMARTIST. Uncomment ALBUMARTIST
+# below to allow script to keep this tag.
 #
 # NOTE: Whitespace _IS_ allowed for the these tag fields, ie:
 #   ALBUM ARTIST
@@ -536,9 +534,8 @@ SOURCE
 # how the album has been mastered (ie, Lossless, or Lossy).
 MASTERING
 
-# The REPLAYGAIN tags below, are added by the '-g, --replaygain' or
-# '-G, --replaygain-noforce' argument.  If you want to keep the ReplayGain
-# tags, make sure you leave these here.
+# The REPLAYGAIN tags below, are added by the '-g' or '-G' argument.
+# If you want to keep the ReplayGain tags, make sure you leave these here.
 REPLAYGAIN_REFERENCE_LOUDNESS
 REPLAYGAIN_TRACK_GAIN
 REPLAYGAIN_TRACK_PEAK
@@ -551,24 +548,24 @@ REPLAYGAIN_ALBUM_PEAK
 #
 # REMOVE ARTWORK:
 #
-# Set whether to remove embedded artwork within FLAC files.  By default, this
+# Set whether to remove embedded artwork within FLAC files. By default, this
 # script will remove any artwork it can find in the PICTURE block of a FLAC
-# file.  Set 'remove_artwork' as 'true' to remove embedded artwork.  All other
+# file. Set 'remove_artwork' as 'true' to remove embedded artwork. All other
 # values are intepreted as 'false'.
 remove_artwork='true'
 
 #
 # SET COMPRESSION:
 #
-# Set the type of COMPRESSION strength when compressing the FLAC files.
-# Numbers range from '1-8', with '1' being the lowest compression and '8' being
-# the highest compression.  The default is '8'.
+# Set the type of COMPRESSION strength when compressing the FLAC files. Numbers
+# range from '1-8', with '1' being the lowest compression and '8' being the
+# highest compression. The default is '8'.
 compression_level='8'
 
 #
 # ERROR LOG DIRECTORY:
 #
-# Set where you want error logs to be placed.  By default, they are stored in
+# Set where you want error logs to be placed. By default, they are stored in
 # the user's HOME directory.
 error_log="${HOME}"
 
@@ -576,25 +573,29 @@ error_log="${HOME}"
 # AUCDTECT SKIP LOSSY:
 #
 # Set whether FLAC files should be skipped if the MASTERING tag is already set
-# as 'Lossy' when analyzed with auCDtect.  Set 'skip_lossy' as 'true' to to
-# skip FLAC files that have the tag: 'MASTERING=Lossy'.  All other values are
+# as 'Lossy' when analyzed with auCDtect. Set 'skip_lossy' as 'true' to skip
+# FLAC files that have the tag: 'MASTERING=Lossy'. All other values are
 # intepreted as 'false'.
 skip_lossy='true'
 
 #
 # SPECTROGRAM DIRECTORY:
 #
-# Set where created spectrogram images should be stored.  By default, they are
-# stored in the same directory as the analyzed FLAC files.  Each image will
-# have the same name as the tested FLAC file but with an integer suffix
-# indicating the FLAC number (which was processed by the script) to allow for
-# uniqueness.  The type of image created is PNG with the extension '.png'.
+# Set where created spectrogram images should be stored. By default, they are
+# stored in the same directory as the analyzed FLAC files. Each image will have
+# the same name as the tested FLAC file but with an integer suffix to allow for
+# uniqueness. The type of image created is PNG.
 #
-# All values for 'spectrogram_location' are interpreted as a directory.  If
-# left blank, the default location will be used.
+# All values for 'spectrogram_location' are interpreted as a directory. If left
+# blank, the default location will be used.
 #
 # An example of a user-defined location:
+#
 #    spectrogram_location="${HOME}/Spectrogram_Images"
+#
+# Example spectrogram:
+#
+#    ${HOME}/Spectrogram_Images/file.flac.spec.png.0
 #
 # See redoflacs(1) for more information.
 spectrogram_location=''
@@ -605,18 +606,17 @@ spectrogram_location=''
 # Set where the extracted artwork images should be stored.
 #
 # By  default, each extracted image will be placed in a subdirectory where the
-# FLAC file is located.  The subdirectory housing the extracted artwork will
-# have a similar name as the currently processed FLAC.  If a directory already
+# FLAC file is located. The subdirectory housing the extracted artwork will
+# have a similar name as the currently processed FLAC. If a directory already
 # exists, an integer is appended to the directory (to prevent overwriting and
-# mixing files).  For example:
+# mixing files). For example:
 #
 #    /path/to/01_file.flac          # FLAC file with embedded artwork
-#    /path/to/01_file.flac_art/     # Directory housing artwork
-#    /path/to/01_file.flac_art~1~/  # Directory '1' if above directory exists
-#    /path/to/01_file.flac_art~2~/  # Directory '2' if above directory exists
-#    /path/to/01_file.flac_art~N~/  # Directory 'N' if above directory exists
+#    /path/to/01_file.flac.art.0/   # Directory housing artwork
+#    /path/to/01_file.flac.art.1/   # Directory '1' if above directory exists
+#    /path/to/01_file.flac.art.2/   # Directory '2' if above directory exists
 #
-# All values for 'artwork_location' are interpreted as a directory.  If left
+# All values for 'artwork_location' are interpreted as a directory. If left
 # blank, the default location will be used.
 #
 # If there is a user-defined location, the extracted images will be placed in a
@@ -625,8 +625,8 @@ spectrogram_location=''
 #    artwork_location="${HOME}/artwork"    # User-defined configuration option
 #
 #    /path/to/01_file.flac                 # FLAC file with embedded artwork
-#    ${HOME}/artwork/01_file.flac_art/     # Directory housing artwork
-#    ${HOME}/artwork/01_file.flac_art~1~/  # If above directory exists
+#    ${HOME}/artwork/01_file.flac.art.0/   # Directory housing artwork
+#    ${HOME}/artwork/01_file.flac.art.1/   # If above directory exists
 #
 # See redoflacs(1) for more information.
 artwork_location=''
@@ -648,22 +648,19 @@ artwork_location=''
 #    TRACKNUMBER=04
 #     TRACKTOTAL=09
 #
-# This is enabled by setting 'prepend_zero' option as 'true'.  All other values
+# This is enabled by setting 'prepend_zero' option as 'true'. All other values
 # are interpreted as 'false'.
 prepend_zero='false'
 
 #
 # PRESERVE FILE MODIFICATION TIME:
 #
-# This is enabled by setting 'preserve_modtime' option as 'true'.  All other
+# This is enabled by setting 'preserve_modtime' option as 'true'. All other
 # values are interpreted as 'false'
 preserve_modtime='false'
 
 # Version:4
 END_OF_CONFIG
-
-  # Write out configuration to either system-wide or local location
-  printf '%s\n' "${config[@]}" > "${config_file}"
 }
 
 #
@@ -708,7 +705,7 @@ _check_config_version()
   declare    config_file  config_last_line  revision
   declare -a config_array
 
-  # Check if configuration file exists based of ${EUID}.  If it doesn't
+  # Check if configuration file exists based of ${EUID}. If it does not
   # exist, create one
   if (( EUID == 0 )); then
     # User is root
@@ -732,7 +729,7 @@ _check_config_version()
   # format as of redoflacs 0.30):
   IFS=':' read -r _ revision <<< "$config_last_line"
 
-  # Check if ${revision} is an integer.  If not, display countdown and
+  # Check if ${revision} is an integer. If not, display countdown and
   # warn user of new configuration file, else test if the user config
   # revision is less than the script config revision
   if [[ "${revision}" =~ ^[[:digit:]]+$ ]]; then
@@ -1217,7 +1214,7 @@ _compress()
 
   # As indicated by '[FIRST]', '[SECOND]', '[THIRD]', '[FOURTH]', and
   # '[LAST]', this is the order each of the statements will evaluate to
-  # 'true'.  '[FIRST]' may never evaluate to 'true' (if the FLAC file
+  # 'true'. '[FIRST]' may never evaluate to 'true' (if the FLAC file
   # fails to decode
   while IFS=$'\n' read -rd ' ' output; do
     # [LAST] Store error message
@@ -1949,7 +1946,7 @@ _extract_images()
   _print_item_half  # Metaflac doesn't display a percentage complete
 
   # Store the values which can identify each image (in each PICTURE
-  # block) to be used during image extraction.  The values needed are:
+  # block) to be used during image extraction. The values needed are:
   #   'METADATA block #<num>'           -> $block_id
   #   '  type: <num> (<description>)'   -> $art_id AND $art_description
   #   '  MIME type: image/jpeg'         -> $mime
