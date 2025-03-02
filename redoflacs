@@ -444,6 +444,9 @@ _trap_sigint()
   # Display extra newline if user invoked SIGINT during a countdown
   [[ "${FUNCNAME[1]}" == '_countdown'* ]] && printf '\n'
 
+  # Display title message of operation
+  _operation_title
+
   # Remove WAV files (auCDtect) and any temporary FLAC files compression
   rm -f "${directory}"/**/*_redoflacs_"$$".wav
   rm -f "${directory}"/**/*.tmp,fl-ac+en\'c
@@ -510,8 +513,8 @@ _scroll_terminal()
 
   # Only scroll if there are more items to display than lines available
   if (( --to_scroll > (lines - row) )); then
-    printf "\033[$(( to_scroll - lines - row ))S"  # Scroll terminal
-    printf "\033[$(( lines - to_scroll ))H"        # Cursor to start
+    printf "\033[$(( to_scroll - (lines - row) ))S"  # Scroll terminal
+    printf "\033[$(( lines - to_scroll ))H"          # Cursor to start
   fi
 }
 
@@ -2423,10 +2426,12 @@ for operation in "${operations[@]}"; do
     ;;
   esac
 
+  # Display title message of operation
   title_row="$(_row)"
-  _operation_title  # Display title message of operation
+  _operation_title
 
-  _scroll_terminal       # Scroll terminal up (if needed)
+  # Scroll terminal up (if needed)
+  _scroll_terminal
   title_row=$(( $(_row) - 1 ))
 
   # Clear job manager file descriptor (tied to FIFO)
