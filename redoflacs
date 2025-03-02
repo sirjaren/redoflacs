@@ -1,12 +1,10 @@
 #!/usr/bin/env bash
-# vim: ts=2:sts=2:sw=2:et:ft=sh:
 #
 # NAME
 #   redoflacs - BASH commandline FLAC compressor, verifier, organizer,
 #               analyzer, and retagger
 #
 # FILE INFORMATION
-#   Author:        Jaren Stangret <sirjaren@gmail.com>
 #   Homepage:      https://github.com/sirjaren/redoflacs
 #   Dependencies:  BASH >= 4.0
 #
@@ -128,8 +126,33 @@ _message_log_exists()
 }
 
 #
-# Display a header before script execution which shows all options
+# Display a banner before script execution which shows all options
 # configured as well as runtime information
+#
+# The structure of the banner:
+#
+#   --------------------------------------------------------------------
+#                           Runtime Information
+#   --------------------------------------------------------------------
+#                           redoflacs 1.0
+#                                FLAC 1.5.0
+#                                Jobs 8
+#                             Threads 2
+#   --------------------------------------------------------------------
+#                 Configuration Options (<config_path>)
+#   --------------------------------------------------------------------
+#                      remove_artwork true
+#                   compression_level 8
+#                           error_log ~/
+#                          skip_lossy true
+#                spectrogram_location <default>
+#                    artwork_location <default>
+#                        prepend_zero true
+#                    preserve_modtime true
+#   --------------------------------------------------------------------
+#
+# Where the width of the banner is dynamically sized to the width of the
+# terminal or to the maximum length supported on script execution
 #
 _runtime_banner()
 {
@@ -141,8 +164,12 @@ _runtime_banner()
   done
   line="${blue}${line}$reset"
 
+  # Replace $HOME with tilde
+  local config_file_title="$config_file"
+  (( EUID != 0 )) && config_file_title="~${config_file_title#$HOME}"
+
   # Dynamically center banner config title
-  local config_title='Configuration Options'
+  local config_title="Configuration Options ($config_file_title)"
   local config_title_center=$(( (MAX_LENGTH / 2) - (${#config_title} / 2) ))
 
   # Dynamically center banner runtime title
@@ -155,9 +182,20 @@ _runtime_banner()
   #   The '- 1' accounts for space between field and value
   local fields_center=$(( (MAX_LENGTH / 2) - 1 ))
 
+  # Runtime information
+  printf '%s\n' "$line"
+  printf "\033[$(_row);${runtime_title_center}H%s\n" "$runtime_title"
+  printf '%s\n' "$line"
+
+  # Display centered script runtime information
+  printf "%${fields_center}s ${cyan}%s${reset}\n" 'redoflacs' "$script_version"
+  printf "%${fields_center}s ${cyan}%s${reset}\n" 'FLAC' "$flac_version"
+  printf "%${fields_center}s ${cyan}%s${reset}\n" 'Jobs' "$jobs"
+  printf "%${fields_center}s ${cyan}%s${reset}\n" 'Threads' "$threads"
+
   # Configuration options
   printf '%s\n' "$line"
-  printf "\033[$(_row);${config_title_center}H%s\n" 'Configuration Options'
+  printf "\033[$(_row);${config_title_center}H%s\n" "$config_title"
   printf '%s\n' "$line"
 
   # Display all configured options, centered
@@ -168,20 +206,14 @@ _runtime_banner()
     # Option value (shell variable value), with a default if empty
     value="${!field:-${magenta}<default>${reset}}"
 
+    # Replace $HOME with tilde
+    [[ "$value" == "$HOME" ]] && value='~/'
+    [[ "$value" == "$HOME"/* ]] && value="~/${value#$HOME}/"
+
     # Display centered configuration option and value
     printf "%${fields_center}s ${cyan}%s${reset}\n" "$field" "$value"
   done
 
-  # Runtime information
-  printf '%s\n' "$line"
-  printf "\033[$(_row);${runtime_title_center}H%s\n" 'Runtime Information'
-  printf '%s\n' "$line"
-
-  # Display centered script runtime information
-  printf "%${fields_center}s ${cyan}%s${reset}\n" 'redoflacs' "$script_version"
-  printf "%${fields_center}s ${cyan}%s${reset}\n" 'FLAC' "$flac_version"
-  printf "%${fields_center}s ${cyan}%s${reset}\n" 'Jobs' "$jobs"
-  printf "%${fields_center}s ${cyan}%s${reset}\n" 'Threads' "$threads"
   printf '%s\n' "$line"
 }
 
