@@ -128,6 +128,64 @@ _message_log_exists()
 }
 
 #
+# Display a header before script execution which shows all options
+# configured as well as runtime information
+#
+_runtime_banner()
+{
+  local i option field value line
+
+  # Generate a blue line the which matches the maximum length supported
+  for ((i=1; i<MAX_LENGTH; i++)); do
+    line+='-'
+  done
+  line="${blue}${line}$reset"
+
+  # Dynamically center banner config title
+  local config_title='Configuration Options'
+  local config_title_center=$(( (MAX_LENGTH / 2) - (${#config_title} / 2) ))
+
+  # Dynamically center banner runtime title
+  local runtime_title='Runtime Information'
+  local runtime_title_center=$(( (MAX_LENGTH / 2) - (${#runtime_title} / 2) ))
+
+  # Dynamically center configuration and runtime options and values
+  #
+  # NOTE
+  #   The '- 1' accounts for space between field and value
+  local fields_center=$(( (MAX_LENGTH / 2) - 1 ))
+
+  # Configuration options
+  printf '%s\n' "$line"
+  printf "\033[$(_row);${config_title_center}H%s\n" 'Configuration Options'
+  printf '%s\n' "$line"
+
+  # Display all configured options, centered
+  for option in "${config_options[@]}"; do
+    # Option field (shell variable)
+    field="${option%%=*}"
+
+    # Option value (shell variable value), with a default if empty
+    value="${!field:-${magenta}<default>${reset}}"
+
+    # Display centered configuration option and value
+    printf "%${fields_center}s ${cyan}%s${reset}\n" "$field" "$value"
+  done
+
+  # Runtime information
+  printf '%s\n' "$line"
+  printf "\033[$(_row);${runtime_title_center}H%s\n" 'Runtime Information'
+  printf '%s\n' "$line"
+
+  # Display centered script runtime information
+  printf "%${fields_center}s ${cyan}%s${reset}\n" 'redoflacs' "$script_version"
+  printf "%${fields_center}s ${cyan}%s${reset}\n" 'FLAC' "$flac_version"
+  printf "%${fields_center}s ${cyan}%s${reset}\n" 'Jobs' "$jobs"
+  printf "%${fields_center}s ${cyan}%s${reset}\n" 'Threads' "$threads"
+  printf '%s\n' "$line"
+}
+
+#
 # Print out current operation title
 #
 # The structure of an operation title:
@@ -347,8 +405,8 @@ _trap_sigint()
 
   # Clear all the operation lines by moving up each line and clearing it
   # until we are just below the operation's title message
-  for (( i=1; i<=items_processed; i++)); do
-    printf "\033[$(( post_row - i))H\033[0K"
+  for (( i=1; i<=items_processed; i++ )); do
+    printf "\033[$(( post_row - i ))H\033[0K"
   done
 
   # Display extra newline if user invoked SIGINT during a countdown
@@ -420,8 +478,8 @@ _scroll_terminal()
 
   # Only scroll if there are more items to display than lines available
   if (( --to_scroll > (lines - row) )); then
-    printf "\033[$((to_scroll - (lines - row)))S"  # Scroll terminal
-    printf "\033[$((lines - to_scroll))H"          # Cursor to start
+    printf "\033[$(( to_scroll - lines - row ))S"  # Scroll terminal
+    printf "\033[$(( lines - to_scroll ))H"        # Cursor to start
   fi
 }
 
@@ -669,28 +727,40 @@ END_OF_CONFIG
 _parse_config()
 {
   local line
-  local -ga tags_to_keep  # Global array used in _retag() function
 
-  # Used to skip irrelevant configuration file lines
-  local regex='^([[:space:]]+|#.*|)$'
+  # Used in _retag() function
+  local -ga tags_to_keep
+
+  # Used in script banner
+  local -ga config_options
+
+  # Skip irrelevant configuration file lines
+  local regex_skip='^([[:space:]]+|#.*|)$'
+
+  # Matches on configuration options (shell variables)
+  local regex_options='^([^[:space:]]+=.*)$'
 
   # Process the configuration file, storing all user-defined tags and
   # evaluate each configuration option
   while IFS=$'\n' read -r line; do
     # Skip empty lines, comment lines and lines with whitespace
-    [[ "$line" =~ ^([[:space:]]+|#.*|)$  ]] && continue
+    [[ "$line" =~ $regex_skip ]] && continue
 
-    # Evaluate configuration file option
-    if [[ "$line" == *'='* ]]; then
-      eval "$line"
+    # Configuration option (shell variable)
+    if [[ "$line" =~ $regex_options ]]; then
+      # Source the shell variable (with interpolation)
+      . <(printf '%s\n' "$line")
+
+      # Store configuration option
+      config_options+=( "$line" )
       continue
     fi
 
-    # These are user-defined FLAC tags stored into a global array
+    # User-defined FLAC tags in configuration stored into a global array
     tags_to_keep+=( "${line^^}" )
   done < "$config_file"
 
-  if [[ "$preserve_modtime" == 'true' ]]; then
+  if [[ "${preserve_modtime,,}" == 'true' ]]; then
     metaflac_extra_options='--preserve-modtime'
   fi
 }
@@ -818,10 +888,10 @@ _countdown_config()
 #
 _num_issues()
 {
-  declare ticks  # Set up local variable
+  local ticks
 
   # Read in number of issue ticks, hiding missing file output
-  { read -r ticks < "${issue_ticks}"; } 2>/dev/null
+  { read -r ticks < "$issue_ticks"; } 2>/dev/null
   printf '%d' "${#ticks}"  # Return number of ticks (0, if empty)
 }
 
@@ -1596,7 +1666,7 @@ _aucdtect()
   #   /path/to/file.flac.spec.png.0 ->
   #   /path/to/file.flac.spec.png.1 ->
   until [[ ! -f "$spectrogram" ]]; do
-    spectrogram="${spectrogram%.*}.$((${spectrogram##*.} + 1))"
+    spectrogram="${spectrogram%.*}.$(( ${spectrogram##*.} + 1 ))"
   done
 
   # SoX display progress percentage on STDERR as well as any error
@@ -1803,7 +1873,7 @@ _retag()
         ]]; then
           # Only modify value if the value is an integer
           if [[ "$line" =~ ^[[:digit:]]+$ ]]; then
-            printf -v line '%02d' $((10#$line))
+            printf -v line '%02d' $(( 10#$line ))
           fi
         fi
 
@@ -1867,6 +1937,9 @@ _retag()
   # Removes all tags from the current FLAC file and sets each found tag
   # all in one operation. A single operation prevents SIGINT from
   # leaving the current FLAC file without any tags
+  #
+  # FIXME:
+  #   metaflac >= 1.4.3 add --remove-all-tags-except=NAME1=NAME2...
   metaflac >/dev/null 2>&1 $metaflac_extra_options \
     --remove-all-tags "${found_tags[@]/#/--set-tag=}" "$item"
 
@@ -1911,7 +1984,7 @@ _extract_images()
   # Ensure we don't clobber the temporary PICTURE blocks file, eg:
   #   /tmp/redoflacs_picture_blocks.0 -> /tmp/redoflacs_picture_blocks.1
   until [[ ! -f "$blocks" ]]; do
-    blocks="${blocks%.*}.$((${blocks##*.} + 1))"
+    blocks="${blocks%.*}.$(( ${blocks##*.} + 1 ))"
   done
 
   _print_item 'Extracting Images'
@@ -2007,7 +2080,9 @@ _extract_images()
   #   /user/configured/path/to/artwork/file.flac.art.0 ->
   #   /user/configured/path/to/artwork/file.flac.art.1
   until [[ ! -d "$artwork_location" ]]; do
-    artwork_location="${artwork_location%.*}.$((${artwork_location##*.} + 1))"
+    artwork_location="${artwork_location%.*}.$((
+      ${artwork_location##*.} + 1
+    ))"
   done
   mkdir -p "$artwork_location"
 
@@ -2025,7 +2100,7 @@ _extract_images()
     #   /path/to/file.flac.art.0/3-Cover_front.jpg.0 ->
     #   /path/to/file.flac.art.0/3-Cover_front.jpg.1
     until [[ ! -f "$img" ]]; do
-      img="${img%.*}.$((${img##*.} + 1))"
+      img="${img%.*}.$(( ${img##*.} + 1 ))"
     done
 
     # Extracts each image by METADATA block number
@@ -2155,7 +2230,7 @@ fi
 pid="$$"
 log_file="${error_log}/redoflacs_$pid.log"
 until [[ ! -f "$log_file" ]]; do
-  log_file="${error_log}/redoflacs_log_$((++pid)).log"
+  log_file="${error_log}/redoflacs_log_$(( ++pid )).log"
 done
 
 #
@@ -2171,7 +2246,7 @@ _process_arguments "${@}"
 _check_missing_programs
 
 # Make sure the artwork location is valid, if the operation is called
-if [[ "${operations[9]}" == 'extract_images' ]]; then
+if [[ "${operations[6]}" == '_extract_images' ]]; then
   # Check if artwork_location is user-defined
   if [[ -n "${artwork_location}" ]]; then
     # Put extracted artwork in user-defined location, testing to make
@@ -2223,6 +2298,12 @@ job_fifo="/tmp/redoflacs_fifo_$$"           # Job manager FIFO
 issue_ticks="/tmp/redoflacs_issue_file_$$"  # Issues/Errors file
 
 #
+# Obtain FLAC version
+#
+flac_version="$(flac --version)"    # eg: flac 1.4.3
+flac_version="${flac_version##* }"  # eg: 1.4.3
+
+#
 # Obtain the total number of lines and columns available in the terminal
 # by sending the following control sequences to the terminal driver:
 #
@@ -2232,9 +2313,11 @@ issue_ticks="/tmp/redoflacs_issue_file_$$"  # Issues/Errors file
 #   CSI u                # Restore cursor position
 #
 # 'CSI 6 n' reports/returns the cursor position/terminal size as:
+#
 #   CSI height ; width R
 #
 # An example:
+#
 #   '\033[80;23R'
 #
 # Send CSI escape to (and read from) STDERR to not pollute STDIN
@@ -2245,7 +2328,7 @@ IFS='[;' \
 # displayed using escape sequences, making shell arithmetic inclusive
 # off by one
 if ((columns < 80)); then
-  readonly MAX_LENGTH="$((++columns))"
+  readonly MAX_LENGTH="$(( ++columns ))"
 else
   readonly MAX_LENGTH='81'
 fi
@@ -2254,6 +2337,8 @@ fi
 # Clear echoed ^C to terminal and restore cursor visibilty on SIGINT
 #
 trap "printf '\033[$(( $(_row) + 1 ));0H\033[0K\033[?25h'; exit 130" SIGINT
+
+_runtime_banner
 
 # _retag(): Display a countdown
 [[ "${operations[@]}" == *'_retag'* ]] && _countdown_metadata
@@ -2337,8 +2422,8 @@ for operation in "${operations[@]}"; do
 
   # Clear all the operation lines by moving up each line and clearing it
   # until we are just below the operation's title message
-  for (( i=1; i<=items_processed; i++)); do
-    printf "\033[$(( post_row - i))H\033[0K"
+  for (( i=1; i<=items_processed; i++ )); do
+    printf "\033[$(( post_row - i ))H\033[0K"
   done
 
   # Display completed operation
