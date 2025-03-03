@@ -424,7 +424,7 @@ _trap_sigint()
 {
   # $? is the signal caught by the trap + 128, eg:
   #   2 (INT) + 128 == 130
-  signal_received="$?"
+  local -i signal_received=$?
 
   # 0 indicates SIGEXIT, which 128 is added
   (( $? != 0 )) && signal_received=$(( $? - 128 ))
@@ -707,9 +707,16 @@ prepend_zero='false'
 #
 # PRESERVE FILE MODIFICATION TIME:
 #
+# Changes whether both 'flac' and 'metaflac' programs ensure the updated files
+# have the same timestamps/permissions as the input files.
+#
+# For 'flac' usage, this is the default, but 'metaflac' does update timestamps
+# and permissions.
+#
 # This is enabled by setting 'preserve_modtime' option as 'true'. All other
-# values are interpreted as 'false'
-preserve_modtime='false'
+# values are interpreted as 'false'.
+#
+preserve_modtime='true'
 END_OF_CONFIG
 
   # Indicate if there was an existing configuration file
@@ -741,6 +748,9 @@ END_OF_CONFIG
 _parse_config()
 {
   local line
+
+  # Used in 'flac' and 'metaflac' invocations
+  local -ga flac_extra_options metaflac_extra_options
 
   # Used in _retag() function
   local -ga tags_to_keep
@@ -774,8 +784,15 @@ _parse_config()
     tags_to_keep+=( "${line^^}" )
   done < "$config_file"
 
+  # Handle timestamp preseveration for both 'flac' and 'metaflac'
   if [[ "${preserve_modtime,,}" == 'true' ]]; then
-    metaflac_extra_options='--preserve-modtime'
+    flac_extra_options+=( '--preserve-modtime' )
+    metaflac_extra_options+=( '--preserve-modtime' )
+
+  # Metaflac defaults to not preserving modification times and does not
+  # have a flag to turn preservation off
+  else
+    flac_extra_options+=( '--no-preserve-modtime' )
   fi
 }
 
@@ -1105,7 +1122,7 @@ _replaygain()
 
     # Obtain ReplayGain tags from all files in the current directory
     mapfile -n0 -t replaygain_tags < <(
-      metaflac 2>/dev/null \
+      metaflac 2>/dev/null "${metaflac_extra_options[@]}" \
         --show-tag='REPLAYGAIN_REFERENCE_LOUDNESS' \
         --show-tag='REPLAYGAIN_TRACK_GAIN' \
         --show-tag='REPLAYGAIN_TRACK_PEAK' \
@@ -1154,8 +1171,8 @@ _replaygain()
       error_log+=( "$error_msg" )
     fi
   done < <(
-    metaflac 2>&1 \
-      $metaflac_extra_options --add-replay-gain "$item"/*$flac_extension
+    metaflac 2>&1 "${metaflac_extra_options[@]}" \
+      --add-replay-gain "$item"/*$flac_extension
   )
 
   # Log failures if there are any errors
@@ -1196,7 +1213,10 @@ _compress()
   #   All errors are ignored here as they will be caught during
   #   compression
   if [[ -z "$force_compression" ]]; then
-    file_compression="$(metaflac 2>/dev/null --show-tag='COMPRESSION' "$item")"
+    file_compression="$(
+      metaflac 2>/dev/null "${metaflac_extra_options[@]}" \
+        --show-tag='COMPRESSION' "$item"
+    )"
 
     # 'compression_level' is obtained from the configuration file, in
     # form of 'COMPRESSION=<value>'
@@ -1254,7 +1274,10 @@ _compress()
 
     # Used to validate previous output is an error and not a filename
     previous="$output"
-  done < <(flac 2>&1 -f -"$compression_level" -V "$item")
+  done < <(
+    flac 2>&1 \
+      "${flac_extra_options[@]}" -f -"$compression_level" -V "$item"
+  )
 
   # Add warning message to error message for logging
   [[ "$warning_msg" ]] && error_msg="$warning_msg|$error_msg"
@@ -1280,8 +1303,8 @@ _compress()
   #
   # NOTE:
   #   Errors are ignored as the FLAC file was verified during encoding
-  metaflac 2>/dev/null \
-    $metaflac_extra_options --set-tag="COMPRESSION=$compression_level" "$item"
+  metaflac 2>/dev/null "${metaflac_extra_options[@]}" \
+    --set-tag="COMPRESSION=$compression_level" "$item"
   _print_item_ok
 
   # Send complete to _run_parallel()
@@ -1327,7 +1350,7 @@ _test()
 
     # Used to validate previous output is an error and not a filename
     previous="$output"
-  done < <(flac 2>&1 -t "$item")
+  done < <(flac 2>&1 "${flac_extra_options[@]}" -t "$item")
 
   # Log failures if there are any errors
   if [[ "$error_msg" ]]; then
@@ -1401,7 +1424,8 @@ _aucdtect()
   #   bits_mastering[0] = bit depth (eg: 16)
   #   bits_mastering[1] = MASTERING tag and value (eg: MASTERING=Lossy)
   mapfile -n2 -t bits_mastering < <(
-    metaflac 2>/dev/null --show-bps --show-tag='MASTERING' "$item"
+    metaflac 2>/dev/null "${metaflac_extra_options[@]}" \
+      --show-bps --show-tag='MASTERING' "$item"
   )
 
   # auCDtect does not support a bit depth greater than 16 (CD quality
@@ -1459,7 +1483,7 @@ _aucdtect()
 
     # Used to validate previous output is an error and not a filename
     previous="$output"
-  done < <(flac 2>&1 -d "$item" -o "$item_wav")
+  done < <(flac 2>&1 "${flac_extra_options[@]}" -d "$item" -o "$item_wav")
 
   # Log failures if there are any errors
   if [[ "$error_msg" ]]; then
@@ -1660,7 +1684,7 @@ _md5check()
 
     # This is the MD5 checksum
     md5sum="$output"
-  done < <(metaflac 2>&1 --show-md5sum "$item")
+  done < <(metaflac 2>&1 "${metaflac_extra_options[@]}" --show-md5sum "$item")
 
   # Log failures if there are any errors
   if [[ "$error_msg" ]]; then
@@ -1726,7 +1750,10 @@ _retag()
     else
       extracted_tag+="$output"
     fi
-  done < <(metaflac 2>&1 --show-tag="${tags_to_keep[0]}" "$item")
+  done < <(
+    metaflac 2>&1 "${metaflac_extra_options[@]}" \
+      --show-tag="${tags_to_keep[0]}" "$item"
+  )
 
   # Log failures if there are any errors
   if [[ "$error_msg" ]]; then
@@ -1749,7 +1776,8 @@ _retag()
     # The first tag (index=0) was already obtained during error checking
     if (( key != 0 )); then
       IFS='' read -rd '' extracted_tag < <(
-        metaflac 2>&1 --show-tag="${tags_to_keep[key]}" "$item"
+        metaflac 2>&1 "${metaflac_extra_options[@]}" \
+          --show-tag="${tags_to_keep[key]}" "$item"
       )
 
       # Strips trailing newline due to the process substitution
@@ -1865,7 +1893,7 @@ _retag()
   #
   # FIXME:
   #   metaflac >= 1.4.3 add --remove-all-tags-except=NAME1=NAME2...
-  metaflac >/dev/null 2>&1 $metaflac_extra_options \
+  metaflac >/dev/null 2>&1 "${metaflac_extra_options[@]}" \
     --remove-all-tags "${found_tags[@]/#/--set-tag=}" "$item"
 
   # Logs missing tags, if any were found
@@ -1915,7 +1943,10 @@ _extract_images()
   _print_item 'Extracting Images'
 
   # Retrieve PICTURE blocks from current item, to a temporary file
-  error_msg="$(metaflac 2>&1 >"$blocks" --list --block-type=PICTURE "$item")"
+  error_msg="$(
+    metaflac 2>&1 "${metaflac_extra_options[@]}" \
+      >"$blocks" --list --block-type=PICTURE "$item"
+  )"
 
   # Log FLAC failure
   if [[ -n "$error_msg" ]]; then
@@ -2029,7 +2060,8 @@ _extract_images()
     done
 
     # Extracts each image by METADATA block number
-    metaflac --block-number="$block_id" --export-picture-to="$img" "$item"
+    metaflac "${metaflac_extra_options[@]}" \
+      --block-number="$block_id" --export-picture-to="$img" "$item"
   done
 
   _print_item_ok
@@ -2058,8 +2090,8 @@ _prune()
       break                                   # Stop reading lines
     fi
   done < <(
-    metaflac 2>&1 \
-      $metaflac_extra_options --remove --dont-use-padding \
+    metaflac 2>&1 "${metaflac_extra_options[@]}" \
+      --remove --dont-use-padding \
       --except-block-type="$dont_prune_flac_metadata" "$item"
   )
 
