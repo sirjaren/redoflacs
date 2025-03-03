@@ -459,11 +459,6 @@ _trap_sigint()
 }
 
 #
-# Display redoflacs version
-#
-_print_version() { printf 'Version %s\n' "${version}"; }
-
-#
 # Kill any children process (obtained via $@), hiding errors and
 # suppressing the shell's notification of terminated jobs
 #
@@ -2393,9 +2388,29 @@ popd >/dev/null
 # If there were no FLAC files found, the glob will exist as index 0, eg:
 #   /path/to/files/**/*.[Ff][Ll][Aa][Cc]
 if [[ ! -f "${total_items[0]}" ]]; then
+  found_flacs_msg='NOT FOUND'
+
+  # Right align message
+  found_flacs_align=$(( MAX_LENGTH - ${#found_flacs_msg} ))
+
+  # Update title message with right aligned message indicating there
+  # were no FLAC files found
+  printf "\033[$(( $(_row) - 1 ));${found_flacs_align}H${red}%s${reset}\n" \
+    "$found_flacs_msg"
+
   _error 'There were no FLAC files found!'
   printf '\033[?25h'   # Restore cursor
   exit 1
+else
+  found_flacs_msg='OK'
+
+  # Right align message
+  found_flacs_align=$(( MAX_LENGTH - ${#found_flacs_msg} ))
+
+  # Update title message with right aligned message indicating success
+  # in finding FLAC files to process
+  printf "\033[$(( $(_row) - 1 ));${found_flacs_align}H${green}%s${reset}\n" \
+    "$found_flacs_msg"
 fi
 
 # Loop through the various operations to run
