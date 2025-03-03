@@ -860,7 +860,6 @@ _num_issues()
 #   $force_compression
 #   $force_replaygain
 #   $no_extra_tags
-#   $operations_to_run[@]
 #   $operations[@]
 #
 _process_arguments()
@@ -1299,12 +1298,15 @@ _compress()
   fi
 
   # Add a 'COMPRESSION' tag to the current FLAC file, to indicate which
-  # compression level was used when compressing
+  # compression level was used when compressing (only if user did not
+  # specify no extra tags to be applied)
   #
   # NOTE:
   #   Errors are ignored as the FLAC file was verified during encoding
-  metaflac 2>/dev/null "${metaflac_extra_options[@]}" \
-    --set-tag="COMPRESSION=$compression_level" "$item"
+  if [[ ! "$no_extra_tags" ]]; then
+    metaflac 2>/dev/null "${metaflac_extra_options[@]}" \
+      --set-tag="COMPRESSION=$compression_level" "$item"
+  fi
   _print_item_ok
 
   # Send complete to _run_parallel()
