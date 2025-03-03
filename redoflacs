@@ -159,7 +159,7 @@ _runtime_banner()
   local i option field value line
 
   # Generate a blue line the which matches the maximum length supported
-  for ((i=1; i<MAX_LENGTH; i++)); do
+  for (( i=1; i<MAX_LENGTH; i++ )); do
     line+='-'
   done
   line="${blue}${line}$reset"
@@ -248,17 +248,6 @@ _operation_title()
 {
   local fmt match op status_banner issues_banner right_align
   local -i issues="$(_num_issues)"  # Total number of issues found
-  local -A operation_title
-
-  # Generate operation title messaging
-  operation_title['_md5check']='Verifying MD5...'
-  operation_title['_test']='Testing...'
-  operation_title['_compress']="Compressing To Level ${compression_level}..."
-  operation_title['_aucdtect']='auCDtect Validation...'
-  operation_title['_replaygain']='Applying ReplayGain...'
-  operation_title['_retag']='Retagging...'
-  operation_title['_extract_images']='Extracting Images...'
-  operation_title['_prune']='Pruning METADATA...'
 
   # Ensure we do not run if running from a countdown or before an
   # operation begins (only if SIGINT was sent during these times)
@@ -437,6 +426,16 @@ _print_item_skip() { printf "\033[${row}H${cyan}skip$reset";   }
 #
 _trap_sigint()
 {
+  # $? is the signal caught by the trap + 128, eg:
+  #   2 (INT) + 128 == 130
+  signal_received="$?"
+
+  # 0 indicates SIGEXIT, which 128 is added
+  (( $? != 0 )) && signal_received=$(( $? - 128 ))
+
+  # Convert numeric signal to name, eg 2 -> SIGINT
+  signal_received="SIG$(kill -l $signal_received)"
+
   _kill_jobs "$(jobs -rp)"
 
   # Clear all the operation lines by moving up each line and clearing it
@@ -448,17 +447,23 @@ _trap_sigint()
   # Display extra newline if user invoked SIGINT during a countdown
   [[ "${FUNCNAME[1]}" == '_countdown_metadata' ]] && printf '\n'
 
-  # Display title message of operation
-  _operation_title
+  # Display title message of operation only on interruption
+  [[ "$signal_received" != 'SIGEXIT' ]] && _operation_title
 
   # Remove WAV files (auCDtect) and any temporary FLAC files compression
   rm -f "${directory}"/**/*_redoflacs_"$$".wav
   rm -f "${directory}"/**/*.tmp,fl-ac+en\'c
 
+  rm -f "$job_fifo"            # Remove temporary FIFO
+  rm -f "$tmp_picture_blocks"  # Remove temporary 'metaflac' blocks
+  rm -f "$issue_ticks"         # Remove temporary errors/issues file
+
+  printf '\033[?25h'           # Restore the cursor
+  printf '\033[?7h'            # Restore terminal wrapping
+
   # Print out log exists to STDERR
   [[ -f "${log_file}" ]] && _message_log_exists "${1}"
 
-  _summary                      # Display Summary Of Operations
   exit 130
 }
 
@@ -1040,18 +1045,6 @@ _check_missing_programs()
     _error 'Ensure these programs are installed and available in $PATH'
     exit 1
   fi
-}
-
-#
-# Display the summary of operations chart
-#
-_summary()
-{
-  printf '\033[?25h'           # Restore the cursor
-  printf '\033[?7h'            # Restore terminal wrapping
-  rm -f "$job_fifo"            # Remove temporary FIFO
-  rm -f "$tmp_picture_blocks"  # Remove temporary 'metaflac' blocks
-  rm -f "$issue_ticks"         # Remove temporary errors/issues file
 }
 
 #
@@ -2112,10 +2105,10 @@ if (( ${BASH_VERSINFO[0]} < 4 )); then
   _error 'program! Current version:'
   _error "  ${cyan}${BASH_VERSION}$reset"
   exit 1
-else
-  # BASH 4: Used to recursively find (glob) FLAC files (eg, /**/*.flac)
-  shopt -s globstar 2>/dev/null
 fi
+
+# BASH 4: Used to recursively find (glob) FLAC files (eg, /**/*.flac)
+shopt -s globstar 2>/dev/null
 
 #
 # Redoflacs configuration file
@@ -2130,6 +2123,24 @@ if [[ ! -f "$config_file" ]]; then
   exit 0
 else
   _parse_config
+fi
+
+#
+# Make sure a user-defined location for album artwork is valid
+#
+if [[ -n "$artwork_location" && ! -d "$artwork_location" ]]; then
+  _error "${cyan}${artwork_location%/}$reset does not exist!"
+  _error 'Please use a valid directory in the configuration file!'
+  exit 1
+fi
+
+#
+# Make sure a user-defined location for spectrograms is valid
+#
+if [[ -n "$spectrogram_location" && ! -d "$spectrogram_location" ]]; then
+  _error "${cyan}${spectrogram_location}$reset doesn't exist!"
+  _error 'Please set a valid directory in the configuration file!'
+  exit 1
 fi
 
 #
@@ -2154,35 +2165,6 @@ _process_arguments "$@"
 #
 _check_missing_programs
 
-# Make sure the artwork location is valid, if the operation is called
-if [[ "${operations[6]}" == '_extract_images' ]]; then
-  # Check if artwork_location is user-defined
-  if [[ -n "${artwork_location}" ]]; then
-    # Put extracted artwork in user-defined location, testing to make
-    # sure the directory exists
-    if [[ ! -d "${artwork_location}" ]]; then
-      _error "${cyan}${artwork_location%/}${reset} doesn't exist!\n"
-      _error 'Please set a valid directory in the configuration file!\n'
-      exit 1
-    fi
-  fi
-fi
-
-# If '-A, --aucdtect-spectrogram' was called, make sure
-# $spectrogram_location is valid
-if [[ "${create_spectrogram}" == 'true' ]]; then
-  # Check if spectrogram_location is user-defined
-  if [[ -n "${spectrogram_location}" ]]; then
-    # Put spectrograms in user-defined location, testing to make sure
-    # the directory exists
-    if [[ ! -d "${spectrogram_location}" ]]; then
-      _error "${cyan}${spectrogram_location}${reset} doesn't exist!\n"
-      _error 'Please set a valid directory in the configuration file!\n'
-      exit 1
-    fi
-  fi
-fi
-
 #
 # Dynamically sets the number of jobs to use if the user did not specify
 # them via '-j[N]', defaulting to two (2) jobs if unable find the number
@@ -2204,11 +2186,34 @@ printf '\033[?7l'                           # Disable terminal wrapping
 job_fifo="/tmp/redoflacs_fifo_$$"           # Job manager FIFO
 issue_ticks="/tmp/redoflacs_issue_file_$$"  # Issues/Errors file
 
+# Set FLAC metadata BLOCKS to NOT remove, used when pruning FLAC files
+if [[ "$remove_artwork" == 'true' ]]; then
+  # Remove PICTURE block
+  dont_prune_flac_metadata='STREAMINFO,VORBIS_COMMENT'
+else
+  # Do not remove PICTURE block
+  dont_prune_flac_metadata='STREAMINFO,PICTURE,VORBIS_COMMENT'
+fi
+
 #
 # Obtain FLAC version
 #
 flac_version="$(flac --version)"    # eg: flac 1.4.3
 flac_version="${flac_version##* }"  # eg: 1.4.3
+
+#
+# These are operation title messages which are used by
+# _operation_title() to dynamically display a title via key lookup
+#
+declare -A operation_title
+operation_title['_md5check']='Verifying MD5...'
+operation_title['_test']='Testing...'
+operation_title['_compress']="Compressing To Level ${compression_level}..."
+operation_title['_aucdtect']='auCDtect Validation...'
+operation_title['_replaygain']='Applying ReplayGain...'
+operation_title['_retag']='Retagging...'
+operation_title['_extract_images']='Extracting Images...'
+operation_title['_prune']='Pruning METADATA...'
 
 #
 # Obtain the total number of lines and columns available in the terminal
@@ -2234,7 +2239,7 @@ IFS='[;' \
 # The maximum length is one higher than the display width as output is
 # displayed using escape sequences, making shell arithmetic inclusive
 # off by one
-if ((columns < 80)); then
+if (( columns < 80 )); then
   readonly MAX_LENGTH="$(( ++columns ))"
 else
   readonly MAX_LENGTH='81'
@@ -2263,8 +2268,11 @@ pushd "$directory" >/dev/null
 total_items=( "${PWD}"/**/*${flac_extension} )
 popd >/dev/null
 
+#
 # If there were no FLAC files found, the glob will exist as index 0, eg:
+#
 #   /path/to/files/**/*.[Ff][Ll][Aa][Cc]
+#
 if [[ ! -f "${total_items[0]}" ]]; then
   found_flacs_msg='NOT FOUND'
 
@@ -2291,33 +2299,34 @@ else
     "$found_flacs_msg"
 fi
 
-# Loop through the various operations to run
+#
+# Run through all the operations specified by the user on the provided
+# FLAC files directory
+#
 for operation in "${operations[@]}"; do
-  # Used to determine current item being processed and used by the
-  # operation title function
+  # Used to determine current item number being processed and used by
+  # the operation title function
   num=0
 
-  case "$operation" in
-    '_replaygain')
-      total_items_backup=( "${total_items[@]}" )  # Total FLACs backup
-      for dir in "${total_items[@]%/*}"; do
-        previous="$current"
-        current="$dir"
-        [[ "$previous" != "$current" ]] && total_dirs+=( "$current" )
-      done
-      total_items=( "${total_dirs[@]}" )          # Process directories
-    ;;
-    '_prune')
-      # Set which FLAC metadata BLOCKS to remove
-      if [[ "${remove_artwork}" == 'true' ]]; then
-        # Remove PICTURE block
-        dont_prune_flac_metadata='STREAMINFO,VORBIS_COMMENT'
-      else
-        # Do not remove PICTURE block
-        dont_prune_flac_metadata='STREAMINFO,PICTURE,VORBIS_COMMENT'
-      fi
-    ;;
-  esac
+  # ReplayGain application requires operating on a directory of files
+  # instead of each file, individually
+  if [[ "$operation" == '_replaygain' ]]; then
+    # Backup all known FLAC files to process
+    total_items_backup=( "${total_items[@]}" )
+
+    # Obtain all the parent directories for each FLAC file (album) and
+    # store each album directory once into an array to apply ReplayGain
+    # on a directory of files instead of individual files
+    current=''
+    total_items=()
+    for dir in "${total_items[@]%/*}"; do
+      previous="$current"
+      current="$dir"
+
+      # Non-matching indicates a "new" directory to store
+      [[ "$previous" != "$current" ]] && total_items+=( "$current" )
+    done
+  fi
 
   # Display title message of operation
   title_row="$(_row)"
@@ -2333,22 +2342,21 @@ for operation in "${operations[@]}"; do
   mkfifo "$job_fifo"   # Create FIFO
   exec 3<>"$job_fifo"  # Open file descriptor read/write
 
+  # If the items to process are less than the number of jobs, add the
+  # number of items to the current row position, else add the number
+  # of jobs to run
   if (( ${#total_items[@]} < jobs )); then
-    # Set row to place cursor after completing an operation and/or trap
-    #
-    # If the items to process are less than the number of jobs, add the
-    # number of items to the current row position, else add the number
-    # of jobs to run
     items_processed="${#total_items[@]}"
   else
-    items_processed="${jobs}"
+    items_processed="$jobs"
   fi
 
   post_row=$(( $(_row) + items_processed ))  # Operation row position
 
   trap '_trap_sigint' SIGINT EXIT
 
-  _run_parallel "$operation"                 # Run operation with jobs
+  # Run current operation with optional parallel jobs
+  _run_parallel
 
   # Clear all the operation lines by moving up each line and clearing it
   # until we are just below the operation's title message
@@ -2359,14 +2367,14 @@ for operation in "${operations[@]}"; do
   # Display completed operation
   _operation_title
 
-  if [[ -f "${log_file}" ]]; then
-    _message_log_exists "${operation}"  # Print out log exists to STDERR
-    _summary                            # Display Summary Of Operations
+  if [[ -f "$log_file" ]]; then
+    _message_log_exists "$operation"  # Print out log exists to STDERR
     exit 1
   fi
 
-  # Restore the items to process from directories to FLACs
-  [[ "${operation}" == 'replaygain_'*'apply' ]] && total_items=( "${total_items_backup[@]}" )
+  # Restore the items to process from directories to FLAC files after
+  # applying ReplayGain
+  if [[ "$operation" == '_replaygain' ]]; then
+    total_items=( "${total_items_backup[@]}" )
+  fi
 done
-
-_summary  # Display Summary Of Operations
