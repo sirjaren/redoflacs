@@ -45,9 +45,7 @@ _error(){ printf >&2 " $red*$reset $@\n";    }  # Red
 #
 _help()
 {
-  local REPLY
-
-  IFS='' read -rd '' << HELP_EOF
+  cat << HELP_EOF
 Usage: redoflacs [operations] [options] [target] ...
 
 Operations:
@@ -73,8 +71,6 @@ Options:
 
 See redoflacs(1) for more information.
 HELP_EOF
-
-  printf '%s' "$REPLY"
 }
 
 #
