@@ -166,7 +166,7 @@ _runtime_banner()
 
   # Replace $HOME with tilde
   local config_file_title="$config_file"
-  (( EUID != 0 )) && config_file_title="~${config_file_title#$HOME}"
+  config_file_title="~${config_file_title#$HOME}"
 
   # Dynamically center banner config title
   local config_title="Configuration Options ($config_file_title)"
@@ -259,6 +259,10 @@ _operation_title()
   operation_title['_retag']='Retagging...'
   operation_title['_extract_images']='Extracting Images...'
   operation_title['_prune']='Pruning METADATA...'
+
+  # Ensure we do not run if running from a countdown or before an
+  # operation begins (only if SIGINT was sent during these times)
+  [[ "${FUNCNAME[1]}" == '_trap_sigint' && -z "$operation" ]] && return 0
 
   # Generate a banner indicating total issues found so far
   if (( issues > 0 )); then
@@ -442,7 +446,7 @@ _trap_sigint()
   done
 
   # Display extra newline if user invoked SIGINT during a countdown
-  [[ "${FUNCNAME[1]}" == '_countdown'* ]] && printf '\n'
+  [[ "${FUNCNAME[1]}" == '_countdown_metadata' ]] && printf '\n'
 
   # Display title message of operation
   _operation_title
@@ -467,8 +471,8 @@ _kill_jobs()
   local -i pid
 
   for pid in $@; do
-    kill ${pid} 2>/dev/null
-    wait ${pid} 2>/dev/null
+    kill $pid 2>/dev/null
+    wait $pid 2>/dev/null
   done
 }
 
@@ -514,61 +518,20 @@ _scroll_terminal()
 }
 
 #
-# Force the creation of a new configuration file
-#
-_new_config()
-{
-  # Check if configuration file exists based of ${EUID}. If it doesn't
-  # exist, create one
-  if (( EUID == 0 )); then
-    # User is root
-    #--
-    # Configuration file location
-    config_file='/etc/redoflacs.conf'
-
-    # If there already is a configuration file, do not overwrite it
-    if [[ -f "${config_file}" ]]; then
-      config_file="/etc/_$$.redoflacs.conf"
-    fi
-  else
-    # User is _NOT_ root
-    #--
-    # Configuration file location
-    config_file="${HOME}/.config/redoflacs/config"
-
-    # If there already is a configuration file, do not overwrite it
-    if [[ -f "${config_file}" ]]; then
-      config_file="${HOME}/.config/redoflacs/_$$.config"
-    fi
-  fi
-
-  # Creates the (new) configuration file
-  _create_config
-
-  # Explain to user where to find the new configuration file
-  _info 'A new configuration file has been created here:\n'
-  _info "${cyan}${config_file}${reset}\n\n"
-
-  _info "It's recommended to review the new configuration file\n"
-  _info 'and transfer over any changes you made in your old\n'
-  _info 'configuration file.\n\n'
-
-  _info 'After making the changes (if any), rename the new\n'
-  _info 'configuration file to your old configuration file\n'
-  _info 'name. Here is the command you could use:\n'
-
-  if (( EUID == 0 )); then
-    _info "${cyan}mv${reset} ${cyan}${config_file}${reset} ${cyan}/etc/redoflacs.conf${reset}\n"
-  else
-    _info "${cyan}mv${reset} ${cyan}${config_file}${reset} ${cyan}${HOME}/.config/redoflacs/config${reset}\n"
-  fi
-}
-
-#
 # Create a configuration file
 #
 _create_config()
 {
+  local -i item=0
+
+  # Ensure the parent directory exists
+  mkdir -p "${config_file%/*}"
+
+  # If there already is a configuration file, do not overwrite it
+  until [[ ! -f "$config_file" ]]; do
+    config_file="${HOME}/.config/redoflacs/config.$(( ++item ))"
+  done
+
   # Don't expand variables when using heredoc
   cat > "$config_file" << "END_OF_CONFIG"
 #
@@ -655,7 +618,7 @@ compression_level='8'
 #
 # Set where you want error logs to be placed. By default, they are stored in
 # the user's HOME directory.
-error_log="${HOME}"
+error_log="$HOME"
 
 #
 # AUCDTECT SKIP LOSSY:
@@ -746,9 +709,29 @@ prepend_zero='false'
 # This is enabled by setting 'preserve_modtime' option as 'true'. All other
 # values are interpreted as 'false'
 preserve_modtime='false'
-
-# Version:4
 END_OF_CONFIG
+
+  # Indicate if there was an existing configuration file
+  if [[ "$config_file" =~ ^.+[[:digit:]]$ ]]; then
+    _warn 'An existing configuration file is here:'
+    _warn "${cyan}${config_file%.*}$reset\n"
+
+    _info 'A new configuration file was created here:'
+    _info "${cyan}${config_file}$reset\n"
+
+    _info 'Ensure the new configuration file is copied here:'
+    _info "${cyan}${config_file%.*}$reset\n"
+
+    _info 'In order for this program to make use of it'
+
+  # No existing configuration file was found, indicate review of file
+  else
+    _info 'A configuration file has been created here:'
+    _info "${cyan}${config_file}$reset\n"
+
+    _info 'It is recommended to review the new configuration file before'
+    _info 'running this program.'
+  fi
 }
 
 #
@@ -796,52 +779,6 @@ _parse_config()
 }
 
 #
-# Check current configuration, if the version in the script is newer
-# warn user and display a countdown before starting script
-#
-_check_config_version()
-{
-  # Set up local variables/arrays
-  declare    config_file  config_last_line  revision
-  declare -a config_array
-
-  # Check if configuration file exists based of ${EUID}. If it does not
-  # exist, create one
-  if (( EUID == 0 )); then
-    # User is root
-    #--
-    # Configuration file location
-    config_file='/etc/redoflacs.conf'
-  else
-    # User is _NOT_ root
-    #--
-    # Configuration file location
-    config_file="${HOME}/.config/redoflacs/config"
-  fi
-
-  # Load configuration file into an array
-  mapfile -n0 -t config_array < "${config_file}"
-
-  # Obtain only the last line of the config
-  config_last_line="${config_array[@]: -1}"
-
-  # Extract the revision number from the configuration file (new syntax
-  # format as of redoflacs 0.30):
-  IFS=':' read -r _ revision <<< "$config_last_line"
-
-  # Check if ${revision} is an integer. If not, display countdown and
-  # warn user of new configuration file, else test if the user config
-  # revision is less than the script config revision
-  if [[ "${revision}" =~ ^[[:digit:]]+$ ]]; then
-    if (( script_revision > revision )); then
-      _countdown_config; printf '\n\n'
-    fi
-  else
-    _countdown_config; printf '\n\n'
-  fi
-}
-
-#
 # Display countdown before retagging to allow user to quit script safely
 #
 _countdown_metadata()
@@ -879,37 +816,6 @@ _countdown_metadata()
     read -t1  # Sleep 1
   done
   printf '\n'
-}
-
-#
-# Displays countdown if a newer config is found to allow user to quit
-# safely
-#
-_countdown_config()
-{
-  trap '_trap_sigint' SIGINT EXIT
-
-  # Warning message
-  _info 'There is a newer configuration file available!\n\n'
-
-  _warn 'It is recommended you generate a new configuration\n'
-  _warn 'file for use with this program.\n\n'
-
-  _warn 'To generate a new configuration file, run:\n'
-  _warn "${cyan}redoflacs --new-config${reset}\n\n"
-
-  _warn 'The above command will _NOT_ overwrite your\n'
-  _warn 'current configuration file.\n\n'
-
-  _warn 'Waiting 10 seconds before starting program...\n'
-  _warn 'Ctrl+C (Control-C) to abort...\n'
-  _info 'Starting in: '
-
-  # 10 second countdown
-  for count in {10..1}; do
-    printf "${red}%s ${reset}" "$count"
-    read -t1  # Sleep 1
-  done
 }
 
 #
@@ -979,7 +885,7 @@ _process_arguments()
       'v') printf 'redoflacs %s\n' "$script_version"; exit 0 ;;
 
       # Create a new configuration file and exit
-      'o') _new_config; exit 0 ;;
+      'o') _create_config; exit 0 ;;
 
       # Disable color output
       'n') unset -v reset red green yellow blue magenta cyan ;;
@@ -2184,37 +2090,7 @@ _prune()
   printf >&3 "$row\n"
 }
 
-###############################  SETUP  ################################
-
-#
-# Make sure we are running BASH 4 or greater
-#
-if (( ${BASH_VERSINFO[0]} < 4 )); then
-  _error "You must be running ${cyan}BASH 4$reset or greater to use"
-  _error 'this program! Current version:'
-  _error "  ${cyan}${BASH_VERSION}$reset"
-  exit 1
-fi
-
-#
-# Ensure Cygwin is not used to run this script
-#
-if [[ "$(uname -o)" == 'Cygwin' ]]; then
-  _error "This version of ${cyan}redoflacs$reset is meant to be run under"
-  _error "UNIX/Linux. Please use the ${cyan}Cygwin$reset version located here:"
-  _error "  ${cyan}https://github.com/sirjaren/redoflacsw$reset"
-  exit 1
-fi
-
-#
-# BASH 4: Used to recursively find (glob) FLAC files (eg, /**/*.flac)
-#
-shopt -s globstar 2>/dev/null
-
-script_version='0.31_pre'           # Redoflacs version
-flac_extension='.[Ff][Ll][Aa][Cc]'  # FLAC extension (case-insensitive)
-
-declare -i script_revision='4'      # Script user configuration revision
+#########################  PRE-SCRIPT CHECKS  ##########################
 
 # For colored output
 reset=$'\033[0m'
@@ -2225,29 +2101,32 @@ blue=$'\033[34m'
 magenta=$'\033[35m'
 cyan=$'\033[36m'
 
-#########################  PRE-SCRIPT CHECKS  ##########################
+script_version='0.31_pre'           # Redoflacs version
+flac_extension='.[Ff][Ll][Aa][Cc]'  # FLAC extension (case-insensitive)
 
 #
-# System or user configuration
+# Make sure we are running BASH 4 or greater
 #
-if (( EUID == 0 )); then
-  config_file='/etc/redoflacs.conf'
+if (( ${BASH_VERSINFO[0]} < 4 )); then
+  _error "You must be running ${cyan}BASH 4$reset or greater to use this"
+  _error 'program! Current version:'
+  _error "  ${cyan}${BASH_VERSION}$reset"
+  exit 1
 else
-  config_file="${HOME}/.config/redoflacs/config"
+  # BASH 4: Used to recursively find (glob) FLAC files (eg, /**/*.flac)
+  shopt -s globstar 2>/dev/null
 fi
 
 #
-# Check if system-wide configuration doesn't exist
+# Redoflacs configuration file
+#
+config_file="${HOME}/.config/redoflacs/config"
+
+#
+# Create a new configuration file if one does not exist
 #
 if [[ ! -f "$config_file" ]]; then
-  mkdir -p "${config_file%/*}"  # Create directory if it doesn't exist
-  _create_config                # Create configuration file
-
-  _info 'A configuration file has been created here:\n'
-  _info "${cyan}${config_file}${reset}\n\n"
-
-  _info 'Please review it before running this program.\n'
-
+  _create_config
   exit 0
 else
   _parse_config
@@ -2257,10 +2136,10 @@ fi
 # Generate log file location
 #
 # Ensure we don't overwrite an existing log file
-pid="$$"
-log_file="${error_log}/redoflacs_$pid.log"
+item=0
+log_file="${error_log}/redoflacs_$$.log"
 until [[ ! -f "$log_file" ]]; do
-  log_file="${error_log}/redoflacs_log_$(( ++pid )).log"
+  log_file="${error_log}/redoflacs_$$.$(( ++item )).log"
 done
 
 #
@@ -2268,7 +2147,7 @@ done
 # variables which are used by later functions/operations (based on
 # whether certain operations are specified)
 #
-_process_arguments "${@}"
+_process_arguments "$@"
 
 #
 # Check for missing programs required by this script
@@ -2322,8 +2201,6 @@ export LC_ALL=C
 printf '\033[?25l'                          # Hide cursor
 printf '\033[?7l'                           # Disable terminal wrapping
 
-_check_config_version                       # Script config version
-
 job_fifo="/tmp/redoflacs_fifo_$$"           # Job manager FIFO
 issue_ticks="/tmp/redoflacs_issue_file_$$"  # Issues/Errors file
 
@@ -2368,10 +2245,11 @@ fi
 #
 trap "printf '\033[$(( $(_row) + 1 ));0H\033[0K\033[?25h'; exit 130" SIGINT
 
+# Display a banner for runtime information and configuration settings
 _runtime_banner
 
 # _retag(): Display a countdown
-[[ "${operations[@]}" == *'_retag'* ]] && _countdown_metadata
+[[ "${operations[5]}" == '_retag' ]] && _countdown_metadata
 
 #
 # Obtain the total FLAC files to process (files and/or directories)
