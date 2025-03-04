@@ -31,10 +31,8 @@
 # prefixes to indicate message severity, eg:
 #   _warn 'This is obsolete'
 #
-# Creates a messsage like:
+# Creates a messsage like (with a yellow asterisk):
 #    * This is obsolete
-#
-# With the asterisk colored yellow
 #
 _info() { printf     " $green*$reset $@\n";  }  # Green
 _warn() { printf >&2 " $yellow*$reset $@\n"; }  # Yellow
@@ -147,10 +145,8 @@ _runtime_banner()
   local i option field value line
 
   # Generate a blue line the which matches the maximum length supported
-  for (( i=1; i<MAX_LENGTH; i++ )); do
-    line+='-'
-  done
-  line="${blue}${line}$reset"
+  printf -v line "%$(( MAX_LENGTH - 1 ))s" ''
+  line="${blue}${line// /-}$reset"
 
   # Replace $HOME with tilde
   local config_file_title="$config_file"
@@ -2281,9 +2277,11 @@ IFS='[;' \
   _ lines columns
 
 #
-# The maximum length is one higher than the display width as output is
-# displayed using escape sequences, making shell arithmetic inclusive
-# off by one
+# The terminal uses 1-based column indexing (columns start at 1), but
+# shell arithmetic is 0-based
+#
+# To right-align text without manual '+ 1' adjustments in every
+# calculation, MAX_LENGTH is set to '$columns + 1'
 #
 if (( columns < 80 )); then
   readonly MAX_LENGTH="$(( columns + 1 ))"
