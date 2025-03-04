@@ -82,43 +82,35 @@ _usage()
 }
 
 #
-# Print out the correct operational message regarding a log file's
-# existence and what infomration that log may contain.
+# Display a message that there may have been some issues that is worth
+# investigating for a given operation and where the log file to review
+# said issues can be found
 #
-# $1 determines the log file to use, as well as how many lines are
-# printed out to correctly set the current row. Possible values:
-#   aucdtect                  md5_check           compress_verify
-#   compress_no_test          test                replaygain_test
-#   replaygain_force_apply    replaygain_apply    retag_analyze
-#   retag_apply               extract_images      prune
-#
-_message_log_exists()
+_display_issues_exist()
 {
-  case "$1" in
-    'aucdtect')
-      _error 'Some FLAC files may be lossy sourced, please check:\n'
-    ;;
-    'md5check')
-      _error 'The MD5 Signature is unset for some FLAC files or there were\n'
-      _error 'issues with some of the FLAC files, please check:\n'
-    ;;
-    'compress'*|'test'|'replaygain_test'|'extract_images'|'prune')
-      _error 'There were issues with some of the FLAC files,\n'
-      _error 'please check:\n'
-    ;;
-    'replaygain')
-      _error 'There were issues adding ReplayGain values,\n'
-      _error 'please check:\n'
-    ;;
-    'retag')
-      _error 'Some FLAC files have missing tags or there were\n'
-      _error 'issues with some of the FLAC files, please check:\n'
-    ;;
+  # Operation-specific messaging
+  case "$operation" in
+    '_md5check')
+      _error 'The MD5 Signature is unset for some FLAC files or there were'
+      _error 'issues with some of the FLAC files, please check:'
+      ;;
+    '_test'|'_compress'|'_extract_images'|'_prune')
+      _error 'There were issues with some of the FLAC files, please check:'
+      ;;
+    '_aucdtect')
+      _error 'Some FLAC files may be lossy sourced, please check:'
+      ;;
+    '_replaygain')
+      _error 'There were issues adding ReplayGain values, please check:'
+      ;;
+    '_retag')
+      _error 'Some FLAC files have missing tags or there were issues with some'
+      _error 'of the FLAC files, please check:'
+      ;;
   esac
 
-  # Print the bottom half of the message (uniform across all operations)
-  _error "${cyan}${log_file}${reset}\n"
-  _error 'for details.\n'
+  _error "${cyan}${log_file}$reset"
+  _error 'for details.'
 }
 
 #
@@ -247,7 +239,7 @@ _operation_title()
 
   # Ensure we do not run if running from a countdown or before an
   # operation begins (only if SIGINT was sent during these times)
-  [[ "${FUNCNAME[1]}" == '_trap_sigint' && -z "$operation" ]] && return 0
+  [[ "${FUNCNAME[1]}" == '_cleanup' && -z "$operation" ]] && return 0
 
   # Generate a banner indicating total issues found so far
   if (( issues > 0 )); then
@@ -262,7 +254,7 @@ _operation_title()
   #
   # NOTE:
   #   The parent function will be the signal handler for SIGINT
-  if [[ "${FUNCNAME[1]}" == '_trap_sigint' ]]; then
+  if [[ "${FUNCNAME[1]}" == '_cleanup' ]]; then
     status_banner='INTERRUPTED'
 
     # Add an extra space to separate issues banner if it exists
@@ -306,7 +298,7 @@ _operation_title()
   # NOTE:
   #   The parent function will be the signal handler for SIGINT
   if
-    [[ "${FUNCNAME[1]}" == '_trap_sigint' ]] \
+    [[ "${FUNCNAME[1]}" == '_cleanup' ]] \
     || (( issues > 0 && num == ${#total_items[@]} ))
   then
     # Loop through all operations and display only the operations which
@@ -371,13 +363,13 @@ _operation_title()
 #   '     01 - This is a long name showing truncation.fla Testing  6/20'
 #
 # An example of how this would look with a percentage displayed:
-#   ' 56% 06 - Some Amazing Song.flac                     Testing  6/20'
+#   ' 56% 01 - This is a long name showing truncation.fla Testing  6/20'
 #
 _print_item()
 {
   local fmt truncated
   local basename="${item##*/}"
-  local label="${1:+ ${1}}"  # Operation label (with leading space)
+  local label="${1:+ $1}"  # Operation label (with leading space)
 
   # The total number of items out of the total number of items, used to
   # determine the maximum width these values can use, eg:
@@ -391,7 +383,15 @@ _print_item()
   # This allows the operation label and total number of completed items
   # to be displayed after this column, effectively truncating the
   # current item if longer than this column position
+  #
+  # NOTE:
+  #   The item basename may be longer than the terminal width, which is
+  #   why line wrapping is disabled and restored, to prevent the display
+  #   of the item basename from traversing multiple lines
   truncated="$(( MAX_LENGTH - ${#total} - ${#label} ))"
+
+  # Disable line wrapping if enabled
+  [[ "$LINE_WRAPPING" ]] && fmt+=$'\033[?7l'
 
   # Belows builds the 'printf' format string
   fmt+=$"\033[${row};6H"              # Cursor row; 6 columns to right
@@ -401,6 +401,9 @@ _print_item()
   fmt+=$"\033[0K"                     # Erase line from cursor to right
   fmt+="${magenta}%s"                 # Modifier; Operation label
   fmt+="${cyan}%${#total}s${reset}"   # Modifier; Items, right-aligned
+
+  # Restore line wrapping if enabled
+  [[ "$LINE_WRAPPING" ]] && fmt+=$'\033[?7h'
 
   # Displays formatted, currently processed item
   printf "$fmt" "$basename" "$label" "${num}/${#total_items[@]}"
@@ -420,31 +423,32 @@ _print_item_skip() { printf "\033[${row}H${cyan}skip$reset";   }
 # Kill any children process and perform cleanup, checking for the
 # existence of a log file before exiting script
 #
-_trap_sigint()
+# The signal captured by this function is $1, generated by the trap
+#
+_cleanup()
 {
-  # $? is the signal caught by the trap + 128, eg:
-  #   2 (INT) + 128 == 130
-  local -i signal_received=$?
+  # The signal received by the trap
+  local signal_received="${1:-EXIT}"
 
-  # 0 indicates SIGEXIT, which 128 is added
-  (( $? != 0 )) && signal_received=$(( $? - 128 ))
+  # Kill all children if the user interrupted the script and clean up
+  # the current items processed from the screen
+  if [[ "$signal_received" == 'SIGINT' ]]; then
+    _kill_jobs "$(jobs -rp)"
 
-  # Convert numeric signal to name, eg 2 -> SIGINT
-  signal_received="SIG$(kill -l $signal_received)"
+    # Clear all the operation lines by moving up each line and clearing
+    # it until we are just below the operation's title message
+    for (( i=1; i<=items_processed; i++ )); do
+      printf "\033[$(( post_row - i ))H\033[0K"
+    done
 
-  _kill_jobs "$(jobs -rp)"
+    # Display title message of operation
+    _operation_title
 
-  # Clear all the operation lines by moving up each line and clearing it
-  # until we are just below the operation's title message
-  for (( i=1; i<=items_processed; i++ )); do
-    printf "\033[$(( post_row - i ))H\033[0K"
-  done
+    exit 130
+  fi
 
-  # Display extra newline if user invoked SIGINT during a countdown
+  # Display extra newline if interruption during countdown
   [[ "${FUNCNAME[1]}" == '_countdown_metadata' ]] && printf '\n'
-
-  # Display title message of operation only on interruption
-  [[ "$signal_received" != 'SIGEXIT' ]] && _operation_title
 
   # Remove WAV files (auCDtect) and any temporary FLAC files compression
   rm -f "${directory}"/**/*_redoflacs_"$$".wav
@@ -455,12 +459,9 @@ _trap_sigint()
   rm -f "$issue_ticks"         # Remove temporary errors/issues file
 
   printf '\033[?25h'           # Restore the cursor
-  printf '\033[?7h'            # Restore terminal wrapping
 
-  # Print out log exists to STDERR
-  [[ -f "${log_file}" ]] && _message_log_exists "${1}"
-
-  exit 130
+  # Ensure user is notified of a log file on script interruption/exit
+  [[ -f "$log_file" ]] && _display_issues_exist
 }
 
 #
@@ -490,9 +491,27 @@ _row()
   local -i row
 
   # Send CSI escape to (and read from) STDERR to not pollute STDIN
-  IFS='[;' read -rsu2 -d'R' -p $'\033[6n' _ row _
+  IFS='[;' read -rsu2 -d'R' -t1 -p $'\033[6n' _ row _
 
-  printf '%d' "$row"
+  printf '%d' "${row:-0}"  # Default to 0, if failure
+}
+
+#
+# Return the current cursor's column position by sending the following
+# control sequence to the controlling terminal:
+#   CSI 6 n            # Query cursor position
+#
+# Which reports/returns the cursor position/terminal size as:
+#   CSI height ; width R  # eg. '\033[80;23R'
+#
+_col()
+{
+  local -i col
+
+  # Send CSI escape to (and read from) STDERR to not pollute STDIN
+  IFS='[;' read -rsu2 -d'R' -t1 -p $'\033[6n' _ _ col
+
+  printf '%d' "${col:-0}"
 }
 
 #
@@ -801,8 +820,6 @@ _parse_config()
 #
 _countdown_metadata()
 {
-  trap '_trap_sigint' SIGINT EXIT
-
   # Warning message
   _error "${yellow}CAUTION!${reset} These are the tag fields that will be kept"
   _error 'when re-tagging the selected files:\n'
@@ -1100,7 +1117,6 @@ _run_parallel()
 #
 _replaygain()
 {
-  trap '_kill_jobs "$(jobs -rp)"' EXIT
   local output error_msg
   local -a error_log files
 
@@ -1198,7 +1214,6 @@ _replaygain()
 #
 _compress()
 {
-  trap '_kill_jobs "$(jobs -rp)"' EXIT
   local output previous error_msg warning_msg
 
   _print_item 'Compressing'
@@ -1319,7 +1334,6 @@ _compress()
 #
 _test()
 {
-  trap '_kill_jobs "$(jobs -rp)"' EXIT
   local output previous error_msg
 
   # Basename of FLAC, splitting on whitespace since the 'read' below
@@ -1381,7 +1395,6 @@ _test()
 #
 _aucdtect()
 {
-  trap '_kill_jobs "$(jobs -rp)"' EXIT
   local item_wav output previous error_msg aucdtect_stdout aucdtect_stderr \
     spectrogram
   local -a bits_mastering
@@ -1668,7 +1681,6 @@ _aucdtect()
 #
 _md5check()
 {
-  trap '_kill_jobs "$(jobs -rp)"' EXIT
   local output error_msg md5sum
 
   _print_item 'Verifying MD5'
@@ -1724,7 +1736,6 @@ _md5check()
 #
 _retag()
 {
-  trap '_kill_jobs "$(jobs -rp)"' EXIT
   local output error_msg line extracted_tag key empty_tag tag missing_tags_str
   local -i index='-1'
   local -a missing_tags found_tags tags
@@ -1931,7 +1942,6 @@ _retag()
 #
 _extract_images()
 {
-  trap '_kill_jobs "$(jobs -rp)"' EXIT
   local -a artwork
   local error_msg block_id art_id art_description mime img
   local blocks="/tmp/redoflacs_picture_blocks.$BASHPID"
@@ -2075,7 +2085,6 @@ _extract_images()
 #
 _prune()
 {
-  trap '_kill_jobs "$(jobs -rp)"' EXIT
   local output error_msg
 
   _print_item 'Pruning'
@@ -2210,8 +2219,12 @@ jobs="${jobs:-2}"
 export LANG=C
 export LC_ALL=C
 
-printf '\033[?25l'                          # Hide cursor
-printf '\033[?7l'                           # Disable terminal wrapping
+# Manage cleanup on interruption and script exit
+trap '_cleanup SIGINT' SIGINT
+trap '_cleanup EXIT' EXIT
+
+# Hide cursor
+printf '\033[?25l'
 
 job_fifo="/tmp/redoflacs_fifo_$$"           # Job manager FIFO
 issue_ticks="/tmp/redoflacs_issue_file_$$"  # Issues/Errors file
@@ -2264,21 +2277,44 @@ operation_title['_prune']='Pruning METADATA...'
 #
 # Send CSI escape to (and read from) STDERR to not pollute STDIN
 IFS='[;' \
-  read -rsu2 -d'R' -p $'\033[s\033[999999;999999H\033[6n\033[u' _ lines columns
+  read -rsu2 -d'R' -t1 -p $'\033[s\033[999999;999999H\033[6n\033[u' \
+  _ lines columns
 
+#
 # The maximum length is one higher than the display width as output is
 # displayed using escape sequences, making shell arithmetic inclusive
 # off by one
+#
 if (( columns < 80 )); then
-  readonly MAX_LENGTH="$(( ++columns ))"
+  readonly MAX_LENGTH="$(( columns + 1 ))"
 else
   readonly MAX_LENGTH='81'
 fi
 
 #
-# Clear echoed ^C to terminal and restore cursor visibilty on SIGINT
+# Print a long blank line that is one column higher than the total
+# columns in the termninal to test for line wrapping
 #
-trap "printf '\033[$(( $(_row) + 1 ));0H\033[0K\033[?25h'; exit 130" SIGINT
+printf "%$(( columns + 1 ))s" ''
+
+#
+# If the current cursor column is equal to the total columns in the
+# terminal (clamping) then line wrapping is disabled
+#
+# If the current cursor column is greater than the total columns in the
+# terminal (non-clamping) then line wrapping is also disabled
+#
+if (( $(_col) >= columns )); then
+  readonly LINE_WRAPPING=''
+
+  # Move back to column 0
+  printf '\r'
+else
+  readonly LINE_WRAPPING='true'
+
+  # Move back up to the previous row at column 0
+  printf '\r\033[1A'
+fi
 
 # Display a banner for runtime information and configuration settings
 _runtime_banner
@@ -2315,7 +2351,6 @@ if [[ ! -f "${total_items[0]}" ]]; then
     "$found_flacs_msg"
 
   _error 'There were no FLAC files found!'
-  printf '\033[?25h'   # Restore cursor
   exit 1
 else
   found_flacs_msg='OK'
@@ -2383,8 +2418,6 @@ for operation in "${operations[@]}"; do
 
   post_row=$(( $(_row) + items_processed ))  # Operation row position
 
-  trap '_trap_sigint' SIGINT EXIT
-
   # Run current operation with optional parallel jobs
   _run_parallel
 
@@ -2396,11 +2429,6 @@ for operation in "${operations[@]}"; do
 
   # Display completed operation
   _operation_title
-
-  if [[ -f "$log_file" ]]; then
-    _message_log_exists "$operation"  # Print out log exists to STDERR
-    exit 1
-  fi
 
   # Restore the items to process from directories to FLAC files after
   # applying ReplayGain
