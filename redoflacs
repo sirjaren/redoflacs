@@ -50,7 +50,7 @@ Operations:
   -c       Compress FLAC files
   -C       Compress FLAC files (even if COMPRESSION tag already exists)
   -t       Test integrity of FLAC files
-  -m       Check for a valid MD5 signature in FLAC files STREAMINFO block
+  -m       Check for a valid MD5 signature in FLAC files' STREAMINFO block
   -a       Use auCDtect to authenticate FLAC files
   -A       Use auCDtect to authenticate FLAC files (create spectrogram)
   -e       Extract all embedded artwork from FLAC files
@@ -60,7 +60,9 @@ Operations:
   -r       Retag FLAC files preserving user-defined tags
 
 Options:
-  -j[N]    Allow N jobs at once, dynamically determined if unspecified
+  -j[N]    Allow N jobs at once (default: all cores, or 2 if unknown)
+  -J[N]    Allow N jobs for compression >= FLAC 1.5.0 (default: cores/threads)
+  -T[N]    Allow N threads for compression >= FLAC 1.5.0 (default: 2)
   -n       Disable color output
   -x       Do not apply COMPRESSION tag when compressing FLAC files
   -o       Generate a new configuration file and exit
@@ -122,8 +124,9 @@ _display_issues_exist()
 #   --------------------------------------------------------------------
 #                           redoflacs 1.0
 #                                FLAC 1.5.0
-#                                Jobs 8
-#                             Threads 2
+#                         Global Jobs 16
+#                    Compression Jobs 8
+#                 Compression Threads 2
 #   --------------------------------------------------------------------
 #                 Configuration Options (<config_path>)
 #   --------------------------------------------------------------------
@@ -142,7 +145,7 @@ _display_issues_exist()
 #
 _runtime_banner()
 {
-  local i option field value line
+  local i option field value line align_cpu job_type
 
   # Generate a blue line the which matches the maximum length supported
   printf -v line "%$(( MAX_LENGTH - 1 ))s" ''
@@ -174,8 +177,47 @@ _runtime_banner()
   # Display centered script runtime information
   printf "%${fields_center}s ${cyan}%s${reset}\n" 'redoflacs' "$script_version"
   printf "%${fields_center}s ${cyan}%s${reset}\n" 'FLAC' "$flac_version"
-  printf "%${fields_center}s ${cyan}%s${reset}\n" 'Jobs' "$jobs"
-  printf "%${fields_center}s ${cyan}%s${reset}\n" 'Threads' "$threads"
+
+  # Multithreaded FLAC distinguishes global jobs from jobs
+  [[ "$multithreaded_flac" ]] && job_type='Global Jobs' || job_type='Jobs'
+
+  # Choose the longest character value between all jobs and threads
+  align_cpu="${#compress_jobs}"
+  (( align_cpu < ${#compress_threads} )) && align_cpu="${#compress_threads}"
+  (( align_cpu < ${#global_jobs} )) && align_cpu="${#global_jobs}"
+
+  # Let the user know of possible CPU starvation if the number of global
+  # jobs is higher than total cores available
+  if [[ "$cpu_job_starvation" ]]; then
+    printf \
+      "%${fields_center}s ${red}%-${align_cpu}s$reset ${yellow}%s$reset\n" \
+      "$job_type" "$global_jobs" '(CPU Starvation Risk!)'
+
+  # Display jobs which appear to be reasonable
+  else
+    printf "%${fields_center}s ${cyan}%s${reset}\n" "$job_type" "$global_jobs"
+  fi
+
+  # Let the user know of possible CPU starvation if the number of
+  # compression jobs and compression threads specified are higher than
+  # total cores available
+  if [[ "$multithreaded_flac" && "$cpu_thread_starvation" ]]; then
+    printf \
+      "%${fields_center}s ${red}%-${align_cpu}s$reset ${yellow}%s${reset}\n" \
+      'Compression Jobs' "$compress_jobs" '(CPU Starvation Risk!)'
+
+    printf \
+      "%${fields_center}s ${red}%-${align_cpu}s$reset ${yellow}%s${reset}\n" \
+      'Compression Threads' "$compress_threads" '(CPU Starvation Risk!)'
+
+  # Display compression jobs and compression threads which appear to be
+  # reasonable
+  elif [[ "$multithreaded_flac" ]]; then
+    printf "%${fields_center}s ${cyan}%s${reset}\n" \
+      'Compression Jobs' "$compress_jobs"
+    printf "%${fields_center}s ${cyan}%s${reset}\n" \
+      'Compression Threads' "$compress_threads"
+  fi
 
   # Configuration options
   printf '%s\n' "$line"
@@ -304,7 +346,7 @@ _operation_title()
       [[ "$op" == "$operation" ]] && match='true' && continue
 
       # Skip completed operations (without issues)
-      [[ -z "$match" ]] && continue
+      [[ ! "$match" ]] && continue
 
       status_banner='DID NOT RUN'
 
@@ -458,6 +500,7 @@ _cleanup()
 
   # Ensure user is notified of a log file on script interruption/exit
   [[ -f "$log_file" ]] && _display_issues_exist
+  exit 1
 }
 
 #
@@ -521,10 +564,10 @@ _scroll_terminal()
   row="$(_row)"
 
   # Default to scrolling the terminal based on the number of jobs
-  to_scroll="$jobs"
+  to_scroll="$operation_jobs"
 
   # Scrolling by number of items to process
-  (( jobs > ${#total_items[@]} )) && to_scroll="${#total_items[@]}"
+  (( operation_jobs > ${#total_items[@]} )) && to_scroll="${#total_items[@]}"
 
   # Only scroll if there are more items to display than lines available
   if (( --to_scroll > (lines - row) )); then
@@ -879,7 +922,8 @@ _process_arguments()
 {
   # Global variables used in other functions/operations
   local -g create_spectrogram force_compression force_replaygain \
-    no_extra_tags directory operations
+    no_extra_tags directory operations global_jobs compress_jobs \
+    compress_threads
 
   local arg invalid op
   local -a conflicting
@@ -892,7 +936,7 @@ _process_arguments()
 
   # Processes all the possible positional parameters, short options
   # only, handling conflicting parameters
-  while getopts ':j:mtcCaAgGrepnhvox' arg "$@"; do
+  while getopts ':j:J:T:mtcCaAgGrepnhvox' arg "$@"; do
     case "$arg" in
       # Given argument is not valid. 'OPTARG' is 'arg' before 'arg' is
       # set to '?'
@@ -903,7 +947,7 @@ _process_arguments()
 
       # Required parameter for a given argument was not specified
       ':')
-        _error 'Option -j, requires a non-zero integer, eg: -j4'
+        _error "Option -$OPTARG, requires a non-zero integer, eg: -${OPTARG}4"
         _help
         exit 1
         ;;
@@ -992,15 +1036,20 @@ _process_arguments()
       # Prune unnecessary metadata blocks from FLAC files
       'p') operations[7]='_prune' ;;
 
-      # Specify number of jobs to process FLAC files
-      'j')
-        # OPTARG is the (required) number after 'j'
-        if [[ "$OPTARG" =~ ^[[:digit:]]+$ ]] && (( OPTARG != 0 )); then
-          jobs="$OPTARG"
-        else
-          _error 'Option -j, requires a non-zero integer, eg: -j4'
+      # Specify number of jobs/threads
+      'j'|'J'|'T')
+        # OPTARG is the (required) number after $arg
+        if [[ ! "$OPTARG" =~ ^[[:digit:]]+$ ]] || (( OPTARG == 0 )); then
+          _error "Option -$arg, requires a non-zero integer, eg: -${arg}4"
+          _error "Current value applied: $OPTARG"
           _help
+          exit 1
         fi
+
+        # Set the relevant jobs/threads based on type of argument
+        [[ "$arg" == 'j' ]] && global_jobs="$OPTARG"
+        [[ "$arg" == 'J' ]] && compress_jobs="$OPTARG"
+        [[ "$arg" == 'T' ]] && compress_threads="$OPTARG"
         ;;
     esac
   done
@@ -1025,10 +1074,28 @@ _process_arguments()
     exit 1
   fi
 
-  # The last element passed in _should_ be the directory to process FLAC
-  # files
-  directory="${@: -1}"
-  directory="${directory%/}"  # Remove ending slash
+  # Clear current arguments processed by getopts, including the last
+  # non-option encountered
+  shift $(( OPTIND - 1 ))
+
+  # Make sure a directory is specified (non-option argument)
+  if (( $# == 0 )); then
+    _error 'Please specify a valid directory!'
+    _help
+    exit 1
+
+  # Ensure only directory is specified, which also shows any invalid
+  # non-option arguments applied
+  elif (( $# > 1 )); then
+    _error 'Unexpected arguments:'
+    _error "  ${cyan}$*${reset}"
+    _error 'All options must come before the target directory!'
+    _help
+    exit 1
+  fi
+
+  # The last element passed in is the directory to process FLAC files
+  directory="${1%/}"  # Remove possible ending slash
 
   # Ensure the directory exists
   if [[ ! -d "$directory" ]]; then
@@ -1084,13 +1151,13 @@ _run_parallel()
   row=$(( $(_row) - 1 ))
 
   # Start as many operations as specified by the number of jobs
-  for item in "${total_items[@]:0:$jobs}"; do
+  for item in "${total_items[@]:0:$operation_jobs}"; do
     (( row++, num++ ))
     "$operation" &
   done
 
   # Wait on operations if number of items is less than total jobs
-  (( ${#total_items[@]} <= jobs )) && wait
+  (( ${#total_items[@]} <= operation_jobs )) && wait
 
   # Completion of an operation sends an integer (terminal row number)
   # and newline to a FIFO (job manager).
@@ -1128,7 +1195,7 @@ _replaygain()
   # NOTE:
   #   All errors are ignored here as they will be caught during
   #   application ReplayGain tags
-  if [[ -z "$force_replaygain" ]]; then
+  if [[ ! "$force_replaygain" ]]; then
     files=( "$item"/*$flac_extension )  # Used for number of files
 
     # Obtain ReplayGain tags from all files in the current directory
@@ -1222,7 +1289,7 @@ _compress()
   # NOTE:
   #   All errors are ignored here as they will be caught during
   #   compression
-  if [[ -z "$force_compression" ]]; then
+  if [[ ! "$force_compression" ]]; then
     file_compression="$(
       metaflac 2>/dev/null "${metaflac_extra_options[@]}" \
         --show-tag='COMPRESSION' "$item"
@@ -1285,8 +1352,8 @@ _compress()
     # Used to validate previous output is an error and not a filename
     previous="$output"
   done < <(
-    flac 2>&1 \
-      "${flac_extra_options[@]}" -f -"$compression_level" -V "$item"
+    flac 2>&1 "${flac_extra_options[@]}" \
+      -f -"$compression_level" -V "$flac_compress_threads" "$item"
   )
 
   # Add warning message to error message for logging
@@ -1333,7 +1400,7 @@ _test()
   local output previous error_msg
 
   # Basename of FLAC, splitting on whitespace since the 'read' below
-  # splits on whitespace
+  # splits on whitespace (to get percentage token, error messages, etc)
   local base="${item##*[ /]}"
 
   _print_item 'Testing'
@@ -2200,16 +2267,6 @@ _process_arguments "$@"
 #
 _check_missing_programs
 
-#
-# Dynamically sets the number of jobs to use if the user did not specify
-# them via '-j[N]', defaulting to two (2) jobs if unable find the number
-# of online CPU's to determine the number of jobs
-#
-jobs="${jobs:-"$(command -p nproc 2>/dev/null)"}"
-jobs="${jobs:-"$(command -p getconf _NPROCESSORS_ONLN 2>/dev/null)"}"
-jobs="${jobs:-"$(command -p sysctl -n hw.ncpu 2>/dev/null)"}"
-jobs="${jobs:-2}"
-
 ###############################  MAIN  #################################
 
 export LANG=C
@@ -2235,10 +2292,73 @@ else
 fi
 
 #
-# Obtain FLAC version
+# Obtain FLAC version (used in banner)
 #
 flac_version="$(flac --version)"    # eg: flac 1.4.3
 flac_version="${flac_version##* }"  # eg: 1.4.3
+
+#
+# Break out FLAC version string to major, minor and patch
+#
+IFS='.' read -r flac_major flac_minor flac_patch <<< "$flac_version"
+
+#
+# Determine the number of cores available, defaulting to 2
+#
+cores=''
+cores="${cores:-"$(command -p nproc 2>/dev/null)"}"
+cores="${cores:-"$(command -p getconf _NPROCESSORS_ONLN 2>/dev/null)"}"
+cores="${cores:-"$(command -p sysctl -n hw.ncpu 2>/dev/null)"}"
+cores="${cores:-2}"
+
+#
+# FLAC 1.5.0 introduced support for multithreaded encoding of FLAC files
+# which is checked to support multithreaded usage in compression
+# operations
+#
+if (( flac_major > 1 || flac_minor >= 5 )); then
+  # FLAC version does support multithreaded encoding
+  multithreaded_flac='true'
+
+  # Default to number of cores for all other jobs (2, if cores is
+  # undetermined)
+  global_jobs="${global_jobs:-$cores}"
+
+  # Default to 2 compression threads
+  compress_threads="${compress_threads:-2}"
+
+  # Default to half as many jobs as threads when compresssing
+  compress_jobs="${compress_jobs:-$(( cores / compress_threads ))}"
+
+  # Sent to 'flac' during compression (encoding)
+  flac_compress_threads="--threads=$compress_threads"
+
+  # Check for CPU starvation with compression jobs * threads
+  cpu_thread_starvation=''
+  if (( (compress_jobs * compress_threads) > cores )); then
+    cpu_thread_starvation='true'
+  fi
+
+  # Check for CPU starvation in user-defined global jobs
+  cpu_job_starvation=''
+  (( global_jobs > cores )) && cpu_job_starvation='true'
+else
+  # FLAC version does not support multithreaded encoding
+  multithreaded_flac=''
+
+  # Default to number of cores for all jobs (2, if cores is
+  # undetermined)
+  global_jobs="${global_jobs:-$cores}"
+
+  # FLAC < 1.5.0 does not support more than one thread
+  compress_threads=1
+  flac_compress_threads=''
+  cpu_thread_starvation=''
+
+  # Check for CPU starvation in user-defined global jobs
+  cpu_job_starvation=''
+  (( global_jobs > cores )) && cpu_job_starvation='true'
+fi
 
 #
 # These are operation title messages which are used by
@@ -2371,6 +2491,13 @@ for operation in "${operations[@]}"; do
   # the operation title function
   num=0
 
+  # Use compression jobs (tied with threads) for compression operation
+  if [[ "$multithreaded_flac" && "$operation" == '_compress' ]]; then
+    operation_jobs="$compress_jobs"
+  else
+    operation_jobs="$global_jobs"
+  fi
+
   # ReplayGain application requires operating on a directory of files
   # instead of each file, individually
   if [[ "$operation" == '_replaygain' ]]; then
@@ -2408,10 +2535,10 @@ for operation in "${operations[@]}"; do
   # If the items to process are less than the number of jobs, add the
   # number of items to the current row position, else add the number
   # of jobs to run
-  if (( ${#total_items[@]} < jobs )); then
+  if (( ${#total_items[@]} < operation_jobs )); then
     items_processed="${#total_items[@]}"
   else
-    items_processed="$jobs"
+    items_processed="$operation_jobs"
   fi
 
   post_row=$(( $(_row) + items_processed ))  # Operation row position
@@ -2427,6 +2554,12 @@ for operation in "${operations[@]}"; do
 
   # Display completed operation
   _operation_title
+
+  # Break out if there were any issues found in the current operation
+  #
+  # NOTE:
+  #   _cleanup() is run after script exit
+  (( $(_num_issues) > 0 )) && break
 
   # Restore the items to process from directories to FLAC files after
   # applying ReplayGain
