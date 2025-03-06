@@ -2219,7 +2219,7 @@ blue=$'\033[34m'
 magenta=$'\033[35m'
 cyan=$'\033[36m'
 
-script_version='0.31_pre'           # Redoflacs version
+script_version='1.0.0'              # Redoflacs version
 flac_extension='.[Ff][Ll][Aa][Cc]'  # FLAC extension (case-insensitive)
 
 #
