@@ -1,3 +1,7 @@
+<div>
+  <img src="https://raw.githubusercontent.com/sirjaren/repository-images/master/redoflacs/redoflacs-0.30.png" alt="redoflacs 0.30"/>
+</div>
+
 # redoflacs
 
 **redoflacs** is a parallel BASH command-line tool for managing a collection of FLAC audio files. It can re-compress FLACs to maximize compression, verify and repair their integrity, and organize or clean up metadata (tags and embedded artwork) in bulk. By utilizing multi-core processing, redoflacs can perform these operations quickly on large libraries of music.
