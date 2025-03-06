@@ -2509,7 +2509,7 @@ for operation in "${operations[@]}"; do
     # on a directory of files instead of individual files
     current=''
     total_items=()
-    for dir in "${total_items[@]%/*}"; do
+    for dir in "${total_items_backup[@]%/*}"; do
       previous="$current"
       current="$dir"
 
