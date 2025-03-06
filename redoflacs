@@ -1277,7 +1277,7 @@ _replaygain()
 #
 _compress()
 {
-  local output previous error_msg warning_msg
+  local file_compression output previous error_msg warning_msg
 
   _print_item 'Compressing'
 
@@ -1297,7 +1297,10 @@ _compress()
 
     # 'compression_level' is obtained from the configuration file, in
     # form of 'COMPRESSION=<value>'
-    if (( ${file_compression##*=} == compression_level )); then
+    if
+      [[ -n "$file_compression" ]] \
+      && (( ${file_compression##*=} == compression_level ))
+    then
       _print_item_skip
       printf >&3 "$row\n"  # Send complete to _run_parallel()
       return
@@ -1383,6 +1386,7 @@ _compress()
   #   Errors are ignored as the FLAC file was verified during encoding
   if [[ ! "$no_extra_tags" ]]; then
     metaflac 2>/dev/null "${metaflac_extra_options[@]}" \
+      --remove-tag='COMPRESSION' \
       --set-tag="COMPRESSION=$compression_level" "$item"
   fi
   _print_item_ok
