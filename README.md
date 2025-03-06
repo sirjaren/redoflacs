@@ -1,5 +1,5 @@
 <div>
-  <img src="https://raw.githubusercontent.com/sirjaren/repository-images/master/redoflacs/redoflacs-0.30.png" alt="redoflacs 0.30"/>
+  <img src="https://raw.githubusercontent.com/sirjaren/repository-images/master/redoflacs/redoflacs-1.0.0.png" alt="redoflacs 1.0.0"/>
 </div>
 
 # redoflacs
