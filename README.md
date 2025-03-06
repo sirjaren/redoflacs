@@ -1,4 +1,4 @@
-<div>
+<div align="center">
   <img src="https://raw.githubusercontent.com/sirjaren/repository-images/master/redoflacs/redoflacs-1.0.0.png" alt="redoflacs 1.0.0"/>
 </div>
 
