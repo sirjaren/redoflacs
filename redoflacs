@@ -1971,10 +1971,23 @@ _retag()
   # all in one operation. A single operation prevents SIGINT from
   # leaving the current FLAC file without any tags
   #
-  # FIXME:
-  #   metaflac >= 1.4.3 add --remove-all-tags-except=NAME1=NAME2...
-  metaflac >/dev/null 2>&1 "${metaflac_extra_options[@]}" \
-    --remove-all-tags "${found_tags[@]/#/--set-tag=}" "$item"
+  # Metaflac >= 1.4.3 added '--remove-all-tags-except=NAME1=NAME2...'
+  # which is a safer operation
+  if
+    ((
+      flac_major > 1 || flac_minor > 4 || (flac_minor == 4 && flac_patch >= 3)
+    ))
+  then
+    # Store only the tag fields and join into a '=' separated string
+    printf -v found_tags '%s=' "${found_tags[@]/%=*}"
+
+    # Ensure trailing '=' is removed
+    metaflac >/dev/null 2>&1 "${metaflac_extra_options[@]}" \
+      --remove-all-tags-except="${found_tags%=}"  "$item"
+  else
+    metaflac >/dev/null 2>&1 "${metaflac_extra_options[@]}" \
+      --remove-all-tags "${found_tags[@]/#/--set-tag=}" "$item"
+  fi
 
   # Logs missing tags, if any were found
   if [[ "${missing_tags[@]}" ]]; then
