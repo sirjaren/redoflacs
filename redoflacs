@@ -503,7 +503,6 @@ _cleanup()
   rm -f "${directory}"/**/*.tmp,fl-ac+en\'c
 
   rm -f "$job_fifo"            # Remove temporary FIFO
-  rm -f "$tmp_picture_blocks"  # Remove temporary 'metaflac' blocks
   rm -f "$issue_ticks"         # Remove temporary errors/issues file
 
   printf '\033[?25h'           # Restore the cursor
@@ -521,7 +520,7 @@ _kill_jobs()
 {
   local -i pid
 
-  for pid in $@; do
+  for pid in "$@"; do
     kill $pid 2>/dev/null
     wait $pid 2>/dev/null
   done
@@ -968,7 +967,7 @@ _process_arguments()
       'o') _create_config; exit 0 ;;
 
       # Disable color output
-      'n') unset -v reset red green yellow blue magenta cyan ;;
+      'n') unset -v 'reset' 'red' 'green' 'yellow' 'blue' 'magenta' 'cyan' ;;
 
       # Prevent COMPRESSION tag from being applied during compression
       'x') no_extra_tags='true' ;;
@@ -982,7 +981,7 @@ _process_arguments()
       # Compression and force compression arguments
       'c'|'C')
         # Skip as both compression arguments were already specified
-        [[ "${conflicting[@]}" == *'-c, -C'* ]] && continue
+        [[ "${conflicting[*]}" == *'-c, -C'* ]] && continue
 
         operations[2]='_compress'
         [[ "$arg" == 'C' ]] && force_compression='true'
@@ -1000,7 +999,7 @@ _process_arguments()
       # auCDtect and auCDtect with spectrogram arguments
       'a'|'A')
         # Skip as both auCDtect arguments were already specified
-        [[ "${conflicting[@]}" == *'-a, -A'* ]] && continue
+        [[ "${conflicting[*]}" == *'-a, -A'* ]] && continue
 
         operations[3]='_aucdtect'
         [[ "$arg" == 'A' ]] && create_spectrogram='true'
@@ -1018,7 +1017,7 @@ _process_arguments()
       # ReplayGain and force ReplayGain arguments
       'g'|'G')
         # Skip as both ReplayGain arguments were already specified
-        [[ "${conflicting[@]}" == *'-g, -G'* ]] && continue
+        [[ "${conflicting[*]}" == *'-g, -G'* ]] && continue
 
         operations[4]='_replaygain'
         [[ "$arg" == 'G' ]] && force_replaygain='true'
@@ -1133,7 +1132,7 @@ _check_missing_programs()
     type -P sox >/dev/null || missing_programs+=( 'sox' )
   fi
 
-  if [[ "${missing_programs[@]}" ]]; then
+  if [[ "${missing_programs[*]}" ]]; then
     _error 'The following required programs were not found:'
     for program in "${missing_programs[@]}"; do
       _error "  ${cyan}${program}$reset"
@@ -1811,7 +1810,7 @@ _retag()
 {
   local output error_msg line extracted_tag key empty_tag tag missing_tags_str
   local -i index='-1'
-  local -a missing_tags found_tags tags
+  local -a missing_tags found_tags
 
   _print_item 'Retagging'
 
@@ -1967,7 +1966,7 @@ _retag()
     for valid_tag in "${found_tags[@]}"; do
       # Matched a tag and value for a missing tag, no longer missing
       if [[ "$valid_tag" == "${missing_tags[tag]}="* ]]; then
-        unset -v missing_tags[tag]
+        unset -v 'missing_tags[tag]'
         break
       fi
     done
@@ -1996,7 +1995,7 @@ _retag()
   fi
 
   # Logs missing tags, if any were found
-  if [[ "${missing_tags[@]}" ]]; then
+  if [[ "${missing_tags[*]}" ]]; then
     _print_item_check
 
     # Generates a comma-separated list of missing tags to be logged.
@@ -2106,13 +2105,13 @@ _extract_images()
 
       # Eg: '4:3-Cover_front.jpg'
       artwork+=( "${block_id}:${art_id}-${art_description}.${mime}" )
-      unset -v block_id art_id art_description mime
+      unset -v 'block_id' 'art_id' 'art_description' 'mime'
     fi
   done < "$blocks"
   rm -f "$blocks"
 
   # Continue only if there was artwork to be extracted
-  if [[ -z "${artwork[@]}" ]]; then
+  if [[ -z "${artwork[*]}" ]]; then
     printf >&3 "$row\n"  # Send complete to _run_parallel()
     return
   fi
@@ -2225,7 +2224,7 @@ flac_extension='.[Ff][Ll][Aa][Cc]'  # FLAC extension (case-insensitive)
 #
 # Make sure we are running BASH 4 or greater
 #
-if (( ${BASH_VERSINFO[0]} < 4 )); then
+if (( BASH_VERSINFO[0] < 4 )); then
   _error "You must be running ${cyan}BASH 4$reset or greater to use this"
   _error 'program! Current version:'
   _error "  ${cyan}${BASH_VERSION}$reset"
@@ -2471,9 +2470,9 @@ _runtime_banner
 #   allows logging to determine where each item resides
 #
 _info 'Looking for FLAC files to process...'
-pushd "$directory" >/dev/null
+pushd "$directory" >/dev/null || exit
 total_items=( "${PWD}"/**/*${flac_extension} )
-popd >/dev/null
+popd >/dev/null || exit
 
 #
 # If there were no FLAC files found, the glob will exist as index 0, eg:
