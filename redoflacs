@@ -1634,7 +1634,6 @@ _lac()
     _print_item_ok
     rm "$item_wav"                # Remove temporary WAV file
     printf >&3 "$row\n"           # Send complete to _run_parallel()
-    sleep 2
     return
   fi
 
@@ -1647,7 +1646,6 @@ _lac()
 
     # Update operation title message with current number of issues
     _operation_title
-    sleep 2
     return
   fi
 
