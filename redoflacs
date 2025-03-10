@@ -1204,6 +1204,67 @@ _run_parallel()
 }
 
 #
+# Decode FLAC to WAV file (used in operation functions)
+#
+_decode_to_wav()
+{
+  local output previous error_msg
+
+  # Used in other functions/operations
+  local -g item_wav
+
+  # The WAV file to be created from current FLAC file
+  item_wav="${item%${flac_extension}}_redoflacs_$$.wav"
+
+  _print_item 'Decoding'
+
+  # As indicated by '[FIRST]', '[SECOND]', and '[LAST]', this is the
+  # order each of the statements will evaluate to 'true'. '[FIRST]' may
+  # never evaluate to 'true' (if the FLAC file fails to decode)
+  while IFS=$'\n' read -rd ' ' output; do
+    # [LAST] Store error message
+    if [[ "$error_msg" && -n "$output" ]]; then
+      [[ "$output" == 'state' ]] && break  # End of error message
+      error_msg+=" $output"
+      continue
+    fi
+
+    # [SECOND] An error occurred, storing first word
+    if [[ "$output" == 'ERROR' && "$previous" == *"${base}:" ]]; then
+      error_msg="$output"
+      continue
+    fi
+
+    # [FIRST] FLAC decoding percentage complete
+    if [[ "$output" == *[[:digit:]]% ]]; then
+      output="${output//$'\b'}"  # Remove all backspace characters
+
+      # Remove beginning 'complete' string (from backspace characters)
+      printf "\033[${row}H${yellow}%4s$reset" "${output#complete}"
+    fi
+
+    # Used to validate previous output is an error and not a filename
+    previous="$output"
+  done < <(flac 2>&1 "${flac_extra_options[@]}" -d "$item" -o "$item_wav")
+
+  # Log failures if there are any errors
+  if [[ "$error_msg" ]]; then
+    _print_item_fail
+
+    # Display parent function as that is the operation
+    printf >> "$log_file" '%s [%s] %s\n' "$item" "${FUNCNAME[1]}" "$error_msg"
+    printf >> "$issue_ticks" '.'  # Add one tick to total issues
+    printf >&3 "$row\n"           # Send complete to _run_parallel()
+
+    # Update operation title message with current number of issues
+    _operation_title
+    return
+  else
+    _print_item_ok
+  fi
+}
+
+#
 # Apply ReplayGain tags to each FLAC file in a given directory.
 # Conditionally skip FLAC files if ReplayGain tags are already set. If
 # there are any errors, they are logged
@@ -1486,8 +1547,7 @@ _test()
 #
 _lac()
 {
-  local item_wav mastering output rest_of_output lac_result previous \
-    error_msg spectrogram
+  local mastering output rest_of_output lac_result spectrogram
   local -i count
 
   # Unit separator (replace newlines from LAC's output with US)
@@ -1551,53 +1611,9 @@ _lac()
     return
   fi
 
-  # The WAV file to be created from current FLAC file
-  item_wav="${item%${flac_extension}}_redoflacs_$$.wav"
-
-  _print_item 'Decoding'
-
-  # As indicated by '[FIRST]', '[SECOND]', and '[LAST]', this is the
-  # order each of the statements will evaluate to 'true'. '[FIRST]' may
-  # never evaluate to 'true' (if the FLAC file fails to decode)
-  while IFS=$'\n' read -rd ' ' output; do
-    # [LAST] Store error message
-    if [[ "$error_msg" && -n "$output" ]]; then
-      [[ "$output" == 'state' ]] && break  # End of error message
-      error_msg+=" $output"
-      continue
-    fi
-
-    # [SECOND] An error occurred, storing first word
-    if [[ "$output" == 'ERROR' && "$previous" == *"${base}:" ]]; then
-      error_msg="$output"
-      continue
-    fi
-
-    # [FIRST] FLAC decoding percentage complete
-    if [[ "$output" == *[[:digit:]]% ]]; then
-      output="${output//$'\b'}"  # Remove all backspace characters
-
-      # Remove beginning 'complete' string (from backspace characters)
-      printf "\033[${row}H${yellow}%4s$reset" "${output#complete}"
-    fi
-
-    # Used to validate previous output is an error and not a filename
-    previous="$output"
-  done < <(flac 2>&1 "${flac_extra_options[@]}" -d "$item" -o "$item_wav")
-
-  # Log failures if there are any errors
-  if [[ "$error_msg" ]]; then
-    _print_item_fail
-    printf >> "$log_file" '%s [%s] %s\n' "$item" 'LAC' "$error_msg"
-    printf >> "$issue_ticks" '.'  # Add one tick to total issues
-    printf >&3 "$row\n"           # Send complete to _run_parallel()
-
-    # Update operation title message with current number of issues
-    _operation_title
-    return
-  else
-    _print_item_ok
-  fi
+  # Decode FLAC file to WAV file as LAC does not support FLAC or decoded
+  # streams over a pipe
+  _decode_to_wav
 
   _print_item 'LAC'
 
@@ -1721,8 +1737,7 @@ _lac()
 #
 _aucdtect()
 {
-  local item_wav output previous error_msg aucdtect_stdout aucdtect_stderr \
-    spectrogram
+  local output aucdtect_stdout aucdtect_stderr spectrogram
   local -a bits_mastering
 
   # Used to look for error messages and file status in auCDtect which is
@@ -1796,53 +1811,9 @@ _aucdtect()
     return
   fi
 
-  # The WAV file to be created from current FLAC file
-  item_wav="${item%${flac_extension}}_redoflacs_$$.wav"
-
-  _print_item 'Decoding'
-
-  # As indicated by '[FIRST]', '[SECOND]', and '[LAST]', this is the
-  # order each of the statements will evaluate to 'true'. '[FIRST]' may
-  # never evaluate to 'true' (if the FLAC file fails to decode)
-  while IFS=$'\n' read -rd ' ' output; do
-    # [LAST] Store error message
-    if [[ "$error_msg" && -n "$output" ]]; then
-      [[ "$output" == 'state' ]] && break  # End of error message
-      error_msg+=" $output"
-      continue
-    fi
-
-    # [SECOND] An error occurred, storing first word
-    if [[ "$output" == 'ERROR' && "$previous" == *"${base}:" ]]; then
-      error_msg="$output"
-      continue
-    fi
-
-    # [FIRST] FLAC decoding percentage complete
-    if [[ "$output" == *[[:digit:]]% ]]; then
-      output="${output//$'\b'}"  # Remove all backspace characters
-
-      # Remove beginning 'complete' string (from backspace characters)
-      printf "\033[${row}H${yellow}%4s$reset" "${output#complete}"
-    fi
-
-    # Used to validate previous output is an error and not a filename
-    previous="$output"
-  done < <(flac 2>&1 "${flac_extra_options[@]}" -d "$item" -o "$item_wav")
-
-  # Log failures if there are any errors
-  if [[ "$error_msg" ]]; then
-    _print_item_fail
-    printf >> "$log_file" '%s [%s] %s\n' "$item" 'auCDtect' "$error_msg"
-    printf >> "$issue_ticks" '.'  # Add one tick to total issues
-    printf >&3 "$row\n"           # Send complete to _run_parallel()
-
-    # Update operation title message with current number of issues
-    _operation_title
-    return
-  else
-    _print_item_ok
-  fi
+  # Decode FLAC file to WAV file as LAC does not support FLAC or decoded
+  # streams over a pipe
+  _decode_to_wav
 
   # Runs auCDtect with medium accuracy setting (for speed):
   #   STDOUT: auCDtect STDOUT captured to be parsed
