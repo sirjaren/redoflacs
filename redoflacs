@@ -520,11 +520,11 @@ _cleanup()
 #
 _kill_jobs()
 {
-  local -i pid
+  local pid
 
   for pid in "$@"; do
-    kill $pid 2>/dev/null
-    wait $pid 2>/dev/null
+    kill "$pid" 2>/dev/null
+    wait "$pid" 2>/dev/null
   done
 }
 
