@@ -63,6 +63,8 @@ Operations:
   -m       Check for a valid MD5 signature in FLAC files' STREAMINFO block
   -a       Use auCDtect to authenticate FLAC files
   -A       Use auCDtect to authenticate FLAC files (create spectrogram)
+  -l       Use LAC to authenticate FLAC files
+  -L       Use LAC to authenticate FLAC files (create spectrogram)
   -e       Extract all embedded artwork from FLAC files
   -p       Remove metadata blocks from FLAC files (PADDING, PICTURE, etc)
   -g       Apply ReplayGain to FLAC files
@@ -498,7 +500,7 @@ _cleanup()
   # Display extra newline if interruption during countdown
   [[ "${FUNCNAME[1]}" == '_countdown_metadata' ]] && printf '\n'
 
-  # Remove WAV files (auCDtect) and any temporary FLAC files compression
+  # Remove temporary WAV and FLAC files
   rm -f "${directory}"/**/*_redoflacs_"$$".wav
   rm -f "${directory}"/**/*.tmp,fl-ac+en\'c
 
@@ -518,11 +520,11 @@ _cleanup()
 #
 _kill_jobs()
 {
-  local -i pid
+  local pid
 
   for pid in "$@"; do
-    kill $pid 2>/dev/null
-    wait $pid 2>/dev/null
+    kill "$pid" 2>/dev/null
+    wait "$pid" 2>/dev/null
   done
 }
 
@@ -687,11 +689,11 @@ compression_level='8'
 error_log="$HOME"
 
 #
-# AUCDTECT SKIP LOSSY:
+# AUCDTECT/LAC SKIP LOSSY:
 #
 # Set whether FLAC files should be skipped if the MASTERING tag is already set
-# as 'Lossy' when analyzed with auCDtect. Set 'skip_lossy' as 'true' to skip
-# FLAC files that have the tag: 'MASTERING=Lossy'. All other values are
+# as 'Lossy' when analyzed with auCDtect or LAC. Set 'skip_lossy' as 'true' to
+# skip FLAC files that have the tag: 'MASTERING=Lossy'. All other values are
 # intepreted as 'false'.
 skip_lossy='true'
 
@@ -941,7 +943,7 @@ _process_arguments()
 
   # Processes all the possible positional parameters, short options
   # only, handling conflicting parameters
-  while getopts ':j:J:T:mtcCaAgGrepnhvox' arg "$@"; do
+  while getopts ':j:J:T:mtcCaAgLlGrepnhvox' arg "$@"; do
     case "$arg" in
       # Given argument is not valid. 'OPTARG' is 'arg' before 'arg' is
       # set to '?'
@@ -1011,6 +1013,24 @@ _process_arguments()
         # '-a' was already specified and '-A' is the current argument
         elif [[ "$arg" == 'A' && ! "$create_spectrogram" ]]; then
           conflicting+=( '-a, -A' )
+        fi
+        ;;
+
+      # LAC and LAC with spectrogram arguments
+      'l'|'L')
+        # Skip as both LAC arguments were already specified
+        [[ "${conflicting[*]}" == *'-l, -L'* ]] && continue
+
+        operations[8]='_lac'
+        [[ "$arg" == 'L' ]] && create_spectrogram='true'
+
+        # '-L' was already specified and '-l' is the current argument
+        if [[ "$arg" == 'l' && "$create_spectrogram" ]]; then
+          conflicting+=( '-l, -L' )
+
+        # '-l' was already specified and '-L' is the current argument
+        elif [[ "$arg" == 'L' && ! "$create_spectrogram" ]]; then
+          conflicting+=( '-l, -L' )
         fi
         ;;
 
@@ -1128,6 +1148,11 @@ _check_missing_programs()
     type -P auCDtect >/dev/null || missing_programs+=( 'auCDtect' )
   fi
 
+  # Lossless Audio Checker (LAC) is the 9th index in $operations[@]
+  if [[ -n "${operations[8]}" ]]; then
+    type -P LAC >/dev/null || missing_programs+=( 'LAC' )
+  fi
+
   if [[ "$create_spectrogram" ]]; then
     type -P sox >/dev/null || missing_programs+=( 'sox' )
   fi
@@ -1176,6 +1201,150 @@ _run_parallel()
 
   # Wait on operations
   wait
+}
+
+#
+# Decode FLAC to WAV file (used in operation functions)
+#
+# NOTE:
+#   This function will return 1 if failure was detected and no other
+#   operations need to be performed (to exit the parent function)
+#
+_decode_to_wav()
+{
+  local output previous error_msg
+
+  # The parent function's name, eg: _lac -> lac
+  local function_label="${FUNCNAME[1]#_}"
+  function_label="${function_label^^}"  # lac -> LAC
+
+  # Used in other functions/operations
+  local -g item_wav
+
+  # The WAV file to be created from current FLAC file
+  item_wav="${item%${flac_extension}}_redoflacs_$$.wav"
+
+  _print_item 'Decoding'
+
+  # As indicated by '[FIRST]', '[SECOND]', and '[LAST]', this is the
+  # order each of the statements will evaluate to 'true'. '[FIRST]' may
+  # never evaluate to 'true' (if the FLAC file fails to decode)
+  while IFS=$'\n' read -rd ' ' output; do
+    # [LAST] Store error message
+    if [[ "$error_msg" && -n "$output" ]]; then
+      [[ "$output" == 'state' ]] && break  # End of error message
+      error_msg+=" $output"
+      continue
+    fi
+
+    # [SECOND] An error occurred, storing first word
+    if [[ "$output" == 'ERROR' && "$previous" == *"${base}:" ]]; then
+      error_msg="$output"
+      continue
+    fi
+
+    # [FIRST] FLAC decoding percentage complete
+    if [[ "$output" == *[[:digit:]]% ]]; then
+      output="${output//$'\b'}"  # Remove all backspace characters
+
+      # Remove beginning 'complete' string (from backspace characters)
+      printf "\033[${row}H${yellow}%4s$reset" "${output#complete}"
+    fi
+
+    # Used to validate previous output is an error and not a filename
+    previous="$output"
+  done < <(flac 2>&1 "${flac_extra_options[@]}" -d "$item" -o "$item_wav")
+
+  # Log failures if there are any errors
+  if [[ "$error_msg" ]]; then
+    _print_item_fail
+
+    printf >> "$log_file" '%s [%s] %s\n' "$item" "$function_label" "$error_msg"
+    printf >> "$issue_ticks" '.'  # Add one tick to total issues
+    printf >&3 "$row\n"           # Send complete to _run_parallel()
+
+    # Update operation title message with current number of issues
+    _operation_title
+
+    # Return 1 to break out of parent fuction
+    return 1
+  else
+    _print_item_ok
+  fi
+}
+
+#
+# Generate a spectrogram of current FLAC (used in operation functions)
+#
+_generate_spectrogram()
+{
+  local output spectrogram
+
+  # The parent function's name, eg: _aucdtect -> aucdtect
+  local function_label="${FUNCNAME[1]#_}"
+  function_label="${function_label^^}"  # aucdtect -> AUCDTECT
+
+  # Default location for spectrogram, eg:
+  #   /path/to/file.flac.spec.png.0
+  #
+  # User defined (eg: /tmp):
+  #   /user/configured/path/to/file.flac.spec.png.0
+  spectrogram="${spectrogram_location:-${item%/*}}/${item##*/}.spec.png.0"
+
+  # User requested a spectrogram, SoX is run to generate a spectrogram
+  # in the location as the current item or a user-defined location
+  _print_item 'Spectrogram'
+
+  # Ensure we don't clobber the spectrogram, eg:
+  #   /path/to/file.flac.spec.png.0 ->
+  #   /path/to/file.flac.spec.png.1
+  until [[ ! -f "$spectrogram" ]]; do
+    spectrogram="${spectrogram%.*}.$(( ${spectrogram##*.} + 1 ))"
+  done
+
+  # SoX display progress percentage on STDERR as well as any error
+  # messages. Example output:
+  #
+  # Error messages:
+  #   sox FAIL formats: can't open input file `file.wav': WAVE: RIF<...>
+  #   sox FAIL formats: can't open input file `file.flacd': No such<...>
+  #
+  # NOTE:
+  #  The '-n1000' is to force 'read' to grab the SoX error if there are
+  #  any error messages, otherwise the percentage complete is read
+  while IFS=$'\n' read -rd '%' -n1000 output; do
+    # Strip from leading string until percentage complete
+    output="${output##*In:}"
+
+    # Strip floating point from output
+    printf "\033[${row}H${yellow}%4s${reset}" "${output%%.*}%"
+  done < <(
+    sox 2>&1 "$item" -S -n spectrogram -o "$spectrogram" -t "$item" \
+      -c '' -p 1 -z 90 -Z 0 -q 249 -w Hann -x 1800 -y 513
+  )
+
+  # Log failures if there are any errors from SoX
+  if [[ "$output" == 'sox FAIL'* ]]; then
+    _print_item_fail
+    printf >> "$log_file" \
+      '%s [%s] %s\n' "$item" "${function_label}:Spectrogram" "$output"
+
+  # Log operation status as well as generated spectrogram location
+  else
+    _print_item_check
+    printf >> "$log_file" \
+      '%s [%s] %s (%s)\n' \
+      "$item" "${function_label}:Spectrogram" \
+      "$lossless_check_results" "$spectrogram"
+  fi
+
+  printf >> "$issue_ticks" '.'  # Add one tick to total issues
+  rm "$item_wav"                # Remove temporary WAV file
+
+  # Update operation title message with current number of issues
+  _operation_title
+
+  printf >&3 "$row\n"           # Send complete to _run_parallel()
 }
 
 #
@@ -1457,6 +1626,144 @@ _test()
 }
 
 #
+# Test FLAC validity with Lossless Audio Checker (LAC)
+#
+_lac()
+{
+  local mastering output rest_of_output spectrogram
+  local -i count
+
+  # Used in other functions
+  local -g lossless_check_results
+
+  # Unit separator (replace newlines from LAC's output with US)
+  local us=$'\037'
+
+  # Used to look for error messages and file status in LAC which is
+  # captured via STDOUT
+  #
+  # Example STDOUT from LAC (error message):
+  #
+  #   Lossless Audio Checker 2.0.5
+  #   Copyright (c) 2012-2016 Julien Lacroix & Yann Prime
+  #   http://losslessaudiochecker.com
+  #   ==================================================
+  #   File:   invalid_file.wav
+  #   Result: WAVE header RIFF chunk: bad Size
+  #
+  # Example STDOUT from LAC (file status):
+  #
+  #   Lossless Audio Checker 2.0.5
+  #   Copyright (c) 2012-2016 Julien Lacroix & Yann Prime
+  #   http://losslessaudiochecker.com
+  #   ==================================================
+  #   File:   bad_file.wav
+  #   Result: Upsampled
+  #
+  # Example regex capture groups obtained:
+  #
+  # Error messages:
+  #
+  #   WAVE header RIFF chunk: bad Size
+  #   WAVE header FMT chunk: not found
+  #   WAVE header EXTENSIBLE chunk: bad Channel Mask
+  #   WAVE header DATA chunk: bad ID
+  #
+  # Successful operations:
+  #
+  #   Clean
+  #   Transcoded
+  #   Upscaled
+  #   Upsampled
+  local regex="${us}Result: (.*)${us}$"
+
+  # Check for a result from LAC that is NOT clean
+  local regex_non_clean='^(transcoded|upscaled|upsampled)'
+
+  _print_item 'LAC'
+
+  # Get the MASTERING tag of a FLAC file. Errors will be caught during
+  # decoding
+  mastering="$(
+    metaflac 2>/dev/null "${metaflac_extra_options[@]}" \
+      --show-tag='MASTERING' "$item"
+  )"
+
+  # Skip FLAC file if MASTERING=Lossy is set and the 'skip_lossy'
+  # configuration option is 'true'
+  if [[ "$mastering" == 'Lossy' && "$skip_lossy" == 'true' ]]; then
+    _print_item_skip
+    printf >&3 "$row\n"  # Send complete to _run_parallel()
+    return
+  fi
+
+  # Decode FLAC file to WAV file as LAC does not support FLAC or decoded
+  # streams over a pipe
+  #
+  # NOTE:
+  #   Break out of current function if there were failures decoding
+  _decode_to_wav || return
+
+  _print_item 'LAC'
+
+  # Runs LAC and parses out the progress bar (made up of '=') and
+  # generates a percentage of completion along with storing the result
+  # of the operation
+  #
+  # NOTE:
+  #   Processing LAC's output is done by character where 'read' is
+  #   reading in a single character at a time
+  while IFS=$'\n' read -rn1 output; do
+    # The first '=' found is the progress bar (max 50), which is counted
+    # and integer scaling division is performed to get the percentage
+    if [[ "$output" == '=' ]]; then
+      printf "\033[${row}H${yellow}%4s$reset" "$(( (++count * 100) / 50 ))%"
+      continue
+    fi
+
+    # The rest of the output (after progress bar) is the file and result
+    if (( count == 50 )); then
+      # All newlines are null, which is replaced by a unit separator
+      [[ -z "$output" ]] && rest_of_output+="$us" || rest_of_output+="$output"
+    fi
+  done < <(LAC "$item_wav")
+
+  # Looks for the result from LAC
+  [[ "$rest_of_output" =~ $regex ]]
+
+  # Either 'Clean', 'Transcoded', 'Upscaled', or 'Upsampled'
+  lossless_check_results="${BASH_REMATCH[1]}"
+
+  # LAC reports a clean file, continue with next item
+  if [[ "${lossless_check_results,,}" == 'clean' ]]; then
+    _print_item_ok
+    rm "$item_wav"                # Remove temporary WAV file
+    printf >&3 "$row\n"           # Send complete to _run_parallel()
+    return
+  fi
+
+  # Log failure if not clean and no spectrogram is requested
+  if
+    [[ "${lossless_check_results,,}" =~ $regex_non_clean ]] \
+    && [[ ! "$create_spectrogram" ]]
+  then
+    _print_item_check
+    printf >> "$log_file" \
+      '%s [%s] %s\n' "$item" 'LAC' "$lossless_check_results"
+    printf >> "$issue_ticks" '.'  # Add one tick to total issues
+    printf >&3 "$row\n"           # Send complete to _run_parallel()
+
+    # Update operation title message with current number of issues
+    _operation_title
+    return
+  fi
+
+  # Generate a spectrogram of the current FLAC file and log the
+  # results of the operation along with the spectrogram location
+  _generate_spectrogram
+}
+
+#
 # Test FLAC validity with auCDtect
 #
 # NOTE:
@@ -1467,20 +1774,24 @@ _test()
 #
 _aucdtect()
 {
-  local item_wav output previous error_msg aucdtect_stdout aucdtect_stderr \
-    spectrogram
+  local output aucdtect_stdout aucdtect_stderr spectrogram
   local -a bits_mastering
+
+  # Used in other functions
+  local -g lossless_check_results
 
   # Used to look for error messages and file status in auCDtect which is
   # captured via STDOUT
   #
   # Example STDOUT from auCDtect (error message):
+  #
   #   auCDtect: CD records authenticity detector, version 0.8
   #   Copyright (c) 2004 Oleg Berngardt. All rights reserved.
   #   Copyright (c) 2004 Alexander Djourik. All rights reserved.
   #   error:  file format     is not supported
   #
   # Example STDOUT from auCDtect (file status):
+  #
   #   auCDtect: CD records authenticity detector, version 0.8
   #   Copyright (c) 2004 Oleg Berngardt. All rights reserved.
   #   Copyright (c) 2004 Alexander Djourik. All rights reserved.
@@ -1493,10 +1804,12 @@ _aucdtect()
   # Example regex capture groups obtained:
   #
   # Error messages:
+  #
   #   error:  can     not     open file <WAV_FILE>
   #   error:  file format     is not supported
   #
   # Successful operations:
+  #
   #   This track looks like CDDA with probability 100%
   #   This track looks like CDDA with probability 49%
   #   This track looks like MPEG with probability 100%
@@ -1538,53 +1851,12 @@ _aucdtect()
     return
   fi
 
-  # The WAV file to be created from current FLAC file
-  item_wav="${item%${flac_extension}}_redoflacs_$$.wav"
-
-  _print_item 'Decoding'
-
-  # As indicated by '[FIRST]', '[SECOND]', and '[LAST]', this is the
-  # order each of the statements will evaluate to 'true'. '[FIRST]' may
-  # never evaluate to 'true' (if the FLAC file fails to decode)
-  while IFS=$'\n' read -rd ' ' output; do
-    # [LAST] Store error message
-    if [[ "$error_msg" && -n "$output" ]]; then
-      [[ "$output" == 'state' ]] && break  # End of error message
-      error_msg+=" $output"
-      continue
-    fi
-
-    # [SECOND] An error occurred, storing first word
-    if [[ "$output" == 'ERROR' && "$previous" == *"${base}:" ]]; then
-      error_msg="$output"
-      continue
-    fi
-
-    # [FIRST] FLAC decoding percentage complete
-    if [[ "$output" == *[[:digit:]]% ]]; then
-      output="${output//$'\b'}"  # Remove all backspace characters
-
-      # Remove beginning 'complete' string (from backspace characters)
-      printf "\033[${row}H${yellow}%4s$reset" "${output#complete}"
-    fi
-
-    # Used to validate previous output is an error and not a filename
-    previous="$output"
-  done < <(flac 2>&1 "${flac_extra_options[@]}" -d "$item" -o "$item_wav")
-
-  # Log failures if there are any errors
-  if [[ "$error_msg" ]]; then
-    _print_item_fail
-    printf >> "$log_file" '%s [%s] %s\n' "$item" 'auCDtect' "$error_msg"
-    printf >> "$issue_ticks" '.'  # Add one tick to total issues
-    printf >&3 "$row\n"           # Send complete to _run_parallel()
-
-    # Update operation title message with current number of issues
-    _operation_title
-    return
-  else
-    _print_item_ok
-  fi
+  # Decode FLAC file to WAV file as LAC does not support FLAC or decoded
+  # streams over a pipe
+  #
+  # NOTE:
+  #   Break out of current function if there were failures decoding
+  _decode_to_wav || return
 
   # Runs auCDtect with medium accuracy setting (for speed):
   #   STDOUT: auCDtect STDOUT captured to be parsed
@@ -1606,6 +1878,9 @@ _aucdtect()
   #   BASH_REMATCH[2]: auCDtect file status
   [[ "$aucdtect_stdout" =~ $regex ]]
 
+  # Store auCDtect status of file
+  lossless_check_results="${BASH_REMATCH[2]}"
+
   # Log failures if there are any errors
   if [[ "${BASH_REMATCH[1]}" ]]; then
     _print_item_fail
@@ -1620,7 +1895,7 @@ _aucdtect()
     return
 
   # auCDtect reports CDDA of 100%, continue with next item
-  elif [[ "${BASH_REMATCH[2]}" == *'CDDA'*'100%'* ]]; then
+  elif [[ "$lossless_check_results" == *'CDDA'*'100%'* ]]; then
     _print_item_ok
     rm "$item_wav"                # Remove temporary WAV file
     printf >&3 "$row\n"           # Send complete to _run_parallel()
@@ -1648,6 +1923,9 @@ _aucdtect()
   #   BASH_REMATCH[2]: auCDtect file status
   [[ "$aucdtect_stdout" =~ $regex ]]
 
+  # Store auCDtect status of file (also used in other functions)
+  lossless_check_results="${BASH_REMATCH[2]}"
+
   # Log failures if there are any errors
   if [[ "${BASH_REMATCH[1]}" ]]; then
     _print_item_fail
@@ -1663,7 +1941,7 @@ _aucdtect()
   fi
 
   # auCDtect reports CDDA of 100%, continue with next item
-  if [[ "${BASH_REMATCH[2]}" == *'CDDA'*'100%'* ]]; then
+  if [[ "$lossless_check_results" == *'CDDA'*'100%'* ]]; then
     _print_item_ok
     rm "$item_wav"                # Remove temporary WAV file
     printf >&3 "$row\n"           # Send complete to _run_parallel()
@@ -1671,13 +1949,13 @@ _aucdtect()
   fi
 
   # Log failure if not CDDA with 100% and no spectrogram is requested
-  if [[
-    "${BASH_REMATCH[2]}" != *'CDDA'*'100%'*
-    && "$create_spectrogram" != 'true'
-  ]]; then
+  if
+    [[ "$lossless_check_results" != *'CDDA'*'100%'* ]] \
+    && [[ ! "$create_spectrogram" ]]
+  then
     _print_item_check
     printf >> "$log_file" \
-      '%s [%s] %s\n' "$item" 'auCDtect' "${BASH_REMATCH[2]}"
+      '%s [%s] %s\n' "$item" 'auCDtect' "$lossless_check_results"
     printf >> "$issue_ticks" '.'  # Add one tick to total issues
     rm "$item_wav"                # Remove temporary WAV file
     printf >&3 "$row\n"           # Send complete to _run_parallel()
@@ -1687,65 +1965,9 @@ _aucdtect()
     return
   fi
 
-  # User requested a spectrogram, SoX is run to generate a spectrogram
-  # in the location as the current item or a user-defined location
-  _print_item 'Spectrogram'
-
-  # Default location for spectrogram, eg:
-  #   /path/to/file.flac.spec.png.0
-  #
-  # User defined (eg: /tmp):
-  #   /user/configured/path/to/file.flac.spec.png.0
-  spectrogram="${spectrogram_location:-${item%/*}}/${item##*/}.spec.png.0"
-
-  # Ensure we don't clobber the spectrogram, eg:
-  #   /path/to/file.flac.spec.png.0 ->
-  #   /path/to/file.flac.spec.png.1 ->
-  until [[ ! -f "$spectrogram" ]]; do
-    spectrogram="${spectrogram%.*}.$(( ${spectrogram##*.} + 1 ))"
-  done
-
-  # SoX display progress percentage on STDERR as well as any error
-  # messages. Example output:
-  #
-  # Error messages:
-  #   sox FAIL formats: can't open input file `file.wav': WAVE: RIF<...>
-  #   sox FAIL formats: can't open input file `file.flacd': No such<...>
-  #
-  # NOTE:
-  #  The '-n1000' is to force 'read' to grab the SoX error if there are
-  #  any error messages, otherwise the percentage complete is read
-  while IFS=$'\n' read -rd '%' -n1000 output; do
-    # Strip from leading string until percentage complete
-    output="${output##*In:}"
-
-    # Strip floating point from output
-    printf "\033[${row}H${yellow}%4s${reset}" "${output%%.*}%"
-  done < <(
-    sox 2>&1 "$item" -S -n spectrogram -o "$spectrogram" -t "$item" \
-      -c '' -p 1 -z 90 -Z 0 -q 249 -w Hann -x 1800 -y 513
-  )
-
-  # Log failures if there are any errors from SoX
-  if [[ "$output" == 'sox FAIL'* ]]; then
-    _print_item_fail
-    printf >> "$log_file" \
-      '%s [%s] %s\n' "$item" 'auCDtect:Spectrogram' "$output"
-
-  # Log auCDtect status for item as well as generated spectrogram
-  else
-    _print_item_check
-    printf >> "$log_file" \
-      '%s [%s] %s (%s)\n' \
-      "$item" 'auCDtect:Spectrogram' "${BASH_REMATCH[2]}" "$spectrogram"
-  fi
-
-  printf >> "$issue_ticks" '.'  # Add one tick to total issues
-  rm "$item_wav"                # Remove temporary WAV file
-  printf >&3 "$row\n"           # Send complete to _run_parallel()
-
-  # Update operation title message with current number of issues
-  _operation_title
+  # Generate a spectrogram of the current FLAC file and log the
+  # results of the operation along with the spectrogram location
+  _generate_spectrogram
 }
 
 #
@@ -2391,6 +2613,7 @@ operation_title['_md5check']='Verifying MD5...'
 operation_title['_test']='Testing...'
 operation_title['_compress']="Compressing To Level ${compression_level}..."
 operation_title['_aucdtect']='auCDtect Validation...'
+operation_title['_lac']='Lossless Audio Checker (LAC) Validation...'
 operation_title['_replaygain']='Applying ReplayGain...'
 operation_title['_retag']='Retagging...'
 operation_title['_extract_images']='Extracting Images...'
