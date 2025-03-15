@@ -1206,9 +1206,17 @@ _run_parallel()
 #
 # Decode FLAC to WAV file (used in operation functions)
 #
+# NOTE:
+#   This function will return 1 if failure was detected and no other
+#   operations need to be performed (to exit the parent function)
+#
 _decode_to_wav()
 {
   local output previous error_msg
+
+  # The parent function's name, eg: _lac -> lac
+  local function_label="${FUNCNAME[1]#_}"
+  function_label="${function_label^^}"  # lac -> LAC
 
   # Used in other functions/operations
   local -g item_wav
@@ -1251,17 +1259,92 @@ _decode_to_wav()
   if [[ "$error_msg" ]]; then
     _print_item_fail
 
-    # Display parent function as that is the operation
-    printf >> "$log_file" '%s [%s] %s\n' "$item" "${FUNCNAME[1]}" "$error_msg"
+    printf >> "$log_file" '%s [%s] %s\n' "$item" "$function_label" "$error_msg"
     printf >> "$issue_ticks" '.'  # Add one tick to total issues
     printf >&3 "$row\n"           # Send complete to _run_parallel()
 
     # Update operation title message with current number of issues
     _operation_title
-    return
+
+    # Return 1 to break out of parent fuction
+    return 1
   else
     _print_item_ok
   fi
+}
+
+#
+# Generate a spectrogram of current FLAC (used in operation functions)
+#
+_generate_spectrogram()
+{
+  local output spectrogram
+
+  # The parent function's name, eg: _aucdtect -> aucdtect
+  local function_label="${FUNCNAME[1]#_}"
+  function_label="${function_label^^}"  # aucdtect -> AUCDTECT
+
+  # Default location for spectrogram, eg:
+  #   /path/to/file.flac.spec.png.0
+  #
+  # User defined (eg: /tmp):
+  #   /user/configured/path/to/file.flac.spec.png.0
+  spectrogram="${spectrogram_location:-${item%/*}}/${item##*/}.spec.png.0"
+
+  # User requested a spectrogram, SoX is run to generate a spectrogram
+  # in the location as the current item or a user-defined location
+  _print_item 'Spectrogram'
+
+  # Ensure we don't clobber the spectrogram, eg:
+  #   /path/to/file.flac.spec.png.0 ->
+  #   /path/to/file.flac.spec.png.1
+  until [[ ! -f "$spectrogram" ]]; do
+    spectrogram="${spectrogram%.*}.$(( ${spectrogram##*.} + 1 ))"
+  done
+
+  # SoX display progress percentage on STDERR as well as any error
+  # messages. Example output:
+  #
+  # Error messages:
+  #   sox FAIL formats: can't open input file `file.wav': WAVE: RIF<...>
+  #   sox FAIL formats: can't open input file `file.flacd': No such<...>
+  #
+  # NOTE:
+  #  The '-n1000' is to force 'read' to grab the SoX error if there are
+  #  any error messages, otherwise the percentage complete is read
+  while IFS=$'\n' read -rd '%' -n1000 output; do
+    # Strip from leading string until percentage complete
+    output="${output##*In:}"
+
+    # Strip floating point from output
+    printf "\033[${row}H${yellow}%4s${reset}" "${output%%.*}%"
+  done < <(
+    sox 2>&1 "$item" -S -n spectrogram -o "$spectrogram" -t "$item" \
+      -c '' -p 1 -z 90 -Z 0 -q 249 -w Hann -x 1800 -y 513
+  )
+
+  # Log failures if there are any errors from SoX
+  if [[ "$output" == 'sox FAIL'* ]]; then
+    _print_item_fail
+    printf >> "$log_file" \
+      '%s [%s] %s\n' "$item" "${function_label}:Spectrogram" "$output"
+
+  # Log operation status as well as generated spectrogram location
+  else
+    _print_item_check
+    printf >> "$log_file" \
+      '%s [%s] %s (%s)\n' \
+      "$item" "${function_label}:Spectrogram" \
+      "$lossless_check_results" "$spectrogram"
+  fi
+
+  printf >> "$issue_ticks" '.'  # Add one tick to total issues
+  rm "$item_wav"                # Remove temporary WAV file
+
+  # Update operation title message with current number of issues
+  _operation_title
+
+  printf >&3 "$row\n"           # Send complete to _run_parallel()
 }
 
 #
@@ -1547,8 +1630,11 @@ _test()
 #
 _lac()
 {
-  local mastering output rest_of_output lac_result spectrogram
+  local mastering output rest_of_output spectrogram
   local -i count
+
+  # Used in other functions
+  local -g lossless_check_results
 
   # Unit separator (replace newlines from LAC's output with US)
   local us=$'\037'
@@ -1613,7 +1699,10 @@ _lac()
 
   # Decode FLAC file to WAV file as LAC does not support FLAC or decoded
   # streams over a pipe
-  _decode_to_wav
+  #
+  # NOTE:
+  #   Break out of current function if there were failures decoding
+  _decode_to_wav || return
 
   _print_item 'LAC'
 
@@ -1642,11 +1731,11 @@ _lac()
   # Looks for the result from LAC
   [[ "$rest_of_output" =~ $regex ]]
 
-  # Either 'clean', 'transcoded', 'upscaled', or 'upsampled'
-  lac_result="${BASH_REMATCH[1],,}"
+  # Either 'Clean', 'Transcoded', 'Upscaled', or 'Upsampled'
+  lossless_check_results="${BASH_REMATCH[1]}"
 
   # LAC reports a clean file, continue with next item
-  if [[ "$lac_result" == 'clean' ]]; then
+  if [[ "${lossless_check_results,,}" == 'clean' ]]; then
     _print_item_ok
     rm "$item_wav"                # Remove temporary WAV file
     printf >&3 "$row\n"           # Send complete to _run_parallel()
@@ -1654,9 +1743,13 @@ _lac()
   fi
 
   # Log failure if not clean and no spectrogram is requested
-  if [[ "$lac_result" =~ $regex_non_clean && ! "$create_spectrogram" ]]; then
+  if
+    [[ "${lossless_check_results,,}" =~ $regex_non_clean ]] \
+    && [[ ! "$create_spectrogram" ]]
+  then
     _print_item_check
-    printf >> "$log_file" '%s [%s] %s\n' "$item" 'LAC' "${lac_result^}"
+    printf >> "$log_file" \
+      '%s [%s] %s\n' "$item" 'LAC' "$lossless_check_results"
     printf >> "$issue_ticks" '.'  # Add one tick to total issues
     printf >&3 "$row\n"           # Send complete to _run_parallel()
 
@@ -1665,65 +1758,9 @@ _lac()
     return
   fi
 
-  # User requested a spectrogram, SoX is run to generate a spectrogram
-  # in the location as the current item or a user-defined location
-  _print_item 'Spectrogram'
-
-  # Default location for spectrogram, eg:
-  #   /path/to/file.flac.spec.png.0
-  #
-  # User defined (eg: /tmp):
-  #   /user/configured/path/to/file.flac.spec.png.0
-  spectrogram="${spectrogram_location:-${item%/*}}/${item##*/}.spec.png.0"
-
-  # Ensure we don't clobber the spectrogram, eg:
-  #   /path/to/file.flac.spec.png.0 ->
-  #   /path/to/file.flac.spec.png.1 ->
-  until [[ ! -f "$spectrogram" ]]; do
-    spectrogram="${spectrogram%.*}.$(( ${spectrogram##*.} + 1 ))"
-  done
-
-  # SoX display progress percentage on STDERR as well as any error
-  # messages. Example output:
-  #
-  # Error messages:
-  #   sox FAIL formats: can't open input file `file.wav': WAVE: RIF<...>
-  #   sox FAIL formats: can't open input file `file.flacd': No such<...>
-  #
-  # NOTE:
-  #  The '-n1000' is to force 'read' to grab the SoX error if there are
-  #  any error messages, otherwise the percentage complete is read
-  while IFS=$'\n' read -rd '%' -n1000 output; do
-    # Strip from leading string until percentage complete
-    output="${output##*In:}"
-
-    # Strip floating point from output
-    printf "\033[${row}H${yellow}%4s${reset}" "${output%%.*}%"
-  done < <(
-    sox 2>&1 "$item" -S -n spectrogram -o "$spectrogram" -t "$item" \
-      -c '' -p 1 -z 90 -Z 0 -q 249 -w Hann -x 1800 -y 513
-  )
-
-  # Log failures if there are any errors from SoX
-  if [[ "$output" == 'sox FAIL'* ]]; then
-    _print_item_fail
-    printf >> "$log_file" \
-      '%s [%s] %s\n' "$item" 'LAC:Spectrogram' "$output"
-
-  # Log LAC status for item as well as generated spectrogram
-  else
-    _print_item_check
-    printf >> "$log_file" \
-      '%s [%s] %s (%s)\n' \
-      "$item" 'LAC:Spectrogram' "${lac_result^}" "$spectrogram"
-  fi
-
-  printf >> "$issue_ticks" '.'  # Add one tick to total issues
-  rm "$item_wav"                # Remove temporary WAV file
-  printf >&3 "$row\n"           # Send complete to _run_parallel()
-
-  # Update operation title message with current number of issues
-  _operation_title
+  # Generate a spectrogram of the current FLAC file and log the
+  # results of the operation along with the spectrogram location
+  _generate_spectrogram
 }
 
 #
@@ -1739,6 +1776,9 @@ _aucdtect()
 {
   local output aucdtect_stdout aucdtect_stderr spectrogram
   local -a bits_mastering
+
+  # Used in other functions
+  local -g lossless_check_results
 
   # Used to look for error messages and file status in auCDtect which is
   # captured via STDOUT
@@ -1813,7 +1853,10 @@ _aucdtect()
 
   # Decode FLAC file to WAV file as LAC does not support FLAC or decoded
   # streams over a pipe
-  _decode_to_wav
+  #
+  # NOTE:
+  #   Break out of current function if there were failures decoding
+  _decode_to_wav || return
 
   # Runs auCDtect with medium accuracy setting (for speed):
   #   STDOUT: auCDtect STDOUT captured to be parsed
@@ -1835,6 +1878,9 @@ _aucdtect()
   #   BASH_REMATCH[2]: auCDtect file status
   [[ "$aucdtect_stdout" =~ $regex ]]
 
+  # Store auCDtect status of file
+  lossless_check_results="${BASH_REMATCH[2]}"
+
   # Log failures if there are any errors
   if [[ "${BASH_REMATCH[1]}" ]]; then
     _print_item_fail
@@ -1849,7 +1895,7 @@ _aucdtect()
     return
 
   # auCDtect reports CDDA of 100%, continue with next item
-  elif [[ "${BASH_REMATCH[2]}" == *'CDDA'*'100%'* ]]; then
+  elif [[ "$lossless_check_results" == *'CDDA'*'100%'* ]]; then
     _print_item_ok
     rm "$item_wav"                # Remove temporary WAV file
     printf >&3 "$row\n"           # Send complete to _run_parallel()
@@ -1877,6 +1923,9 @@ _aucdtect()
   #   BASH_REMATCH[2]: auCDtect file status
   [[ "$aucdtect_stdout" =~ $regex ]]
 
+  # Store auCDtect status of file (also used in other functions)
+  lossless_check_results="${BASH_REMATCH[2]}"
+
   # Log failures if there are any errors
   if [[ "${BASH_REMATCH[1]}" ]]; then
     _print_item_fail
@@ -1892,7 +1941,7 @@ _aucdtect()
   fi
 
   # auCDtect reports CDDA of 100%, continue with next item
-  if [[ "${BASH_REMATCH[2]}" == *'CDDA'*'100%'* ]]; then
+  if [[ "$lossless_check_results" == *'CDDA'*'100%'* ]]; then
     _print_item_ok
     rm "$item_wav"                # Remove temporary WAV file
     printf >&3 "$row\n"           # Send complete to _run_parallel()
@@ -1901,12 +1950,12 @@ _aucdtect()
 
   # Log failure if not CDDA with 100% and no spectrogram is requested
   if
-    [[ "${BASH_REMATCH[2]}" != *'CDDA'*'100%'* ]] \
+    [[ "$lossless_check_results" != *'CDDA'*'100%'* ]] \
     && [[ ! "$create_spectrogram" ]]
   then
     _print_item_check
     printf >> "$log_file" \
-      '%s [%s] %s\n' "$item" 'auCDtect' "${BASH_REMATCH[2]}"
+      '%s [%s] %s\n' "$item" 'auCDtect' "$lossless_check_results"
     printf >> "$issue_ticks" '.'  # Add one tick to total issues
     rm "$item_wav"                # Remove temporary WAV file
     printf >&3 "$row\n"           # Send complete to _run_parallel()
@@ -1916,65 +1965,9 @@ _aucdtect()
     return
   fi
 
-  # User requested a spectrogram, SoX is run to generate a spectrogram
-  # in the location as the current item or a user-defined location
-  _print_item 'Spectrogram'
-
-  # Default location for spectrogram, eg:
-  #   /path/to/file.flac.spec.png.0
-  #
-  # User defined (eg: /tmp):
-  #   /user/configured/path/to/file.flac.spec.png.0
-  spectrogram="${spectrogram_location:-${item%/*}}/${item##*/}.spec.png.0"
-
-  # Ensure we don't clobber the spectrogram, eg:
-  #   /path/to/file.flac.spec.png.0 ->
-  #   /path/to/file.flac.spec.png.1 ->
-  until [[ ! -f "$spectrogram" ]]; do
-    spectrogram="${spectrogram%.*}.$(( ${spectrogram##*.} + 1 ))"
-  done
-
-  # SoX display progress percentage on STDERR as well as any error
-  # messages. Example output:
-  #
-  # Error messages:
-  #   sox FAIL formats: can't open input file `file.wav': WAVE: RIF<...>
-  #   sox FAIL formats: can't open input file `file.flacd': No such<...>
-  #
-  # NOTE:
-  #  The '-n1000' is to force 'read' to grab the SoX error if there are
-  #  any error messages, otherwise the percentage complete is read
-  while IFS=$'\n' read -rd '%' -n1000 output; do
-    # Strip from leading string until percentage complete
-    output="${output##*In:}"
-
-    # Strip floating point from output
-    printf "\033[${row}H${yellow}%4s${reset}" "${output%%.*}%"
-  done < <(
-    sox 2>&1 "$item" -S -n spectrogram -o "$spectrogram" -t "$item" \
-      -c '' -p 1 -z 90 -Z 0 -q 249 -w Hann -x 1800 -y 513
-  )
-
-  # Log failures if there are any errors from SoX
-  if [[ "$output" == 'sox FAIL'* ]]; then
-    _print_item_fail
-    printf >> "$log_file" \
-      '%s [%s] %s\n' "$item" 'auCDtect:Spectrogram' "$output"
-
-  # Log auCDtect status for item as well as generated spectrogram
-  else
-    _print_item_check
-    printf >> "$log_file" \
-      '%s [%s] %s (%s)\n' \
-      "$item" 'auCDtect:Spectrogram' "${BASH_REMATCH[2]}" "$spectrogram"
-  fi
-
-  printf >> "$issue_ticks" '.'  # Add one tick to total issues
-  rm "$item_wav"                # Remove temporary WAV file
-  printf >&3 "$row\n"           # Send complete to _run_parallel()
-
-  # Update operation title message with current number of issues
-  _operation_title
+  # Generate a spectrogram of the current FLAC file and log the
+  # results of the operation along with the spectrogram location
+  _generate_spectrogram
 }
 
 #
