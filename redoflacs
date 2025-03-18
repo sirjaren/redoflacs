@@ -2611,6 +2611,7 @@ export LC_ALL=C
 
 # Manage cleanup on interruption and script exit
 trap '_cleanup SIGINT' SIGINT
+trap '_cleanup SIGTERM' SIGTERM
 trap '_cleanup EXIT' EXIT
 
 # Hide cursor
