@@ -146,6 +146,7 @@ _display_issues_exist()
 #                   compression_level 8
 #                           error_log ~/
 #                          skip_lossy true
+#              temporary_wav_location <default>
 #                spectrogram_location <default>
 #                    artwork_location <default>
 #                        prepend_zero true
@@ -501,11 +502,13 @@ _cleanup()
   [[ "${FUNCNAME[1]}" == '_countdown_metadata' ]] && printf '\n'
 
   # Remove temporary WAV and FLAC files
-  rm -f "${directory}"/**/*_redoflacs_"$$".wav
-  rm -f "${directory}"/**/*.tmp,fl-ac+en\'c
+  rm -rf "${temporary_wav_location_sub_dir:-/dev/null/foo}"
+  rm -f "${directory:-/dev/null/foo}"/**/*_redoflacs_$$.wav
+  rm -f "${directory:-/dev/null/foo}"/**/*.tmp,fl-ac+en\'c
 
-  rm -f "$job_fifo"            # Remove temporary FIFO
-  rm -f "$issue_ticks"         # Remove temporary errors/issues file
+  # Remove temporary job FIFO and temporary errors/issues file
+  rm -f "${job_fifo:-/dev/null/foo}"
+  rm -f "${issue_ticks:-/dev/null/foo}"
 
   printf '\033[?25h'           # Restore the cursor
 
@@ -696,6 +699,28 @@ error_log="$HOME"
 # skip FLAC files that have the tag: 'MASTERING=Lossy'. All other values are
 # intepreted as 'false'.
 skip_lossy='true'
+
+#
+# WAV FILE DIRECTORY
+#
+# Set where to place temporary created WAV files when decoding FLAC files for
+# use with auCDtect or LAC (Lossless Audio Checker).
+#
+# By default the WAV file is created in the same location as the FLAC file and
+# removed when the operation is completed for that file.
+#
+# Users may prefer to place all WAV files on TMPFS backed storage or some other
+# location depending on their use case.
+#
+# All values for 'temporary_wav_location' are interpreted as a directory. If
+# left blank, the default location will be used.
+#
+# NOTE:
+#   Setting this value to a directory on a filesystem with minimal space may
+#   increase the chance of filesystem exhaustion if running with a large number
+#   of parallel jobs
+#
+temporary_wav_location=''
 
 #
 # SPECTROGRAM DIRECTORY:
@@ -1221,8 +1246,23 @@ _decode_to_wav()
   # Used in other functions/operations
   local -g item_wav
 
-  # The WAV file to be created from current FLAC file
-  item_wav="${item%${flac_extension}}_redoflacs_$$.wav"
+  # Generate the WAV file path to be created from the current FLAC file
+  if [[ "$temporary_wav_location_sub_dir" ]]; then
+    # Eg: /tmp/tmp_redoflacs_dir.1234.1 ->
+    #     /tmp/tmp_redoflacs_dir.1234.1/Albums/01.flac
+    item_wav="${temporary_wav_location_sub_dir%/}/$item"
+
+    # Ensure the relative path is created in the temporary directory
+    mkdir -p "${item_wav%/*}"
+
+    # Eg: /tmp/tmp_redoflacs_dir.1234.1/Albums/01.flac ->
+    #     /tmp/tmp_redoflacs_dir.1234.1/Albums/01_redoflacs_1234.wav
+    item_wav="${item_wav%.*}_redoflacs_$$.wav"
+  else
+    # Eg: /path/to/Albums/01.flac ->
+    #     /path/to/Albums/01_redoflacs_1234.wav
+    item_wav="${item%.*}_redoflacs_$$.wav"
+  fi
 
   _print_item 'Decoding'
 
@@ -1339,7 +1379,6 @@ _generate_spectrogram()
   fi
 
   printf >> "$issue_ticks" '.'  # Add one tick to total issues
-  rm "$item_wav"                # Remove temporary WAV file
 
   # Update operation title message with current number of issues
   _operation_title
@@ -1728,6 +1767,9 @@ _lac()
     fi
   done < <(LAC "$item_wav")
 
+  # Remove temporary WAV file
+  rm -f "${item_wav:-/dev/null/foo}"
+
   # Looks for the result from LAC
   [[ "$rest_of_output" =~ $regex ]]
 
@@ -1737,7 +1779,6 @@ _lac()
   # LAC reports a clean file, continue with next item
   if [[ "${lossless_check_results,,}" == 'clean' ]]; then
     _print_item_ok
-    rm "$item_wav"                # Remove temporary WAV file
     printf >&3 "$row\n"           # Send complete to _run_parallel()
     return
   fi
@@ -1751,10 +1792,11 @@ _lac()
     printf >> "$log_file" \
       '%s [%s] %s\n' "$item" 'LAC' "$lossless_check_results"
     printf >> "$issue_ticks" '.'  # Add one tick to total issues
-    printf >&3 "$row\n"           # Send complete to _run_parallel()
 
     # Update operation title message with current number of issues
     _operation_title
+    printf >&3 "$row\n"           # Send complete to _run_parallel()
+
     return
   fi
 
@@ -1887,18 +1929,25 @@ _aucdtect()
     printf >> "$log_file" \
       '%s [%s] %s\n' "$item" 'auCDtect' "${BASH_REMATCH[1]}"
     printf >> "$issue_ticks" '.'  # Add one tick to total issues
-    rm "$item_wav"                # Remove temporary WAV file
-    printf >&3 "$row\n"           # Send complete to _run_parallel()
+
+    # Remove temporary WAV file
+    rm -f "${item_wav:-/dev/null/foo}"
 
     # Update operation title message with current number of issues
     _operation_title
+    printf >&3 "$row\n"           # Send complete to _run_parallel()
+
     return
 
   # auCDtect reports CDDA of 100%, continue with next item
   elif [[ "$lossless_check_results" == *'CDDA'*'100%'* ]]; then
     _print_item_ok
-    rm "$item_wav"                # Remove temporary WAV file
+
+    # Remove temporary WAV file
+    rm -f "${item_wav:-/dev/null/foo}"
+
     printf >&3 "$row\n"           # Send complete to _run_parallel()
+
     return
   fi
 
@@ -1932,19 +1981,26 @@ _aucdtect()
     printf >> "$log_file" \
       '%s [%s] %s\n' "$item" 'auCDtect' "${BASH_REMATCH[1]}"
     printf >> "$issue_ticks" '.'  # Add one tick to total issues
-    rm "$item_wav"                # Remove temporary WAV file
-    printf >&3 "$row\n"           # Send complete to _run_parallel()
+
+    # Remove temporary WAV file
+    rm -f "${item_wav:-/dev/null/foo}"
 
     # Update operation title message with current number of issues
     _operation_title
+    printf >&3 "$row\n"           # Send complete to _run_parallel()
+
     return
   fi
 
   # auCDtect reports CDDA of 100%, continue with next item
   if [[ "$lossless_check_results" == *'CDDA'*'100%'* ]]; then
     _print_item_ok
-    rm "$item_wav"                # Remove temporary WAV file
+
+    # Remove temporary WAV file
+    rm -f "${item_wav:-/dev/null/foo}"
+
     printf >&3 "$row\n"           # Send complete to _run_parallel()
+
     return
   fi
 
@@ -1957,13 +2013,19 @@ _aucdtect()
     printf >> "$log_file" \
       '%s [%s] %s\n' "$item" 'auCDtect' "$lossless_check_results"
     printf >> "$issue_ticks" '.'  # Add one tick to total issues
-    rm "$item_wav"                # Remove temporary WAV file
-    printf >&3 "$row\n"           # Send complete to _run_parallel()
+
+    # Remove temporary WAV file
+    rm -f "${item_wav:-/dev/null/foo}"
 
     # Update operation title message with current number of issues
     _operation_title
+    printf >&3 "$row\n"           # Send complete to _run_parallel()
+
     return
   fi
+
+  # Remove temporary WAV file
+  rm -f "${item_wav:-/dev/null/foo}"
 
   # Generate a spectrogram of the current FLAC file and log the
   # results of the operation along with the spectrogram location
@@ -2275,7 +2337,7 @@ _extract_images()
     _print_item_fail
     printf >> "$log_file" '%s [ExtractArtwork] %s\n' "$item" "$error_msg"
     printf >> "$issue_ticks" '.'  # Add one tick to total issues
-    rm -f "$blocks"
+    rm -f "${blocks:-/dev/null/foo}"
     printf >&3 "$row\n"           # Send complete to _run_parallel()
 
     # Update operation title message with current number of issues
@@ -2286,7 +2348,7 @@ _extract_images()
   # Skip if there were no PICTURE blocks found in current FLAC
   if [[ ! -s "$blocks" ]]; then
     _print_item_skip
-    rm -f "$blocks"
+    rm -f "${blocks:-/dev/null/foo}"
     printf >&3 "$row\n"  # Send complete to _run_parallel()
     return
   fi
@@ -2330,7 +2392,7 @@ _extract_images()
       unset -v 'block_id' 'art_id' 'art_description' 'mime'
     fi
   done < "$blocks"
-  rm -f "$blocks"
+  rm -f "${blocks:-/dev/null/foo}"
 
   # Continue only if there was artwork to be extracted
   if [[ -z "${artwork[*]}" ]]; then
@@ -2472,6 +2534,15 @@ else
 fi
 
 #
+# Make sure a user-defined location for temporary WAV files is valid
+#
+if [[ -n "$temporary_wav_location" && ! -d "$temporary_wav_location" ]]; then
+  _error "${cyan}${temporary_wav_location}$reset doesn't exist!"
+  _error 'Please set a valid directory in the configuration file!'
+  exit 1
+fi
+
+#
 # Make sure a user-defined location for album artwork is valid
 #
 if [[ -n "$artwork_location" && ! -d "$artwork_location" ]]; then
@@ -2498,6 +2569,28 @@ log_file="${error_log}/redoflacs_$$.log"
 until [[ ! -f "$log_file" ]]; do
   log_file="${error_log}/redoflacs_$$.$(( ++item )).log"
 done
+
+#
+# Generate a unique temporary directory to house temporary WAV files if
+# a user specified a temporary directory
+#
+# Ensure we don't clobber the temporary directory, eg:
+#   /tmp/tmp_redoflacs_dir.1234.0 -> /tmp/tmp_redoflacs_dir.1234.1
+#
+# NOTE:
+#   This directory is only created if an operation will decode FLAC
+#   files to WAV files
+#
+if [[ "$temporary_wav_location" ]]; then
+  user_tmp_dir="tmp_redoflacs_dir.$$.0"
+  until [[ ! -d "${temporary_wav_location%/}/$user_tmp_dir" ]]; do
+    user_tmp_dir="${user_tmp_dir%.*}.$(( ${user_tmp_dir##*.} + 1 ))"
+  done
+
+  # Set the user temporary directory to a unique subdirectory to allow
+  # easy removal after script completion/termination
+  temporary_wav_location_sub_dir="${temporary_wav_location%/}/$user_tmp_dir"
+fi
 
 #
 # Process/validate script positional parameters. This function provides
@@ -2773,7 +2866,10 @@ for operation in "${operations[@]}"; do
 
   # Clear job manager file descriptor (tied to FIFO)
   exec 3<&- 3>&-       # Close file descriptor
-  rm -f "$job_fifo"    # Remove FIFO if it exists
+
+  # Remove FIFO if it exists
+  rm -f "${job_fifo:-/dev/null/foo}"
+
   mkfifo "$job_fifo"   # Create FIFO
   exec 3<>"$job_fifo"  # Open file descriptor read/write
 
