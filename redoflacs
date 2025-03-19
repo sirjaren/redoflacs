@@ -1322,7 +1322,7 @@ _decode_to_wav()
 #
 _generate_spectrogram()
 {
-  local output spectrogram
+  local output rest_of_output spectrogram
 
   # The parent function's name, eg: _aucdtect -> aucdtect
   local function_label="${FUNCNAME[1]#_}"
@@ -1361,26 +1361,32 @@ _generate_spectrogram()
   # Error messages:
   #   sox FAIL formats: can't open input file `file.wav': WAVE: RIF<...>
   #   sox FAIL formats: can't open input file `file.flacd': No such<...>
-  #
-  # NOTE:
-  #  The '-n1000' is to force 'read' to grab the SoX error if there are
-  #  any error messages, otherwise the percentage complete is read
-  while IFS=$'\n' read -rd '%' -n1000 output; do
-    # Strip from leading string until percentage complete
-    output="${output##*In:}"
+  while IFS=$'\n' read -rd ' ' output; do
+    if [[ "$output" != *'In:'[[:digit:]]*'%' ]]; then
+      rest_of_output+=" $output"  # Re-add spacing
+      continue
+    fi
 
-    # Strip floating point from output
-    printf "\033[${row}H${yellow}%4s${reset}" "${output%%.*}%"
+    # Strip from leading string
+    output="${output##*In:}"  # Strip leading string
+    output="${output%\%}"     # Strip trailing percentage
+    output="${output%%.*}"    # Strip floating point from output
+
+    # Re-add percentage when printing
+    printf "\033[${row}H${yellow}%4s$reset" "$output%"
   done < <(
     sox 2>&1 "$item" -S -n spectrogram -o "$spectrogram" -t "$item" \
       -c '' -p 1 -z 90 -Z 0 -q 249 -w Hann -x 1800 -y 513
   )
 
+  # Strip leading space from generated output
+  IFS=' ' read -r rest_of_output <<< "$rest_of_output"
+
   # Log failures if there are any errors from SoX
-  if [[ "$output" == 'sox FAIL'* ]]; then
+  if [[ "$rest_of_output" == 'sox FAIL'* ]]; then
     _print_item_fail
     printf >> "$log_file" \
-      '%s [%s] %s\n' "$item" "${function_label}:Spectrogram" "$output"
+      '%s [%s] %s\n' "$item" "${function_label}:Spectrogram" "$rest_of_output"
 
   # Log operation status as well as generated spectrogram location
   else
