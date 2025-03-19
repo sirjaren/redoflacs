@@ -508,6 +508,9 @@ _cleanup()
   rm -f "${directory:-/dev/null/foo}"/**/*_redoflacs_$$.wav
   rm -f "${directory:-/dev/null/foo}"/**/*.tmp,fl-ac+en\'c
 
+  # Remove temporary picture blocks (from artwork extraction)
+  rm -f /tmp/redoflacs_picture_blocks.[[:digit:]]*
+
   # Remove temporary job FIFO and temporary errors/issues file
   rm -f "${job_fifo:-/dev/null/foo}"
   rm -f "${issue_ticks:-/dev/null/foo}"
@@ -2344,8 +2347,8 @@ _extract_images()
 
   # Retrieve PICTURE blocks from current item, to a temporary file
   error_msg="$(
-    metaflac 2>&1 "${metaflac_extra_options[@]}" \
-      >"$blocks" --list --block-type=PICTURE "$item"
+    metaflac 2>&1 >"$blocks" "${metaflac_extra_options[@]}" \
+      --list --block-type=PICTURE "$item"
   )"
 
   # Log FLAC failure
