@@ -2544,6 +2544,18 @@ fi
 shopt -s globstar 2>/dev/null
 
 #
+# Process/validate script positional parameters. This function provides
+# variables which are used by later functions/operations (based on
+# whether certain operations are specified)
+#
+_process_arguments "$@"
+
+#
+# Check for missing programs required by this script
+#
+_check_missing_programs
+
+#
 # Redoflacs configuration file
 #
 config_file="${HOME}/.config/redoflacs/config"
@@ -2616,18 +2628,6 @@ if [[ "$temporary_wav_location" ]]; then
   # easy removal after script completion/termination
   temporary_wav_location_sub_dir="${temporary_wav_location%/}/$user_tmp_dir"
 fi
-
-#
-# Process/validate script positional parameters. This function provides
-# variables which are used by later functions/operations (based on
-# whether certain operations are specified)
-#
-_process_arguments "$@"
-
-#
-# Check for missing programs required by this script
-#
-_check_missing_programs
 
 ###############################  MAIN  #################################
 
