@@ -245,9 +245,11 @@ _runtime_banner()
     # Option value (shell variable value), with a default if empty
     value="${!field:-${magenta}<default>${reset}}"
 
-    # Replace $HOME with tilde
+    # Eg: $HOME -> ~/
     [[ "$value" == "$HOME" ]] && value='~/'
-    [[ "$value" == "$HOME"/* ]] && value="~/${value#$HOME}/"
+
+    # Eg: $HOME/user/dir -> ~/user/dir
+    [[ "$value" == "$HOME"/* ]] && value="~/${value#$HOME/}/"
 
     # Display centered configuration option and value
     printf "%${fields_center}s ${cyan}%s${reset}\n" "$field" "$value"
@@ -727,19 +729,19 @@ temporary_wav_location=''
 #
 # Set where created spectrogram images should be stored. By default, they are
 # stored in the same directory as the analyzed FLAC files. Each image will have
-# the same name as the tested FLAC file but with an integer suffix to allow for
-# uniqueness. The type of image created is PNG.
+# the same name as the tested FLAC file but with an integer-based suffix to
+# allow for uniqueness. The type of image created is PNG.
 #
 # All values for 'spectrogram_location' are interpreted as a directory. If left
 # blank, the default location will be used.
 #
 # An example of a user-defined location:
 #
-#    spectrogram_location="${HOME}/Spectrogram_Images"
+#    spectrogram_location="${HOME}/specs"
 #
 # Example spectrogram:
 #
-#    ${HOME}/Spectrogram_Images/file.flac.spec.png.0
+#    ${HOME}/specs/music/artist/album/file.flac.spec.png.0
 #
 spectrogram_location=''
 
@@ -754,10 +756,10 @@ spectrogram_location=''
 # exists, an integer is appended to the directory (to prevent overwriting and
 # mixing files). For example:
 #
-#    /path/to/01_file.flac          # FLAC file with embedded artwork
-#    /path/to/01_file.flac.art.0/   # Directory housing artwork
-#    /path/to/01_file.flac.art.1/   # Directory '1' if above directory exists
-#    /path/to/01_file.flac.art.2/   # Directory '2' if above directory exists
+#    /music/artist/album/file.flac          # FLAC file with embedded images
+#    /music/artist/album/file.flac.art.0/   # Directory housing artwork
+#    /music/artist/album/file.flac.art.1/   # '1' if above directory exists
+#    /music/artist/album/file.flac.art.2/   # '2' if above directory exists
 #
 # All values for 'artwork_location' are interpreted as a directory. If left
 # blank, the default location will be used.
@@ -766,10 +768,12 @@ spectrogram_location=''
 # subdirectory in that location with a naming scheme similar to above:
 #
 #    artwork_location="${HOME}/artwork"    # User-defined configuration option
+#    /music/artist/album/file.flac         # FLAC file with embedded artwork
 #
-#    /path/to/01_file.flac                 # FLAC file with embedded artwork
-#    ${HOME}/artwork/01_file.flac.art.0/   # Directory housing artwork
-#    ${HOME}/artwork/01_file.flac.art.1/   # If above directory exists
+#    # Directory housing artwork (incremented if already existing)
+#    ${HOME}/artwork/music/artist/album/file.flac.art.0/
+#    ${HOME}/artwork/music/artist/album/file.flac.art.1/
+#    ${HOME}/artwork/music/artist/album/file.flac.art.2/
 #
 artwork_location=''
 
@@ -1249,18 +1253,18 @@ _decode_to_wav()
   # Generate the WAV file path to be created from the current FLAC file
   if [[ "$temporary_wav_location_sub_dir" ]]; then
     # Eg: /tmp/tmp_redoflacs_dir.1234.1 ->
-    #     /tmp/tmp_redoflacs_dir.1234.1/Albums/01.flac
-    item_wav="${temporary_wav_location_sub_dir%/}/$item"
+    #     /tmp/tmp_redoflacs_dir.1234.1/music/artist/album/01.flac
+    item_wav="${temporary_wav_location_sub_dir%/}/${item#/}"
 
     # Ensure the relative path is created in the temporary directory
     mkdir -p "${item_wav%/*}"
 
-    # Eg: /tmp/tmp_redoflacs_dir.1234.1/Albums/01.flac ->
-    #     /tmp/tmp_redoflacs_dir.1234.1/Albums/01_redoflacs_1234.wav
+    # Eg: /tmp/tmp_redoflacs_dir.1234.1/music/artist/album/01.flac ->
+    #     /tmp/tmp_redoflacs_dir.1234.1/music/artist/album/01_redoflacs_1234.wav
     item_wav="${item_wav%.*}_redoflacs_$$.wav"
   else
-    # Eg: /path/to/Albums/01.flac ->
-    #     /path/to/Albums/01_redoflacs_1234.wav
+    # Eg: /music/artist/album/01.flac ->
+    #     /music/artist/album/01_redoflacs_1234.wav
     item_wav="${item%.*}_redoflacs_$$.wav"
   fi
 
@@ -1324,20 +1328,29 @@ _generate_spectrogram()
   local function_label="${FUNCNAME[1]#_}"
   function_label="${function_label^^}"  # aucdtect -> AUCDTECT
 
-  # Default location for spectrogram, eg:
-  #   /path/to/file.flac.spec.png.0
-  #
-  # User defined (eg: /tmp):
-  #   /user/configured/path/to/file.flac.spec.png.0
-  spectrogram="${spectrogram_location:-${item%/*}}/${item##*/}.spec.png.0"
+  # Determine where to put spectrograms by checking user config
+  if [[ "$spectrogram_location" ]]; then
+    # Eg: /media/specs -> /media/specs/artist/album/file.flac
+    spectrogram="${spectrogram_location%/}/${item#/}"
+
+    # Ensure the relative path is created in the spectrogram location
+    mkdir -p "${spectrogram%/*}"
+
+    # Eg: /media/specs/artist/album/file.flac ->
+    #     /media/specs/artist/album/file.flac.spec.png.0
+    spectrogram="${spectrogram}.spec.png.0"
+  else
+    # Eg: /music/artist/album/file.flac.spec.png.0
+    spectrogram="${item}.spec.png.0"
+  fi
 
   # User requested a spectrogram, SoX is run to generate a spectrogram
   # in the location as the current item or a user-defined location
   _print_item 'Spectrogram'
 
   # Ensure we don't clobber the spectrogram, eg:
-  #   /path/to/file.flac.spec.png.0 ->
-  #   /path/to/file.flac.spec.png.1
+  #   /music/artist/album/file.flac.spec.png.0 ->
+  #   /music/artist/album/file.flac.spec.png.1
   until [[ ! -f "$spectrogram" ]]; do
     spectrogram="${spectrogram%.*}.$(( ${spectrogram##*.} + 1 ))"
   done
@@ -2401,21 +2414,24 @@ _extract_images()
   fi
 
   # Determine where to put extracted artwork by checking user config
-  if [[ -n "$artwork_location" ]]; then
-    # /user/configured/path/to/artwork/file.flac.art.0
-    artwork_location="${artwork_location%/}/${item##*/}.art.0"
+  if [[ "$artwork_location" ]]; then
+    # Eg: /media/images -> /media/images/artist/album/file.flac
+    artwork_location="${artwork_location%/}/${item#/}"
+
+    # Ensure the relative path is created in the artwork location
+    mkdir -p "${artwork_location%/*}"
+
+    # Eg: /media/images/artist/album/file.flac ->
+    #     /media/images/artist/album/file.flac.art.0
+    artwork_location="${artwork_location}.art.0"
   else
-    # /path/to/file.flac.art.0
+    # Eg: /music/artist/album/file.flac.art.0
     artwork_location="${item}.art.0"
   fi
 
   # Ensure we don't clobber the artwork directory, eg:
-  #   /path/to/file.flac.art.0 -> /path/to/file.flac.art.1
-  #
-  # Or if the user configured an artwork directory from the
-  # configuration file:
-  #   /user/configured/path/to/artwork/file.flac.art.0 ->
-  #   /user/configured/path/to/artwork/file.flac.art.1
+  #   /music/artist/album/file.flac.art.0 ->
+  #   /music/artist/album/file.flac.art.1
   until [[ ! -d "$artwork_location" ]]; do
     artwork_location="${artwork_location%.*}.$((
       ${artwork_location##*.} + 1
@@ -2429,13 +2445,13 @@ _extract_images()
   # Which looks like:
   #   '4:3-Cover_front.jpg'
   for value in "${artwork[@]}"; do
-    # Eg: '/path/to/file.flac.art.0/3-Cover_front.jpg.0'
+    # Eg: '/music/artist/album/file.flac.art.0/3-Cover_front.jpg.0'
     img="${artwork_location}/${value#*:}.0"
     block_id="${value%%:*}"  # Eg: '4:3-Cover_front.jpg' -> '4'
 
     # Ensure we don't clobber the extracted image, eg:
-    #   /path/to/file.flac.art.0/3-Cover_front.jpg.0 ->
-    #   /path/to/file.flac.art.0/3-Cover_front.jpg.1
+    #   /music/artist/album/file.flac.art.0/3-Cover_front.jpg.0 ->
+    #   /music/artist/album/file.flac.art.0/3-Cover_front.jpg.1
     until [[ ! -f "$img" ]]; do
       img="${img%.*}.$(( ${img##*.} + 1 ))"
     done
@@ -2794,7 +2810,7 @@ popd >/dev/null || exit
 #
 # If there were no FLAC files found, the glob will exist as index 0, eg:
 #
-#   /path/to/files/**/*.[Ff][Ll][Aa][Cc]
+#   /music/artist/album/files/**/*.[Ff][Ll][Aa][Cc]
 #
 if [[ ! -f "${total_items[0]}" ]]; then
   found_flacs_msg='NOT FOUND'
