@@ -673,13 +673,40 @@ REPLAYGAIN_ALBUM_PEAK
 # OPTIONS
 #------------------------------------------------------------------------------
 #
-# REMOVE ARTWORK:
+# PRESERVE FILE MODIFICATION TIME:
 #
-# Set whether to remove embedded artwork within FLAC files. By default, this
-# script will remove any artwork it can find in the PICTURE block of a FLAC
-# file. Set 'remove_artwork' as 'true' to remove embedded artwork. All other
-# values are intepreted as 'false'.
-remove_artwork='true'
+# Changes whether both 'flac' and 'metaflac' programs ensure the updated files
+# have the same timestamps/permissions as the input files.
+#
+# For 'flac' usage, this is the default, but 'metaflac' does update timestamps
+# and permissions.
+#
+# This is enabled by setting 'preserve_modtime' option as 'true'. All other
+# values are interpreted as 'false'.
+#
+preserve_modtime='true'
+
+#
+# PREPEND TRACK NUMBER:
+#
+# Change whether the retag (-r) operation will re-tag singular track numbers
+# and track totals from:
+#    1, 2, 3, 4, 5, 6, 7, 8, 9
+# to
+#    01, 02, 03, 04, 05, 06, 07, 08, 09
+#
+# For example, if you had:
+#    TRACKNUMBER=4
+#     TRACKTOTAL=9
+#
+# You would end up with:
+#    TRACKNUMBER=04
+#     TRACKTOTAL=09
+#
+# This is enabled by setting 'prepend_zero' option as 'true'. All other values
+# are interpreted as 'false'.
+#
+prepend_zero='false'
 
 #
 # SET COMPRESSION:
@@ -687,14 +714,18 @@ remove_artwork='true'
 # Set the type of COMPRESSION strength when compressing the FLAC files. Numbers
 # range from '1-8', with '1' being the lowest compression and '8' being the
 # highest compression. The default is '8'.
+#
 compression_level='8'
 
 #
-# ERROR LOG DIRECTORY:
+# REMOVE ARTWORK:
 #
-# Set where you want error logs to be placed. By default, they are stored in
-# the user's HOME directory.
-error_log="$HOME"
+# Set whether to remove embedded artwork within FLAC files. By default, this
+# script will remove any artwork it can find in the PICTURE block of a FLAC
+# file. Set 'remove_artwork' as 'true' to remove embedded artwork. All other
+# values are intepreted as 'false'.
+#
+remove_artwork='true'
 
 #
 # AUCDTECT/LAC SKIP LOSSY:
@@ -703,7 +734,19 @@ error_log="$HOME"
 # as 'Lossy' when analyzed with auCDtect or LAC. Set 'skip_lossy' as 'true' to
 # skip FLAC files that have the tag: 'MASTERING=Lossy'. All other values are
 # intepreted as 'false'.
+#
 skip_lossy='true'
+
+#
+# ERROR LOG DIRECTORY:
+#
+# Set where you want error logs to be placed. By default, they are stored in
+# the user's HOME directory.
+#
+# All values for 'error_log' are interpreted as a directory. If left blank, the
+# default location will be used.
+#
+error_log=''
 
 #
 # WAV FILE DIRECTORY
@@ -779,41 +822,6 @@ spectrogram_location=''
 #    ${HOME}/artwork/music/artist/album/file.flac.art.2/
 #
 artwork_location=''
-
-#
-# PREPEND TRACK NUMBER:
-#
-# Change whether the '-r, --retag' operation will re-tag singular track numbers
-# and track totals from:
-#    1, 2, 3, 4, 5, 6, 7, 8, 9
-# to
-#    01, 02, 03, 04, 05, 06, 07, 08, 09
-#
-# For example, if you had:
-#    TRACKNUMBER=4
-#     TRACKTOTAL=9
-#
-# You would end up with:
-#    TRACKNUMBER=04
-#     TRACKTOTAL=09
-#
-# This is enabled by setting 'prepend_zero' option as 'true'. All other values
-# are interpreted as 'false'.
-prepend_zero='false'
-
-#
-# PRESERVE FILE MODIFICATION TIME:
-#
-# Changes whether both 'flac' and 'metaflac' programs ensure the updated files
-# have the same timestamps/permissions as the input files.
-#
-# For 'flac' usage, this is the default, but 'metaflac' does update timestamps
-# and permissions.
-#
-# This is enabled by setting 'preserve_modtime' option as 'true'. All other
-# values are interpreted as 'false'.
-#
-preserve_modtime='true'
 END_OF_CONFIG
 
   # Indicate if there was an existing configuration file
@@ -2544,18 +2552,6 @@ fi
 shopt -s globstar 2>/dev/null
 
 #
-# Process/validate script positional parameters. This function provides
-# variables which are used by later functions/operations (based on
-# whether certain operations are specified)
-#
-_process_arguments "$@"
-
-#
-# Check for missing programs required by this script
-#
-_check_missing_programs
-
-#
 # Redoflacs configuration file
 #
 config_file="${HOME}/.config/redoflacs/config"
@@ -2571,40 +2567,61 @@ else
 fi
 
 #
-# Make sure a user-defined location for temporary WAV files is valid
+# Process/validate script positional parameters. This function provides
+# variables which are used by later functions/operations (based on
+# whether certain operations are specified)
 #
-if [[ -n "$temporary_wav_location" && ! -d "$temporary_wav_location" ]]; then
-  _error "${cyan}${temporary_wav_location}$reset doesn't exist!"
-  _error 'Please set a valid directory in the configuration file!'
-  exit 1
-fi
+_process_arguments "$@"
 
 #
-# Make sure a user-defined location for album artwork is valid
+# Check for missing programs required by this script
 #
-if [[ -n "$artwork_location" && ! -d "$artwork_location" ]]; then
-  _error "${cyan}${artwork_location%/}$reset does not exist!"
-  _error 'Please use a valid directory in the configuration file!'
-  exit 1
-fi
+_check_missing_programs
 
 #
-# Make sure a user-defined location for spectrograms is valid
+# Manage any user-defined directories from the configuration checking
+# for directory existence and if writable
 #
-if [[ -n "$spectrogram_location" && ! -d "$spectrogram_location" ]]; then
-  _error "${cyan}${spectrogram_location}$reset doesn't exist!"
-  _error 'Please set a valid directory in the configuration file!'
-  exit 1
-fi
+# NOTE:
+#   Configuration keys are passed in by name, allowing reference to
+#   derive the key name and indirection for the key value
+#
+for dir in \
+  error_log \
+  temporary_wav_location \
+  artwork_location \
+  spectrogram_location
+do
+  # Skip any default (empty) configuration values
+  [[ "${!dir}" ]] || continue
+
+  # Check for existence
+  if [[ ! -d "${!dir}" ]]; then
+    _error "${cyan}${!dir}$reset does NOT exist!"
+    _error
+
+  # Check for writable
+  elif [[ ! -w "${!dir}" ]]; then
+    _error "${cyan}${!dir}$reset is NOT writable!"
+    _error
+  fi
+
+  if [[ ! -d "${!dir}" || ! -w "${!dir}" ]]; then
+    _error "Ensure a valid value for ${cyan}${dir}$reset is used"
+    _error 'in the following configuration file:'
+    _error "  ${cyan}${config_file}$reset"
+    exit 1
+  fi
+done
 
 #
 # Generate log file location
 #
 # Ensure we don't overwrite an existing log file
 item=0
-log_file="${error_log}/redoflacs_$$.log"
+log_file="${error_log:-${HOME}}/redoflacs_$$.log"
 until [[ ! -f "$log_file" ]]; do
-  log_file="${error_log}/redoflacs_$$.$(( ++item )).log"
+  log_file="${error_log:-${HOME}}/redoflacs_$$.$(( ++item )).log"
 done
 
 #
