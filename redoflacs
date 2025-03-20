@@ -142,15 +142,15 @@ _display_issues_exist()
 #   --------------------------------------------------------------------
 #                 Configuration Options (<config_path>)
 #   --------------------------------------------------------------------
-#                      remove_artwork true
+#                    preserve_modtime true
+#                        prepend_zero true
 #                   compression_level 8
-#                           error_log ~/
+#                      remove_artwork true
 #                          skip_lossy true
+#                           error_log <default>
 #              temporary_wav_location <default>
 #                spectrogram_location <default>
 #                    artwork_location <default>
-#                        prepend_zero true
-#                    preserve_modtime true
 #   --------------------------------------------------------------------
 #
 # Where the width of the banner is dynamically sized to the width of the
