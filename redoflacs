@@ -852,7 +852,8 @@ END_OF_CONFIG
 #
 _parse_config()
 {
-  local line
+
+  local line option value
 
   # Used in 'flac' and 'metaflac' invocations
   local -ga flac_extra_options metaflac_extra_options
@@ -869,24 +870,64 @@ _parse_config()
   # Matches on configuration options (shell variables)
   local regex_options='^([^[:space:]]+=.*)$'
 
+  # Unnecessary, as these variables are dynamically exported from the
+  # config but are defined to silence shellcheck of unused variables
+  local -g \
+    preserve_modtime \
+    prepend_zero \
+    compression_level \
+    remove_artwork \
+    skip_lossy \
+    error_log \
+    temporary_wav_location \
+    spectrogram_location \
+    artwork_location
+
+  # Key/value associative array used to only evaluate valid options
+  local -A valid_config_options
+  valid_config_options=(
+    [preserve_modtime]='true'
+    [prepend_zero]='true'
+    [compression_level]='true'
+    [remove_artwork]='true'
+    [skip_lossy]='true'
+    [error_log]='true'
+    [temporary_wav_location]='true'
+    [spectrogram_location]='true'
+    [artwork_location]='true'
+  )
+
   # Process the configuration file, storing all user-defined tags and
   # evaluate each configuration option
   while IFS=$'\n' read -r line; do
     # Skip empty lines, comment lines and lines with whitespace
     [[ "$line" =~ $regex_skip ]] && continue
 
-    # Configuration option (shell variable)
-    if [[ "$line" =~ $regex_options ]]; then
-      # Source the shell variable (with interpolation)
-      . <(printf '%s\n' "$line")
+    # Skip if option is not part of the valid options
+    [[ ! "${valid_config_options["${line%%=*}"]}" ]] && continue
 
-      # Store configuration option
-      config_options+=( "$line" )
+    # Non-option (shell variables) are treated as user-defined FLAC tags
+    if [[ ! "$line" =~ $regex_options ]]; then
+      # FLAC tags stored into a global array
+      tags_to_keep+=( "${line^^}" )
       continue
     fi
 
-    # User-defined FLAC tags in configuration stored into a global array
-    tags_to_keep+=( "${line^^}" )
+    # Store configuration option key/value
+    config_options+=( "$line" )
+
+    # Break up line into shell variable and value
+    IFS='=' read -r option value <<< "$line"
+
+    # Remove leading/trailing whitespace from value (if any)
+    IFS=$' \t\n' read -r value <<< "$value"
+
+    # Remove single/double quotes from value (if any)
+    value="${value#[\'\"]}"
+    value="${value%[\'\"]}"
+
+    # Evaluate configuration option and value into environment
+    export "$option"="$value"
   done < "$config_file"
 
   # Handle timestamp preseveration for both 'flac' and 'metaflac'
