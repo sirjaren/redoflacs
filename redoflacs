@@ -1439,7 +1439,7 @@ _replaygain()
   #   All errors are ignored here as they will be caught during
   #   application ReplayGain tags
   if [[ ! "$force_replaygain" ]]; then
-    files=( "$item"/*$flac_extension )  # Used for number of files
+    files=( "$item"/*.flac )  # Used for number of files
 
     # Obtain ReplayGain tags from all files in the current directory
     mapfile -n0 -t replaygain_tags < <(
@@ -1493,7 +1493,7 @@ _replaygain()
     fi
   done < <(
     metaflac 2>&1 "${metaflac_extra_options[@]}" \
-      --add-replay-gain "$item"/*$flac_extension
+      --add-replay-gain "$item"/*.flac
   )
 
   # Log failures if there are any errors
@@ -2536,7 +2536,6 @@ magenta=$'\033[35m'
 cyan=$'\033[36m'
 
 script_version='1.0.0'              # Redoflacs version
-flac_extension='.[Ff][Ll][Aa][Cc]'  # FLAC extension (case-insensitive)
 
 #
 # Make sure we are running BASH 4 or greater
@@ -2550,6 +2549,9 @@ fi
 
 # BASH 4: Used to recursively find (glob) FLAC files (eg, /**/*.flac)
 shopt -s globstar 2>/dev/null
+
+# BASH 2: Make all globbing case-insensitive
+shopt -s nocaseglob 2>/dev/null
 
 #
 # Redoflacs configuration file
@@ -2830,7 +2832,7 @@ _runtime_banner
 #
 _info 'Looking for FLAC files to process...'
 pushd "$directory" >/dev/null || exit
-total_items=( "${PWD}"/**/*${flac_extension} )
+total_items=( "${PWD}"/**/*.flac )
 popd >/dev/null || exit
 
 #
