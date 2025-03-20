@@ -852,7 +852,6 @@ END_OF_CONFIG
 #
 _parse_config()
 {
-
   local line option value
 
   # Used in 'flac' and 'metaflac' invocations
@@ -1295,6 +1294,10 @@ _decode_to_wav()
 {
   local output previous error_msg
 
+  # Basename of FLAC, splitting on whitespace since the 'read' below
+  # splits on whitespace (to get percentage token, error messages, etc)
+  local base="${item##*[ /]}"
+
   # The parent function's name, eg: _lac -> lac
   local function_label="${FUNCNAME[1]#_}"
   function_label="${function_label^^}"  # lac -> LAC
@@ -1562,6 +1565,10 @@ _replaygain()
 _compress()
 {
   local file_compression output previous error_msg warning_msg
+
+  # Basename of FLAC, splitting on whitespace since the 'read' below
+  # splits on whitespace (to get percentage token, error messages, etc)
+  local base="${item##*[ /]}"
 
   _print_item 'Compressing'
 
