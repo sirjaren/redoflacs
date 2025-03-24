@@ -905,15 +905,15 @@ _parse_config()
     # Skip empty lines, comment lines and lines with whitespace
     [[ "$line" =~ $regex_skip ]] && continue
 
-    # Skip if option is not part of the valid options
-    [[ ! "${valid_config_options["${line%%=*}"]}" ]] && continue
-
     # Non-option (shell variables) are treated as user-defined FLAC tags
     if [[ ! "$line" =~ $regex_options ]]; then
       # FLAC tags stored into a global array
       tags_to_keep+=( "${line^^}" )
       continue
     fi
+
+    # Skip if option is not part of the valid options
+    [[ ! "${valid_config_options["${line%%=*}"]}" ]] && continue
 
     # Store configuration option key/value
     config_options+=( "$line" )
