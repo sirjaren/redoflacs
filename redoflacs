@@ -455,6 +455,7 @@ _cleanup()
   # Abnormal termination will terminate running jobs and remove
   # temporary files
   if [[ "$signal_received" != 'EXIT' ]]; then
+    _operation_title
     _kill_jobs "$(jobs -rp)"
 
     # Clear all the operation lines by moving up each line and clearing
@@ -463,9 +464,20 @@ _cleanup()
       printf "\033[$(( post_row - i ))H\033[0K"
     done
 
-    # Display title message of operation
-    _operation_title
+    # Remove temporary WAV and FLAC files
+    rm -rf "${temporary_wav_location_sub_dir:-/dev/null/foo}"
+    rm -f "${directory:-/dev/null/foo}"/**/*_redoflacs_$$.wav
+    rm -f "${directory:-/dev/null/foo}"/**/*.tmp,fl-ac+en\'c
 
+    # Remove temporary picture blocks (from artwork extraction)
+    rm -f /tmp/redoflacs_picture_blocks.[[:digit:]]*
+
+    # Define standard exit codes based on signal received
+    [[ "$signal_received" == 'SIGINT' ]] && exit_code=130
+    [[ "$signal_received" == 'SIGTERM' ]] && exit_code=143
+  fi
+
+  if [[ "$signal_received" == 'EXIT' ]]; then
     # Loop through all operations and display only the operations which
     # have not run
     for op in "${operations[@]}"; do
@@ -493,14 +505,6 @@ _cleanup()
       # Display generated operation title message
       printf "$fmt" "${operation_title[$op]}"
     done
-
-    # Remove temporary WAV and FLAC files
-    rm -rf "${temporary_wav_location_sub_dir:-/dev/null/foo}"
-    rm -f "${directory:-/dev/null/foo}"/**/*_redoflacs_$$.wav
-    rm -f "${directory:-/dev/null/foo}"/**/*.tmp,fl-ac+en\'c
-
-    # Remove temporary picture blocks (from artwork extraction)
-    rm -f /tmp/redoflacs_picture_blocks.[[:digit:]]*
   fi
 
   # Normal script termination checks for any logs and performs cleanup
@@ -509,24 +513,16 @@ _cleanup()
     # Ensure user is notified of a log file on script interruption/exit
     [[ -f "$log_file" ]] && _display_issues_exist
 
-    # Display extra newline if interruption during countdown
-    [[ "${FUNCNAME[1]}" == '_countdown_metadata' ]] && printf '\n'
-
     # Remove temporary job FIFO and temporary errors/issues file
     rm -f "${job_fifo:-/dev/null/foo}"
     rm -f "${issue_ticks:-/dev/null/foo}"
 
     # Restore terminal cursor
     printf '\033[?25h'
+
+    # Issues found without an abnormal signal
+    (( exit_code == 0 && issues > 0 )) && exit_code=1
   fi
-
-  # Return standard exit codes based on signal received or issues found
-  [[ "$signal_received" == 'SIGINT' ]] && exit 130
-  [[ "$signal_received" == 'SIGTERM' ]] && exit 143
-  (( issues > 0 )) && exit 1
-
-  # Completed without issue
-  exit 0
 }
 
 #
@@ -2739,10 +2735,14 @@ fi
 export LANG=C
 export LC_ALL=C
 
+# Used in _cleanup() (via trap) to determine if an abnormal signal
+# caught or there generalized (logged) failures caught by the script
+exit_code=0
+
 # Manage cleanup on interruption and script exit
-trap '_cleanup SIGINT' SIGINT
-trap '_cleanup SIGTERM' SIGTERM
-trap '_cleanup EXIT' EXIT
+trap '_cleanup SIGINT; exit $exit_code' SIGINT
+trap '_cleanup SIGTERM; exit $exit_code' SIGTERM
+trap '_cleanup EXIT; exit $exit_code' EXIT
 
 # Hide cursor
 printf '\033[?25l'
