@@ -2788,6 +2788,10 @@ if (( flac_major > 1 || flac_minor >= 5 )); then
   # FLAC version does support multithreaded encoding
   multithreaded_flac='true'
 
+  # Compression jobs default to global jobs if global jobs is specified
+  # but no compression jobs were specified
+  [[ "$global_jobs" && ! "$compress_jobs" ]] && compress_jobs="$global_jobs"
+
   # Default to number of cores for all other jobs (2, if cores is
   # undetermined)
   global_jobs="${global_jobs:-$cores}"
