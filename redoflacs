@@ -623,10 +623,6 @@ _create_config()
 # Any line that is _NOT_ prepended with a '#' will be interpreted as an option
 # (except for blank lines -- these are not interpreted)
 #
-# NOTE:
-#   The options listed below are shell syntax. Interpolation can occur
-#   should weak (double) quotes be used.
-#
 #------------------------------------------------------------------------------
 # TAGGING SECTION
 #------------------------------------------------------------------------------
@@ -676,6 +672,20 @@ REPLAYGAIN_ALBUM_PEAK
 
 #------------------------------------------------------------------------------
 # OPTIONS
+#------------------------------------------------------------------------------
+#
+# The options listed below are shell syntax with slight changes to how quoting
+# is expected to work. All possible variables used within either single or
+# double quotes will undergo evaluation/interpolation.
+#
+# Using each of the following examples:
+#
+#   error_log='$HOME/logs'
+#   error_log="$HOME/logs"
+#
+# $HOME is evaluated and expanded, even though the single quotes version would
+# normally prevent evaluation.
+#
 #------------------------------------------------------------------------------
 #
 # PRESERVE FILE MODIFICATION TIME:
