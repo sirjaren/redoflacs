@@ -853,11 +853,14 @@ END_OF_CONFIG
 }
 
 #
-# Parse the user/system configuration file
+# Parse the configuration file
 #
 _parse_config()
 {
-  local line option value
+  local line option value valid_option
+
+  # Used to check for missing, but required, configuration options
+  local -a missing_options
 
   # Used in 'flac' and 'metaflac' invocations
   local -ga flac_extra_options metaflac_extra_options
@@ -890,7 +893,7 @@ _parse_config()
     spectrogram_location \
     artwork_location
 
-  # Key/value associative array used to only evaluate valid options
+  # Key/value associative array used to evaluate valid/missing options
   local -A valid_config_options
   valid_config_options=(
     [preserve_modtime]='true'
@@ -942,6 +945,28 @@ _parse_config()
     # Evaluate configuration option and value into environment
     export "$option"="$value"
   done < "$config_file"
+
+  # Look for any missing options in the user's configuration file and
+  # notify the user
+  for valid_option in "${!valid_config_options[@]}"; do
+    if [[ " ${config_options[*]%%=*} " != *" $valid_option "* ]]; then
+      missing_options+=( "$valid_option" )
+    fi
+  done
+
+  # Exit if there were any missing options from the configuration file
+  if [[ "${missing_options[*]}" ]]; then
+    _error 'The following required options are missing:'
+    for option in "${missing_options[@]}"; do
+      _error "  ${cyan}${option}$reset"
+    done
+
+    _error
+
+    _error 'Recreate a configuration file (non-destructive) via:'
+    _error "  ${cyan}redoflacs -o $reset"
+    exit 1
+  fi
 
   # Handle timestamp preseveration for both 'flac' and 'metaflac'
   if [[ "${preserve_modtime,,}" == 'true' ]]; then
