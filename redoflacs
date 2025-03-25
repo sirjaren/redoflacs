@@ -44,9 +44,9 @@
 # Creates a messsage like (with a yellow asterisk):
 #    * This is obsolete
 #
-_info() { printf     " $green*$reset $@\n";  }  # Green
-_warn() { printf >&2 " $yellow*$reset $@\n"; }  # Yellow
-_error(){ printf >&2 " $red*$reset $@\n";    }  # Red
+_info() { printf     ' %s %b\n' "$green*$reset" "$@";  }  # Green
+_warn() { printf >&2 ' %s %b\n' "$yellow*$reset" "$@"; }  # Yellow
+_error(){ printf >&2 ' %s %b\n' "$red*$reset" "$@";    }  # Red
 
 #
 # Display help
@@ -166,7 +166,7 @@ _runtime_banner()
 
   # Replace $HOME with tilde
   local config_file_title="$config_file"
-  config_file_title="~${config_file_title#$HOME}"
+  config_file_title="~${config_file_title#"$HOME"}"
 
   # Dynamically center banner config title
   local config_title="Configuration Options ($config_file_title)"
@@ -246,10 +246,12 @@ _runtime_banner()
     value="${!field:-${magenta}<default>${reset}}"
 
     # Eg: $HOME -> ~/
+    # shellcheck disable=SC2088
     [[ "$value" == "$HOME" ]] && value='~/'
 
     # Eg: $HOME/user/dir -> ~/user/dir
-    [[ "$value" == "$HOME"/* ]] && value="~/${value#$HOME/}/"
+    # shellcheck disable=SC2088
+    [[ "$value" == "$HOME"/* ]] && value="~/${value#"$HOME"/}/"
 
     # Display centered configuration option and value
     printf "%${fields_center}s ${cyan}%s${reset}\n" "$field" "$value"
@@ -288,7 +290,10 @@ _runtime_banner()
 _operation_title()
 {
   local fmt status_banner issues_banner right_align
-  local -i issues="$(_num_issues)"  # Total number of issues found
+
+  # Total number of issues found
+  local -i issues
+  issues="$(_num_issues)"
 
   # Ensure we do not run if running from a countdown or before an
   # operation begins (only if SIGINT was sent during these times)
@@ -342,6 +347,7 @@ _operation_title()
   fmt+="${red}${issues_banner}$reset\n"     # Issues banner
 
   # Display generated operation title message
+  # shellcheck disable=SC2059
   printf "$fmt" "${operation_title[$operation]}"
 }
 
@@ -420,6 +426,7 @@ _print_item()
   [[ "$LINE_WRAPPING" ]] && fmt+=$'\033[?7h'
 
   # Displays formatted, currently processed item
+  # shellcheck disable=SC2059
   printf "$fmt" "$basename" "$label" "${num}/${#total_items[@]}"
 }
 
@@ -427,11 +434,11 @@ _print_item()
 # These functions are used after '_print_item()' to update/indicate the
 # status of a given item in an operation
 #
-_print_item_ok()   { printf "\033[${row}H${green}100%%$reset"; }
-_print_item_fail() { printf "\033[${row}H${red}fail$reset";    }
-_print_item_check(){ printf "\033[${row}H${yellow}chck$reset"; }
-_print_item_half() { printf "\033[${row}H$yellow 50%%$reset";  }
-_print_item_skip() { printf "\033[${row}H${cyan}skip$reset";   }
+_print_item_ok()   { printf '%b' "\033[${row}H${green}100%$reset";  }
+_print_item_fail() { printf '%b' "\033[${row}H${red}fail$reset";    }
+_print_item_check(){ printf '%b' "\033[${row}H${yellow}chck$reset"; }
+_print_item_half() { printf '%b' "\033[${row}H$yellow 50%$reset";   }
+_print_item_skip() { printf '%b' "\033[${row}H${cyan}skip$reset";   }
 
 #
 # Manage termination and cleanup of this script
@@ -446,7 +453,9 @@ _cleanup()
 {
   local i fmt op match status_banner right_align
 
-  local -i issues="$(_num_issues)"    # Total number of issues found
+  # Total number of issues found
+  local -i issues
+  issues="$(_num_issues)"
 
   # If this global variable is non-zero, a trap caught an abnormal
   # signal and redefined it to an exit code value matching the signal
@@ -458,7 +467,7 @@ _cleanup()
     # Clear all the operation lines by moving up each line and clearing
     # it until we are just below the operation's title message
     for (( i=1; i<=items_processed; i++ )); do
-      printf "\033[$(( post_row - i ))H\033[0K"
+      printf '%b' "\033[$(( post_row - i ))H\033[0K"
     done
 
     # Remove temporary WAV and FLAC files
@@ -497,6 +506,7 @@ _cleanup()
     fmt+="${magenta}${status_banner}$reset\n"
 
     # Display generated operation title message
+    # shellcheck disable=SC2059
     printf "$fmt" "${operation_title[$op]}"
   done
 
@@ -569,7 +579,7 @@ _col()
 #
 _scroll_terminal()
 {
-  local -i row to_scroll
+  local -i row to_scroll fmt
 
   # Obtain current row position
   row="$(_row)"
@@ -582,8 +592,11 @@ _scroll_terminal()
 
   # Only scroll if there are more items to display than lines available
   if (( --to_scroll > (lines - row) )); then
-    printf "\033[$(( to_scroll - (lines - row) ))S"  # Scroll terminal
-    printf "\033[$(( lines - to_scroll ))H"          # Cursor to start
+    # Scroll terminal the required number of lines
+    printf '%b' "\033[$(( to_scroll - (lines - row) ))S"
+
+    # Place cursor back to where it was in relation to current output
+    printf '%b' "\033[$(( lines - to_scroll ))H"
   fi
 }
 
@@ -970,12 +983,12 @@ _countdown_metadata()
   _warn "Waiting ${red}20${reset} seconds before starting program..."
   _warn 'Ctrl+C (Control-C) to abort...\n'
 
-  printf " ${green}*${reset} Starting in: "
+  printf '%b' " ${green}*${reset} Starting in: "
 
   # 10 second countdown
   for count in {20..1}; do
     printf "${red}%d ${reset}" "$count"
-    read -t1  # Sleep 1
+    read -rt1  # Sleep 1
   done
   printf '\n'
 }
@@ -1275,6 +1288,8 @@ _check_missing_programs()
     done
 
     _error
+
+    # shellcheck disable=SC2016
     _error 'Ensure these programs are installed and available in $PATH'
     exit 1
   fi
@@ -1391,7 +1406,7 @@ _decode_to_wav()
 
     printf >> "$log_file" '%s [%s] %s\n' "$item" "$function_label" "$error_msg"
     printf >> "$issue_ticks" '.'  # Add one tick to total issues
-    printf >&3 "$row\n"           # Send complete to _run_parallel()
+    printf >&3 '%d\n' "$row"      # Send complete to _run_parallel()
 
     # Update operation title message with current number of issues
     _operation_title
@@ -1488,7 +1503,7 @@ _generate_spectrogram()
   # Update operation title message with current number of issues
   _operation_title
 
-  printf >&3 "$row\n"           # Send complete to _run_parallel()
+  printf >&3 '%d\n' "$row"      # Send complete to _run_parallel()
 }
 
 #
@@ -1534,7 +1549,7 @@ _replaygain()
     # multiplied by 5 (the number of ReplayGain tags added to each file)
     if (( ${#replaygain_tags[@]} == ${#files[@]} * 5 )); then
       _print_item_skip
-      printf >&3 "$row\n"  # Send complete to _run_parallel()
+      printf >&3 '%d\n' "$row"      # Send complete to _run_parallel()
       return
     fi
   fi
@@ -1584,7 +1599,7 @@ _replaygain()
   fi
 
   # Send complete to _run_parallel()
-  printf >&3 "$row\n"
+  printf >&3 '%d\n' "$row"
 }
 
 #
@@ -1624,7 +1639,7 @@ _compress()
       && (( ${file_compression##*=} == compression_level ))
     then
       _print_item_skip
-      printf >&3 "$row\n"  # Send complete to _run_parallel()
+      printf >&3 '%d\n' "$row"  # Send complete to _run_parallel()
       return
     fi
   fi
@@ -1693,7 +1708,7 @@ _compress()
     printf >> "$issue_ticks" '.'        # Add one tick to total issues
 
     # Send complete to _run_parallel()
-    printf >&3 "$row\n"
+    printf >&3 '%d\n' "$row"
 
     # Update operation title message with current number of issues
     _operation_title
@@ -1714,7 +1729,7 @@ _compress()
   _print_item_ok
 
   # Send complete to _run_parallel()
-  printf >&3 "$row\n"
+  printf >&3 '%d\n' "$row"
 }
 
 #
@@ -1770,7 +1785,7 @@ _test()
   fi
 
   # Send complete to _run_parallel()
-  printf >&3 "$row\n"
+  printf >&3 '%d\n' "$row"
 }
 
 #
@@ -1841,7 +1856,7 @@ _lac()
   # configuration option is 'true'
   if [[ "$mastering" == 'Lossy' && "$skip_lossy" == 'true' ]]; then
     _print_item_skip
-    printf >&3 "$row\n"  # Send complete to _run_parallel()
+    printf >&3 '%d\n' "$row"  # Send complete to _run_parallel()
     return
   fi
 
@@ -1888,7 +1903,7 @@ _lac()
   # LAC reports a clean file, continue with next item
   if [[ "${lossless_check_results,,}" == 'clean' ]]; then
     _print_item_ok
-    printf >&3 "$row\n"           # Send complete to _run_parallel()
+    printf >&3 '%d\n' "$row"  # Send complete to _run_parallel()
     return
   fi
 
@@ -1904,7 +1919,7 @@ _lac()
 
     # Update operation title message with current number of issues
     _operation_title
-    printf >&3 "$row\n"           # Send complete to _run_parallel()
+    printf >&3 '%d\n' "$row"  # Send complete to _run_parallel()
 
     return
   fi
@@ -1987,7 +2002,7 @@ _aucdtect()
   #   not be obtained. Errors will be caught during decoding
   if (( ${bits_mastering[0]:-0} > 16 )); then
     _print_item_skip
-    printf >&3 "$row\n"  # Send complete to _run_parallel()
+    printf >&3 '%d\n' "$row"  # Send complete to _run_parallel()
     return
   fi
 
@@ -1998,7 +2013,7 @@ _aucdtect()
     && "$skip_lossy" == 'true'
   ]]; then
     _print_item_skip
-    printf >&3 "$row\n"  # Send complete to _run_parallel()
+    printf >&3 '%d\n' "$row"  # Send complete to _run_parallel()
     return
   fi
 
@@ -2044,7 +2059,7 @@ _aucdtect()
 
     # Update operation title message with current number of issues
     _operation_title
-    printf >&3 "$row\n"           # Send complete to _run_parallel()
+    printf >&3 '%d\n' "$row"  # Send complete to _run_parallel()
 
     return
 
@@ -2055,7 +2070,8 @@ _aucdtect()
     # Remove temporary WAV file
     rm -f "${item_wav:-/dev/null/foo}"
 
-    printf >&3 "$row\n"           # Send complete to _run_parallel()
+    # Send complete to _run_parallel()
+    printf >&3 '%d\n' "$row"
 
     return
   fi
@@ -2096,7 +2112,7 @@ _aucdtect()
 
     # Update operation title message with current number of issues
     _operation_title
-    printf >&3 "$row\n"           # Send complete to _run_parallel()
+    printf >&3 '%d\n' "$row"  # Send complete to _run_parallel()
 
     return
   fi
@@ -2108,7 +2124,8 @@ _aucdtect()
     # Remove temporary WAV file
     rm -f "${item_wav:-/dev/null/foo}"
 
-    printf >&3 "$row\n"           # Send complete to _run_parallel()
+    # Send complete to _run_parallel()
+    printf >&3 '%d\n' "$row"
 
     return
   fi
@@ -2128,7 +2145,7 @@ _aucdtect()
 
     # Update operation title message with current number of issues
     _operation_title
-    printf >&3 "$row\n"           # Send complete to _run_parallel()
+    printf >&3 '%d\n' "$row"  # Send complete to _run_parallel()
 
     return
   fi
@@ -2188,7 +2205,7 @@ _md5check()
   fi
 
   # Send complete to _run_parallel()
-  printf >&3 "$row\n"
+  printf >&3 '%d\n' "$row"
 }
 
 #
@@ -2240,7 +2257,7 @@ _retag()
     printf >> "$issue_ticks" '.'  # Add one tick to total issues
 
     # Send complete to _run_parallel()
-    printf >&3 "$row\n"
+    printf >&3 '%d\n' "$row"
 
     # Update operation title message with current number of issues
     _operation_title
@@ -2412,7 +2429,7 @@ _retag()
   fi
 
   # Send complete to _run_parallel()
-  printf >&3  "$row\n"
+  printf >&3 '%d\n' "$row"
 }
 
 #
@@ -2447,7 +2464,7 @@ _extract_images()
     printf >> "$log_file" '%s [ExtractArtwork] %s\n' "$item" "$error_msg"
     printf >> "$issue_ticks" '.'  # Add one tick to total issues
     rm -f "${blocks:-/dev/null/foo}"
-    printf >&3 "$row\n"           # Send complete to _run_parallel()
+    printf >&3 '%d\n' "$row"  # Send complete to _run_parallel()
 
     # Update operation title message with current number of issues
     _operation_title
@@ -2458,7 +2475,7 @@ _extract_images()
   if [[ ! -s "$blocks" ]]; then
     _print_item_skip
     rm -f "${blocks:-/dev/null/foo}"
-    printf >&3 "$row\n"  # Send complete to _run_parallel()
+    printf >&3 '%d\n' "$row"  # Send complete to _run_parallel()
     return
   fi
 
@@ -2505,7 +2522,7 @@ _extract_images()
 
   # Continue only if there was artwork to be extracted
   if [[ -z "${artwork[*]}" ]]; then
-    printf >&3 "$row\n"  # Send complete to _run_parallel()
+    printf >&3 '%d\n' "$row"  # Send complete to _run_parallel()
     return
   fi
 
@@ -2558,7 +2575,7 @@ _extract_images()
   done
 
   _print_item_ok
-  printf >&3 "$row\n"  # Send complete to _run_parallel()
+  printf >&3 '%d\n' "$row"  # Send complete to _run_parallel()
 }
 
 #
@@ -2600,7 +2617,7 @@ _prune()
   fi
 
   # Send complete to _run_parallel()
-  printf >&3 "$row\n"
+  printf >&3 '%d\n' "$row"
 }
 
 #########################  PRE-SCRIPT CHECKS  ##########################
@@ -3023,7 +3040,7 @@ for operation in "${operations[@]}"; do
   # Clear all the operation lines by moving up each line and clearing it
   # until we are just below the operation's title message
   for (( i=1; i<=items_processed; i++ )); do
-    printf "\033[$(( post_row - i ))H\033[0K"
+    printf '%b' "\033[$(( post_row - i ))H\033[0K"
   done
 
   # Display completed operation
