@@ -1250,31 +1250,31 @@ _process_arguments()
 
   # Configure the order to run operations as this script may be called
   # to run one or all operations on a target directory of FLAC files
-  if [[ " ${operations_to_run[*]} " =~ ' _md5check ' ]]; then
+  if [[ " ${operations_to_run[*]} " == *' _md5check '* ]]; then
     operations+=( '_md5check' )
   fi
-  if [[ " ${operations_to_run[*]} " =~ ' _test ' ]]; then
+  if [[ " ${operations_to_run[*]} " == *' _test '* ]]; then
     operations+=( '_test' )
   fi
-  if [[ " ${operations_to_run[*]} " =~ ' _compress ' ]]; then
+  if [[ " ${operations_to_run[*]} " == *' _compress '* ]]; then
     operations+=( '_compress' )
   fi
-  if [[ " ${operations_to_run[*]} " =~ ' _aucdtect ' ]]; then
+  if [[ " ${operations_to_run[*]} " == *' _aucdtect '* ]]; then
     operations+=( '_aucdtect' )
   fi
-  if [[ " ${operations_to_run[*]} " =~ ' _lac ' ]]; then
+  if [[ " ${operations_to_run[*]} " == *' _lac '* ]]; then
     operations+=( '_lac' )
   fi
-  if [[ " ${operations_to_run[*]} " =~ ' _replaygain ' ]]; then
+  if [[ " ${operations_to_run[*]} " == *' _replaygain '* ]]; then
     operations+=( '_replaygain' )
   fi
-  if [[ " ${operations_to_run[*]} " =~ ' _retag ' ]]; then
+  if [[ " ${operations_to_run[*]} " == *' _retag '* ]]; then
     operations+=( '_retag' )
   fi
-  if [[ " ${operations_to_run[*]} " =~ ' _extract_images ' ]]; then
+  if [[ " ${operations_to_run[*]} " == *' _extract_images '* ]]; then
     operations+=( '_extract_images' )
   fi
-  if [[ " ${operations_to_run[*]} " =~ ' _prune ' ]]; then
+  if [[ " ${operations_to_run[*]} " == *' _prune '* ]]; then
     operations+=( '_prune' )
   fi
 }
@@ -1293,12 +1293,12 @@ _check_missing_programs()
   done
 
   # auCDtect binary
-  if [[ " ${operations[*]} " =~ ' _aucdtect ' ]]; then
+  if [[ " ${operations[*]} " == *' _aucdtect '* ]]; then
     type -P auCDtect >/dev/null || missing_programs+=( 'auCDtect' )
   fi
 
   # Lossless Audio Checker (LAC) binary
-  if [[ " ${operations[*]} " =~ ' _lac ' ]]; then
+  if [[ " ${operations[*]} " == *' _lac '* ]]; then
     type -P LAC >/dev/null || missing_programs+=( 'LAC' )
   fi
 
@@ -2951,7 +2951,7 @@ fi
 _runtime_banner
 
 # _retag(): Display a countdown
-[[ " ${operations[*]} " =~ ' _retag ' ]] && _countdown_metadata
+[[ " ${operations[*]} " == *' _retag '* ]] && _countdown_metadata
 
 #
 # Obtain the total FLAC files to process (files and/or directories)
