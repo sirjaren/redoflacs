@@ -940,7 +940,7 @@ _parse_config()
     # interpolate values which contain a variable prefix
     #
     # NOTE:
-    #   BASH >= 4.4.x allows for parameter transformations which is
+    #   BASH >= 4.4.x allows for parameter transformations which are
     #   safer than using 'eval'
     if [[ ! "$value" =~ $regex_cmds && "$value" == *\$* ]]; then
       if (( ${BASH_VERSINFO[0]}${BASH_VERSINFO[1]} >= 44 )); then
@@ -1363,6 +1363,22 @@ _run_parallel()
 }
 
 #
+# Sends the value of $row (integer) to the job manager FIFO which is
+# from the parent function, _run_parallel()
+#
+# This value is where the cursor is located for the current operation
+# on a given item, allowing the job manager to know where to put output
+# for the next job, if any
+#
+# The newline is needed in order for the 'read' to finish reading the
+# output
+#
+_send_operation_finished()
+{
+  printf >&3 '%d\n' "$row"
+}
+
+#
 # Decode FLAC to WAV file (used in operation functions)
 #
 # NOTE:
@@ -1439,12 +1455,12 @@ _decode_to_wav()
 
     printf >> "$log_file" '%s [%s] %s\n' "$item" "$function_label" "$error_msg"
     printf >> "$issue_ticks" '.'  # Add one tick to total issues
-    printf >&3 '%d\n' "$row"      # Send complete to _run_parallel()
 
     # Update operation title message with current number of issues
     _operation_title
 
     # Return 1 to break out of parent fuction
+    _send_operation_finished
     return 1
   else
     _print_item_ok
@@ -1535,8 +1551,7 @@ _generate_spectrogram()
 
   # Update operation title message with current number of issues
   _operation_title
-
-  printf >&3 '%d\n' "$row"      # Send complete to _run_parallel()
+  _send_operation_finished
 }
 
 #
@@ -1582,7 +1597,7 @@ _replaygain()
     # multiplied by 5 (the number of ReplayGain tags added to each file)
     if (( ${#replaygain_tags[@]} == ${#files[@]} * 5 )); then
       _print_item_skip
-      printf >&3 '%d\n' "$row"      # Send complete to _run_parallel()
+      _send_operation_finished
       return
     fi
   fi
@@ -1631,8 +1646,7 @@ _replaygain()
     _print_item_ok
   fi
 
-  # Send complete to _run_parallel()
-  printf >&3 '%d\n' "$row"
+  _send_operation_finished
 }
 
 #
@@ -1672,7 +1686,7 @@ _compress()
       && (( ${file_compression##*=} == compression_level ))
     then
       _print_item_skip
-      printf >&3 '%d\n' "$row"  # Send complete to _run_parallel()
+      _send_operation_finished
       return
     fi
   fi
@@ -1740,11 +1754,9 @@ _compress()
     printf >> "$log_file" '%s [Compress] %s\n' "$item" "$error_msg"
     printf >> "$issue_ticks" '.'        # Add one tick to total issues
 
-    # Send complete to _run_parallel()
-    printf >&3 '%d\n' "$row"
-
     # Update operation title message with current number of issues
     _operation_title
+    _send_operation_finished
     return
   fi
 
@@ -1759,10 +1771,9 @@ _compress()
       --remove-tag='COMPRESSION' \
       --set-tag="COMPRESSION=$compression_level" "$item"
   fi
-  _print_item_ok
 
-  # Send complete to _run_parallel()
-  printf >&3 '%d\n' "$row"
+  _print_item_ok
+  _send_operation_finished
 }
 
 #
@@ -1817,8 +1828,7 @@ _test()
     _print_item_ok
   fi
 
-  # Send complete to _run_parallel()
-  printf >&3 '%d\n' "$row"
+  _send_operation_finished
 }
 
 #
@@ -1889,7 +1899,7 @@ _lac()
   # configuration option is 'true'
   if [[ "$mastering" == 'Lossy' && "$skip_lossy" == 'true' ]]; then
     _print_item_skip
-    printf >&3 '%d\n' "$row"  # Send complete to _run_parallel()
+    _send_operation_finished
     return
   fi
 
@@ -1936,7 +1946,7 @@ _lac()
   # LAC reports a clean file, continue with next item
   if [[ "${lossless_check_results,,}" == 'clean' ]]; then
     _print_item_ok
-    printf >&3 '%d\n' "$row"  # Send complete to _run_parallel()
+    _send_operation_finished
     return
   fi
 
@@ -1952,8 +1962,7 @@ _lac()
 
     # Update operation title message with current number of issues
     _operation_title
-    printf >&3 '%d\n' "$row"  # Send complete to _run_parallel()
-
+    _send_operation_finished
     return
   fi
 
@@ -2035,7 +2044,7 @@ _aucdtect()
   #   not be obtained. Errors will be caught during decoding
   if (( ${bits_mastering[0]:-0} > 16 )); then
     _print_item_skip
-    printf >&3 '%d\n' "$row"  # Send complete to _run_parallel()
+    _send_operation_finished
     return
   fi
 
@@ -2046,7 +2055,7 @@ _aucdtect()
     && "$skip_lossy" == 'true'
   ]]; then
     _print_item_skip
-    printf >&3 '%d\n' "$row"  # Send complete to _run_parallel()
+    _send_operation_finished
     return
   fi
 
@@ -2092,8 +2101,7 @@ _aucdtect()
 
     # Update operation title message with current number of issues
     _operation_title
-    printf >&3 '%d\n' "$row"  # Send complete to _run_parallel()
-
+    _send_operation_finished
     return
 
   # auCDtect reports CDDA of 100%, continue with next item
@@ -2103,9 +2111,7 @@ _aucdtect()
     # Remove temporary WAV file
     rm -f "${item_wav:-/dev/null/foo}"
 
-    # Send complete to _run_parallel()
-    printf >&3 '%d\n' "$row"
-
+    _send_operation_finished
     return
   fi
 
@@ -2145,8 +2151,7 @@ _aucdtect()
 
     # Update operation title message with current number of issues
     _operation_title
-    printf >&3 '%d\n' "$row"  # Send complete to _run_parallel()
-
+    _send_operation_finished
     return
   fi
 
@@ -2157,9 +2162,7 @@ _aucdtect()
     # Remove temporary WAV file
     rm -f "${item_wav:-/dev/null/foo}"
 
-    # Send complete to _run_parallel()
-    printf >&3 '%d\n' "$row"
-
+    _send_operation_finished
     return
   fi
 
@@ -2178,8 +2181,7 @@ _aucdtect()
 
     # Update operation title message with current number of issues
     _operation_title
-    printf >&3 '%d\n' "$row"  # Send complete to _run_parallel()
-
+    _send_operation_finished
     return
   fi
 
@@ -2237,8 +2239,7 @@ _md5check()
     _print_item_ok
   fi
 
-  # Send complete to _run_parallel()
-  printf >&3 '%d\n' "$row"
+  _send_operation_finished
 }
 
 #
@@ -2289,11 +2290,9 @@ _retag()
     printf >> "$log_file" '%s [Retag] %s\n' "$item" "$error_msg"
     printf >> "$issue_ticks" '.'  # Add one tick to total issues
 
-    # Send complete to _run_parallel()
-    printf >&3 '%d\n' "$row"
-
     # Update operation title message with current number of issues
     _operation_title
+    _send_operation_finished
     return
   fi
 
@@ -2461,8 +2460,7 @@ _retag()
     _print_item_ok
   fi
 
-  # Send complete to _run_parallel()
-  printf >&3 '%d\n' "$row"
+  _send_operation_finished
 }
 
 #
@@ -2497,10 +2495,10 @@ _extract_images()
     printf >> "$log_file" '%s [ExtractArtwork] %s\n' "$item" "$error_msg"
     printf >> "$issue_ticks" '.'  # Add one tick to total issues
     rm -f "${blocks:-/dev/null/foo}"
-    printf >&3 '%d\n' "$row"  # Send complete to _run_parallel()
 
     # Update operation title message with current number of issues
     _operation_title
+    _send_operation_finished
     return
   fi
 
@@ -2508,7 +2506,7 @@ _extract_images()
   if [[ ! -s "$blocks" ]]; then
     _print_item_skip
     rm -f "${blocks:-/dev/null/foo}"
-    printf >&3 '%d\n' "$row"  # Send complete to _run_parallel()
+    _send_operation_finished
     return
   fi
 
@@ -2555,7 +2553,7 @@ _extract_images()
 
   # Continue only if there was artwork to be extracted
   if [[ -z "${artwork[*]}" ]]; then
-    printf >&3 '%d\n' "$row"  # Send complete to _run_parallel()
+    _send_operation_finished
     return
   fi
 
@@ -2608,7 +2606,7 @@ _extract_images()
   done
 
   _print_item_ok
-  printf >&3 '%d\n' "$row"  # Send complete to _run_parallel()
+  _send_operation_finished
 }
 
 #
@@ -2649,8 +2647,7 @@ _prune()
     _print_item_ok
   fi
 
-  # Send complete to _run_parallel()
-  printf >&3 '%d\n' "$row"
+  _send_operation_finished
 }
 
 #########################  PRE-SCRIPT CHECKS  ##########################
