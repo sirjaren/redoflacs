@@ -44,9 +44,9 @@
 # Creates a messsage like (with a yellow asterisk):
 #    * This is obsolete
 #
-_info() { printf     " $green*$reset $@\n";  }  # Green
-_warn() { printf >&2 " $yellow*$reset $@\n"; }  # Yellow
-_error(){ printf >&2 " $red*$reset $@\n";    }  # Red
+_info() { printf     ' %s %b\n' "$green*$reset" "$@";  }  # Green
+_warn() { printf >&2 ' %s %b\n' "$yellow*$reset" "$@"; }  # Yellow
+_error(){ printf >&2 ' %s %b\n' "$red*$reset" "$@";    }  # Red
 
 #
 # Display help
@@ -166,7 +166,7 @@ _runtime_banner()
 
   # Replace $HOME with tilde
   local config_file_title="$config_file"
-  config_file_title="~${config_file_title#$HOME}"
+  config_file_title="~${config_file_title#"$HOME"}"
 
   # Dynamically center banner config title
   local config_title="Configuration Options ($config_file_title)"
@@ -246,10 +246,12 @@ _runtime_banner()
     value="${!field:-${magenta}<default>${reset}}"
 
     # Eg: $HOME -> ~/
+    # shellcheck disable=SC2088
     [[ "$value" == "$HOME" ]] && value='~/'
 
     # Eg: $HOME/user/dir -> ~/user/dir
-    [[ "$value" == "$HOME"/* ]] && value="~/${value#$HOME/}/"
+    # shellcheck disable=SC2088
+    [[ "$value" == "$HOME"/* ]] && value="~/${value#"$HOME"/}/"
 
     # Display centered configuration option and value
     printf "%${fields_center}s ${cyan}%s${reset}\n" "$field" "$value"
@@ -288,7 +290,10 @@ _runtime_banner()
 _operation_title()
 {
   local fmt status_banner issues_banner right_align
-  local -i issues="$(_num_issues)"  # Total number of issues found
+
+  # Total number of issues found
+  local -i issues
+  issues="$(_num_issues)"
 
   # Ensure we do not run if running from a countdown or before an
   # operation begins (only if SIGINT was sent during these times)
@@ -342,6 +347,7 @@ _operation_title()
   fmt+="${red}${issues_banner}$reset\n"     # Issues banner
 
   # Display generated operation title message
+  # shellcheck disable=SC2059
   printf "$fmt" "${operation_title[$operation]}"
 }
 
@@ -420,6 +426,7 @@ _print_item()
   [[ "$LINE_WRAPPING" ]] && fmt+=$'\033[?7h'
 
   # Displays formatted, currently processed item
+  # shellcheck disable=SC2059
   printf "$fmt" "$basename" "$label" "${num}/${#total_items[@]}"
 }
 
@@ -427,11 +434,11 @@ _print_item()
 # These functions are used after '_print_item()' to update/indicate the
 # status of a given item in an operation
 #
-_print_item_ok()   { printf "\033[${row}H${green}100%%$reset"; }
-_print_item_fail() { printf "\033[${row}H${red}fail$reset";    }
-_print_item_check(){ printf "\033[${row}H${yellow}chck$reset"; }
-_print_item_half() { printf "\033[${row}H$yellow 50%%$reset";  }
-_print_item_skip() { printf "\033[${row}H${cyan}skip$reset";   }
+_print_item_ok()   { printf '%b' "\033[${row}H${green}100%$reset";  }
+_print_item_fail() { printf '%b' "\033[${row}H${red}fail$reset";    }
+_print_item_check(){ printf '%b' "\033[${row}H${yellow}chck$reset"; }
+_print_item_half() { printf '%b' "\033[${row}H$yellow 50%$reset";   }
+_print_item_skip() { printf '%b' "\033[${row}H${cyan}skip$reset";   }
 
 #
 # Manage termination and cleanup of this script
@@ -446,7 +453,9 @@ _cleanup()
 {
   local i fmt op match status_banner right_align
 
-  local -i issues="$(_num_issues)"    # Total number of issues found
+  # Total number of issues found
+  local -i issues
+  issues="$(_num_issues)"
 
   # If this global variable is non-zero, a trap caught an abnormal
   # signal and redefined it to an exit code value matching the signal
@@ -458,7 +467,7 @@ _cleanup()
     # Clear all the operation lines by moving up each line and clearing
     # it until we are just below the operation's title message
     for (( i=1; i<=items_processed; i++ )); do
-      printf "\033[$(( post_row - i ))H\033[0K"
+      printf '%b' "\033[$(( post_row - i ))H\033[0K"
     done
 
     # Remove temporary WAV and FLAC files
@@ -497,6 +506,7 @@ _cleanup()
     fmt+="${magenta}${status_banner}$reset\n"
 
     # Display generated operation title message
+    # shellcheck disable=SC2059
     printf "$fmt" "${operation_title[$op]}"
   done
 
@@ -569,7 +579,7 @@ _col()
 #
 _scroll_terminal()
 {
-  local -i row to_scroll
+  local -i row to_scroll fmt
 
   # Obtain current row position
   row="$(_row)"
@@ -582,8 +592,11 @@ _scroll_terminal()
 
   # Only scroll if there are more items to display than lines available
   if (( --to_scroll > (lines - row) )); then
-    printf "\033[$(( to_scroll - (lines - row) ))S"  # Scroll terminal
-    printf "\033[$(( lines - to_scroll ))H"          # Cursor to start
+    # Scroll terminal the required number of lines
+    printf '%b' "\033[$(( to_scroll - (lines - row) ))S"
+
+    # Place cursor back to where it was in relation to current output
+    printf '%b' "\033[$(( lines - to_scroll ))H"
   fi
 }
 
@@ -609,10 +622,6 @@ _create_config()
 #
 # Any line that is _NOT_ prepended with a '#' will be interpreted as an option
 # (except for blank lines -- these are not interpreted)
-#
-# NOTE:
-#   The options listed below are shell syntax. Interpolation can occur
-#   should weak (double) quotes be used.
 #
 #------------------------------------------------------------------------------
 # TAGGING SECTION
@@ -663,6 +672,20 @@ REPLAYGAIN_ALBUM_PEAK
 
 #------------------------------------------------------------------------------
 # OPTIONS
+#------------------------------------------------------------------------------
+#
+# The options listed below are shell syntax with slight changes to how quoting
+# is expected to work. All possible variables used within either single or
+# double quotes will undergo evaluation/interpolation.
+#
+# Using each of the following examples:
+#
+#   error_log='$HOME/logs'
+#   error_log="$HOME/logs"
+#
+# $HOME is evaluated and expanded, even though the single quotes version would
+# normally prevent evaluation.
+#
 #------------------------------------------------------------------------------
 #
 # PRESERVE FILE MODIFICATION TIME:
@@ -840,11 +863,14 @@ END_OF_CONFIG
 }
 
 #
-# Parse the user/system configuration file
+# Parse the configuration file
 #
 _parse_config()
 {
-  local line option value
+  local line option value valid_option
+
+  # Used to check for missing, but required, configuration options
+  local -a missing_options
 
   # Used in 'flac' and 'metaflac' invocations
   local -ga flac_extra_options metaflac_extra_options
@@ -861,6 +887,9 @@ _parse_config()
   # Matches on configuration options (shell variables)
   local regex_options='^([^[:space:]]+=.*)$'
 
+  # Matches on possible command substitutions in option values
+  local regex_cmds='\$\(|`'
+
   # Unnecessary, as these variables are dynamically exported from the
   # config but are defined to silence shellcheck of unused variables
   local -g \
@@ -874,7 +903,7 @@ _parse_config()
     spectrogram_location \
     artwork_location
 
-  # Key/value associative array used to only evaluate valid options
+  # Key/value associative array used to evaluate valid/missing options
   local -A valid_config_options
   valid_config_options=(
     [preserve_modtime]='true'
@@ -917,9 +946,45 @@ _parse_config()
     value="${value#[\'\"]}"
     value="${value%[\'\"]}"
 
+    # Do not interpolate possible command subsitutions and only
+    # interpolate values which contain a variable prefix
+    #
+    # NOTE:
+    #   BASH >= 4.4.x allows for parameter transformations which are
+    #   safer than using 'eval'
+    if [[ ! "$value" =~ $regex_cmds && "$value" == *\$* ]]; then
+      if (( ${BASH_VERSINFO[0]}${BASH_VERSINFO[1]} >= 44 )); then
+        value="${value@P}"  # Expand like a prompt string
+      else
+        eval "value=\"$value\"" 2>/dev/null || :
+      fi
+    fi
+
     # Evaluate configuration option and value into environment
     export "$option"="$value"
   done < "$config_file"
+
+  # Look for any missing options in the user's configuration file and
+  # notify the user
+  for valid_option in "${!valid_config_options[@]}"; do
+    if [[ " ${config_options[*]%%=*} " != *" $valid_option "* ]]; then
+      missing_options+=( "$valid_option" )
+    fi
+  done
+
+  # Exit if there were any missing options from the configuration file
+  if [[ "${missing_options[*]}" ]]; then
+    _error 'The following required options are missing:'
+    for option in "${missing_options[@]}"; do
+      _error "  ${cyan}${option}$reset"
+    done
+
+    _error
+
+    _error 'Recreate a configuration file (non-destructive) via:'
+    _error "  ${cyan}redoflacs -o $reset"
+    exit 1
+  fi
 
   # Handle timestamp preseveration for both 'flac' and 'metaflac'
   if [[ "${preserve_modtime,,}" == 'true' ]]; then
@@ -961,12 +1026,12 @@ _countdown_metadata()
   _warn "Waiting ${red}20${reset} seconds before starting program..."
   _warn 'Ctrl+C (Control-C) to abort...\n'
 
-  printf " ${green}*${reset} Starting in: "
+  printf '%b' " ${green}*${reset} Starting in: "
 
   # 10 second countdown
   for count in {20..1}; do
     printf "${red}%d ${reset}" "$count"
-    read -t1  # Sleep 1
+    read -rt1  # Sleep 1
   done
   printf '\n'
 }
@@ -1203,31 +1268,31 @@ _process_arguments()
 
   # Configure the order to run operations as this script may be called
   # to run one or all operations on a target directory of FLAC files
-  if [[ " ${operations_to_run[*]} " =~ ' _md5check ' ]]; then
+  if [[ " ${operations_to_run[*]} " == *' _md5check '* ]]; then
     operations+=( '_md5check' )
   fi
-  if [[ " ${operations_to_run[*]} " =~ ' _test ' ]]; then
+  if [[ " ${operations_to_run[*]} " == *' _test '* ]]; then
     operations+=( '_test' )
   fi
-  if [[ " ${operations_to_run[*]} " =~ ' _compress ' ]]; then
+  if [[ " ${operations_to_run[*]} " == *' _compress '* ]]; then
     operations+=( '_compress' )
   fi
-  if [[ " ${operations_to_run[*]} " =~ ' _aucdtect ' ]]; then
+  if [[ " ${operations_to_run[*]} " == *' _aucdtect '* ]]; then
     operations+=( '_aucdtect' )
   fi
-  if [[ " ${operations_to_run[*]} " =~ ' _lac ' ]]; then
+  if [[ " ${operations_to_run[*]} " == *' _lac '* ]]; then
     operations+=( '_lac' )
   fi
-  if [[ " ${operations_to_run[*]} " =~ ' _replaygain ' ]]; then
+  if [[ " ${operations_to_run[*]} " == *' _replaygain '* ]]; then
     operations+=( '_replaygain' )
   fi
-  if [[ " ${operations_to_run[*]} " =~ ' _retag ' ]]; then
+  if [[ " ${operations_to_run[*]} " == *' _retag '* ]]; then
     operations+=( '_retag' )
   fi
-  if [[ " ${operations_to_run[*]} " =~ ' _extract_images ' ]]; then
+  if [[ " ${operations_to_run[*]} " == *' _extract_images '* ]]; then
     operations+=( '_extract_images' )
   fi
-  if [[ " ${operations_to_run[*]} " =~ ' _prune ' ]]; then
+  if [[ " ${operations_to_run[*]} " == *' _prune '* ]]; then
     operations+=( '_prune' )
   fi
 }
@@ -1246,12 +1311,12 @@ _check_missing_programs()
   done
 
   # auCDtect binary
-  if [[ " ${operations[*]} " =~ ' _aucdtect ' ]]; then
+  if [[ " ${operations[*]} " == *' _aucdtect '* ]]; then
     type -P auCDtect >/dev/null || missing_programs+=( 'auCDtect' )
   fi
 
   # Lossless Audio Checker (LAC) binary
-  if [[ " ${operations[*]} " =~ ' _lac ' ]]; then
+  if [[ " ${operations[*]} " == *' _lac '* ]]; then
     type -P LAC >/dev/null || missing_programs+=( 'LAC' )
   fi
 
@@ -1266,6 +1331,8 @@ _check_missing_programs()
     done
 
     _error
+
+    # shellcheck disable=SC2016
     _error 'Ensure these programs are installed and available in $PATH'
     exit 1
   fi
@@ -1303,6 +1370,22 @@ _run_parallel()
 
   # Wait on operations
   wait
+}
+
+#
+# Sends the value of $row (integer) to the job manager FIFO which is
+# from the parent function, _run_parallel()
+#
+# This value is where the cursor is located for the current operation
+# on a given item, allowing the job manager to know where to put output
+# for the next job, if any
+#
+# The newline is needed in order for the 'read' to finish reading the
+# output
+#
+_send_operation_finished()
+{
+  printf >&3 '%d\n' "$row"
 }
 
 #
@@ -1382,12 +1465,12 @@ _decode_to_wav()
 
     printf >> "$log_file" '%s [%s] %s\n' "$item" "$function_label" "$error_msg"
     printf >> "$issue_ticks" '.'  # Add one tick to total issues
-    printf >&3 "$row\n"           # Send complete to _run_parallel()
 
     # Update operation title message with current number of issues
     _operation_title
 
     # Return 1 to break out of parent fuction
+    _send_operation_finished
     return 1
   else
     _print_item_ok
@@ -1478,8 +1561,7 @@ _generate_spectrogram()
 
   # Update operation title message with current number of issues
   _operation_title
-
-  printf >&3 "$row\n"           # Send complete to _run_parallel()
+  _send_operation_finished
 }
 
 #
@@ -1525,7 +1607,7 @@ _replaygain()
     # multiplied by 5 (the number of ReplayGain tags added to each file)
     if (( ${#replaygain_tags[@]} == ${#files[@]} * 5 )); then
       _print_item_skip
-      printf >&3 "$row\n"  # Send complete to _run_parallel()
+      _send_operation_finished
       return
     fi
   fi
@@ -1574,8 +1656,7 @@ _replaygain()
     _print_item_ok
   fi
 
-  # Send complete to _run_parallel()
-  printf >&3 "$row\n"
+  _send_operation_finished
 }
 
 #
@@ -1615,7 +1696,7 @@ _compress()
       && (( ${file_compression##*=} == compression_level ))
     then
       _print_item_skip
-      printf >&3 "$row\n"  # Send complete to _run_parallel()
+      _send_operation_finished
       return
     fi
   fi
@@ -1683,11 +1764,9 @@ _compress()
     printf >> "$log_file" '%s [Compress] %s\n' "$item" "$error_msg"
     printf >> "$issue_ticks" '.'        # Add one tick to total issues
 
-    # Send complete to _run_parallel()
-    printf >&3 "$row\n"
-
     # Update operation title message with current number of issues
     _operation_title
+    _send_operation_finished
     return
   fi
 
@@ -1702,10 +1781,9 @@ _compress()
       --remove-tag='COMPRESSION' \
       --set-tag="COMPRESSION=$compression_level" "$item"
   fi
-  _print_item_ok
 
-  # Send complete to _run_parallel()
-  printf >&3 "$row\n"
+  _print_item_ok
+  _send_operation_finished
 }
 
 #
@@ -1760,8 +1838,7 @@ _test()
     _print_item_ok
   fi
 
-  # Send complete to _run_parallel()
-  printf >&3 "$row\n"
+  _send_operation_finished
 }
 
 #
@@ -1832,7 +1909,7 @@ _lac()
   # configuration option is 'true'
   if [[ "$mastering" == 'Lossy' && "$skip_lossy" == 'true' ]]; then
     _print_item_skip
-    printf >&3 "$row\n"  # Send complete to _run_parallel()
+    _send_operation_finished
     return
   fi
 
@@ -1879,7 +1956,7 @@ _lac()
   # LAC reports a clean file, continue with next item
   if [[ "${lossless_check_results,,}" == 'clean' ]]; then
     _print_item_ok
-    printf >&3 "$row\n"           # Send complete to _run_parallel()
+    _send_operation_finished
     return
   fi
 
@@ -1895,8 +1972,7 @@ _lac()
 
     # Update operation title message with current number of issues
     _operation_title
-    printf >&3 "$row\n"           # Send complete to _run_parallel()
-
+    _send_operation_finished
     return
   fi
 
@@ -1978,7 +2054,7 @@ _aucdtect()
   #   not be obtained. Errors will be caught during decoding
   if (( ${bits_mastering[0]:-0} > 16 )); then
     _print_item_skip
-    printf >&3 "$row\n"  # Send complete to _run_parallel()
+    _send_operation_finished
     return
   fi
 
@@ -1989,7 +2065,7 @@ _aucdtect()
     && "$skip_lossy" == 'true'
   ]]; then
     _print_item_skip
-    printf >&3 "$row\n"  # Send complete to _run_parallel()
+    _send_operation_finished
     return
   fi
 
@@ -2035,8 +2111,7 @@ _aucdtect()
 
     # Update operation title message with current number of issues
     _operation_title
-    printf >&3 "$row\n"           # Send complete to _run_parallel()
-
+    _send_operation_finished
     return
 
   # auCDtect reports CDDA of 100%, continue with next item
@@ -2046,8 +2121,7 @@ _aucdtect()
     # Remove temporary WAV file
     rm -f "${item_wav:-/dev/null/foo}"
 
-    printf >&3 "$row\n"           # Send complete to _run_parallel()
-
+    _send_operation_finished
     return
   fi
 
@@ -2087,8 +2161,7 @@ _aucdtect()
 
     # Update operation title message with current number of issues
     _operation_title
-    printf >&3 "$row\n"           # Send complete to _run_parallel()
-
+    _send_operation_finished
     return
   fi
 
@@ -2099,8 +2172,7 @@ _aucdtect()
     # Remove temporary WAV file
     rm -f "${item_wav:-/dev/null/foo}"
 
-    printf >&3 "$row\n"           # Send complete to _run_parallel()
-
+    _send_operation_finished
     return
   fi
 
@@ -2119,8 +2191,7 @@ _aucdtect()
 
     # Update operation title message with current number of issues
     _operation_title
-    printf >&3 "$row\n"           # Send complete to _run_parallel()
-
+    _send_operation_finished
     return
   fi
 
@@ -2178,8 +2249,7 @@ _md5check()
     _print_item_ok
   fi
 
-  # Send complete to _run_parallel()
-  printf >&3 "$row\n"
+  _send_operation_finished
 }
 
 #
@@ -2230,11 +2300,9 @@ _retag()
     printf >> "$log_file" '%s [Retag] %s\n' "$item" "$error_msg"
     printf >> "$issue_ticks" '.'  # Add one tick to total issues
 
-    # Send complete to _run_parallel()
-    printf >&3 "$row\n"
-
     # Update operation title message with current number of issues
     _operation_title
+    _send_operation_finished
     return
   fi
 
@@ -2402,8 +2470,7 @@ _retag()
     _print_item_ok
   fi
 
-  # Send complete to _run_parallel()
-  printf >&3  "$row\n"
+  _send_operation_finished
 }
 
 #
@@ -2438,10 +2505,10 @@ _extract_images()
     printf >> "$log_file" '%s [ExtractArtwork] %s\n' "$item" "$error_msg"
     printf >> "$issue_ticks" '.'  # Add one tick to total issues
     rm -f "${blocks:-/dev/null/foo}"
-    printf >&3 "$row\n"           # Send complete to _run_parallel()
 
     # Update operation title message with current number of issues
     _operation_title
+    _send_operation_finished
     return
   fi
 
@@ -2449,7 +2516,7 @@ _extract_images()
   if [[ ! -s "$blocks" ]]; then
     _print_item_skip
     rm -f "${blocks:-/dev/null/foo}"
-    printf >&3 "$row\n"  # Send complete to _run_parallel()
+    _send_operation_finished
     return
   fi
 
@@ -2496,7 +2563,7 @@ _extract_images()
 
   # Continue only if there was artwork to be extracted
   if [[ -z "${artwork[*]}" ]]; then
-    printf >&3 "$row\n"  # Send complete to _run_parallel()
+    _send_operation_finished
     return
   fi
 
@@ -2549,7 +2616,7 @@ _extract_images()
   done
 
   _print_item_ok
-  printf >&3 "$row\n"  # Send complete to _run_parallel()
+  _send_operation_finished
 }
 
 #
@@ -2590,8 +2657,7 @@ _prune()
     _print_item_ok
   fi
 
-  # Send complete to _run_parallel()
-  printf >&3 "$row\n"
+  _send_operation_finished
 }
 
 #########################  PRE-SCRIPT CHECKS  ##########################
@@ -2900,7 +2966,7 @@ fi
 _runtime_banner
 
 # _retag(): Display a countdown
-[[ " ${operations[*]} " =~ ' _retag ' ]] && _countdown_metadata
+[[ " ${operations[*]} " == *' _retag '* ]] && _countdown_metadata
 
 #
 # Obtain the total FLAC files to process (files and/or directories)
@@ -3014,7 +3080,7 @@ for operation in "${operations[@]}"; do
   # Clear all the operation lines by moving up each line and clearing it
   # until we are just below the operation's title message
   for (( i=1; i<=items_processed; i++ )); do
-    printf "\033[$(( post_row - i ))H\033[0K"
+    printf '%b' "\033[$(( post_row - i ))H\033[0K"
   done
 
   # Display completed operation
