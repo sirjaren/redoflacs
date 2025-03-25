@@ -861,6 +861,9 @@ _parse_config()
   # Matches on configuration options (shell variables)
   local regex_options='^([^[:space:]]+=.*)$'
 
+  # Matches on possible command substitutions in option values
+  local regex_cmds='\$\(|`'
+
   # Unnecessary, as these variables are dynamically exported from the
   # config but are defined to silence shellcheck of unused variables
   local -g \
@@ -916,6 +919,12 @@ _parse_config()
     # Remove single/double quotes from value (if any)
     value="${value#[\'\"]}"
     value="${value%[\'\"]}"
+
+    # Do not interpolate possible command subsitutions and only
+    # interpolate values which contain a variable prefix
+    if [[ ! "$value" =~ $regex_cmds && "$value" == *\$* ]]; then
+      eval "value=\"$value\"" 2>/dev/null || :
+    fi
 
     # Evaluate configuration option and value into environment
     export "$option"="$value"
