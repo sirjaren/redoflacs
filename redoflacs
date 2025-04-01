@@ -674,17 +674,21 @@ REPLAYGAIN_ALBUM_PEAK
 # OPTIONS
 #------------------------------------------------------------------------------
 #
-# The options listed below are shell syntax with slight changes to how quoting
-# is expected to work. All possible variables used within either single or
-# double quotes will undergo evaluation/interpolation.
+# The options listed below are shell syntax where option values are
+# evaluated/interpolated as expected with the caveat that command substitutions
+# are not allowed, eg:
 #
-# Using each of the following examples:
+#   error_log='$HOME/logs'            # $HOME/logs
+#   error_log='${HOME}/logs'          # ${HOME}/logs
+#   error_log="$HOME/logs"            # /home/user/logs
+#   error_log="${HOME}/logs"          # /home/user/logs
+#   error_log="$(pwd)/logs"           # $(pwd)/logs
+#   error_log="`pwd`/logs"            # `pwd`/logs
+#   error_log="${HOME}/$(date)/logs"  # ${HOME}/$(date)/logs
+#   error_log='${HOME}/$(date)/logs'  # ${HOME}/$(date)/logs
 #
-#   error_log='$HOME/logs'
-#   error_log="$HOME/logs"
-#
-# $HOME is evaluated and expanded, even though the single quotes version would
-# normally prevent evaluation.
+# Any single quoted value and values with command substitutions are treated as
+# literal strings.
 #
 #------------------------------------------------------------------------------
 #
@@ -942,9 +946,20 @@ _parse_config()
     # Remove leading/trailing whitespace from value (if any)
     IFS=$' \t\n' read -r value <<< "$value"
 
-    # Remove single/double quotes from value (if any)
-    value="${value#[\'\"]}"
-    value="${value%[\'\"]}"
+    # Do not interpolate value if single quotes are around value
+    if [[ "$value" =~ ^\'.*\'$ ]]; then
+      # Remove single quotes from value
+      value="${value#\'}"
+      value="${value%\'}"
+
+      # Set configuration option and value into environment
+      export "$option"="$value"
+      continue
+    fi
+
+    # Remove double quotes from value (if any)
+    value="${value#\"}"
+    value="${value%\"}"
 
     # Do not interpolate possible command subsitutions and only
     # interpolate values which contain a variable prefix
@@ -960,7 +975,7 @@ _parse_config()
       fi
     fi
 
-    # Evaluate configuration option and value into environment
+    # Interpolate configuration option and value into environment
     export "$option"="$value"
   done < "$config_file"
 
