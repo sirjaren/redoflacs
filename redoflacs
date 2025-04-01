@@ -971,7 +971,7 @@ _parse_config()
       if (( ${BASH_VERSINFO[0]}${BASH_VERSINFO[1]} >= 44 )); then
         value="${value@P}"  # Expand like a prompt string
       else
-        eval "value=\"$value\"" 2>/dev/null || :
+        value="$(eval "printf '%s' \"$value\"" 2>/dev/null)"
       fi
     fi
 
