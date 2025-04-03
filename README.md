@@ -4,11 +4,11 @@
 
 # redoflacs
 
-**redoflacs** is a parallel BASH command-line tool for managing a collection of
+`redoflacs` is a parallel BASH command-line tool for managing a collection of
 FLAC audio files. It can re-compress FLACs to maximize compression, verify and
-repair their integrity, and organize or clean up metadata (tags and embedded
-artwork) in bulk. By utilizing multi-core processing, redoflacs can perform
-these operations quickly on large libraries of music.
+their integrity, and organize or clean up metadata (tags and embedded artwork)
+in bulk. By utilizing multi-core processing, `redoflacs` can perform these
+operations quickly on large libraries of music.
 
 ## Features
 
@@ -38,7 +38,7 @@ This allows consistent playback volume across tracks and albums. (Requires that
 each album’s tracks reside in separate directories for accurate album gain
 calculation.)
 
-- **Authenticity analysis** – Use **auCDtect** or Lossless Audio Checker (LAC)
+- **Authenticity analysis** – Use `auCDtect` or Lossless Audio Checker (`LAC`)
 tool to analyze audio data and detect files that might not be true lossless
 sources (e.g. upconverted from MP3). Suspect files are logged for attention.
 An extended mode can also generate spectral spectrogram images (requires
@@ -51,34 +51,36 @@ Extracted images are saved to a folder (configurable) alongside each FLAC file.
 
 ## Requirements
 
-- **Operating System:** Unix-like environment (Linux; macOS should work with a
-newer Bash).
+- **Operating System:** Unix-like environment (Linux/BSD; macOS should work
+with a newer Bash).
 - **Bash 4.0** or higher.
 - **FLAC:** The [FLAC tools](https://xiph.org/flac/) package (includes `flac`
 and `metaflac`).
 - **Optional:**
   - **SoX** (with PNG support) – only needed for generating spectrogram images.
-  - **auCDtect** – only needed for CDDA authenticity check operations.
+  - **auCDtect** – only needed for authenticity check operations.
+  - **LAC** – only needed for authenticity check operations.
 
-Ensure the required programs are installed and in your PATH before using
-redoflacs. Optional tools can be installed to enable those specific features
-(redoflacs will notify you if an optional tool is required but not found).
+Ensure the required programs are installed and in your `$PATH` before using
+`redoflacs`. Optional tools can be installed to enable those specific features
+(`redoflacs` will notify you if an optional tool is required but not found).
 
 ## Installation
 
-1. **Download the script:** You can get redoflacs by cloning the
+1. **Download the script:** You can get `redoflacs` by cloning the
 [GitHub repository](https://github.com/sirjaren/redoflacs) or downloading the
-latest release. The main script file is **`redoflacs`** (a single Bash script).
+latest release. The main script file is `redoflacs` (a single Bash script).
 
-2. **Install the script:** Place the `redoflacs` script somewhere in your PATH
-(for example, `/usr/local/bin/`) and ensure it is executable. For example:
+2. **Install the script:** Place the `redoflacs` script somewhere in your
+`$PATH` (for example, `/usr/local/bin/`) and ensure it is executable. For
+example:
 
    ```bash
    $ cp redoflacs /usr/local/bin/redoflacs
    $ chmod +x /usr/local/bin/redoflacs
    ```
 
-3. **Configuration (optional):** On first run, redoflacs will create a
+3. **Configuration (optional):** On first run, `redoflacs` will create a
 configuration file at `~/.config/redoflacs/config` with default settings. You
 can manually generate or reset this file by running `redoflacs -o`. Review this
 config file to adjust settings such as compression level, which tags to
@@ -124,7 +126,7 @@ redoflacs [operations] [options] [target]
   $ redoflacs -A ~/Music
   ```
 
-  Analyzes all FLACs in a directory with auCDtect to detect upscaled or
+  Analyzes all FLACs in a directory with `auCDtect` to detect upscaled or
   lossy-sourced files.
 
 - **Combine multiple operations in one go**
@@ -143,7 +145,7 @@ redoflacs [operations] [options] [target]
 
 ## Project Status and Contribution
 
-redoflacs is an open-source project released under the MIT License.
+`redoflacs` is an open-source project released under the MIT License.
 Contributions such as bug fixes or improvements are welcome – feel free to fork
 the repository and open a pull request on GitHub.
 
