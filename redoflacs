@@ -278,15 +278,6 @@ _runtime_banner()
 # Where the status may or may not be displayed and/or the number of
 # issues may or may not be displayed
 #
-# When the script is to end (user provided SIGINT) or there were issues
-# to address in the current operation, the rest of the operations are
-# displayed (titles) indicating they were NOT run, eg:
-#
-#   '* Testing...                                   COMPLETED 10 issues'
-#   '* Compressing To Level 8...                            DID NOT RUN'
-#   '* Retagging...                                         DID NOT RUN'
-#   '* Pruning METADATA...                                  DID NOT RUN'
-#
 _operation_title()
 {
   local fmt status_banner issues_banner right_align
@@ -449,6 +440,13 @@ _print_item_skip() { printf '%b' "\033[${row}H${cyan}skip$reset";   }
 # Abnormal signals caught will perform cleanup by removing files and
 # killing any jobs which may be running
 #
+# On script end, any operation that was not run is displayed, eg:
+#
+#   '* Testing...                                   COMPLETED 10 issues'
+#   '* Compressing To Level 8...                            DID NOT RUN'
+#   '* Retagging...                                         DID NOT RUN'
+#   '* Pruning METADATA...                                  DID NOT RUN'
+#
 _cleanup()
 {
   local i fmt op match status_banner right_align
@@ -478,7 +476,6 @@ _cleanup()
     # Remove temporary picture blocks (from artwork extraction)
     rm -f /tmp/redoflacs_picture_blocks.[[:digit:]]*
   fi
-
 
   # Due to catching an abnormal signal or if there were issues found,
   # loop through all operations and display any operation which did not
@@ -674,17 +671,21 @@ REPLAYGAIN_ALBUM_PEAK
 # OPTIONS
 #------------------------------------------------------------------------------
 #
-# The options listed below are shell syntax with slight changes to how quoting
-# is expected to work. All possible variables used within either single or
-# double quotes will undergo evaluation/interpolation.
+# The options listed below are shell syntax where option values are
+# evaluated/interpolated as expected with the caveat that command substitutions
+# are not allowed, eg:
 #
-# Using each of the following examples:
+#   error_log='$HOME/logs'            # $HOME/logs
+#   error_log='${HOME}/logs'          # ${HOME}/logs
+#   error_log="$HOME/logs"            # /home/user/logs
+#   error_log="${HOME}/logs"          # /home/user/logs
+#   error_log="$(pwd)/logs"           # $(pwd)/logs
+#   error_log="`pwd`/logs"            # `pwd`/logs
+#   error_log="${HOME}/$(date)/logs"  # ${HOME}/$(date)/logs
+#   error_log='${HOME}/$(date)/logs'  # ${HOME}/$(date)/logs
 #
-#   error_log='$HOME/logs'
-#   error_log="$HOME/logs"
-#
-# $HOME is evaluated and expanded, even though the single quotes version would
-# normally prevent evaluation.
+# Any single quoted value and values with command substitutions are treated as
+# literal strings.
 #
 #------------------------------------------------------------------------------
 #
@@ -942,9 +943,20 @@ _parse_config()
     # Remove leading/trailing whitespace from value (if any)
     IFS=$' \t\n' read -r value <<< "$value"
 
-    # Remove single/double quotes from value (if any)
-    value="${value#[\'\"]}"
-    value="${value%[\'\"]}"
+    # Do not interpolate value if single quotes are around value
+    if [[ "$value" =~ ^\'.*\'$ ]]; then
+      # Remove single quotes from value
+      value="${value#\'}"
+      value="${value%\'}"
+
+      # Set configuration option and value into environment
+      export "$option"="$value"
+      continue
+    fi
+
+    # Remove double quotes from value (if any)
+    value="${value#\"}"
+    value="${value%\"}"
 
     # Do not interpolate possible command subsitutions and only
     # interpolate values which contain a variable prefix
@@ -956,11 +968,11 @@ _parse_config()
       if (( ${BASH_VERSINFO[0]}${BASH_VERSINFO[1]} >= 44 )); then
         value="${value@P}"  # Expand like a prompt string
       else
-        eval "value=\"$value\"" 2>/dev/null || :
+        value="$(eval "printf '%s' \"$value\"" 2>/dev/null)"
       fi
     fi
 
-    # Evaluate configuration option and value into environment
+    # Interpolate configuration option and value into environment
     export "$option"="$value"
   done < "$config_file"
 
