@@ -278,15 +278,6 @@ _runtime_banner()
 # Where the status may or may not be displayed and/or the number of
 # issues may or may not be displayed
 #
-# When the script is to end (user provided SIGINT) or there were issues
-# to address in the current operation, the rest of the operations are
-# displayed (titles) indicating they were NOT run, eg:
-#
-#   '* Testing...                                   COMPLETED 10 issues'
-#   '* Compressing To Level 8...                            DID NOT RUN'
-#   '* Retagging...                                         DID NOT RUN'
-#   '* Pruning METADATA...                                  DID NOT RUN'
-#
 _operation_title()
 {
   local fmt status_banner issues_banner right_align
@@ -449,6 +440,13 @@ _print_item_skip() { printf '%b' "\033[${row}H${cyan}skip$reset";   }
 # Abnormal signals caught will perform cleanup by removing files and
 # killing any jobs which may be running
 #
+# On script end, any operation that was not run is displayed, eg:
+#
+#   '* Testing...                                   COMPLETED 10 issues'
+#   '* Compressing To Level 8...                            DID NOT RUN'
+#   '* Retagging...                                         DID NOT RUN'
+#   '* Pruning METADATA...                                  DID NOT RUN'
+#
 _cleanup()
 {
   local i fmt op match status_banner right_align
@@ -478,7 +476,6 @@ _cleanup()
     # Remove temporary picture blocks (from artwork extraction)
     rm -f /tmp/redoflacs_picture_blocks.[[:digit:]]*
   fi
-
 
   # Due to catching an abnormal signal or if there were issues found,
   # loop through all operations and display any operation which did not
